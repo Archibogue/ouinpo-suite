@@ -53,98 +53,124 @@ Après activation, vérifier les points suivants :
 
 Les compétences BO complètes ne sont pas créées automatiquement par l’installeur. Elles doivent être importées via un pack pédagogique ou créées depuis l’administration du plugin.
 
-Les pages publiques ne sont pas créées automatiquement. Voir `docs/SHORTCODES.md` pour la liste des pages recommandées et des shortcodes à insérer.
+Les pages publiques ne sont pas créées automatiquement. Il faut les créer dans WordPress, puis y placer les shortcodes nécessaires.
 
-## Pages publiques à créer
+## Packs pédagogiques
 
-Pour une installation minimale, créer au moins les pages suivantes :
+Les packs pédagogiques permettent d’importer des contenus dans une installation neuve ou existante :
 
-| Page WordPress | Shortcode |
+- compétences ;
+- exercices ;
+- indices et solutions ;
+- métadonnées de type bac ;
+- sujets pratiques ;
+- flashcards.
+
+Le dossier `packs/` contient le schéma et les exemples fournis avec le plugin.
+
+Pour une installation de démonstration, importer par exemple :
+
+```text
+packs/ouinpo-pack-demo.json
+```
+
+Après import, vérifier dans l’administration que les exercices, sujets pratiques et flashcards apparaissent bien.
+
+## Pages WordPress et shortcodes
+
+Les shortcodes doivent être placés dans des pages WordPress créées manuellement. Les slugs ci-dessous sont conseillés, mais peuvent être adaptés.
+
+### Pages indispensables
+
+| Page WordPress | Slug conseillé | Shortcode |
+|---|---|---|
+| Exercices | `exercices` | `[ouinpo_exercises page="/exercice/"]` |
+| Exercice | `exercice` | `[ouinpo_exercise]` |
+| Sujets pratiques | `sujets-pratiques` | `[ouinpo_practical_subjects page="/epreuve-pratique-sujet/"]` |
+| Sujet pratique | `epreuve-pratique-sujet` | `[ouinpo_practical_subject]` |
+| Flashcards | `flashcards` | `[ouinpo_flashcards]` |
+| Ma progression | `ma-progression` | `[ouinpo_competences_progress]` |
+| Mes badges | `mes-badges` | `[ouinpo_student_badges]` |
+| Palmarès des badges | `palmares-badges` | `[ouinpo_badges_palmares]` |
+| Carte du site | `carte-du-site` | `[ouinpo_site_map]` |
+
+### Pages utiles selon les modules activés
+
+| Page WordPress | Slug conseillé | Shortcode |
+|---|---|---|
+| Dépôt élève | `depot-eleve` | `[ouinpo_upload]` |
+| Mes dépôts | `mes-depots` | `[ouinpo_my_submissions]` |
+| Ressources pédagogiques | `ressources-pedagogiques` | `[ouinpo_resources]` |
+| Suivi des compétences prof | `suivi-competences-prof` | `[ouinpo_competences_prof]` |
+| Choisir mon titre | `choisir-mon-titre` | `[ouinpo_title_selector]` |
+
+Il est possible de regrouper le dépôt et l’historique des dépôts sur une seule page :
+
+```text
+[ouinpo_upload]
+
+[ouinpo_my_submissions]
+```
+
+### Pages IA et parcours
+
+| Page WordPress | Slug conseillé | Shortcode |
+|---|---|---|
+| SegFault | `segfault` | `[segfault_chat]` |
+| Mon parcours conseillé | `mon-parcours-conseille` | `[segfault_parcours]` |
+| Mes parcours | `mes-parcours` | `[segfault_mes_parcours]` |
+
+### Pages optionnelles
+
+| Page WordPress | Slug conseillé | Shortcode |
+|---|---|---|
+| Recherche textuelle | `recherche-textuelle` | `[ouinpo_recherche_textuelle]` |
+| Quête OuInPo | `quete-ouinpo` | `[ouinpo_gate page="registre-des-apprentis-satrapes-et-para-satrapes" needed="42" reveal="link"]` |
+| Registre des apprentis | `registre-des-apprentis-satrapes-et-para-satrapes` | `[ouinpo_signpad page="registre-des-apprentis-satrapes-et-para-satrapes" needed="42" show_list="1"]` |
+
+### Shortcodes d’intégration
+
+Ces shortcodes ne nécessitent pas forcément une page dédiée :
+
+| Shortcode | Usage |
 |---|---|
-| Exercices | `[ouinpo_exercises]` |
-| Exercice | `[ouinpo_exercise]` |
-| Sujets pratiques | `[ouinpo_practical_subjects]` |
-| Sujet pratique | `[ouinpo_practical_subject]` |
-| Flashcards | `[ouinpo_flashcards]` |
-| Ma progression | `[ouinpo_competences_progress]` |
+| `[ouinpo_revision_band]` | Bandeau de révision à placer dans un cours ou une page élève |
+| `[ouinpo_hint]...[/ouinpo_hint]` | Contenu conditionnel lié au module Gate |
+| `[ouinpo_class_field]` | Champ classe à intégrer dans un formulaire ou une page d’inscription personnalisée |
 
-Sur un WordPress en permaliens simples, les liens peuvent utiliser des URLs de type `?page_id=...`. Le plugin est prévu pour conserver ces paramètres lors de l’ouverture d’un exercice ou d’un sujet pratique.
+## Permaliens simples WordPress
 
-## Shortcodes principaux
+Sur un WordPress vierge, les URLs peuvent être en `?page_id=...` au lieu d’utiliser des slugs lisibles.
 
-Les shortcodes peuvent être placés dans des pages WordPress.
+Dans ce cas, après avoir créé les pages de détail, remplacer les URLs des shortcodes de liste par les URLs réelles.
 
-```text
-[ouinpo_exercises]
-````
-
-Affiche la liste des exercices.
+Exemple pour les exercices :
 
 ```text
-[ouinpo_exercise]
+[ouinpo_exercises page="/?page_id=34"]
 ```
 
-Affiche un exercice individuel.
+Exemple pour les sujets pratiques :
 
 ```text
-[ouinpo_practical_subjects]
+[ouinpo_practical_subjects page="/?page_id=35"]
 ```
 
-Affiche la liste des sujets pratiques.
-
-```text
-[ouinpo_practical_subject]
-```
-
-Affiche un sujet pratique individuel.
-
-```text
-[ouinpo_competences_progress]
-```
-
-Affiche la progression par compétences.
-
-```text
-[ouinpo_student_badges]
-```
-
-Affiche les badges d’un élève.
-
-```text
-[ouinpo_badges_palmares]
-```
-
-Affiche un palmarès de badges.
-
-## Pages conseillées
-
-Créer au minimum les pages suivantes :
-
-| Page           | Shortcode conseillé             |
-| -------------- | ------------------------------- |
-| Exercices      | `[ouinpo_exercises]`            |
-| Sujet pratique | `[ouinpo_practical_subjects]`   |
-| Mes badges     | `[ouinpo_student_badges]`       |
-| Ma progression | `[ouinpo_competences_progress]` |
-| Palmarès       | `[ouinpo_badges_palmares]`      |
-
-Les slugs peuvent être adaptés selon le site de l’enseignant.
-- Guide des shortcodes et des pages WordPress à créer : `docs/SHORTCODES.md`
+`34` et `35` sont à remplacer par les identifiants réels des pages créées dans WordPress.
 
 ## IA et confidentialité
 
 Les fonctions IA sont optionnelles.
 
-Aucune clé API n’est fournie avec le plugin.
-Chaque enseignant doit configurer ses propres accès, s’il souhaite utiliser un fournisseur d’IA.
+Aucune clé API n’est fournie avec le plugin. Chaque enseignant doit configurer ses propres accès, s’il souhaite utiliser un fournisseur d’IA.
 
 Avant toute utilisation avec des élèves, il est recommandé de :
 
-* vérifier le cadre applicable dans l’établissement ;
-* informer les élèves des usages prévus ;
-* éviter l’envoi de données personnelles ;
-* désactiver les fonctions IA publiques si elles ne sont pas nécessaires ;
-* vérifier les quotas et les coûts éventuels.
+- vérifier le cadre applicable dans l’établissement ;
+- informer les élèves des usages prévus ;
+- éviter l’envoi de données personnelles ;
+- désactiver les fonctions IA publiques si elles ne sont pas nécessaires ;
+- vérifier les quotas et les coûts éventuels.
 
 ## Données élèves
 
@@ -152,15 +178,15 @@ Le plugin peut stocker des données de progression, de statut d’exercice, de b
 
 Avant de partager une archive du plugin, ne jamais inclure :
 
-* dump SQL de production ;
-* données élèves ;
-* résultats d’exercices ;
-* logs ;
-* réponses saisies ;
-* badges attribués ;
-* clés API ;
-* export WordPress personnel ;
-* fichier de configuration local.
+- dump SQL de production ;
+- données élèves ;
+- résultats d’exercices ;
+- logs ;
+- réponses saisies ;
+- badges attribués ;
+- clés API ;
+- export WordPress personnel ;
+- fichier de configuration local.
 
 ## Diagnostic
 
@@ -172,11 +198,11 @@ OuInPo Suite → Réglages → Diagnostic
 
 Elle permet de vérifier :
 
-* la version du plugin ;
-* l’environnement WordPress/PHP ;
-* les tables présentes ;
-* les options principales ;
-* les données sensibles à ne pas exporter.
+- la version du plugin ;
+- l’environnement WordPress/PHP ;
+- les tables présentes ;
+- les options principales ;
+- les données sensibles à ne pas exporter.
 
 Sur un site de production, il est normal que certaines lignes indiquent que des données ne doivent pas être exportées.
 
@@ -205,13 +231,13 @@ Version de partage en préparation.
 
 Avant diffusion large, vérifier :
 
-* installation sur WordPress vierge ;
-* absence de données personnelles ;
-* absence de clés API ;
-* documentation complète ;
-* import/export des contenus pédagogiques ;
-* tests des pages principales ;
-* compatibilité avec plusieurs thèmes WordPress.
+- installation sur WordPress vierge ;
+- absence de données personnelles ;
+- absence de clés API ;
+- documentation complète ;
+- import/export des contenus pédagogiques ;
+- tests des pages principales ;
+- compatibilité avec plusieurs thèmes WordPress.
 
 ## Désactivation et désinstallation
 
@@ -230,5 +256,7 @@ Une future version pourra proposer une option explicite de purge complète, mais
 Le schéma généré par une installation vierge a été comparé au schéma de production OuInPo.
 
 Les différences restantes sont non bloquantes :
+
 - ordre d’index ou syntaxe phpMyAdmin dans les exports ;
 - commentaires SQL absents sur certaines colonnes ;
+- contraintes étrangères Flashcards présentes sur installation neuve, car les tables sont créées en InnoDB.
