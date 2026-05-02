@@ -10,6 +10,9 @@
    PHP publics utiles au rendu.
    ========================================================== */
 
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Serif+4:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap');
+
 /* ===== Source prod : src/Modules/Exercises/plugin/public/assets/css/exercises.css ===== */
 
 /* ==== OuInPo — Exos UI (propre & responsive) ==== */
@@ -7089,26 +7092,6 @@
   }
 }
 
-  .sf-messages {
-    height: 45vh;
-  }
-
-  .sf-toggle {
-    right: 10px;
-    bottom: 10px;
-    width: 52px;
-    height: 52px;
-    line-height: 52px;
-    font-size: 24px;
-  }
-
-  .sf-input {
-    align-items: stretch;
-  }
-
-  .sf-input button {
-    align-self: flex-end;
-  }
 
 /* =========================================================
    Effets d attente et bulles humoristiques de SegFault
@@ -7835,3 +7818,1082 @@
           .ouinpo-palmares-right{align-items:center;}
           .ouinpo-palmares .ouinpo-badge-earned{text-align:left;width:100%;}
         }
+
+/* ==========================================================
+   OuInPo Suite — Thème OuInPo
+   Compléments issus du CSS additionnel de la prod
+   ----------------------------------------------------------
+   À garder ici : styles des composants/contenus OuInPo.
+   À ne pas mettre ici : styles globaux Hemingway, body/html,
+   Ultimate Member, H5P, widgets/sidebar/footer.
+   ========================================================== */
+
+:root {
+  --ink: #eae6f7;
+  --copper: #b98c5a;
+  --copper-light: #d4aa72;
+  --copper-soft: #c9a56a;
+  --eldritch: #d4c8e4;
+  --phosphor: #9be15d;
+  --rust: #7a3e1c;
+  --shadow: rgba(0,0,0,.6);
+  --abyss: #101b10;
+  --vine: #243224;
+  --frame: #34293c;
+  --paper: #151114;
+
+  /* Pont avec les variables déjà utilisées par le thème du plugin. */
+  --ouin-text: var(--ink);
+  --ouin-muted: #cbbba4;
+  --ouin-accent: var(--copper-light);
+  --ouin-accent-dark: var(--rust);
+  --ouin-border: rgba(185,140,90,.45);
+}
+
+/* Typographie OuInPo limitée aux zones du plugin et aux contenus OuInPo. */
+.ouinpo-content,
+.ouinpo-exo,
+.ouinpo-exercises-page,
+.ouinpo-practical-page,
+.ouinpo-practical-subject,
+.ouinpo-competences,
+.ouinpo-site-map,
+.ouinpo-box,
+.ouinpo-rt,
+.ouinpo-badges-grid,
+.ouinpo-sf,
+.sf-panel,
+.ouinpo-submissions {
+  color: var(--ink);
+  font-family: 'Source Serif 4', serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+/* Titres et liens seulement dans les zones OuInPo. */
+.ouinpo-content :is(h1,h2,h3,h4,h5),
+.ouinpo-exo :is(h1,h2,h3,h4,h5),
+.ouinpo-exercises-page :is(h1,h2,h3,h4,h5),
+.ouinpo-practical-page :is(h1,h2,h3,h4,h5),
+.ouinpo-practical-subject :is(h1,h2,h3,h4,h5),
+.ouinpo-competences :is(h1,h2,h3,h4,h5),
+.ouinpo-site-map :is(h1,h2,h3,h4,h5),
+.ouinpo-box :is(h1,h2,h3,h4,h5) {
+  font-family: 'Cormorant Garamond', serif;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--copper-soft);
+  text-shadow: 0 2px 6px var(--shadow);
+}
+
+.ouinpo-content a,
+.ouinpo-exo a,
+.ouinpo-exercises-page a,
+.ouinpo-practical-page a,
+.ouinpo-practical-subject a,
+.ouinpo-competences a,
+.ouinpo-site-map a,
+.ouinpo-box a,
+.ouinpo-rt a {
+  color: var(--copper);
+  text-decoration: none;
+}
+
+.ouinpo-content a:hover,
+.ouinpo-exo a:hover,
+.ouinpo-exercises-page a:hover,
+.ouinpo-practical-page a:hover,
+.ouinpo-practical-subject a:hover,
+.ouinpo-competences a:hover,
+.ouinpo-site-map a:hover,
+.ouinpo-box a:hover,
+.ouinpo-rt a:hover {
+  color: var(--copper-light);
+  text-shadow: 0 0 6px rgba(185,140,90,.45);
+}
+
+/* Citations dans les contenus OuInPo. */
+.ouinpo-content blockquote,
+.ouinpo-exo blockquote,
+.ouinpo-practical-subject blockquote,
+.ouinpo-site-map blockquote {
+  font-style: italic;
+  color: var(--copper-soft);
+  background: rgba(255,255,255,.05);
+  border-left: 4px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  padding: 1em 1.2em;
+  margin: 1.5em 0;
+  box-shadow: inset 0 0 8px rgba(255,255,255,.04);
+}
+
+.ouinpo-content blockquote::before,
+.ouinpo-content blockquote::after,
+.ouinpo-exo blockquote::before,
+.ouinpo-exo blockquote::after,
+.ouinpo-practical-subject blockquote::before,
+.ouinpo-practical-subject blockquote::after,
+.ouinpo-site-map blockquote::before,
+.ouinpo-site-map blockquote::after {
+  content: none !important;
+}
+
+.ouinpo-content blockquote cite,
+.ouinpo-exo blockquote cite,
+.ouinpo-practical-subject blockquote cite,
+.ouinpo-site-map blockquote cite {
+  display: block;
+  margin-top: .6em;
+  font-style: normal;
+  font-size: .9em;
+  color: rgba(185,140,90,.8);
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(0,0,0,.7);
+}
+
+.ouinpo-content blockquote cite::before,
+.ouinpo-exo blockquote cite::before,
+.ouinpo-practical-subject blockquote cite::before,
+.ouinpo-site-map blockquote cite::before {
+  content: none !important;
+}
+
+/* Encadrés génériques de type laboratoire. */
+.ouinpo-content .lab-note,
+.ouinpo-exo .lab-note,
+.ouinpo-practical-subject .lab-note,
+.ouinpo-site-map .lab-note {
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(30,30,30,.7);
+  padding: 1rem;
+  margin: 1.2rem 0;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  color: var(--ink);
+}
+
+.ouinpo-content .lab-note.danger,
+.ouinpo-exo .lab-note.danger,
+.ouinpo-practical-subject .lab-note.danger,
+.ouinpo-site-map .lab-note.danger {
+  border-color: #6b0f1a;
+  background: linear-gradient(0deg, rgba(107,15,26,.15), rgba(30,0,0,.6));
+}
+
+/* Encadrés eldritch : “Ce qu’il faut retenir”, exemples, synthèses. */
+.ouinpo-content .eldritch,
+.ouinpo-exo .eldritch,
+.ouinpo-practical-subject .eldritch,
+.ouinpo-site-map .eldritch,
+.ouinpo-eldritch {
+  background: linear-gradient(180deg, #1c131f, #221a26 60%, #1c131f);
+  color: var(--ink);
+  border: 1px solid var(--frame);
+  border-radius: 10px;
+  padding: 1.1rem;
+  margin: 1.4rem 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(200,150,90,.2);
+}
+
+.ouinpo-content .eldritch h3,
+.ouinpo-content .eldritch a,
+.ouinpo-exo .eldritch h3,
+.ouinpo-exo .eldritch a,
+.ouinpo-practical-subject .eldritch h3,
+.ouinpo-practical-subject .eldritch a,
+.ouinpo-site-map .eldritch h3,
+.ouinpo-site-map .eldritch a,
+.ouinpo-eldritch h3,
+.ouinpo-eldritch a {
+  color: #b7a7ff;
+}
+
+.ouinpo-content .eldritch a:hover,
+.ouinpo-exo .eldritch a:hover,
+.ouinpo-practical-subject .eldritch a:hover,
+.ouinpo-site-map .eldritch a:hover,
+.ouinpo-eldritch a:hover {
+  color: #d7ceff;
+  text-shadow: 0 0 6px rgba(183,167,255,.45);
+}
+
+.ouinpo-content .eldritch::before,
+.ouinpo-exo .eldritch::before,
+.ouinpo-practical-subject .eldritch::before,
+.ouinpo-site-map .eldritch::before,
+.ouinpo-eldritch::before {
+  content: "⟟ ⌰ Ϟ ᚱ ᚨ ᚾ";
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  font-size: 2.2rem;
+  opacity: .08;
+  letter-spacing: .3em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ouinpo-content .eldritch::after,
+.ouinpo-exo .eldritch::after,
+.ouinpo-practical-subject .eldritch::after,
+.ouinpo-site-map .eldritch::after,
+.ouinpo-eldritch::after {
+  content: "";
+  position: absolute;
+  left: -60px;
+  bottom: -40px;
+  width: 220px;
+  height: 220px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(155,225,93,.06), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(155,225,93,.04), transparent 60%);
+  filter: blur(8px);
+  animation: ouinpo-sway 18s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ouinpo-sway {
+  0%, 100% { transform: rotate(2deg) translateY(0); }
+  50% { transform: rotate(-3deg) translateY(-6px); }
+}
+
+/* Alertes pédagogiques / “Vérifie ta compréhension”. */
+.ouinpo-content .alert,
+.ouinpo-exo .alert,
+.ouinpo-exercises-page .alert,
+.ouinpo-practical-page .alert,
+.ouinpo-practical-subject .alert,
+.ouinpo-site-map .alert,
+.ouinpo-box.alert,
+.ouinpo-alert {
+  position: relative;
+  border: 1px dashed var(--copper);
+  background-color: rgba(0,0,0,.25);
+  color: var(--ink);
+  padding: 1.5em;
+  padding-right: 5.2rem;
+  margin-bottom: 2em;
+  border-radius: 8px;
+  font-style: italic;
+  box-shadow: 0 0 10px var(--shadow);
+}
+
+.ouinpo-content .alert::before,
+.ouinpo-exo .alert::before,
+.ouinpo-exercises-page .alert::before,
+.ouinpo-practical-page .alert::before,
+.ouinpo-practical-subject .alert::before,
+.ouinpo-site-map .alert::before,
+.ouinpo-box.alert::before,
+.ouinpo-alert::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 58px;
+  height: 58px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg stroke='currentColor' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 32 Q32 10 56 32 Q32 54 8 32 Z'/%3E%3Ccircle cx='32' cy='32' r='8'/%3E%3Cpath d='M32 24 L32 40'/%3E%3Cpath d='M32 6 L32 10'/%3E%3Cpath d='M32 54 L32 58'/%3E%3Cpath d='M6 32 L10 32'/%3E%3Cpath d='M54 32 L58 32'/%3E%3Cpath d='M14 14 L18 18'/%3E%3Cpath d='M46 46 L50 50'/%3E%3Cpath d='M14 50 L18 46'/%3E%3Cpath d='M46 18 L50 14'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  color: #0a8f5a;
+  pointer-events: none;
+  animation: ouinpo-eldritch-pulse 2.8s ease-in-out infinite;
+  transform-origin: center;
+  filter:
+    drop-shadow(0 0 6px rgba(10,143,90,.65))
+    drop-shadow(0 0 2px rgba(10,143,90,.4));
+}
+
+.ouinpo-content .alert::after,
+.ouinpo-exo .alert::after,
+.ouinpo-exercises-page .alert::after,
+.ouinpo-practical-page .alert::after,
+.ouinpo-practical-subject .alert::after,
+.ouinpo-site-map .alert::after,
+.ouinpo-box.alert::after,
+.ouinpo-alert::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 58px;
+  height: 58px;
+  background: radial-gradient(ellipse 80% 55% at 50% 50%, rgba(0,0,0,.28) 0 100%);
+  border-radius: 50%;
+  transform-origin: center;
+  animation: ouinpo-blink-irregular 11s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ouinpo-eldritch-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter:
+      drop-shadow(0 0 6px rgba(0,255,128,.55))
+      drop-shadow(0 0 2px rgba(10,143,90,.45));
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18);
+    filter:
+      drop-shadow(0 0 24px rgba(0,255,128,.95))
+      drop-shadow(0 0 10px rgba(0,255,128,.75));
+    opacity: .95;
+  }
+}
+
+@keyframes ouinpo-blink-irregular {
+  0%, 6%, 8%, 34%, 36%, 72%, 74%, 100% { transform: scaleY(0); }
+  7%, 35%, 73% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ouinpo-content .alert::before,
+  .ouinpo-content .alert::after,
+  .ouinpo-exo .alert::before,
+  .ouinpo-exo .alert::after,
+  .ouinpo-practical-subject .alert::before,
+  .ouinpo-practical-subject .alert::after,
+  .ouinpo-site-map .alert::before,
+  .ouinpo-site-map .alert::after,
+  .ouinpo-content .eldritch::after,
+  .ouinpo-exo .eldritch::after,
+  .ouinpo-practical-subject .eldritch::after,
+  .ouinpo-site-map .eldritch::after {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .ouinpo-content .alert,
+  .ouinpo-exo .alert,
+  .ouinpo-exercises-page .alert,
+  .ouinpo-practical-page .alert,
+  .ouinpo-practical-subject .alert,
+  .ouinpo-site-map .alert,
+  .ouinpo-box.alert,
+  .ouinpo-alert {
+    padding-right: 4rem;
+  }
+
+  .ouinpo-content .alert::before,
+  .ouinpo-content .alert::after,
+  .ouinpo-exo .alert::before,
+  .ouinpo-exo .alert::after,
+  .ouinpo-exercises-page .alert::before,
+  .ouinpo-exercises-page .alert::after,
+  .ouinpo-practical-page .alert::before,
+  .ouinpo-practical-page .alert::after,
+  .ouinpo-practical-subject .alert::before,
+  .ouinpo-practical-subject .alert::after,
+  .ouinpo-site-map .alert::before,
+  .ouinpo-site-map .alert::after,
+  .ouinpo-box.alert::before,
+  .ouinpo-box.alert::after,
+  .ouinpo-alert::before,
+  .ouinpo-alert::after {
+    width: 44px;
+    height: 44px;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+/* Code, terminal et touches clavier dans les zones OuInPo. */
+.ouinpo-content pre,
+.ouinpo-content code,
+.ouinpo-exo pre,
+.ouinpo-exo code,
+.ouinpo-exercises-page pre,
+.ouinpo-exercises-page code,
+.ouinpo-practical-subject pre,
+.ouinpo-practical-subject code,
+.ouinpo-site-map pre,
+.ouinpo-site-map code,
+.ouinpo-box pre,
+.ouinpo-box code {
+  font-family: 'Source Code Pro', monospace !important;
+  background: var(--abyss);
+  color: var(--phosphor);
+  border: 1px solid var(--vine);
+  padding: .6rem;
+  box-shadow: inset 0 0 20px rgba(155,225,93,.06);
+}
+
+.ouinpo-content pre,
+.ouinpo-exo pre,
+.ouinpo-exercises-page pre,
+.ouinpo-practical-subject pre,
+.ouinpo-site-map pre,
+.ouinpo-box pre {
+  background: var(--abyss) !important;
+  color: var(--phosphor) !important;
+  margin: 1em 0;
+  overflow-x: auto;
+}
+
+.ouinpo-content pre::before,
+.ouinpo-exo pre::before,
+.ouinpo-exercises-page pre::before,
+.ouinpo-practical-subject pre::before,
+.ouinpo-site-map pre::before,
+.ouinpo-box pre::before {
+  content: none !important;
+}
+
+/* Code allégé dans les encadrés eldritch. */
+.ouinpo-content .eldritch pre,
+.ouinpo-content .eldritch code,
+.ouinpo-exo .eldritch pre,
+.ouinpo-exo .eldritch code,
+.ouinpo-practical-subject .eldritch pre,
+.ouinpo-practical-subject .eldritch code,
+.ouinpo-site-map .eldritch pre,
+.ouinpo-site-map .eldritch code,
+.ouinpo-eldritch pre,
+.ouinpo-eldritch code {
+  background: transparent !important;
+  color: var(--phosphor) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-family: 'Source Code Pro', monospace !important;
+  font-size: .95em;
+  line-height: 1.6;
+}
+
+.ouinpo-content kbd,
+.ouinpo-exo kbd,
+.ouinpo-practical-subject kbd,
+.ouinpo-site-map kbd {
+  display: inline-block;
+  font-family: 'Source Code Pro', monospace;
+  font-size: .9em;
+  color: var(--ink);
+  background: #1b181a;
+  border: 1px solid #4b4340;
+  border-radius: 4px;
+  padding: .25em .45em;
+  margin: 0 .15em;
+  vertical-align: middle;
+  letter-spacing: .03em;
+  text-shadow: 0 1px 0 rgba(0,0,0,.8);
+  background-image: linear-gradient(180deg,#222 0%,#111 100%);
+  box-shadow:
+    inset 0 0 3px rgba(0,0,0,.7),
+    0 2px 0 #111,
+    0 3px 2px rgba(0,0,0,.6);
+  transition: transform .1s ease-in-out, box-shadow .1s ease-in-out;
+}
+
+.ouinpo-content kbd:hover,
+.ouinpo-exo kbd:hover,
+.ouinpo-practical-subject kbd:hover,
+.ouinpo-site-map kbd:hover {
+  background-image: linear-gradient(180deg,#2a2728 0%,#181616 100%);
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,.05),
+    0 2px 0 #000,
+    0 3px 3px rgba(0,0,0,.6);
+}
+
+.ouinpo-content kbd:active,
+.ouinpo-exo kbd:active,
+.ouinpo-practical-subject kbd:active,
+.ouinpo-site-map kbd:active {
+  transform: translateY(2px);
+  background-image: linear-gradient(180deg,#151313 0%,#0e0e0e 100%);
+  box-shadow: inset 0 0 5px rgba(0,0,0,.9), 0 1px 0 #000;
+}
+
+.ouinpo-content kbd + kbd,
+.ouinpo-exo kbd + kbd,
+.ouinpo-practical-subject kbd + kbd,
+.ouinpo-site-map kbd + kbd {
+  margin-left: .25em;
+}
+
+.ouinpo-content kbd.special,
+.ouinpo-exo kbd.special,
+.ouinpo-practical-subject kbd.special,
+.ouinpo-site-map kbd.special {
+  color: var(--copper-light);
+  border-color: var(--copper);
+  box-shadow:
+    inset 0 0 4px rgba(185,140,90,.3),
+    0 2px 0 #332212,
+    0 3px 3px rgba(0,0,0,.6);
+}
+
+/* Prism Toolbar dans les contenus OuInPo : éviter que “copier” couvre le code. */
+.ouinpo-content .code-toolbar,
+.ouinpo-exo .code-toolbar,
+.ouinpo-practical-subject .code-toolbar {
+  position: relative;
+}
+
+.ouinpo-content .code-toolbar > .toolbar,
+.ouinpo-exo .code-toolbar > .toolbar,
+.ouinpo-practical-subject .code-toolbar > .toolbar {
+  position: absolute !important;
+  top: .5rem !important;
+  right: .5rem !important;
+  z-index: 5 !important;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 6px;
+  padding: .2rem .35rem;
+  box-shadow: 0 6px 14px rgba(0,0,0,.35);
+}
+
+.ouinpo-content .code-toolbar > .toolbar a,
+.ouinpo-content .code-toolbar > .toolbar button,
+.ouinpo-exo .code-toolbar > .toolbar a,
+.ouinpo-exo .code-toolbar > .toolbar button,
+.ouinpo-practical-subject .code-toolbar > .toolbar a,
+.ouinpo-practical-subject .code-toolbar > .toolbar button {
+  color: var(--ink) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-content pre[class*="language-"],
+.ouinpo-content .code-toolbar pre,
+.ouinpo-exo pre[class*="language-"],
+.ouinpo-exo .code-toolbar pre,
+.ouinpo-practical-subject pre[class*="language-"],
+.ouinpo-practical-subject .code-toolbar pre {
+  padding-top: 2.4rem !important;
+  padding-right: 2.2rem;
+}
+
+/* Tableaux pédagogiques OuInPo. */
+.ouinpo-content table,
+.ouinpo-exo table,
+.ouinpo-practical-subject table,
+.ouinpo-site-map table,
+.ouinpo-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+}
+
+.ouinpo-content table thead th,
+.ouinpo-exo table thead th,
+.ouinpo-practical-subject table thead th,
+.ouinpo-site-map table thead th,
+.ouinpo-table thead th {
+  color: var(--copper-light) !important;
+  background: rgba(185,140,90,.12) !important;
+  border-bottom: 1px solid rgba(185,140,90,.45) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  font-weight: 600;
+}
+
+.ouinpo-content table td,
+.ouinpo-content table th,
+.ouinpo-exo table td,
+.ouinpo-exo table th,
+.ouinpo-practical-subject table td,
+.ouinpo-practical-subject table th,
+.ouinpo-site-map table td,
+.ouinpo-site-map table th,
+.ouinpo-table td,
+.ouinpo-table th {
+  border-color: rgba(185,140,90,.25) !important;
+  vertical-align: top;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.ouinpo-content table tr:nth-child(even) td,
+.ouinpo-exo table tr:nth-child(even) td,
+.ouinpo-practical-subject table tr:nth-child(even) td,
+.ouinpo-site-map table tr:nth-child(even) td,
+.ouinpo-table tr:nth-child(even) td {
+  background: rgba(255,255,255,.03);
+}
+
+/* Correctifs tableaux issus de la prod, limités aux tables OuInPo. */
+.ouinpo-content table,
+.entry-content table.ouinpo-table,
+.post-content table.ouinpo-table,
+.page-content table.ouinpo-table {
+  table-layout: auto !important;
+  width: 100% !important;
+}
+
+.ouinpo-content th:first-child,
+.ouinpo-content td:first-child,
+.entry-content table.ouinpo-table th:first-child,
+.entry-content table.ouinpo-table td:first-child,
+.post-content table.ouinpo-table th:first-child,
+.post-content table.ouinpo-table td:first-child,
+.page-content table.ouinpo-table th:first-child,
+.page-content table.ouinpo-table td:first-child {
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+  max-width: none !important;
+}
+
+@media (max-width: 480px) {
+  .ouinpo-content th:first-child,
+  .ouinpo-content td:first-child,
+  .entry-content table.ouinpo-table th:first-child,
+  .entry-content table.ouinpo-table td:first-child,
+  .post-content table.ouinpo-table th:first-child,
+  .post-content table.ouinpo-table td:first-child,
+  .page-content table.ouinpo-table th:first-child,
+  .page-content table.ouinpo-table td:first-child {
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    hyphens: manual !important;
+  }
+}
+
+.ouinpo-content table code,
+.ouinpo-exo table code,
+.ouinpo-practical-subject table code,
+.ouinpo-site-map table code,
+.ouinpo-table code {
+  display: inline-block;
+  white-space: normal;
+  line-height: 1.4;
+  padding: .15rem .35rem;
+  border-radius: 4px;
+  background: var(--abyss);
+  color: var(--phosphor);
+  border: 1px solid var(--vine);
+  box-shadow: inset 0 0 20px rgba(155,225,93,.06);
+  vertical-align: baseline;
+}
+
+.ouinpo-content table pre,
+.ouinpo-exo table pre,
+.ouinpo-practical-subject table pre,
+.ouinpo-site-map table pre,
+.ouinpo-table pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: .25rem 0;
+}
+
+/* Blocs OuInPo explicites. */
+.ouinpo-box {
+  background: rgba(0,0,0,.28) !important;
+  border: 1px dashed var(--copper) !important;
+  color: var(--ink) !important;
+  border-radius: 10px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 0 10px var(--shadow);
+}
+
+.ouinpo-box h3 {
+  margin: 0 0 .6rem;
+  color: var(--eldritch);
+  text-shadow: 0 2px 6px var(--shadow);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  border: 0;
+}
+
+.ouinpo-list {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.ouinpo-list li {
+  margin: .35rem 0;
+}
+
+.ouinpo-badge {
+  background: rgba(255,255,255,.06) !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+}
+
+/* Fin de cours / conclusion OuInPo. */
+.ouinpo-endquote {
+  border-top: 1px solid rgba(185,140,90,.45) !important;
+  margin-top: 2.5rem;
+  padding-top: 1.2rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--copper-light);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  position: relative;
+}
+
+.ouinpo-endquote::before {
+  content: "❧";
+  color: var(--copper);
+  font-size: 1.4rem;
+  position: absolute;
+  top: -1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 .4rem;
+}
+
+.ouinpo-endquote cite {
+  display: block;
+  font-size: .95rem;
+  margin-top: .4rem !important;
+  color: rgba(185,140,90,.75);
+  font-style: normal;
+  border-top: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  position: static !important;
+  padding-top: 0 !important;
+}
+
+.ouinpo-endquote cite::before,
+.ouinpo-endquote cite::after {
+  content: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  display: none !important;
+}
+
+.pata-imag {
+  font-style: italic;
+  text-decoration: underline dotted;
+}
+
+.pata-imag::after {
+  content: " — Jour imaginaire";
+  opacity: .75;
+}
+
+/* Boutons et formulaires : uniquement dans les composants OuInPo. */
+.ouinpo-box button,
+.ouinpo-box input[type="submit"],
+.ouinpo-exo button,
+.ouinpo-exercises-page button,
+.ouinpo-practical-page button,
+.ouinpo-practical-subject button,
+.ouinpo-competences button,
+.ouinpo-rt button,
+.ouinpo-submissions button,
+.ouinpo-submissions input[type="submit"] {
+  background: linear-gradient(180deg, var(--copper), var(--rust)) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: .6rem 1.1rem !important;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  box-shadow: 0 6px 14px rgba(138,90,43,.35);
+  transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.ouinpo-box button:hover,
+.ouinpo-box input[type="submit"]:hover,
+.ouinpo-exo button:hover,
+.ouinpo-exercises-page button:hover,
+.ouinpo-practical-page button:hover,
+.ouinpo-practical-subject button:hover,
+.ouinpo-competences button:hover,
+.ouinpo-rt button:hover,
+.ouinpo-submissions button:hover,
+.ouinpo-submissions input[type="submit"]:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(185,140,90,.45);
+}
+
+.ouinpo-box input[type="text"],
+.ouinpo-box input[type="email"],
+.ouinpo-box input[type="file"],
+.ouinpo-box select,
+.ouinpo-box textarea,
+.ouinpo-exo input[type="text"],
+.ouinpo-exo input[type="email"],
+.ouinpo-exo input[type="search"],
+.ouinpo-exo select,
+.ouinpo-exo textarea,
+.ouinpo-exercises-page input[type="text"],
+.ouinpo-exercises-page input[type="search"],
+.ouinpo-exercises-page select,
+.ouinpo-exercises-page textarea,
+.ouinpo-practical-page input[type="text"],
+.ouinpo-practical-page input[type="search"],
+.ouinpo-practical-page select,
+.ouinpo-practical-page textarea,
+.ouinpo-practical-subject textarea,
+.ouinpo-competences input[type="text"],
+.ouinpo-competences select,
+.ouinpo-competences textarea,
+.ouinpo-rt input,
+.ouinpo-rt select,
+.ouinpo-rt textarea,
+.ouinpo-submissions input[type="text"],
+.ouinpo-submissions input[type="email"],
+.ouinpo-submissions input[type="file"],
+.ouinpo-submissions select,
+.ouinpo-submissions textarea {
+  background: rgba(0,0,0,.28) !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  line-height: 1.45 !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.25);
+  transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.ouinpo-box input:focus,
+.ouinpo-box select:focus,
+.ouinpo-box textarea:focus,
+.ouinpo-exo input:focus,
+.ouinpo-exo select:focus,
+.ouinpo-exo textarea:focus,
+.ouinpo-exercises-page input:focus,
+.ouinpo-exercises-page select:focus,
+.ouinpo-exercises-page textarea:focus,
+.ouinpo-practical-page input:focus,
+.ouinpo-practical-page select:focus,
+.ouinpo-practical-page textarea:focus,
+.ouinpo-practical-subject textarea:focus,
+.ouinpo-competences input:focus,
+.ouinpo-competences select:focus,
+.ouinpo-competences textarea:focus,
+.ouinpo-rt input:focus,
+.ouinpo-rt select:focus,
+.ouinpo-rt textarea:focus,
+.ouinpo-submissions input:focus,
+.ouinpo-submissions select:focus,
+.ouinpo-submissions textarea:focus {
+  outline: none !important;
+  border-color: var(--copper) !important;
+  box-shadow:
+    0 0 0 2px rgba(185,140,90,.25),
+    0 0 12px rgba(185,140,90,.35) !important;
+  background: rgba(0,0,0,.34) !important;
+}
+
+.ouinpo-box ::placeholder,
+.ouinpo-exo ::placeholder,
+.ouinpo-exercises-page ::placeholder,
+.ouinpo-practical-page ::placeholder,
+.ouinpo-practical-subject ::placeholder,
+.ouinpo-competences ::placeholder,
+.ouinpo-rt ::placeholder,
+.ouinpo-submissions ::placeholder {
+  color: rgba(234,230,247,.78) !important;
+  opacity: 1 !important;
+}
+
+.ouinpo-box input[type="checkbox"],
+.ouinpo-box input[type="radio"],
+.ouinpo-exo input[type="checkbox"],
+.ouinpo-exo input[type="radio"],
+.ouinpo-exercises-page input[type="checkbox"],
+.ouinpo-exercises-page input[type="radio"],
+.ouinpo-practical-page input[type="checkbox"],
+.ouinpo-practical-page input[type="radio"],
+.ouinpo-competences input[type="checkbox"],
+.ouinpo-competences input[type="radio"],
+.ouinpo-submissions input[type="checkbox"],
+.ouinpo-submissions input[type="radio"] {
+  accent-color: var(--copper);
+  transform: translateY(1px);
+}
+
+/* Sécurité de superposition pour mini-jeu / signature / résultats OuInPo. */
+#ouinpo-signpad,
+#ouinpo-game,
+#ouinpo-sign-result {
+  position: relative;
+  z-index: 1;
+}
+
+#ouinpo-sign-result .button,
+#ouinpo-sign-result a.button {
+  position: relative;
+  z-index: 3;
+  display: inline-block;
+  pointer-events: auto;
+}
+
+/* Badge flottant SegFault : correction de visibilité reprise de la prod. */
+.ouinpo-notif-float {
+  position: fixed !important;
+  right: 68px !important;
+  bottom: 48px !important;
+  background: #e11d48 !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  cursor: pointer;
+  z-index: 999999 !important;
+  display: block !important;
+}
+
+#sf-toggle::after,
+#sf-toggle .sf-badge {
+  display: none !important;
+  content: none !important;
+}
+
+/* ==========================================================
+   Correctif thème OuInPo — Suivi des compétences prof
+   Objectif : empêcher le thème WordPress ou ses styles de formulaires
+   de reprendre la main sur la barre de filtres du tableau prof.
+   À conserver dans themes/ouinpo.css, pas dans le CSS module.
+   ========================================================== */
+
+.ouinpo-teacher.ouinpo-competences {
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar .field {
+  min-width: 0;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar .field label {
+  color: var(--mut, #b6a27c) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-family: 'Source Serif 4', Georgia, serif !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  text-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar select,
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar .field select,
+.ouinpo-teacher.ouinpo-competences select#t-year,
+.ouinpo-teacher.ouinpo-competences select#t-group,
+.ouinpo-teacher.ouinpo-competences select#t-domain,
+.ouinpo-teacher.ouinpo-competences select#t-user,
+.ouinpo-teacher.ouinpo-competences select#t-view {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  color: var(--txt, #f2e7c9) !important;
+  background: var(--paper, #26211c) !important;
+  border: 1px solid var(--line, #5e4b33) !important;
+  border-radius: 10px !important;
+  box-shadow:
+    inset 0 0 8px rgba(0,0,0,.45),
+    0 1px 0 rgba(255,255,255,.04) !important;
+  font-family: 'Source Serif 4', Georgia, serif !important;
+  font-size: 0.95rem !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  text-shadow: none !important;
+  outline: none !important;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar select:focus {
+  border-color: var(--cuivre, #c59b52) !important;
+  box-shadow:
+    0 0 0 2px rgba(197,155,82,.22),
+    0 0 12px rgba(197,155,82,.28),
+    inset 0 0 8px rgba(0,0,0,.45) !important;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar select option {
+  color: #f2e7c9 !important;
+  background: #26211c !important;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar #t-refresh,
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar button#t-refresh.btn-copper {
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 145px !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 18px !important;
+  align-self: end !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  color: #fff !important;
+  background: linear-gradient(180deg, #c69254, #8a4d23) !important;
+  border: 1px solid rgba(197,155,82,.45) !important;
+  border-radius: 8px !important;
+  box-shadow:
+    0 6px 14px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.22) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.55) !important;
+  transform: none;
+}
+
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar #t-refresh:hover,
+.ouinpo-teacher.ouinpo-competences .ouinpo-toolbar button#t-refresh.btn-copper:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+
+@media (max-width: 1120px) {
+  .ouinpo-teacher.ouinpo-competences .ouinpo-toolbar {
+    grid-template-columns: repeat(5, minmax(128px, 1fr)) auto;
+  }
+
+  .ouinpo-teacher.ouinpo-competences .ouinpo-toolbar #t-refresh,
+  .ouinpo-teacher.ouinpo-competences .ouinpo-toolbar button#t-refresh.btn-copper {
+    min-width: 135px !important;
+    padding: 0 14px !important;
+  }
+}
