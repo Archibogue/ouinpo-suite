@@ -1545,6 +1545,84 @@ final class SuiteAdmin
         <?php
     }
 
+    private static function renderAppearanceSettings(): void
+    {
+        if (!current_user_can('manage_options')) {
+            ?>
+            <div class="notice notice-error">
+                <p>Ces réglages sont réservés aux administrateurs.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        $option_name = 'ouinpo_suite_style_mode';
+
+        $current = get_option($option_name, 'ouinpo');
+
+        if (!in_array($current, ['ouinpo', 'neutral'], true)) {
+            $current = 'ouinpo';
+        }
+
+        ?>
+        <div class="card" style="padding:16px;max-width:1200px;">
+            <h2 class="ouinpo-suite-card-title">Apparence publique</h2>
+
+            <p class="ouinpo-suite-muted">
+                Choisissez le style utilisé par les pages publiques de la suite.
+                Le style sobre est recommandé pour une installation partagée avec d’autres enseignants.
+            </p>
+
+            <form method="post" action="options.php">
+                <?php settings_fields('ouinpo_suite_settings'); ?>
+
+                <table class="form-table" role="presentation">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Style de l’interface</th>
+                            <td>
+                                <fieldset>
+                                    <label style="display:block;margin-bottom:10px;">
+                                        <input
+                                            type="radio"
+                                            name="<?php echo esc_attr($option_name); ?>"
+                                            value="ouinpo"
+                                            <?php checked($current, 'ouinpo'); ?>
+                                        >
+                                        <strong>OuInPo</strong>
+                                        <span class="ouinpo-suite-muted">
+                                            — style actuel, plus marqué et pataphysique.
+                                        </span>
+                                    </label>
+
+                                    <label style="display:block;margin-bottom:10px;">
+                                        <input
+                                            type="radio"
+                                            name="<?php echo esc_attr($option_name); ?>"
+                                            value="neutral"
+                                            <?php checked($current, 'neutral'); ?>
+                                        >
+                                        <strong>Sobre</strong>
+                                        <span class="ouinpo-suite-muted">
+                                            — style neutre, clair, adapté à une version partageable.
+                                        </span>
+                                    </label>
+
+                                    <p class="description">
+                                        Ce réglage ne supprime aucun fichier CSS. Il choisit simplement le thème chargé côté public.
+                                    </p>
+                                </fieldset>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <?php submit_button('Enregistrer l’apparence'); ?>
+            </form>
+        </div>
+        <?php
+    }
+
     private static function renderModulesSettings(): void
     {
         if (!current_user_can('manage_options')) {
@@ -1919,6 +1997,7 @@ final class SuiteAdmin
 
         $settingsTabs = [
             'modules' => 'Modules',
+            'appearance' => 'Apparence',
         ];
 
         if (ModuleSettings::isEnabled('meta')) {
@@ -1937,6 +2016,10 @@ final class SuiteAdmin
 
         if ($tab === 'modules') {
             self::renderModulesSettings();
+
+        } elseif ($tab === 'appearance') {
+            self::renderAppearanceSettings();
+
         } elseif ($tab === 'meta' && ModuleSettings::isEnabled('meta')) {
             ?>
             <div class="ouinpo-suite-grid">

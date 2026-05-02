@@ -55,6 +55,7 @@ final class Plugin
     {
         if (is_admin()) {
             \Ouinpo\Suite\Core\Admin\SuiteAdmin::init();
+            \Ouinpo\Suite\Core\SettingsPage::init();
         }
 
         foreach ($this->registry->all() as $module) {

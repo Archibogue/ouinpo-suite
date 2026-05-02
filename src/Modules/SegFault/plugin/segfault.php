@@ -1573,16 +1573,16 @@ add_action('wp_enqueue_scripts', function () {
   $sf_css_rel = 'assets/css/front/segfault.css';
   $sf_css_ver = defined('OUINPO_SUITE_DIR') && file_exists(OUINPO_SUITE_DIR . $sf_css_rel)
       ? (string) filemtime(OUINPO_SUITE_DIR . $sf_css_rel)
-      : '1.1.6';
+      : '1.0.0';
 
   wp_enqueue_style(
       'ouinpo-sf',
       defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL . $sf_css_rel : OUINPO_SF_URL . 'assets/segfault.css',
-      [],
+      ['ouinpo-core-css', 'ouinpo-theme-css'],
       $sf_css_ver
   );
 
-  wp_enqueue_script('ouinpo-sf', OUINPO_SF_URL.'assets/segfault.js', [], '1.1.6', true);
+  wp_enqueue_script('ouinpo-sf', OUINPO_SF_URL.'assets/segfault.js', [], '1.0.0', true);
 
   wp_localize_script('ouinpo-sf', 'OUINPO_SF', [
 
