@@ -3103,27 +3103,6 @@ class Ouinpo_Submissions_Plugin {
 
         ?>
 
-<style>
-
-  .ouinpo-notif-float{
-
-    position:fixed; right:18px; bottom:18px;
-
-    background:#e11d48; color:#fff; border-radius:999px;
-
-    padding:8px 12px; font-size:13px; font-weight:600;
-
-    box-shadow:0 6px 16px rgba(0,0,0,.35);
-
-    z-index:999998; display:none; cursor:pointer; user-select:none
-
-  }
-
-  #sf-toggle::after, #sf-toggle .sf-badge { display:none !important; content:none !important; }
-
-</style>
-
-
 
 <script>window.OUINPO_SEGF_PHRASE = <?php echo wp_json_encode( $seg_phrase ); ?>;</script>
 

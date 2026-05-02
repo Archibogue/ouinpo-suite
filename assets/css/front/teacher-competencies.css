@@ -1,0 +1,511 @@
+/* ==========================================================
+   OuInPo Suite — Suivi professeur
+   CSS module fonctionnel
+   Ne contient pas l’identité graphique OuInPo.
+   Les couleurs peuvent être surchargées par les thèmes.
+   ========================================================== */
+
+.ouinpo-teacher,
+.ouinpo-teacher * {
+  box-sizing: border-box;
+}
+
+.ouinpo-teacher {
+  --teacher-bg: var(--ouin-neutral-bg, #ffffff);
+  --teacher-bg-soft: var(--ouin-neutral-bg-soft, #f8fafc);
+  --teacher-border: var(--ouin-neutral-border, #d1d5db);
+  --teacher-border-soft: var(--ouin-neutral-border-soft, #e5e7eb);
+  --teacher-text: var(--ouin-neutral-text, #111827);
+  --teacher-muted: var(--ouin-neutral-muted, #6b7280);
+  --teacher-primary: var(--ouin-neutral-primary, #2563eb);
+  --teacher-primary-dark: var(--ouin-neutral-primary-dark, #1d4ed8);
+  --teacher-success: var(--ouin-neutral-success, #15803d);
+  --teacher-warning: var(--ouin-neutral-warning, #b45309);
+  --teacher-danger: var(--ouin-neutral-danger, #b91c1c);
+  --teacher-radius: 12px;
+
+  color: var(--teacher-text);
+}
+
+/* ==========================================================
+   Barre de filtres
+   ========================================================== */
+
+.ouinpo-teacher .ouinpo-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  align-items: flex-end;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--teacher-border);
+  border-radius: var(--teacher-radius);
+  background: var(--teacher-bg-soft);
+}
+
+.ouinpo-teacher .ouinpo-toolbar .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 180px;
+  flex: 1 1 180px;
+}
+
+.ouinpo-teacher .ouinpo-toolbar .field label {
+  font-weight: 700;
+  color: var(--teacher-text);
+}
+
+.ouinpo-teacher .ouinpo-toolbar select,
+.ouinpo-teacher .ouinpo-toolbar input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--teacher-border);
+  border-radius: 8px;
+  background: var(--teacher-bg);
+  color: var(--teacher-text);
+  font: inherit;
+}
+
+.ouinpo-teacher .ouinpo-toolbar select:focus,
+.ouinpo-teacher .ouinpo-toolbar input:focus {
+  outline: 2px solid color-mix(in srgb, var(--teacher-primary) 25%, transparent);
+  border-color: var(--teacher-primary);
+}
+
+.ouinpo-teacher .ouinpo-toolbar .seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ouinpo-teacher button,
+.ouinpo-teacher .button,
+.ouinpo-teacher .btn-copper,
+.ouinpo-teacher .ouinpo-ds-toggle,
+.ouinpo-teacher #t-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--teacher-primary);
+  border-radius: 8px;
+  background: var(--teacher-primary);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ouinpo-teacher button:hover,
+.ouinpo-teacher .button:hover,
+.ouinpo-teacher .btn-copper:hover,
+.ouinpo-teacher .ouinpo-ds-toggle:hover,
+.ouinpo-teacher #t-refresh:hover {
+  background: var(--teacher-primary-dark);
+  border-color: var(--teacher-primary-dark);
+  color: #ffffff;
+}
+
+.ouinpo-teacher button:disabled,
+.ouinpo-teacher .button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ==========================================================
+   Cartes / panneaux
+   ========================================================== */
+
+.ouinpo-teacher .ouinpo-cards,
+.ouinpo-ds-students-grid,
+.ouinpo-ds-cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.ouinpo-teacher .ouinpo-cards {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 1rem 0;
+}
+
+.ouinpo-teacher .card,
+.ouinpo-ds-student-card,
+.ouinpo-ds-card {
+  padding: 1rem;
+  border: 1px solid var(--teacher-border);
+  border-radius: var(--teacher-radius);
+  background: var(--teacher-bg);
+  color: var(--teacher-text);
+}
+
+.ouinpo-ds-students-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.ouinpo-ds-card h4,
+.ouinpo-ds-card-head h4,
+.ouinpo-ds-student-head h4 {
+  margin: 0 0 0.4rem;
+  color: var(--teacher-text);
+}
+
+.ouinpo-ds-card-meta,
+.ouinpo-ds-domain,
+.ouinpo-ds-student-note,
+.ouinpo-ds-detail-list,
+.ouinpo-ds-details {
+  color: var(--teacher-muted);
+}
+
+/* ==========================================================
+   Tableaux
+   ========================================================== */
+
+.ouinpo-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 1rem 0;
+  background: var(--teacher-bg);
+  border: 1px solid var(--teacher-border);
+}
+
+.ouinpo-table thead th {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  background: var(--teacher-bg-soft);
+  color: var(--teacher-text);
+  border-bottom: 1px solid var(--teacher-border);
+  font-weight: 700;
+}
+
+.ouinpo-table tbody td {
+  padding: 0.65rem 0.75rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--teacher-border-soft);
+  color: var(--teacher-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ouinpo-table tbody tr:hover {
+  background: var(--teacher-bg-soft);
+}
+
+.ouinpo-table .col-id,
+.ouinpo-sf-col-id {
+  width: 70px;
+  text-align: center;
+}
+
+.ouinpo-ds-table th:nth-child(3),
+.ouinpo-ds-table td:nth-child(3) {
+  width: 12%;
+}
+
+.ouinpo-ds-table th:nth-child(4),
+.ouinpo-ds-table td:nth-child(4),
+.ouinpo-ds-table th:nth-child(5),
+.ouinpo-ds-table td:nth-child(5),
+.ouinpo-ds-table th:nth-child(6),
+.ouinpo-ds-table td:nth-child(6),
+.ouinpo-ds-table th:nth-child(7),
+.ouinpo-ds-table td:nth-child(7),
+.ouinpo-ds-table th:nth-child(8),
+.ouinpo-ds-table td:nth-child(8),
+.ouinpo-ds-table th:nth-child(9),
+.ouinpo-ds-table td:nth-child(9),
+.ouinpo-ds-table th:nth-child(10),
+.ouinpo-ds-table td:nth-child(10) {
+  text-align: center;
+}
+
+/* ==========================================================
+   Barres de progression
+   ========================================================== */
+
+.ouinpo-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ouinpo-progress,
+.ouinpo-progress-stacked,
+.ouin-bar,
+.ouinpo-ex-mini-bar {
+  width: 100%;
+  min-width: 120px;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--teacher-border-soft);
+}
+
+.ouinpo-progress-bar,
+.ouin-bar .seg,
+.ouinpo-ex-mini-bar > span {
+  display: block;
+  height: 100%;
+}
+
+.ouinpo-progress-stacked,
+.ouin-bar {
+  display: flex;
+}
+
+.ouinpo-progress-bar.segment-acquired,
+.ouin-bar .seg-acq,
+.ouinpo-ex-mini-bar.is-good > span {
+  background: var(--teacher-success);
+}
+
+.ouinpo-progress-bar.segment-inprogress,
+.ouin-bar .seg-prog,
+.ouin-bar .seg-conso,
+.ouinpo-ex-mini-bar.is-mid > span {
+  background: var(--teacher-warning);
+}
+
+.ouinpo-progress-bar.segment-notacquired,
+.ouin-bar .seg-na,
+.ouinpo-ex-mini-bar.is-low > span {
+  background: var(--teacher-danger);
+}
+
+.ouinpo-progress-label,
+.ouin-bar-legend,
+.ouinpo-ex-mini-bar-label {
+  font-size: 0.85rem;
+  color: var(--teacher-muted);
+}
+
+.ouin-bar-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(160px, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.55rem 0;
+}
+
+.ouin-bar-label {
+  font-weight: 700;
+  color: var(--teacher-text);
+}
+
+/* ==========================================================
+   Badges / états
+   ========================================================== */
+
+.ouinpo-ds-badges-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+}
+
+.ouinpo-ds-badge,
+.ouinpo-ex-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--teacher-border);
+  background: var(--teacher-bg-soft);
+  color: var(--teacher-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ouinpo-ds-badge.is-present {
+  border-color: color-mix(in srgb, var(--teacher-success) 45%, var(--teacher-border));
+  color: var(--teacher-success);
+}
+
+.ouinpo-ds-badge.is-absent {
+  border-color: color-mix(in srgb, var(--teacher-danger) 45%, var(--teacher-border));
+  color: var(--teacher-danger);
+}
+
+.ouinpo-ds-badge.is-acquired,
+.ouinpo-ex-state.is-acquired {
+  border-color: color-mix(in srgb, var(--teacher-success) 45%, var(--teacher-border));
+  color: var(--teacher-success);
+}
+
+.ouinpo-ds-badge.is-conso,
+.ouinpo-ds-badge.is-consolidating,
+.ouinpo-ex-state.is-consolidating {
+  border-color: color-mix(in srgb, var(--teacher-primary) 45%, var(--teacher-border));
+  color: var(--teacher-primary);
+}
+
+.ouinpo-ds-badge.is-prog,
+.ouinpo-ds-badge.is-in_progress,
+.ouinpo-ex-state.is-in_progress {
+  border-color: color-mix(in srgb, var(--teacher-warning) 45%, var(--teacher-border));
+  color: var(--teacher-warning);
+}
+
+.ouinpo-ds-badge.is-na,
+.ouinpo-ds-badge.is-not_acquired,
+.ouinpo-ex-state.is-not_acquired {
+  border-color: color-mix(in srgb, var(--teacher-danger) 45%, var(--teacher-border));
+  color: var(--teacher-danger);
+}
+
+.ouinpo-ds-student-card.is-absent,
+.ouinpo-ds-card.is-absent {
+  border-color: color-mix(in srgb, var(--teacher-danger) 45%, var(--teacher-border));
+}
+
+/* ==========================================================
+   Détails DS
+   ========================================================== */
+
+.ouinpo-ds-detail-row td {
+  background: var(--teacher-bg-soft);
+}
+
+.ouinpo-ds-detail-wrap {
+  padding: 0.75rem;
+  border: 1px solid var(--teacher-border-soft);
+  border-radius: var(--teacher-radius);
+  background: var(--teacher-bg);
+}
+
+.ouinpo-ds-detail-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.ouinpo-ds-details {
+  margin-top: 0.75rem;
+}
+
+.ouinpo-ds-details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* ==========================================================
+   Onglet exercices
+   ========================================================== */
+
+#ouinpo-teacher-tab-ex .ouinpo-table {
+  min-width: 900px;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table th,
+#ouinpo-teacher-tab-ex .ouinpo-table td {
+  font-size: 0.92rem;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(1),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(1) {
+  width: 70px;
+  text-align: center;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(2),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(2) {
+  width: 26%;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(3),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(3) {
+  width: 16%;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(4),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(4),
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(5),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(5),
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(6),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(6),
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(7),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(7) {
+  text-align: center;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-card {
+  border: 1px solid var(--teacher-border);
+  border-radius: var(--teacher-radius);
+  background: var(--teacher-bg);
+  padding: 1rem;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-domain {
+  color: var(--teacher-muted);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table tr.is-priority td {
+  background: color-mix(in srgb, var(--teacher-danger) 8%, var(--teacher-bg));
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table tr.is-solid td {
+  background: color-mix(in srgb, var(--teacher-success) 8%, var(--teacher-bg));
+}
+
+/* ==========================================================
+   Responsive
+   ========================================================== */
+
+@media (max-width: 900px) {
+  .ouinpo-teacher .ouinpo-toolbar {
+    align-items: stretch;
+  }
+
+  .ouinpo-teacher .ouinpo-toolbar .field,
+  .ouinpo-teacher .ouinpo-toolbar #t-refresh {
+    flex: 1 1 100%;
+  }
+
+  .ouin-bar-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .ouinpo-table tbody td {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 640px) {
+  .ouinpo-teacher .ouinpo-toolbar {
+    padding: 0.8rem;
+  }
+
+  .ouinpo-teacher button,
+  .ouinpo-teacher .button,
+  .ouinpo-teacher .btn-copper,
+  .ouinpo-teacher #t-refresh {
+    width: 100%;
+  }
+
+  .ouinpo-ds-students-grid,
+  .ouinpo-ds-cards,
+  #ouinpo-teacher-tab-ex .ouinpo-ds-cards {
+    grid-template-columns: 1fr;
+  }
+}

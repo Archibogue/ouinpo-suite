@@ -41,7 +41,7 @@ class Assets {
             'core_css'      => 'assets/css/core/base.css',
             'exo_css'       => 'assets/css/front/exercises.css',
             'practical_css' => 'assets/css/front/practical.css',
-            'teacher_css'   => 'assets/css/admin/teacher-competencies.css',
+            'teacher_css'   => 'assets/css/front/teacher-competencies.css',
 
             'theme_neutral' => 'assets/css/themes/neutral.css',
             'theme_ouinpo'  => 'assets/css/themes/ouinpo.css',
