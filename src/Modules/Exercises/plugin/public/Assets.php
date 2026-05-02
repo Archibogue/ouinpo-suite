@@ -56,18 +56,16 @@ class Assets {
         }
 
         /*
-         * Mode de style.
-         *
-         * Pour l’instant, le défaut reste "ouinpo",
-         * car les CSS modules contiennent encore l’apparence OuInPo.
-         *
-         * Plus tard, quand l’identité graphique aura été déplacée dans
-         * assets/css/themes/ouinpo.css, on changera le défaut en "neutral".
-         */
-        $style_mode = get_option('ouinpo_suite_style_mode', 'ouinpo');
+        * Mode de style.
+        *
+        * Par défaut, le plugin charge le thème neutre.
+        * Le thème OuInPo est une couche visuelle optionnelle portée par
+        * assets/css/themes/ouinpo.css.
+        */
+        $style_mode = get_option('ouinpo_suite_style_mode', 'neutral');
 
         if (!in_array($style_mode, ['neutral', 'ouinpo'], true)) {
-            $style_mode = 'ouinpo';
+            $style_mode = 'neutral';
         }
 
         $theme_file = $style_mode === 'neutral'

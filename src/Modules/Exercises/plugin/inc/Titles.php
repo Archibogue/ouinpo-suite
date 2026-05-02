@@ -170,14 +170,24 @@ class Titles {
         $css_path = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR . $css_rel : '';
         $css_url  = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL . $css_rel : '';
 
+        $deps = [];
+
+        if (wp_style_is('ouinpo-core-css', 'registered')) {
+            $deps[] = 'ouinpo-core-css';
+        }
+
         wp_enqueue_style(
             'ouinpo-titles-css',
             $css_url,
-            [],
+            $deps,
             ($css_path !== '' && file_exists($css_path))
                 ? (string) filemtime($css_path)
                 : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0')
         );
+
+        if (wp_style_is('ouinpo-theme-css', 'registered')) {
+            wp_enqueue_style('ouinpo-theme-css');
+        }
 
         $user_id = get_current_user_id();
 

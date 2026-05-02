@@ -1558,10 +1558,10 @@ final class SuiteAdmin
 
         $option_name = 'ouinpo_suite_style_mode';
 
-        $current = get_option($option_name, 'ouinpo');
+        $current = get_option($option_name, 'neutral');
 
         if (!in_array($current, ['ouinpo', 'neutral'], true)) {
-            $current = 'ouinpo';
+            $current = 'neutral';
         }
 
         ?>

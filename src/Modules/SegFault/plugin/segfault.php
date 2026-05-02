@@ -1575,12 +1575,24 @@ add_action('wp_enqueue_scripts', function () {
       ? (string) filemtime(OUINPO_SUITE_DIR . $sf_css_rel)
       : '1.0.0';
 
+  $sf_css_deps = [];
+
+  if (wp_style_is('ouinpo-core-css', 'registered')) {
+      $sf_css_deps[] = 'ouinpo-core-css';
+  }
+
   wp_enqueue_style(
       'ouinpo-sf',
       defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL . $sf_css_rel : OUINPO_SF_URL . 'assets/segfault.css',
-      ['ouinpo-core-css', 'ouinpo-theme-css'],
+      $sf_css_deps,
       $sf_css_ver
   );
+
+  // Le thème doit passer après le CSS module pour pouvoir jouer son rôle
+  // de couche visuelle : neutral.css ou ouinpo.css.
+  if (wp_style_is('ouinpo-theme-css', 'registered')) {
+      wp_enqueue_style('ouinpo-theme-css');
+  }
 
   wp_enqueue_script('ouinpo-sf', OUINPO_SF_URL.'assets/segfault.js', [], '1.0.0', true);
 

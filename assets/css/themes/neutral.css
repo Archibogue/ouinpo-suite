@@ -831,3 +831,222 @@ button[data-ouinpo-sf-open]:hover {
   border-color: #2563eb;
   background: #eff6ff;
 }
+
+/* ==========================================================
+   Compléments neutral — modules encore historiquement habillés OuInPo
+   ========================================================== */
+
+/* Variables historiques du suivi professeur */
+.ouinpo-teacher {
+  --cuivre: var(--ouin-neutral-primary);
+  --laiton: var(--ouin-neutral-primary);
+  --bord: var(--ouin-neutral-border);
+  --txt: var(--ouin-neutral-text);
+  --mut: var(--ouin-neutral-muted);
+  --panel: var(--ouin-neutral-bg);
+  --paper: var(--ouin-neutral-bg-soft);
+  --line: var(--ouin-neutral-border-soft);
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-teacher .ouinpo-toolbar select,
+.ouinpo-teacher input,
+.ouinpo-teacher select {
+  background: #ffffff;
+  color: var(--ouin-neutral-text);
+  border-color: var(--ouin-neutral-border);
+  box-shadow: none;
+}
+
+.ouinpo-table thead th {
+  background: var(--ouin-neutral-bg-soft);
+  color: var(--ouin-neutral-text);
+  border-bottom: 1px solid var(--ouin-neutral-border);
+}
+
+.ouinpo-table tbody td {
+  border-bottom: 1px solid var(--ouin-neutral-border-soft);
+}
+
+.ouinpo-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* Sujets pratiques */
+.ouinpo-practical-subjects-root,
+.ouinpo-practical-subject {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-practical-subject__header,
+.ouinpo-practical-statement,
+.ouinpo-practical-files,
+.ouinpo-practical-calls,
+.ouinpo-practical-progress,
+.ouinpo-practical-call,
+.ouinpo-practical-answer-box,
+.ouinpo-practical-call .exo-answer-box,
+.ouinpo-practical-ai-notice {
+  background: var(--ouin-neutral-bg);
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-practical-title,
+.ouinpo-practical-statement h3,
+.ouinpo-practical-files h3,
+.ouinpo-practical-calls h3,
+.ouinpo-practical-progress h3,
+.ouinpo-practical-call-head h4,
+.ouinpo-practical-call .exo-answer-box h5 {
+  color: var(--ouin-neutral-text);
+  text-shadow: none;
+}
+
+.ouinpo-practical-subjects-root .ouinpo-exercise-sub,
+.ouinpo-practical-progress-item small,
+.ouinpo-practical-call-status,
+.ouinpo-practical-ai-notice p {
+  color: var(--ouin-neutral-muted);
+}
+
+.ouinpo-practical-files-list li,
+.ouinpo-practical-progress-item,
+.ouinpo-practical-call-prompt,
+.ouinpo-practical-call-points,
+.ouinpo-practical-call .exo-answer-text,
+.ouinpo-practical-call .exo-ai-feedback,
+.ouinpo-practical-call .exo-ai-correction {
+  background: var(--ouin-neutral-bg-soft);
+  color: var(--ouin-neutral-text);
+  border-color: var(--ouin-neutral-border-soft);
+  box-shadow: none;
+}
+
+.ouinpo-practical-call .exo-answer-text:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: var(--ouin-neutral-primary);
+  box-shadow: none;
+}
+
+.ouinpo-practical-call .exo-answer-actions button,
+.ouinpo-practical-call .exo-insert-code,
+.ouinpo-practical-files-list a {
+  background: var(--ouin-neutral-primary);
+  border-color: var(--ouin-neutral-primary);
+  color: #ffffff;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.ouinpo-practical-call .exo-answer-actions button:hover,
+.ouinpo-practical-call .exo-insert-code:hover,
+.ouinpo-practical-files-list a:hover {
+  background: var(--ouin-neutral-primary-dark);
+  border-color: var(--ouin-neutral-primary-dark);
+  color: #ffffff;
+}
+
+/* Recherche textuelle */
+.ouinpo-rt {
+  background: var(--ouin-neutral-bg);
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-rt__title,
+.ouinpo-rt__field label,
+.ouinpo-rt__panel h4,
+.ouinpo-rt__panel h5,
+.ouinpo-rt__label {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-rt__input,
+.ouinpo-rt button,
+.ouinpo-rt__status,
+.ouinpo-rt__stats,
+.ouinpo-rt__explain,
+.ouinpo-rt__table-wrap,
+.ouinpo-rt__panel,
+.ouinpo-rt__cell,
+.ouinpo-rt__pi-row,
+.ouinpo-rt__match-detail {
+  background: var(--ouin-neutral-bg-soft);
+  color: var(--ouin-neutral-text);
+  border-color: var(--ouin-neutral-border-soft);
+  box-shadow: none;
+}
+
+.ouinpo-rt button {
+  background: var(--ouin-neutral-primary);
+  border-color: var(--ouin-neutral-primary);
+  color: #ffffff;
+}
+
+.ouinpo-rt button:hover {
+  background: var(--ouin-neutral-primary-dark);
+  border-color: var(--ouin-neutral-primary-dark);
+  color: #ffffff;
+  transform: none;
+}
+
+.ouinpo-rt__status {
+  border-left-color: var(--ouin-neutral-primary);
+}
+
+.ouinpo-rt__cell.is-match,
+.ouinpo-rt__pi-cell.is-active {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-rt__cell.is-current {
+  background: #fef3c7;
+  border-color: #fbbf24;
+}
+
+.ouinpo-rt__cell.is-fail {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Sélecteur de titres */
+.ouinpo-title-selector,
+.ouinpo-badge-card {
+  background: var(--ouin-neutral-bg);
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-badge-card button {
+  background: var(--ouin-neutral-primary);
+  border: 1px solid var(--ouin-neutral-primary);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* Dépôts / ressources */
+.ouinpo-box,
+.ouinpo-chapter {
+  background: var(--ouin-neutral-bg);
+  color: var(--ouin-neutral-text);
+  border-color: var(--ouin-neutral-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-badge {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.ouinpo-res-desc,
+.ouinpo-files-label,
+.ouinpo-chapter[data-domain="no-domain"] .ouinpo-chapter-title {
+  color: var(--ouin-neutral-muted);
+  opacity: 1;
+}

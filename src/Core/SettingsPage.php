@@ -46,18 +46,18 @@ final class SettingsPage
             [
                 'type'              => 'string',
                 'sanitize_callback' => [self::class, 'sanitize_style_mode'],
-                'default'           => 'ouinpo',
+                'default'           => 'neutral',
             ]
         );
     }
 
     public static function sanitize_style_mode($value): string
     {
-        $value = is_string($value) ? $value : 'ouinpo';
+        $value = is_string($value) ? $value : 'neutral';
 
         return in_array($value, ['ouinpo', 'neutral'], true)
             ? $value
-            : 'ouinpo';
+            : 'neutral';
     }
 
     public static function render(): void
@@ -66,10 +66,10 @@ final class SettingsPage
             wp_die('Accès refusé.');
         }
 
-        $current = get_option(self::OPTION_STYLE_MODE, 'ouinpo');
+        $current = get_option(self::OPTION_STYLE_MODE, 'neutral');
 
         if (!in_array($current, ['ouinpo', 'neutral'], true)) {
-            $current = 'ouinpo';
+            $current = 'neutral';
         }
 
         ?>

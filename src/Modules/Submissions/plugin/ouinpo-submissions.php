@@ -457,6 +457,9 @@ class Ouinpo_Submissions_Plugin {
                 $deps,
                 $css_ver
             );
+            if (wp_style_is('ouinpo-theme-css', 'registered')) {
+                wp_enqueue_style('ouinpo-theme-css');
+            }
         }
 
     }
