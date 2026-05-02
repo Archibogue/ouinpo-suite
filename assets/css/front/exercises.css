@@ -1,0 +1,1650 @@
+/* ==========================================================
+   OuInPo Suite — Exercices / progression / badges
+   CSS module fonctionnel
+   Ne contient pas l’identité graphique OuInPo.
+   ========================================================== */
+
+/* ===========================
+   EXERCICE — détail
+   =========================== */
+
+.ouinpo-exo {
+  padding: 1.25rem;
+  border-radius: 14px;
+}
+
+.ouinpo-exo .exo-statement {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.ouinpo-exo .exo-statement p {
+  margin: 0.5rem 0;
+}
+
+.ouinpo-exo .exo-meta {
+  margin: 0 0 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.ouinpo-exo .exo-meta .ouinpo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: left;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ouinpo-exo .exo-answer-box,
+.ouinpo-exo .exo-solutions,
+.ouinpo-exo .exo-hints,
+.ouinpo-exo .exo-status-line,
+.ouinpo-exo .exo-actions,
+.ouin-exo-block {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 14px;
+}
+
+.ouinpo-exo .exo-answer-box h4,
+.ouinpo-exo .exo-solutions h4,
+.ouin-exo-block h5 {
+  margin-top: 0;
+}
+
+.ouinpo-exo textarea.exo-answer-text {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 220px;
+  resize: vertical;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.ouinpo-exo .exo-answer-actions,
+.ouinpo-exo .exo-actions,
+.exo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.ouinpo-exo .exo-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.ouinpo-exo .solutions-list {
+  list-style: none;
+  margin: 0.75rem 0 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ouinpo-exo .solutions-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.ouinpo-exo .solutions-list button {
+  width: 100%;
+  text-align: left;
+}
+
+.ouin-exo-block-content p {
+  margin: 0.5rem 0;
+}
+
+/* ===========================
+   BOUTONS
+   =========================== */
+
+.ouinpo-exo button,
+.ouin-exo-block button,
+.btn-copper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5ch;
+  padding: 0.68rem 0.95rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ouinpo-exo button:disabled,
+.ouin-exo-block button:disabled,
+.btn-copper:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   LISTE DES EXERCICES
+   =========================== */
+
+.ouinpo-exercises-page {
+  width: 100%;
+}
+
+.ouinpo-exercises-shell {
+  display: grid;
+  gap: 1.4rem;
+  margin: 1.25rem 0 2rem;
+}
+
+.ouinpo-panel,
+.copper-panel,
+.ouinpo-exo-domain-block {
+  border-radius: 16px;
+}
+
+.ouinpo-panel {
+  padding: 1.2rem 1.25rem;
+}
+
+.ouinpo-panel-title,
+.ouinpo-exo-domain-title {
+  margin: 0 0 0.9rem 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.ouinpo-panel-intro {
+  margin: -0.2rem 0 0.8rem 0;
+}
+
+.ouinpo-exo-domain-block {
+  padding: 1rem 1.1rem;
+  margin: 0 0 1rem 0;
+}
+
+.ouinpo-exo-domain-block:last-child {
+  margin-bottom: 0;
+}
+
+.ouinpo-exo-domain-title {
+  font-size: 1.25rem;
+  margin-bottom: 0.8rem;
+}
+
+.ouinpo-exercises-list,
+.ouinpo-exo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ouinpo-exercise-item,
+.ouin-exo-li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.92rem 1rem;
+  border-radius: 14px;
+}
+
+.ouinpo-exercise-main,
+.ouin-exo-main {
+  min-width: 0;
+}
+
+.ouinpo-exercise-link,
+.ouin-exo-link {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.08rem;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.ouinpo-exercise-link:hover,
+.ouin-exo-link:hover {
+  text-decoration: underline;
+}
+
+.ouinpo-exercise-sub {
+  margin-top: 0.3rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.ouin-exo-level {
+  display: none;
+}
+
+/* Ancienne liste */
+#ouinpo-exo-list li {
+  position: relative;
+  padding-right: 7.5rem;
+}
+
+#ouinpo-exo-list .exo-badge {
+  position: absolute;
+  right: .5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ===========================
+   FILTRES
+   =========================== */
+
+.ouinpo-exo-filters {
+  margin-bottom: 0;
+}
+
+.ouinpo-filters-grid,
+.ouinpo-exo-filters .ouinpo-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.ouinpo-filters-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.ouinpo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ouinpo-field label,
+.ouinpo-exo-filters .ouinpo-field label {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+}
+
+.ouinpo-field select,
+.ouinpo-field input,
+.ouinpo-select,
+.ouinpo-exo-filters select,
+.ouinpo-exo-toolbar select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font: inherit;
+}
+
+.ouinpo-exo-toolbar {
+  margin: 0 0 1rem 0;
+}
+
+/* ===========================
+   BADGES / CHIPS
+   =========================== */
+
+.ouinpo-exercises-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1rem 0;
+}
+
+.ouinpo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 34px;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.ouinpo-badges,
+.ouin-exo-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ouinpo-badge,
+.exo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.44rem 0.78rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ouinpo-badge--competency {
+  white-space: normal;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ===========================
+   CHARGEMENT / VIDE / IA
+   =========================== */
+
+.ouinpo-loading,
+.ouinpo-empty {
+  padding: 1rem 1.05rem;
+  border-radius: 12px;
+}
+
+.ouinpo-ia-notice {
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.ouinpo-ia-notice p {
+  margin: 0;
+}
+
+/* ===========================
+   COMPÉTENCES / PROGRESSION
+   =========================== */
+
+.ouinpo-competences {
+  padding: 24px 22px 30px;
+  border-radius: 14px;
+  position: relative;
+}
+
+.ouinpo-competences h2 {
+  margin: 0 0 16px;
+  padding-bottom: 6px;
+}
+
+.ouinpo-competences h3 {
+  margin: 10px 0;
+  font-size: 1rem;
+}
+
+.ouinpo-competences .ouinpo-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 16px 0 22px;
+}
+
+.ouinpo-competences .card {
+  text-align: center;
+  padding: 10px 8px 12px;
+  border-radius: 10px;
+}
+
+.ouinpo-competences .kpi {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.ouinpo-competences .kpi-label {
+  font-size: .75rem;
+  margin-top: 4px;
+}
+
+.ouinpo-competences .ouin-bar-row {
+  display: grid;
+  grid-template-columns: 230px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  margin: 10px 0;
+}
+
+.ouinpo-competences .ouin-bar-label {
+  font-weight: 700;
+  padding-left: 10px;
+}
+
+.ouinpo-competences .ouin-bar {
+  position: relative;
+  height: 20px;
+  display: flex;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ouinpo-competences .ouin-bar .seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.ouinpo-competences .ouin-bar-legend {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ouinpo-competences .ouinpo-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.ouinpo-competences .ouin-li {
+  display: grid;
+  grid-template-columns: 30px 220px 1fr 100px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+}
+
+.ouinpo-competences .ouin-li-ico {
+  text-align: center;
+  font-size: 18px;
+}
+
+.ouinpo-competences .ouin-li-domain {
+  font-weight: 700;
+}
+
+.ouinpo-competences .ouin-li-label {
+  font-weight: 500;
+}
+
+.ouinpo-competences .ouin-li-status {
+  justify-self: end;
+  font-size: .8rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.ouinpo-competences .ouin-li.ouin-li-empty {
+  grid-template-columns: 1fr;
+}
+
+.ouinpo-competences .ouin-li.ouin-li-empty .ouin-li-label {
+  grid-column: 1 / -1;
+}
+
+/* Onglets */
+.ouinpo-me-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 16px;
+  padding-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ouinpo-me-tab {
+  appearance: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ouinpo-me-panel {
+  display: none;
+}
+
+.ouinpo-me-panel.is-active {
+  display: block;
+}
+
+/* DS */
+.ouinpo-ds-cards {
+  margin-bottom: 1.25rem;
+}
+
+.ouinpo-ds-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.ouinpo-ds-card {
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ouinpo-ds-card h4 {
+  margin: 0 0 0.35rem 0;
+}
+
+.ouinpo-ds-domain {
+  margin-top: 0;
+  margin-bottom: .75rem;
+  font-size: 0.95rem;
+}
+
+.ouinpo-ds-meta p {
+  margin: .35rem 0;
+}
+
+.ouinpo-ds-history {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+}
+
+.ouinpo-ds-history summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ouinpo-ds-history ul {
+  margin: .75rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ouinpo-ds-history li {
+  margin: .35rem 0;
+}
+
+.ouinpo-student-ds-block {
+  margin-bottom: 1.25rem;
+}
+
+.ouinpo-student-ds-block h3 {
+  margin-bottom: .75rem;
+}
+
+/* Tableaux */
+.ouinpo-competences .ouinpo-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+}
+
+.ouinpo-competences .ouinpo-table th,
+.ouinpo-competences .ouinpo-table td {
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+.ouinpo-competences .ouinpo-table th {
+  text-align: left;
+  font-weight: 700;
+}
+
+/* ID */
+#ouinpo-competencies-table th:first-child,
+#ouinpo-competencies-table td:first-child {
+  width: 60px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ===========================
+   VUE GLOBALE ÉLÈVE
+   =========================== */
+
+.ouinpo-competences #ouinpo-tab-global {
+  padding-top: 4px;
+}
+
+.ouinpo-competences .ouinpo-global-dashboard {
+  display: grid;
+  gap: 18px;
+}
+
+.ouinpo-competences .ouinpo-global-hero,
+.ouinpo-competences .ouinpo-focus-card,
+.ouinpo-competences .ouinpo-global-domains,
+.ouinpo-competences .ouinpo-domain-card {
+  border-radius: 18px;
+}
+
+.ouinpo-competences .ouinpo-global-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(200px, 280px);
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+}
+
+.ouinpo-competences .ouinpo-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ouinpo-competences .ouinpo-global-hero h3 {
+  margin: 0 0 10px;
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+.ouinpo-competences .ouinpo-global-intro {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.ouinpo-competences .ouinpo-global-subline {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ouinpo-competences .ouinpo-global-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ouinpo-competences .ouinpo-progress-ring {
+  --pct: 0%;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.ouinpo-competences .ouinpo-progress-ring::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+}
+
+.ouinpo-competences .ouinpo-progress-ring-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.ouinpo-competences .ouinpo-progress-ring-inner strong {
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
+.ouinpo-competences .ouinpo-progress-ring-inner span {
+  font-size: 0.82rem;
+}
+
+.ouinpo-competences .ouinpo-global-focus {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.ouinpo-competences .ouinpo-focus-card {
+  padding: 18px;
+}
+
+.ouinpo-competences .ouinpo-focus-card h4 {
+  margin: 0 0 12px;
+  font-size: 1.08rem;
+}
+
+.ouinpo-competences .ouinpo-focus-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.ouinpo-competences .ouinpo-focus-list li,
+.ouinpo-competences .ouinpo-focus-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.ouinpo-competences .ouinpo-focus-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ouinpo-competences .ouinpo-focus-link {
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ouinpo-competences .ouinpo-focus-link:hover {
+  text-decoration: underline;
+}
+
+.ouinpo-competences .ouinpo-focus-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ouinpo-competences .ouinpo-focus-badge,
+.ouinpo-competences .ouinpo-focus-difficulty {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ouinpo-competences .ouinpo-global-domains {
+  padding: 18px;
+}
+
+.ouinpo-competences .ouinpo-section-head {
+  margin-bottom: 14px;
+}
+
+.ouinpo-competences .ouinpo-section-head h4 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.ouinpo-competences .ouinpo-section-head p {
+  margin: 0;
+}
+
+.ouinpo-competences .ouinpo-domain-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.ouinpo-competences .ouinpo-domain-card {
+  overflow: hidden;
+}
+
+.ouinpo-competences .ouinpo-domain-summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+}
+
+.ouinpo-competences .ouinpo-domain-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ouinpo-competences .ouinpo-domain-summary-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ouinpo-competences .ouinpo-domain-summary h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.ouinpo-competences .ouinpo-domain-mood {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ouinpo-competences .ouinpo-domain-bar {
+  display: flex;
+  overflow: hidden;
+  height: 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.ouinpo-competences .ouinpo-domain-bar .seg {
+  height: 100%;
+}
+
+.ouinpo-competences .ouinpo-domain-text,
+.ouinpo-competences .ouinpo-domain-stats {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ouinpo-competences .ouinpo-domain-text {
+  margin-bottom: 6px;
+}
+
+.ouinpo-competences .ouinpo-domain-stats {
+  font-size: 0.92rem;
+}
+
+.ouinpo-competences .ouinpo-domain-summary-side {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  text-align: right;
+}
+
+.ouinpo-competences .ouinpo-domain-fraction {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.ouinpo-competences .ouinpo-domain-open {
+  font-size: 0.82rem;
+}
+
+.ouinpo-competences .ouinpo-domain-body {
+  padding: 0 18px 18px;
+}
+
+.ouinpo-competences .ouinpo-skill-list,
+.ouinpo-competences .ouinpo-allskills-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ouinpo-competences .ouinpo-skill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.ouinpo-competences .ouinpo-skill-main {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+}
+
+.ouinpo-competences .ouinpo-skill-label {
+  line-height: 1.45;
+}
+
+/* Toutes les compétences */
+.ouinpo-competences .ouinpo-allskills-domain {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ouinpo-competences .ouinpo-allskills-domain summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.ouinpo-competences .ouinpo-allskills-domain summary::-webkit-details-marker {
+  display: none;
+}
+
+.ouinpo-competences .ouinpo-allskills-domain-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ouinpo-competences .ouinpo-allskills-domain-count {
+  font-size: 0.82rem;
+}
+
+.ouinpo-competences .ouinpo-allskills-domain-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ouinpo-competences .ouinpo-mini-badge {
+  min-width: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.ouinpo-competences .ouinpo-allskills-domain-body {
+  padding: 0 14px 14px;
+}
+
+/* ===========================
+   BADGES / PALMARÈS
+   =========================== */
+
+#ouinpo-student-badges,
+.ouinpo-palmares {
+  margin: 2rem auto 3rem;
+  max-width: 1200px;
+  padding: 1.5rem;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+#ouinpo-student-badges > *,
+.ouinpo-palmares > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ouinpo-palmares-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.ouinpo-badges-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+}
+
+.ouinpo-badges-section {
+  margin-bottom: 2.25rem;
+  padding: 1.25rem 1.4rem 1.6rem;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ouinpo-badges-section-title {
+  position: relative;
+  z-index: 1;
+  font-size: 1.3rem;
+  margin: 0 0 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ouinpo-badges-level-block {
+  position: relative;
+  padding-top: 0.2rem;
+  margin-top: 0.8rem;
+}
+
+.ouinpo-badges-level-title {
+  font-size: 1.05rem;
+  margin: 0 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ouinpo-badges-domain-block {
+  margin-top: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+.ouinpo-badges-domain-title {
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem;
+  padding-left: .65rem;
+}
+
+.ouinpo-badges-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 0.45rem;
+}
+
+.ouinpo-badge-item {
+  position: relative;
+  padding: 0.75rem 0.75rem 0.8rem;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: default;
+  overflow: hidden;
+  width: 100%;
+}
+
+.ouinpo-badge-split,
+.ouinpo-palmares-layout {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 1.5rem;
+  align-items: start;
+  padding-right: 1.5rem;
+}
+
+.ouinpo-badge-left,
+.ouinpo-palmares-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.ouinpo-badge-right,
+.ouinpo-palmares-left {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  position: relative;
+}
+
+.ouinpo-badge-title {
+  font-size: 0.97rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ouinpo-badge-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+
+.ouinpo-badge-level,
+.ouinpo-badge-domain {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.ouinpo-badge-bigimg {
+  display: block;
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  object-fit: cover;
+  margin-top: 0.5rem;
+}
+
+.ouinpo-badge-earned {
+  margin-top: 0.1rem;
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+.ouinpo-palmares-list {
+  list-style: none;
+  margin: .35rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap: 0.25rem 1.2rem;
+}
+
+.ouinpo-palmares-list li {
+  margin: .18rem 0;
+  white-space: normal;
+}
+
+/* Description palmarès */
+.ouinpo-palmares .ouinpo-badge-desc {
+  margin-top: -0.1rem;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc summary::-webkit-details-marker {
+  display: none;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc-box {
+  margin-top: 0.6rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+/* ===========================
+   BANDEAU DE RÉVISION
+   =========================== */
+
+.ouinpo-revision-band {
+  position: relative;
+  margin: 1rem 0 1.35rem;
+  padding: 0.78rem 0.95rem 0.82rem;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ouinpo-revision-band__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem 1rem;
+  align-items: start;
+}
+
+.ouinpo-revision-band__main {
+  min-width: 0;
+}
+
+.ouinpo-revision-band__title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.45rem;
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.ouinpo-revision-band__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+  margin: 0 0 0.45rem;
+  padding: 0;
+  list-style: none;
+}
+
+.ouinpo-revision-band__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.16rem 0.48rem;
+  border-radius: 999px;
+  font-size: 0.79rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ouinpo-revision-band__retenir {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.38;
+}
+
+.ouinpo-revision-band__side {
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.ouinpo-revision-band__side-title,
+.ouinpo-revision-band__box-title {
+  display: block;
+  margin: 0.05rem 0 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ouinpo-revision-band__links,
+.ouinpo-revision-band__list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.ouinpo-revision-band__links li,
+.ouinpo-revision-band__list li {
+  margin: 0.14rem 0;
+}
+
+.ouinpo-revision-band__more {
+  margin-top: 0.65rem;
+  padding-top: 0.58rem;
+}
+
+.ouinpo-revision-band__more summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ouinpo-revision-band__more[open] summary {
+  margin-bottom: 0.65rem;
+}
+
+.ouinpo-revision-band__more-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.ouinpo-revision-band__full {
+  grid-column: 1 / -1;
+}
+
+.ouinpo-revision-band__path {
+  margin-top: 0.55rem;
+}
+
+.ouinpo-revision-band__path-link {
+  display: inline-block;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.83rem;
+  line-height: 1.2;
+}
+
+/* ===========================
+   CARTE DU SITE
+   =========================== */
+
+.ouinpo-site-map {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ouinpo-site-map--embedded {
+  gap: 0;
+}
+
+.ouinpo-sitemap-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 1rem 1.05rem;
+  border-radius: 18px;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > span {
+  display: block;
+  margin-bottom: .85rem;
+  padding-bottom: .7rem;
+  text-decoration: none;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .55rem;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li {
+  list-style: none;
+  margin: 0;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > span {
+  display: block;
+  padding: .55rem .7rem;
+  border-radius: 10px;
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list ul ul ul {
+  margin-top: .45rem;
+  margin-left: .85rem;
+  padding-left: .75rem;
+  display: grid;
+  gap: .35rem;
+}
+
+/* ===========================
+   FILTRES DIVERS
+   =========================== */
+
+.ouinpo-me-ds-filter,
+.ouinpo-help-box {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+}
+
+.ouinpo-me-ds-filter label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.ouinpo-me-ds-filter select,
+.ouinpo-ds-filter select {
+  min-width: 260px;
+  max-width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.ouinpo-help-box h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  font-style: normal;
+  font-family: inherit;
+}
+
+.ouinpo-help-box p {
+  margin: 8px 0 0;
+  font-style: normal;
+  font-family: inherit;
+  line-height: 1.65;
+}
+
+.ouinpo-training-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 18px 0 22px;
+}
+
+.ouinpo-filter label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.ouinpo-filter select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.ouinpo-ds-filter {
+  margin: 1rem 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.ouinpo-ds-filter label {
+  font-weight: 600;
+}
+
+/* ===========================
+   COMPATIBILITÉ
+   =========================== */
+
+.ouin-li {
+  list-style: none;
+}
+
+#ouinpo-exo-list[hidden],
+.ouinpo-exercises-legacy[hidden] {
+  display: none !important;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+
+@media (max-width: 980px) {
+  .ouinpo-exo-filters .ouinpo-filters-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .ouinpo-exercise-item,
+  .ouin-exo-li {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .ouinpo-badges,
+  .ouin-exo-status {
+    justify-content: flex-start;
+  }
+
+  .ouinpo-competences .ouinpo-global-hero,
+  .ouinpo-competences .ouinpo-global-focus {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-competences .ouinpo-global-hero-side {
+    justify-content: start;
+  }
+
+  .ouinpo-competences .ouinpo-progress-ring {
+    width: 140px;
+    height: 140px;
+  }
+}
+
+@media (max-width: 820px) {
+  .ouinpo-competences .ouinpo-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ouinpo-revision-band__top {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-revision-band__side {
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .ouinpo-palmares-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ouinpo-badge-split,
+  .ouinpo-palmares-layout {
+    grid-template-columns: 1fr;
+    padding-right: 0;
+    text-align: center;
+  }
+
+  .ouinpo-badge-right,
+  .ouinpo-palmares-left {
+    justify-content: center;
+  }
+
+  .ouinpo-badge-left,
+  .ouinpo-palmares-right {
+    align-items: center;
+  }
+
+  .ouinpo-badge-bigimg {
+    width: 130px;
+    height: 130px;
+  }
+
+  .ouinpo-badge-earned {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+@media (max-width: 780px) {
+  .ouinpo-training-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .ouinpo-revision-band {
+    padding: 0.75rem 0.85rem 0.8rem;
+  }
+
+  .ouinpo-revision-band__more-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-revision-band__chip {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 680px) {
+  .ouinpo-exo {
+    padding: .9rem;
+  }
+
+  .ouinpo-exo button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ouinpo-exo .exo-actions {
+    gap: .6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ouinpo-exo-filters .ouinpo-filters-grid,
+  .ouinpo-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-panel,
+  .copper-panel,
+  .ouinpo-exo-domain-block,
+  .ouinpo-exo .exo-answer-box,
+  .ouinpo-exo .exo-solutions,
+  .ouinpo-exo .exo-hints,
+  .ouinpo-exo .exo-status-line,
+  .ouinpo-exo .exo-actions,
+  .ouin-exo-block {
+    padding: 0.9rem;
+    border-radius: 12px;
+  }
+
+  .ouinpo-panel-title,
+  .ouinpo-exo-domain-title {
+    font-size: 1.2rem;
+  }
+
+  .ouinpo-exercise-link,
+  .ouin-exo-link {
+    font-size: 1rem;
+  }
+
+  .ouinpo-badges-filters {
+    border-radius: 14px;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .ouinpo-badges-filters select,
+  .ouinpo-palmares-year-filter select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ouinpo-badge-title {
+    font-size: 0.9rem;
+  }
+
+  .ouinpo-badge-item {
+    padding: 0.7rem 0.65rem 0.75rem;
+  }
+
+  .ouinpo-competences .ouin-bar-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-competences .ouin-li {
+    grid-template-columns: 26px 1fr;
+  }
+
+  .ouinpo-competences .ouin-li-status {
+    justify-self: start;
+    margin-top: 4px;
+  }
+
+  .ouinpo-me-tab {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .ouinpo-competences .ouinpo-global-hero,
+  .ouinpo-competences .ouinpo-focus-card,
+  .ouinpo-competences .ouinpo-global-domains {
+    padding: 14px;
+  }
+
+  .ouinpo-competences .ouinpo-domain-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-competences .ouinpo-domain-summary-side {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .ouinpo-competences .ouinpo-skill-row {
+    grid-template-columns: 1fr;
+  }
+}

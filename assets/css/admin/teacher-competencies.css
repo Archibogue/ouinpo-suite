@@ -1,0 +1,641 @@
+/* =========================
+   CONTENEUR GÉNÉRAL
+   ========================= */
+
+.ouinpo-teacher {
+  --cuivre: #c59b52;
+  --laiton: #d4b06c;
+  --bord: #4a3c2a;
+  --txt: #f2e7c9;
+  --mut: #b6a27c;
+  --panel: #1c1a18;
+  --paper: #26211c;
+  --line: #5e4b33;
+
+  color: var(--txt);
+}
+
+/* =========================
+   TOOLBAR
+   5 filtres + bouton
+   ========================= */
+
+.ouinpo-teacher .ouinpo-toolbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(160px, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+  margin: 10px 0 14px;
+}
+
+.ouinpo-teacher .ouinpo-toolbar .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ouinpo-teacher .ouinpo-toolbar .field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--mut);
+  margin: 0;
+}
+
+.ouinpo-teacher .ouinpo-toolbar select {
+  width: 100%;
+  height: 44px;
+  background: var(--paper);
+  color: var(--txt);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.ouinpo-teacher .ouinpo-toolbar .seg {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.ouinpo-teacher .ouinpo-toolbar #t-refresh {
+  height: 44px;
+  padding: 0 18px;
+  margin: 0;
+  align-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* =========================
+   BOUTON CUIVRE
+   ========================= */
+
+.btn-copper {
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2d271f, #211d18);
+  color: var(--laiton);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgba(197, 155, 82, 0.25) inset,
+    0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.btn-copper:hover {
+  filter: brightness(1.08);
+}
+
+/* =========================
+   PANEL RÉSULTATS
+   ========================= */
+
+.copper-panel {
+  background: linear-gradient(180deg, var(--paper), #191613);
+  border: 1px solid var(--bord);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.06),
+    0 0 28px rgba(0, 0, 0, 0.45);
+}
+
+.copper-panel .loading,
+.copper-panel .error {
+  padding: 16px;
+  color: var(--mut);
+}
+
+/* =========================
+   KPI / CARTES
+   ========================= */
+
+.ouinpo-teacher .ouinpo-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* =========================
+   TABLEAU
+   ========================= */
+
+.ouinpo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.ouinpo-table thead th {
+  text-align: left;
+  padding: 10px 8px;
+  background: #1f1b16;
+  color: var(--laiton);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+}
+
+.ouinpo-table tbody td {
+  padding: 8px;
+  border-bottom: 1px dotted rgba(197, 155, 82, 0.25);
+}
+
+.ouinpo-table tbody tr:hover {
+  background: rgba(197, 155, 82, 0.06);
+}
+
+.ouinpo-table .col-id {
+  width: 64px;
+  text-align: center;
+  color: var(--mut);
+}
+
+/* Colonne statut centrée */
+.ouinpo-ds-table th:nth-child(4),
+.ouinpo-ds-table td:nth-child(4),
+.ouinpo-ds-table th:nth-child(5),
+.ouinpo-ds-table td:nth-child(5),
+.ouinpo-ds-table th:nth-child(6),
+.ouinpo-ds-table td:nth-child(6),
+.ouinpo-ds-table th:nth-child(7),
+.ouinpo-ds-table td:nth-child(7),
+.ouinpo-ds-table th:nth-child(8),
+.ouinpo-ds-table td:nth-child(8),
+.ouinpo-ds-table th:nth-child(9),
+.ouinpo-ds-table td:nth-child(9) {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ouinpo-ds-table th:nth-child(10),
+.ouinpo-ds-table td:nth-child(10) {
+  text-align: center;
+}
+
+/* Icône de statut */
+.ouin-li-ico {
+  display: inline-block;
+  width: 1.4em;
+  text-align: center;
+  font-size: 1.1em;
+}
+
+/* =========================
+   BARRES DE PROGRESSION
+   VERSION STACKED
+   ========================= */
+
+.ouinpo-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ouinpo-progress {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.ouinpo-progress-stacked {
+  display: flex;
+  width: 100%;
+}
+
+.ouinpo-progress-bar {
+  height: 100%;
+}
+
+.ouinpo-progress-bar.segment-acquired {
+  background: #3ca86b;
+}
+
+.ouinpo-progress-bar.segment-inprogress {
+  background: #e5a93c;
+}
+
+.ouinpo-progress-bar.segment-notacquired {
+  background: #c94c4c;
+}
+
+.ouinpo-progress-label {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+/* =========================
+   BARRES PAR DOMAINE
+   ========================= */
+
+.ouin-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.ouin-bar-label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.ouin-bar {
+  display: flex;
+  height: 0.9rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.7rem;
+  line-height: 0.9rem;
+  color: #111;
+}
+
+.ouin-bar .seg {
+  display: inline-block;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ouin-bar .seg-acq {
+  background: #3ca86b;
+}
+
+.ouin-bar .seg-prog {
+  background: #e5a93c;
+}
+
+.ouin-bar .seg-na {
+  background: #c94c4c;
+}
+
+.ouin-bar-legend {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 980px) {
+  .ouinpo-teacher .ouinpo-toolbar {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .ouinpo-teacher .ouinpo-toolbar #t-refresh {
+    width: 100%;
+  }
+
+  .ouinpo-teacher .ouinpo-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ouin-bar .seg-conso {
+  background: #3c8dbc;
+}
+
+.ouinpo-ds-table .is-empty-ds {
+  opacity: 0.65;
+}
+
+.ouinpo-ds-detail-row td {
+  background: rgba(255,255,255,0.02);
+  padding: 14px;
+}
+
+.ouinpo-ds-detail-wrap {
+  padding: 4px 0;
+}
+
+.ouinpo-ds-students-grid,
+.ouinpo-ds-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.ouinpo-ds-students-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.ouinpo-ds-student-card,
+.ouinpo-ds-card {
+  border: 1px solid rgba(214,163,98,0.28);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+}
+
+.ouinpo-ds-student-card.is-absent,
+.ouinpo-ds-card.is-absent {
+  border-color: rgba(214,54,56,0.45);
+}
+
+.ouinpo-ds-student-head,
+.ouinpo-ds-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ouinpo-ds-card-head h4 {
+  margin: 0 0 4px;
+}
+
+.ouinpo-ds-card-meta {
+  margin: 0;
+  opacity: 0.8;
+  font-size: 0.95em;
+}
+
+.ouinpo-ds-badges-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ouinpo-ds-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+}
+
+.ouinpo-ds-badge.is-absent {
+  color: #ffd6d6;
+  border-color: rgba(214,54,56,0.55);
+  background: rgba(214,54,56,0.14);
+}
+
+.ouinpo-ds-badge.is-present {
+  color: #d9f0dc;
+  border-color: rgba(0,138,32,0.45);
+  background: rgba(0,138,32,0.14);
+}
+
+.ouinpo-ds-badge.is-acquired {
+  color: #d9f0dc;
+  border-color: rgba(0,138,32,0.45);
+  background: rgba(0,138,32,0.14);
+}
+
+.ouinpo-ds-badge.is-conso,
+.ouinpo-ds-badge.is-consolidating {
+  color: #dcecff;
+  border-color: rgba(34,113,177,0.45);
+  background: rgba(34,113,177,0.14);
+}
+
+.ouinpo-ds-badge.is-prog,
+.ouinpo-ds-badge.is-in_progress {
+  color: #fff1c9;
+  border-color: rgba(219,166,23,0.45);
+  background: rgba(219,166,23,0.14);
+}
+
+.ouinpo-ds-badge.is-na,
+.ouinpo-ds-badge.is-not_acquired {
+  color: #ffd6d6;
+  border-color: rgba(214,54,56,0.45);
+  background: rgba(214,54,56,0.14);
+}
+
+.ouinpo-ds-details {
+  margin-top: 10px;
+}
+
+.ouinpo-ds-detail-list {
+  margin: 10px 0 0 18px;
+}
+
+.ouinpo-ds-student-note {
+  margin-top: 6px;
+  opacity: 0.85;
+  font-size: 0.95em;
+}
+
+.ouinpo-ds-table th:nth-child(3),
+.ouinpo-ds-table td:nth-child(3) {
+  white-space: nowrap;
+}
+
+.ouinpo-ds-toggle {
+  min-width: 74px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ===========================
+   FRONT PROF — SUIVI EXERCICES
+   =========================== */
+
+#ouinpo-teacher-tab-ex .ouinpo-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table th,
+#ouinpo-teacher-tab-ex .ouinpo-table td {
+  vertical-align: top;
+}
+
+/* 1 = Élève */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(1),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(1) {
+  width: 100px;
+  max-width: 100px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+/* 2 = Domaine */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(2),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(2) {
+  width: 110px;
+  max-width: 110px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+/* 3 = Compétence */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(3),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(3) {
+  width: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+/* 4 = État actuel */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(4),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(4) {
+  width: 120px;
+  max-width: 120px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 5 = D/T/R */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(5),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(5) {
+  width: 80px;
+  max-width: 80px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 6 = Couverture */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(6),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(6) {
+  width: 120px;
+  max-width: 120px;
+  text-align: center;
+}
+
+/* 7 = Réussite */
+#ouinpo-teacher-tab-ex .ouinpo-table th:nth-child(7),
+#ouinpo-teacher-tab-ex .ouinpo-table td:nth-child(7) {
+  width: 120px;
+  max-width: 120px;
+  text-align: center;
+}
+
+/* Cartes en vue élève */
+#ouinpo-teacher-tab-ex .ouinpo-ds-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-card {
+  border: 1px solid rgba(214,163,98,0.28);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-card h4 {
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-domain {
+  margin: 0 0 10px;
+  font-size: 0.95em;
+  opacity: 0.82;
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ds-card p {
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+/* État actuel */
+#ouinpo-teacher-tab-ex .ouinpo-ex-state {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ex-state.is-acquired {
+  color: #d9f0dc;
+  border-color: rgba(0,138,32,0.45);
+  background: rgba(0,138,32,0.14);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ex-state.is-consolidating {
+  color: #dcecff;
+  border-color: rgba(34,113,177,0.45);
+  background: rgba(34,113,177,0.14);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ex-state.is-in_progress {
+  color: #fff1c9;
+  border-color: rgba(219,166,23,0.45);
+  background: rgba(219,166,23,0.14);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-ex-state.is-not_acquired {
+  color: #ffd6d6;
+  border-color: rgba(214,54,56,0.45);
+  background: rgba(214,54,56,0.14);
+}
+
+/* Mini-barres */
+.ouinpo-ex-mini-bar {
+  position: relative;
+  width: 100%;
+  min-width: 90px;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.ouinpo-ex-mini-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(214,163,98,0.8);
+}
+
+.ouinpo-ex-mini-bar.is-good > span {
+  background: rgba(0,138,32,0.78);
+}
+
+.ouinpo-ex-mini-bar.is-mid > span {
+  background: rgba(219,166,23,0.78);
+}
+
+.ouinpo-ex-mini-bar.is-low > span {
+  background: rgba(214,54,56,0.78);
+}
+
+.ouinpo-ex-mini-bar-label {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.84;
+  white-space: nowrap;
+}
+
+/* Lignes mises en valeur */
+#ouinpo-teacher-tab-ex .ouinpo-table tr.is-priority td {
+  background: rgba(214,54,56,0.06);
+}
+
+#ouinpo-teacher-tab-ex .ouinpo-table tr.is-solid td {
+  background: rgba(0,138,32,0.05);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  #ouinpo-teacher-tab-ex .ouinpo-table {
+    font-size: 14px;
+  }
+
+  #ouinpo-teacher-tab-ex .ouinpo-ds-cards {
+    grid-template-columns: 1fr;
+  }
+}

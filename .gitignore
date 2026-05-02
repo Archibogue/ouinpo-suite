@@ -1,0 +1,50 @@
+# Builds / archives
+dist/
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Données de production / exports
+*.sql
+*.sqlite
+*.db
+*.log
+*.bak
+*.backup
+*.old
+*.tmp
+*.wxr
+site-segfault-clean.xml
+
+# Secrets / config locale
+.env
+.env.*
+wp-config.php
+config.php
+secrets.php
+auth.json
+
+# Dossiers techniques locaux
+.git/
+.idea/
+.vscode/
+node_modules/
+vendor/
+cache/
+tmp/
+temp/
+logs/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Locks locaux éventuels
+composer.lock
+package-lock.json
+yarn.lock
+
+# Notes privées
+notes-privees/

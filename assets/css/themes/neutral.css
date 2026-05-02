@@ -1,0 +1,543 @@
+/* ==========================================================
+   OuInPo Suite — Thème sobre
+   Version partageable pour collègues NSI
+   ========================================================== */
+
+:root {
+  --ouin-neutral-bg: #ffffff;
+  --ouin-neutral-bg-soft: #f8fafc;
+  --ouin-neutral-border: #d1d5db;
+  --ouin-neutral-border-soft: #e5e7eb;
+  --ouin-neutral-text: #111827;
+  --ouin-neutral-muted: #6b7280;
+  --ouin-neutral-primary: #2563eb;
+  --ouin-neutral-primary-dark: #1d4ed8;
+  --ouin-neutral-success: #15803d;
+  --ouin-neutral-warning: #b45309;
+  --ouin-neutral-danger: #b91c1c;
+}
+
+/* ===========================
+   Base visuelle générale
+   =========================== */
+
+.ouinpo-exo,
+.ouinpo-competences,
+#ouinpo-student-badges,
+.ouinpo-palmares,
+.ouinpo-panel,
+.copper-panel,
+.ouinpo-exo-domain-block,
+.ouinpo-ds-card,
+.ouinpo-badges-section,
+.ouinpo-badge-item,
+.ouinpo-revision-band,
+.ouinpo-help-box,
+.ouinpo-me-ds-filter {
+  color: var(--ouin-neutral-text);
+  background: var(--ouin-neutral-bg);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-exo,
+.ouinpo-competences,
+#ouinpo-student-badges,
+.ouinpo-palmares {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Suppression des effets OuInPo décoratifs */
+.ouinpo-competences::before,
+#ouinpo-student-badges::before,
+.ouinpo-palmares::before,
+.ouinpo-badges-section::before,
+.ouinpo-badge-item::before,
+.ouinpo-badge-item::after,
+.ouinpo-badge-current-title::before,
+.ouinpo-badge-tier-gold .ouinpo-badge-right::after,
+.ouinpo-badge-tier-platinum .ouinpo-badge-right::after,
+.ouinpo-badge-item[data-meta="1"] .ouinpo-badge-right::before {
+  display: none;
+}
+
+/* ===========================
+   Titres
+   =========================== */
+
+.ouinpo-exo h1,
+.ouinpo-exo h2,
+.ouinpo-exo h3,
+.ouinpo-competences h2,
+.ouinpo-competences h3,
+.ouinpo-panel-title,
+.ouinpo-exo-domain-title,
+.ouinpo-badges-section-title,
+.ouinpo-badges-level-title,
+.ouinpo-badges-domain-title {
+  color: var(--ouin-neutral-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  text-shadow: none;
+}
+
+.ouinpo-panel-title,
+.ouinpo-exo-domain-title,
+.ouinpo-competences h2 {
+  border-bottom: 1px solid var(--ouin-neutral-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+/* ===========================
+   Liens
+   =========================== */
+
+.ouinpo-exo a,
+.ouinpo-competences a,
+.ouinpo-exercise-link,
+.ouin-exo-link,
+.ouinpo-focus-link,
+.ouinpo-revision-band__links a {
+  color: var(--ouin-neutral-primary);
+  text-decoration: none;
+}
+
+.ouinpo-exo a:hover,
+.ouinpo-competences a:hover,
+.ouinpo-exercise-link:hover,
+.ouin-exo-link:hover,
+.ouinpo-focus-link:hover,
+.ouinpo-revision-band__links a:hover {
+  color: var(--ouin-neutral-primary-dark);
+  text-decoration: underline;
+}
+
+/* ===========================
+   Boutons
+   =========================== */
+
+.ouinpo-exo button,
+.ouin-exo-block button,
+.btn-copper,
+.ouinpo-me-tab {
+  border: 1px solid var(--ouin-neutral-primary);
+  background: var(--ouin-neutral-primary);
+  color: #ffffff;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: normal;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.ouinpo-exo button:hover,
+.ouin-exo-block button:hover,
+.btn-copper:hover,
+.ouinpo-me-tab:hover {
+  background: var(--ouin-neutral-primary-dark);
+  border-color: var(--ouin-neutral-primary-dark);
+  color: #ffffff;
+  transform: none;
+}
+
+.ouinpo-me-tab.is-active {
+  background: #eff6ff;
+  color: var(--ouin-neutral-primary-dark);
+  border-color: #bfdbfe;
+  box-shadow: none;
+}
+
+.ouinpo-me-tab.is-active::after {
+  display: none;
+}
+
+/* Boutons d’état */
+.ouinpo-exo .exo-actions .mark-attempt {
+  background: #f59e0b;
+  border-color: #d97706;
+  color: #111827;
+}
+
+.ouinpo-exo .exo-actions .mark-solved {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #ffffff;
+}
+
+/* ===========================
+   Formulaires
+   =========================== */
+
+.ouinpo-field select,
+.ouinpo-field input,
+.ouinpo-select,
+.ouinpo-exo-filters select,
+.ouinpo-exo-toolbar select,
+.ouinpo-exo textarea.exo-answer-text,
+.ouinpo-me-ds-filter select,
+.ouinpo-filter select,
+.ouinpo-ds-filter select {
+  color: var(--ouin-neutral-text);
+  background: #ffffff;
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: none;
+}
+
+.ouinpo-field select:focus,
+.ouinpo-field input:focus,
+.ouinpo-select:focus,
+.ouinpo-exo-filters select:focus,
+.ouinpo-exo-toolbar select:focus,
+.ouinpo-exo textarea.exo-answer-text:focus,
+.ouinpo-me-ds-filter select:focus,
+.ouinpo-filter select:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: var(--ouin-neutral-primary);
+  box-shadow: none;
+}
+
+/* ===========================
+   Exercices
+   =========================== */
+
+.ouinpo-exo .exo-title,
+.ouinpo-exo .exo-answer-box h4,
+.ouinpo-exo .exo-solutions h4,
+.ouin-exo-block h5 {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-exo .exo-answer-box,
+.ouinpo-exo .exo-solutions,
+.ouinpo-exo .exo-hints,
+.ouinpo-exo .exo-status-line,
+.ouinpo-exo .exo-actions,
+.ouin-exo-block {
+  background: var(--ouin-neutral-bg-soft);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: none;
+}
+
+.ouinpo-exo .exo-statement code,
+.ouinpo-exo code {
+  background: #f3f4f6;
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border-soft);
+  border-radius: 5px;
+  padding: 0.12rem 0.32rem;
+}
+
+.ouinpo-exo pre {
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* ===========================
+   Liste des exercices
+   =========================== */
+
+.ouinpo-exercise-item,
+.ouin-exo-li {
+  background: #ffffff;
+  border: 1px solid var(--ouin-neutral-border-soft);
+  box-shadow: none;
+}
+
+.ouinpo-exercise-item:hover,
+.ouin-exo-li:hover {
+  background: #f9fafb;
+  border-color: #bfdbfe;
+  transform: none;
+}
+
+.ouinpo-exercise-sub,
+.ouinpo-panel-intro,
+.ouinpo-domain-stats,
+.ouinpo-domain-open,
+.ouinpo-global-subline {
+  color: var(--ouin-neutral-muted);
+}
+
+/* ===========================
+   Badges et chips
+   =========================== */
+
+.ouinpo-chip,
+.ouinpo-badge,
+.exo-badge,
+.ouinpo-badge-level,
+.ouinpo-badge-domain,
+.ouinpo-mini-badge,
+.ouinpo-focus-badge,
+.ouinpo-focus-difficulty,
+.ouinpo-revision-band__chip {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.badge-attempt,
+.ouinpo-badge--attempted {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.badge-solved,
+.ouinpo-badge--solved {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.ouinpo-badge--difficulty {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.ouinpo-badge--exam {
+  background: #f5f3ff;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+/* ===========================
+   Compétences
+   =========================== */
+
+.ouinpo-competences .card,
+.ouinpo-competences .ouinpo-global-hero,
+.ouinpo-competences .ouinpo-focus-card,
+.ouinpo-competences .ouinpo-global-domains,
+.ouinpo-competences .ouinpo-domain-card,
+.ouinpo-competences .ouinpo-skill-row,
+.ouinpo-competences .ouinpo-allskills-domain {
+  background: #ffffff;
+  border: 1px solid var(--ouin-neutral-border-soft);
+  box-shadow: none;
+}
+
+.ouinpo-competences .kpi {
+  color: var(--ouin-neutral-primary);
+}
+
+.ouinpo-competences .kpi-label,
+.ouinpo-competences .ouin-bar-legend,
+.ouinpo-competences .ouin-li-domain,
+.ouinpo-competences .ouinpo-eyebrow,
+.ouinpo-competences .ouinpo-section-head p,
+.ouinpo-competences .ouinpo-allskills-domain-count {
+  color: var(--ouin-neutral-muted);
+}
+
+.ouinpo-competences .ouin-bar,
+.ouinpo-competences .ouinpo-domain-bar {
+  background: #e5e7eb;
+  border: 1px solid var(--ouin-neutral-border-soft);
+  box-shadow: none;
+}
+
+.ouinpo-competences .seg-acq,
+.ouinpo-competences .ouinpo-domain-bar .seg-acq {
+  background: #16a34a;
+}
+
+.ouinpo-competences .seg-conso,
+.ouinpo-competences .ouinpo-domain-bar .seg-conso {
+  background: #2563eb;
+}
+
+.ouinpo-competences .seg-prog,
+.ouinpo-competences .ouinpo-domain-bar .seg-prog {
+  background: #f59e0b;
+}
+
+.ouinpo-competences .seg-na,
+.ouinpo-competences .ouinpo-domain-bar .seg-na {
+  background: #9ca3af;
+}
+
+/* Cercle de progression */
+.ouinpo-competences .ouinpo-progress-ring {
+  background:
+    conic-gradient(
+      var(--ouin-neutral-primary) 0 var(--pct),
+      #e5e7eb var(--pct) 100%
+    );
+}
+
+.ouinpo-competences .ouinpo-progress-ring::before {
+  background: #ffffff;
+  border: 1px solid var(--ouin-neutral-border-soft);
+}
+
+/* ===========================
+   Palmarès / badges
+   =========================== */
+
+.ouinpo-badges-filters,
+.ouinpo-badges-section,
+.ouinpo-badge-item {
+  background: #ffffff;
+  border: 1px solid var(--ouin-neutral-border-soft);
+  box-shadow: none;
+}
+
+.ouinpo-badge-item:hover {
+  transform: none;
+  border-color: #bfdbfe;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-badge-title {
+  color: var(--ouin-neutral-text);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.ouinpo-badge-item:hover .ouinpo-badge-title {
+  text-shadow: none;
+}
+
+.ouinpo-badge-bigimg {
+  box-shadow: none !important;
+  border: 1px solid var(--ouin-neutral-border);
+  animation: none !important;
+  filter: none !important;
+}
+
+.ouinpo-badge-earned {
+  color: var(--ouin-neutral-muted);
+}
+
+.ouinpo-palmares-count {
+  color: var(--ouin-neutral-primary);
+  text-shadow: none;
+}
+
+.ouinpo-palmares-list li {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-palmares .ouinpo-badge-desc summary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid var(--ouin-neutral-border);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc-box {
+  background: #f9fafb;
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: none;
+}
+
+/* ===========================
+   Bandeau de révision
+   =========================== */
+
+.ouinpo-revision-band {
+  background: #f8fafc;
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: none;
+}
+
+.ouinpo-revision-band::before {
+  background: var(--ouin-neutral-primary);
+}
+
+.ouinpo-revision-band__title,
+.ouinpo-revision-band__retenir,
+.ouinpo-revision-band__more summary {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-revision-band__retenir-label,
+.ouinpo-revision-band__side-title,
+.ouinpo-revision-band__box-title {
+  color: var(--ouin-neutral-primary);
+}
+
+.ouinpo-revision-band__path-link {
+  background: #eff6ff;
+  color: var(--ouin-neutral-primary-dark);
+  border: 1px solid #bfdbfe;
+}
+
+/* ===========================
+   Carte du site
+   =========================== */
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li {
+  background: #ffffff;
+  border: 1px solid var(--ouin-neutral-border-soft);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li:hover {
+  transform: none;
+  border-color: #bfdbfe;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > span {
+  color: var(--ouin-neutral-text);
+  border-bottom: 1px solid var(--ouin-neutral-border-soft);
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a::after,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > span::after {
+  background: var(--ouin-neutral-primary);
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > span {
+  background: #f9fafb;
+  border: 1px solid var(--ouin-neutral-border-soft);
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > a:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  transform: none;
+}
+
+/* ===========================
+   Encarts IA / aide
+   =========================== */
+
+.ouinpo-ia-notice {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-left: 4px solid #f59e0b;
+  color: #78350f;
+}
+
+.ouinpo-help-box {
+  background: #f8fafc;
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border);
+  box-shadow: none;
+}
+
+.ouinpo-help-box h3 {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-help-box p {
+  color: var(--ouin-neutral-text);
+}
+
+.ouinpo-help-box strong {
+  color: var(--ouin-neutral-primary-dark);
+}

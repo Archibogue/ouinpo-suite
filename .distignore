@@ -1,0 +1,64 @@
+.distignore
+
+# Données de production à ne jamais distribuer
+*.sql
+*.sqlite
+*.db
+*.log
+*.bak
+*.backup
+*.old
+*.tmp
+
+# Configuration locale / secrets
+.env
+.env.*
+wp-config.php
+config.php
+secrets.php
+auth.json
+
+# Exports WordPress / RAG / contenus locaux
+site-segfault-clean.xml
+*.wxr
+*.xml
+
+# Archives précédentes
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Dossiers techniques locaux
+.git
+.github
+.idea
+.vscode
+node_modules
+vendor
+cache
+tmp
+temp
+logs
+dist
+dist/*
+tools
+tools/*
+tools/**
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Fichiers de développement local
+phpunit.xml
+phpstan.neon
+composer.lock
+package-lock.json
+yarn.lock
+packs/ouinpo-pack-test-*.json
+
+# Documentation privée éventuelle
+notes-privees
+notes-privees/*

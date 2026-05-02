@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "ouinpo-pack-example",
+    "title": "Pack exemple OuInPo",
+    "description": "Structure de référence pour les packs pédagogiques OuInPo Suite.",
+    "author": "OuInPo",
+    "license": "Voir CONTENT-LICENSE.md",
+    "created_at": "2026-05-01"
+  },
+  "school_levels": [],
+  "difficulties": [],
+  "competencies": [],
+  "exercises": [],
+  "flashcards": [],
+  "badges": []
+}

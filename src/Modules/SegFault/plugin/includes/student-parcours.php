@@ -1,0 +1,976 @@
+<?php
+// ============================================================
+// Shortcode élève : [segfault_mes_parcours]
+// Affichage "style screen-exercices" (skin OuInPo via segfault.css)
+// + Génération de parcours par Domaine + Comp (option)
+// ============================================================
+
+if (!defined('ABSPATH')) exit;
+
+/**
+ * AJAX élève : génère un parcours à partir d’un domaine (+ comp optionnelle)
+ * Action : ouinpo_sf_student_generate_path
+ *
+ * IMPORTANT : les fonctions de sélection sont dans le namespace OuInPo\SegFault
+ * -> on les appelle avec \OuInPo\SegFault\...
+ */
+add_action('wp_ajax_ouinpo_sf_student_generate_path', function () {
+  if (!is_user_logged_in()) {
+    wp_send_json_error(['message' => 'not_logged_in'], 401);
+  }
+
+  $nonce = isset($_POST['nonce']) ? sanitize_text_field((string)$_POST['nonce']) : '';
+  if (!wp_verify_nonce($nonce, 'ouinpo_sf_student_generate_path')) {
+    wp_send_json_error(['message' => 'bad_nonce'], 400);
+  }
+
+  $student_id = (int)get_current_user_id();
+
+  $domain_value = isset($_POST['domain_value']) ? sanitize_text_field((string)$_POST['domain_value']) : '';
+  $domain_value = trim($domain_value);
+
+  $competency_id = isset($_POST['competency_id']) ? (int)$_POST['competency_id'] : 0;
+  if ($competency_id <= 0) $competency_id = null;
+
+  $limit = isset($_POST['limit']) ? (int)$_POST['limit'] : 7;
+  $limit = max(1, min(25, $limit));
+
+  if ($domain_value === '') {
+    wp_send_json_error(['message' => 'missing_domain'], 400);
+  }
+
+  // ✅ Niveau via groupe (source de vérité) + fallback
+  $lvl = '';
+  if (function_exists('\\OuInPo\\SegFault\\ouinpo_sf_student_level_from_group')) {
+    $lvl = \OuInPo\SegFault\ouinpo_sf_student_level_from_group($student_id);
+  }
+  if ($lvl === '') {
+    if (function_exists('\\ouinpo_sf_user_nsi_level')) {
+      $lvl = \ouinpo_sf_user_nsi_level($student_id, null);
+    }
+  }
+
+    if (!in_array($lvl, ['seconde','premiere','terminale'], true)) $lvl = 'premiere';
+
+  if (!function_exists('\\OuInPo\\SegFault\\ouinpo_sf_find_exercise_ids_by_domain_and_comp')) {
+    wp_send_json_error([
+      'message' => 'missing_selector',
+      'hint'    => 'ouinpo_sf_find_exercise_ids_by_domain_and_comp non chargée'
+    ], 500);
+  }
+
+  $ids = \OuInPo\SegFault\ouinpo_sf_find_exercise_ids_by_domain_and_comp(
+    $domain_value,
+    $competency_id,
+    $lvl,
+    $student_id,
+    $limit,
+    true
+  );
+
+  if (empty($ids)) {
+    wp_send_json_success(['ok' => false, 'message' => 'no_exercises', 'level' => $lvl]);
+  }
+
+  if (!class_exists('\Ouinpo\Exercises\PathsService')) {
+    wp_send_json_error(['message' => 'missing_paths_service'], 500);
+  }
+
+  $title = $competency_id
+    ? ('Parcours — '.$domain_value.' (compétence)')
+    : ('Parcours — '.$domain_value);
+
+  $result = \Ouinpo\Exercises\PathsService::save_path([
+    'title'        => $title,
+    'student_note' => 'Parcours généré automatiquement à partir de tes besoins du moment. Tu peux le supprimer plus tard car il a été créé depuis ton espace élève.',
+    'mode'         => 'free',
+    'is_active'    => 1,
+    'is_template'  => 0,
+    'exercise_ids' => $ids,
+    'group_ids'    => [],
+    'user_ids'     => [$student_id],
+  ]);
+
+  if (is_wp_error($result)) {
+    wp_send_json_error([
+      'message' => 'path_create_failed',
+      'detail'  => $result->get_error_message(),
+    ], 500);
+  }
+
+  $path_id = (int) $result;
+
+  wp_send_json_success([
+    'ok'      => true,
+    'path_id' => $path_id,
+    'count'   => count($ids),
+    'level'   => $lvl,
+  ]);
+});
+
+
+add_action('wp_ajax_ouinpo_sf_student_use_template', function () {
+  if (!is_user_logged_in()) {
+    wp_send_json_error(['message' => 'not_logged_in'], 401);
+  }
+
+  $nonce = isset($_POST['nonce']) ? sanitize_text_field((string)$_POST['nonce']) : '';
+  if (!wp_verify_nonce($nonce, 'ouinpo_sf_student_use_template')) {
+    wp_send_json_error(['message' => 'bad_nonce'], 400);
+  }
+
+  if (!class_exists('\Ouinpo\Exercises\PathsService')) {
+    wp_send_json_error(['message' => 'missing_paths_service'], 500);
+  }
+
+  $student_id  = (int) get_current_user_id();
+  $template_id = isset($_POST['template_id']) ? (int) $_POST['template_id'] : 0;
+  if ($template_id <= 0) {
+    wp_send_json_error(['message' => 'missing_template_id'], 400);
+  }
+
+  $result = \Ouinpo\Exercises\PathsService::instantiate_template($template_id, [$student_id], [], '');
+  if (is_wp_error($result)) {
+    wp_send_json_error([
+      'message' => 'instantiate_failed',
+      'detail'  => $result->get_error_message(),
+    ], 500);
+  }
+
+  wp_send_json_success([
+    'ok'      => true,
+    'path_id' => (int) $result,
+  ]);
+});
+
+add_action('wp_ajax_ouinpo_sf_student_delete_path', function () {
+  if (!is_user_logged_in()) {
+    wp_send_json_error(['message' => 'not_logged_in'], 401);
+  }
+
+  $nonce = isset($_POST['nonce']) ? sanitize_text_field((string)$_POST['nonce']) : '';
+  if (!wp_verify_nonce($nonce, 'ouinpo_sf_student_delete_path')) {
+    wp_send_json_error(['message' => 'bad_nonce'], 400);
+  }
+
+  if (!class_exists('\Ouinpo\Exercises\PathsService')) {
+    wp_send_json_error(['message' => 'missing_paths_service'], 500);
+  }
+
+  $student_id = (int) get_current_user_id();
+  $path_id    = isset($_POST['path_id']) ? (int) $_POST['path_id'] : 0;
+  if ($path_id <= 0) {
+    wp_send_json_error(['message' => 'missing_path_id'], 400);
+  }
+
+  $deleted = \Ouinpo\Exercises\PathsService::delete_user_self_path($path_id, $student_id);
+  if (!$deleted) {
+    wp_send_json_error(['message' => 'forbidden_delete'], 403);
+  }
+
+  wp_send_json_success(['ok' => true]);
+});
+
+add_shortcode('segfault_mes_parcours', function ($atts) {
+
+  $members_only = (int)get_option('ouinpo_sf_members_only', 0);
+  if ($members_only && !is_user_logged_in()) return '';
+  if (!is_user_logged_in()) return '<p>Connecte-toi pour voir tes parcours.</p>';
+
+  $user_id = (int)get_current_user_id();
+  global $wpdb;
+
+  $t_paths   = $wpdb->prefix.'ouin_sf_paths';
+  $t_items   = $wpdb->prefix.'ouin_sf_path_items';
+  $t_exo     = $wpdb->prefix.'ouin_exo_exercises';
+  $t_status  = $wpdb->prefix.'ouin_exo_user_status';
+  $t_comp    = $wpdb->prefix.'ouin_exo_competencies';
+  $t_targets = $wpdb->prefix.'ouin_sf_path_targets';
+  $t_gm      = $wpdb->prefix.'ouin_exo_group_members';
+
+  $view_id = isset($_GET['sf_path']) ? (int)$_GET['sf_path'] : 0;
+
+  $badge = function (string $st): array {
+    if ($st === 'solved')    return ['✅', 'Réussi',   'sf-pill ok'];
+    if ($st === 'attempted') return ['🟡', 'Tenté',    'sf-pill warn'];
+    return ['⚪', 'À faire',  'sf-pill none'];
+  };
+
+  // ------------------------------------------------------------
+  // Données "générateur" : niveau élève -> domaines & compétences
+  // ------------------------------------------------------------
+  $student_level = '';
+  if (function_exists('\\OuInPo\\SegFault\\ouinpo_sf_student_level_from_group')) {
+    $student_level = \OuInPo\SegFault\ouinpo_sf_student_level_from_group($user_id);
+  }
+  if ($student_level === '') {
+    $student_level = function_exists('\\ouinpo_sf_user_nsi_level')
+      ? \ouinpo_sf_user_nsi_level($user_id, null)
+      : 'premiere';
+  }
+
+    if (!in_array($student_level, ['seconde','premiere','terminale'], true)) $student_level = 'premiere';
+
+    $allowed_comp_levels = function_exists('\\OuInPo\\SegFault\\ouinpo_sf_allowed_competency_levels')
+      ? \OuInPo\SegFault\ouinpo_sf_allowed_competency_levels($student_level)
+      : ['Première'];
+    
+    $level_placeholders = implode(',', array_fill(0, count($allowed_comp_levels), '%s'));
+    
+    $domains = $wpdb->get_results($wpdb->prepare("
+      SELECT DISTINCT track, domain, domain_slug
+      FROM {$t_comp}
+      WHERE active = 1
+        AND level IN ({$level_placeholders})
+      ORDER BY track ASC, domain ASC
+    ", ...$allowed_comp_levels), ARRAY_A) ?: [];
+    
+    $competencies = $wpdb->get_results($wpdb->prepare("
+      SELECT id, track, level, domain, domain_slug, competency
+      FROM {$t_comp}
+      WHERE active = 1
+        AND level IN ({$level_placeholders})
+      ORDER BY track ASC, domain ASC, id ASC
+    ", ...$allowed_comp_levels), ARRAY_A) ?: [];
+
+  $ajax_url     = admin_url('admin-ajax.php');
+  $nonce_gen    = wp_create_nonce('ouinpo_sf_student_generate_path');
+  $nonce_tpl    = wp_create_nonce('ouinpo_sf_student_use_template');
+  $nonce_delete = wp_create_nonce('ouinpo_sf_student_delete_path');
+  
+  $prefill_domain = isset($_GET['sf_domain']) ? sanitize_text_field((string) $_GET['sf_domain']) : '';
+  $prefill_comp_id = isset($_GET['sf_comp_id']) ? (int) $_GET['sf_comp_id'] : 0;
+
+  $prefill_domain_json = wp_json_encode($prefill_domain, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  $prefill_comp_id_json = wp_json_encode($prefill_comp_id, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  
+  $template_domain_options = class_exists('\Ouinpo\Exercises\PathsService')
+    ? \Ouinpo\Exercises\PathsService::get_template_domain_options()
+    : [];
+  $template_goal_options = class_exists('\Ouinpo\Exercises\PathsService')
+    ? \Ouinpo\Exercises\PathsService::get_template_goal_options()
+    : [];
+    $templates = class_exists('\Ouinpo\Exercises\PathsService')
+      ? \Ouinpo\Exercises\PathsService::list_active_templates([
+          'level_slug' => $student_level,
+        ])
+      : [];
+
+  $template_domain_values = [];
+  $template_goal_values = [];
+  foreach ($templates as $tpl) {
+    $d = sanitize_key((string) ($tpl['domain_slug'] ?? ''));
+    $g = sanitize_key((string) ($tpl['goal_slug'] ?? ''));
+    if ($d !== '' && !isset($template_domain_values[$d]) && isset($template_domain_options[$d])) {
+      $template_domain_values[$d] = $template_domain_options[$d];
+    }
+    if ($g !== '' && !isset($template_goal_values[$g]) && isset($template_goal_options[$g])) {
+      $template_goal_values[$g] = $template_goal_options[$g];
+    }
+  }
+
+  // ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // Vue détail
+  // ------------------------------------------------------------
+  if ($view_id > 0) {
+
+    // ✅ Nouveau modèle : accès si ciblé directement ou via une classe
+    // + compat legacy via p.student_id
+    $path = $wpdb->get_row($wpdb->prepare("
+      SELECT DISTINCT p.*
+      FROM {$t_paths} p
+      LEFT JOIN {$t_targets} t
+        ON t.path_id = p.id
+      LEFT JOIN {$t_gm} gm
+        ON t.target_type = 'group'
+       AND t.target_id = gm.group_id
+      WHERE p.id = %d
+        AND p.is_active = 1
+        AND (
+             (t.target_type = 'user'  AND t.target_id = %d)
+          OR (t.target_type = 'group' AND gm.user_id = %d)
+          OR (p.student_id = %d)
+        )
+      LIMIT 1
+    ", $view_id, $user_id, $user_id, $user_id), ARRAY_A);
+
+    if (!$path) {
+      return '<div class="ouinpo-sf-card"><p>Parcours introuvable.</p></div>';
+    }
+
+    $path_mode = in_array((string)($path['mode'] ?? 'free'), ['free', 'sequential'], true)
+      ? (string)$path['mode']
+      : 'free';
+
+    $items = $wpdb->get_results($wpdb->prepare("
+      SELECT i.position, i.exercise_id, i.note, e.title AS exo_title
+      FROM {$t_items} i
+      LEFT JOIN {$t_exo} e ON e.id = i.exercise_id
+      WHERE i.path_id = %d
+      ORDER BY i.position ASC, i.id ASC
+    ", $view_id), ARRAY_A) ?: [];
+
+    $ids = [];
+    foreach ($items as $r) {
+      $eid = (int)($r['exercise_id'] ?? 0);
+      if ($eid > 0) $ids[] = $eid;
+    }
+    $ids = array_values(array_unique($ids));
+
+    $status_map = class_exists('\\Ouinpo\\Exercises\\PathsService')
+      ? \Ouinpo\Exercises\PathsService::get_user_status_map_for_path($view_id, $user_id)
+      : [];
+
+    if (empty($status_map) && !empty($ids)) {
+      $in = implode(',', array_fill(0, count($ids), '%d'));
+      $params = array_merge([$user_id], $ids);
+
+      $rows = $wpdb->get_results($wpdb->prepare("
+        SELECT exercise_id, status
+        FROM {$t_status}
+        WHERE user_id = %d AND exercise_id IN ($in)
+      ", ...$params), ARRAY_A) ?: [];
+
+      foreach ($rows as $r) {
+        $status_map[(int)$r['exercise_id']] = (string)($r['status'] ?? 'none');
+      }
+    }
+
+    $unlocked_ids = ($path_mode === 'sequential' && class_exists('\\Ouinpo\\Exercises\\PathsService'))
+      ? \Ouinpo\Exercises\PathsService::get_unlocked_exercise_ids_for_user($view_id, $user_id)
+      : $ids;
+
+    $unlocked_lookup = array_fill_keys(array_map('intval', $unlocked_ids), true);
+
+    $total = count($items);
+    $solved = 0;
+    $attempted = 0;
+    foreach ($items as $it) {
+      $eid = (int)($it['exercise_id'] ?? 0);
+      $st = $status_map[$eid] ?? 'none';
+      if ($st === 'solved') $solved++;
+      elseif ($st === 'attempted') $attempted++;
+    }
+    $pct = ($total > 0) ? (int)round(100 * $solved / $total) : 0;
+
+    $back_url = esc_url(remove_query_arg('sf_path'));
+    $can_delete_current = class_exists('\Ouinpo\Exercises\PathsService')
+      ? \Ouinpo\Exercises\PathsService::can_user_self_remove_path($view_id, $user_id)
+      : false;
+
+    $html = '';
+    $html .= '<div class="sf-back">';
+    $html .= '<a class="ouinpo-sf-btn" href="'.$back_url.'">← Retour à mes parcours</a>';
+    if ($can_delete_current) {
+      $html .= ' <a href="#" class="ouinpo-sf-btn sf-delete-path" data-path-id="'.(int)$view_id.'">Supprimer ce parcours</a>';
+    }
+    $html .= '</div>';
+
+    $html .= '<div class="ouinpo-sf-card">';
+    $html .= '<h2>'.esc_html((string)($path['title'] ?? 'Parcours')).'</h2>';
+    if (!empty($path['student_note'])) {
+      $html .= '<div class="ouinpo-sf-muted">'.wp_kses_post(wpautop((string)$path['student_note'])).'</div>';
+    }
+
+    if ($path_mode === 'sequential') {
+      $html .= '<p class="ouinpo-sf-muted"><strong>Mode séquentiel</strong> : réussis chaque exercice pour débloquer le suivant.</p>';
+    } else {
+      $html .= '<p class="ouinpo-sf-muted"><strong>Mode libre</strong> : tous les exercices sont accessibles.</p>';
+    }
+
+    $html .= '<p class="ouinpo-sf-muted">';
+    $html .= '<span class="sf-progressbar"><span style="width:'.(int)$pct.'%"></span></span>';
+    $html .= '<strong>'.(int)$pct.'%</strong> ('.(int)$solved.'/'.(int)$total.' réussis, '.(int)$attempted.' tentés)';
+    $html .= '</p>';
+
+    $html .= '<table class="ouinpo-sf-table">';
+    $html .= '<thead><tr>
+      <th class="ouinpo-sf-col-narrow">Ordre</th>
+      <th>Exercice</th>
+      <th class="ouinpo-sf-col-status">Statut</th>
+      <th class="ouinpo-sf-col-action">Lien</th>
+    </tr></thead><tbody>';
+
+    if (empty($items)) {
+      $html .= '<tr><td colspan="4">Aucun exercice dans ce parcours.</td></tr>';
+    } else {
+      foreach ($items as $it) {
+        $eid = (int)($it['exercise_id'] ?? 0);
+        if ($eid <= 0) continue;
+
+        $title = trim((string)($it['exo_title'] ?? ''));
+        if ($title === '') $title = 'Exercice '.$eid;
+
+        $st = $status_map[$eid] ?? 'none';
+        $is_locked = ($path_mode === 'sequential' && empty($unlocked_lookup[$eid]));
+
+        if ($is_locked) {
+          $ico = '🔒';
+          $lab = 'Verrouillé';
+          $cls = 'sf-pill none';
+          $action_html = '<span class="ouinpo-sf-muted">Termine le précédent</span>';
+        } else {
+          [$ico, $lab, $cls] = $badge($st);
+          $url = esc_url(add_query_arg([
+            'exo'     => $eid,
+            'sf_path' => $view_id,
+          ], home_url('/exercice/')));
+          $action_html = '<a class="ouinpo-sf-btn" href="'.$url.'" target="_blank" rel="noopener noreferrer">Ouvrir</a>';
+        }
+
+        $html .= '<tr>';
+        $html .= '<td>'.(int)($it['position'] ?? 0).'</td>';
+        $html .= '<td>'.esc_html($title).'</td>';
+        $html .= '<td><span class="'.esc_attr($cls).'">'.esc_html($ico.' '.$lab).'</span></td>';
+        $html .= '<td>'.$action_html.'</td>';
+        $html .= '</tr>';
+      }
+    }
+
+    $html .= '</tbody></table>';
+    $html .= '</div>';
+
+    return $html;
+  }
+
+  // ------------------------------------------------------------
+  // Vue liste
+  // ------------------------------------------------------------
+  // ✅ Nouveau modèle : parcours affectés directement ou via groupe
+  // + compat legacy via p.student_id
+  $paths = $wpdb->get_results($wpdb->prepare("
+    SELECT DISTINCT p.*
+    FROM {$t_paths} p
+    LEFT JOIN {$t_targets} t
+      ON t.path_id = p.id
+    LEFT JOIN {$t_gm} gm
+      ON t.target_type = 'group'
+     AND t.target_id = gm.group_id
+    WHERE p.is_active = 1
+      AND (
+           (t.target_type = 'user'  AND t.target_id = %d)
+        OR (t.target_type = 'group' AND gm.user_id = %d)
+        OR (p.student_id = %d)
+      )
+    ORDER BY p.updated_at DESC, p.id DESC
+  ", $user_id, $user_id, $user_id), ARRAY_A) ?: [];
+
+  $items_by_path = [];
+  if (!empty($paths)) {
+    $path_ids = array_values(array_unique(array_map(fn($p) => (int)$p['id'], $paths)));
+    $path_ids = array_values(array_filter($path_ids));
+
+    if (!empty($path_ids)) {
+      $in = implode(',', array_fill(0, count($path_ids), '%d'));
+      $rows = $wpdb->get_results($wpdb->prepare("
+        SELECT path_id, exercise_id
+        FROM {$t_items}
+        WHERE path_id IN ($in)
+      ", ...$path_ids), ARRAY_A) ?: [];
+
+      foreach ($rows as $r) {
+        $pid = (int)($r['path_id'] ?? 0);
+        $eid = (int)($r['exercise_id'] ?? 0);
+        if ($pid <= 0 || $eid <= 0) continue;
+        $items_by_path[$pid] ??= [];
+        $items_by_path[$pid][] = $eid;
+      }
+    }
+  }
+
+  $all_exo_ids = [];
+  foreach ($items_by_path as $arr) foreach ($arr as $eid) $all_exo_ids[] = (int)$eid;
+  $all_exo_ids = array_values(array_unique(array_filter($all_exo_ids)));
+
+  $status_map = [];
+  if (!empty($all_exo_ids)) {
+    $in = implode(',', array_fill(0, count($all_exo_ids), '%d'));
+    $params = array_merge([$user_id], $all_exo_ids);
+
+    $rows = $wpdb->get_results($wpdb->prepare("
+      SELECT exercise_id, status
+      FROM {$t_status}
+      WHERE user_id = %d AND exercise_id IN ($in)
+    ", ...$params), ARRAY_A) ?: [];
+
+    foreach ($rows as $r) {
+      $status_map[(int)$r['exercise_id']] = (string)($r['status'] ?? 'none');
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Rendu page (générateur + table parcours)
+  // ------------------------------------------------------------
+  $html = '';
+
+  $html .= '<div class="ouinpo-sf-card">';
+  $html .= '<h2>Générer un parcours</h2>';
+  $html .= '<p class="ouinpo-sf-muted">Niveau détecté : <strong>'.esc_html($student_level === 'terminale' ? 'Terminale' : 'Première').'</strong>. Choisis un domaine et, si tu veux, une compétence précise.</p>';
+
+  $html .= '<div class="ouinpo-sf-gen">';
+
+  $html .= '<div class="ouinpo-sf-field">';
+  $html .= '<label for="sf-gen-domain">Domaine</label>';
+  $html .= '<select id="sf-gen-domain" class="ouinpo-sf-select">';
+  $html .= '<option value="">— Choisir —</option>';
+
+  $cur = '';
+  foreach ($domains as $d) {
+    $track = trim((string)($d['track'] ?? ''));
+    if ($track !== $cur) {
+      if ($cur !== '') $html .= '</optgroup>';
+      $cur = $track;
+      $html .= '<optgroup label="'.esc_attr($cur ?: 'Domaine').'">';
+    }
+    $val = trim((string)($d['domain_slug'] ?? ''));
+    if ($val === '') $val = trim((string)($d['domain'] ?? ''));
+    $lab = trim((string)($d['domain'] ?? $val));
+    if ($val === '') continue;
+    $html .= '<option value="'.esc_attr($val).'">'.esc_html($lab).'</option>';
+  }
+  if ($cur !== '') $html .= '</optgroup>';
+  $html .= '</select>';
+  $html .= '</div>';
+
+  $html .= '<div class="ouinpo-sf-field">';
+  $html .= '<label for="sf-gen-comp">Compétence (option)</label>';
+  $html .= '<select id="sf-gen-comp" class="ouinpo-sf-select" disabled>';
+  $html .= '<option value="0">— Toutes —</option>';
+  $html .= '</select>';
+  $html .= '</div>';
+
+  $html .= '<div class="ouinpo-sf-field ouinpo-sf-field-small">';
+  $html .= '<label for="sf-gen-limit">Nb</label>';
+  $html .= '<input id="sf-gen-limit" class="ouinpo-sf-input" type="number" min="1" max="25" value="7">';
+  $html .= '</div>';
+
+  $html .= '<div class="ouinpo-sf-field ouinpo-sf-field-action">';
+  $html .= '<label>&nbsp;</label>';
+  $html .= '<button type="button" class="ouinpo-sf-btn" id="sf-gen-btn">Générer</button>';
+  $html .= '</div>';
+
+  $html .= '</div>';
+  $html .= '<div id="sf-gen-msg" class="ouinpo-sf-muted ouinpo-sf-gen-msg"></div>';
+  $html .= '</div>';
+
+if (!empty($templates)) {
+  $html .= '<div class="ouinpo-sf-card">';
+  $html .= '<h2>Choisir un parcours modèle</h2>';
+  $html .= '<p class="ouinpo-sf-muted">Seuls les modèles de ton niveau te sont proposés. Tu peux ensuite filtrer par domaine BO et par objectif.</p>';
+
+  $html .= '<div class="ouinpo-sf-gen">';
+
+  $html .= '<div class="ouinpo-sf-field">';
+  $html .= '<label for="sf-template-domain">Domaine BO</label>';
+  $html .= '<select id="sf-template-domain" class="ouinpo-sf-select">';
+  $html .= '<option value="">— Tous —</option>';
+  foreach ($template_domain_values as $slug => $label) {
+    $html .= '<option value="'.esc_attr($slug).'">'.esc_html($label).'</option>';
+  }
+  $html .= '</select>';
+  $html .= '</div>';
+
+  $html .= '<div class="ouinpo-sf-field">';
+  $html .= '<label for="sf-template-goal">Objectif</label>';
+  $html .= '<select id="sf-template-goal" class="ouinpo-sf-select">';
+  $html .= '<option value="">— Tous —</option>';
+  foreach ($template_goal_values as $slug => $label) {
+    $html .= '<option value="'.esc_attr($slug).'">'.esc_html($label).'</option>';
+  }
+  $html .= '</select>';
+  $html .= '</div>';
+
+  $html .= '<div class="ouinpo-sf-field ouinpo-sf-field-action">';
+  $html .= '<label>&nbsp;</label>';
+  $html .= '<button type="button" class="ouinpo-sf-btn" id="sf-template-filter-btn">Filtrer</button>';
+  $html .= '</div>';
+
+  $html .= '</div>';
+
+  $html .= '<p id="sf-template-empty" class="ouinpo-sf-muted" style="display:none;">Aucun modèle ne correspond à ces filtres.</p>';
+  $html .= '<div id="sf-template-msg" class="ouinpo-sf-muted ouinpo-sf-gen-msg"></div>';
+
+  $html .= '<table class="ouinpo-sf-table" style="table-layout:fixed; width:100%; border-collapse:collapse;">';
+  $html .= '<colgroup>'
+    . '<col style="width:34%;">'
+    . '<col style="width:25%;">'
+    . '<col style="width:16%;">'
+    . '<col style="width:10%;">'
+    . '<col style="width:15%;">'
+    . '</colgroup>';
+
+  $html .= '<thead><tr>'
+    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Modèle</div></th>'
+    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Domaine</div></th>'
+    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Objectif</div></th>'
+    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Mode</div></th>'
+    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Action</div></th>'
+    . '</tr></thead><tbody id="sf-template-tbody">';
+
+  foreach ($templates as $tpl) {
+    $tpl_id = (int)($tpl['id'] ?? 0);
+    if ($tpl_id <= 0) continue;
+
+    $tpl_mode_label = (($tpl['mode'] ?? 'free') === 'sequential') ? 'Séquentiel' : 'Libre';
+    $tpl_domain_slug = sanitize_key((string) ($tpl['domain_slug'] ?? ''));
+    $tpl_goal_slug   = sanitize_key((string) ($tpl['goal_slug'] ?? ''));
+    $tpl_domain_label = $template_domain_options[$tpl_domain_slug] ?? '—';
+    $tpl_goal_label   = $template_goal_options[$tpl_goal_slug] ?? '—';
+
+    $html .= '<tr class="sf-template-row" data-domain="'.esc_attr($tpl_domain_slug).'" data-goal="'.esc_attr($tpl_goal_slug).'">';
+
+    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">';
+    $html .= '<strong>'.esc_html((string)($tpl['title'] ?? 'Modèle')).'</strong>';
+    if (!empty($tpl['student_note'])) {
+      $html .= '<br><span class="ouinpo-sf-muted">'.wp_kses_post((string)$tpl['student_note']).'</span>';
+    }
+    $html .= '</div></td>';
+
+    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">'.esc_html($tpl_domain_label).'</div></td>';
+    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">'.esc_html($tpl_goal_label).'</div></td>';
+    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">'.esc_html($tpl_mode_label).'</div></td>';
+    $html .= '<td class="sf-actions"><a href="#" class="ouinpo-sf-btn sf-use-template" data-template-id="'.$tpl_id.'">Choisir</a></td>';
+
+    $html .= '</tr>';
+  }
+
+  $html .= '</tbody></table>';
+  $html .= '</div>';
+}
+  $html .= '<div class="ouinpo-sf-card">';
+  $html .= '<h2>Mes parcours</h2>';
+
+  if (empty($paths)) {
+    $html .= '<p>Aucun parcours assigné pour le moment.</p>';
+    $html .= '</div>';
+  } else {
+    $html .= '<table class="ouinpo-sf-table">';
+    $html .= '<thead><tr>
+      <th class="ouinpo-sf-col-id">ID</th>
+      <th>Parcours</th>
+      <th class="ouinpo-sf-col-prog">Progression</th>
+      <th class="ouinpo-sf-col-action">Actions</th>
+    </tr></thead><tbody>';
+
+    foreach ($paths as $p) {
+      $pid = (int)($p['id'] ?? 0);
+      if ($pid <= 0) continue;
+
+      $ids = $items_by_path[$pid] ?? [];
+      $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+      $total = count($ids);
+      $solved = 0;
+      foreach ($ids as $eid) {
+        if (($status_map[$eid] ?? 'none') === 'solved') $solved++;
+      }
+      $pct = ($total > 0) ? (int)round(100 * $solved / $total) : 0;
+
+      $view_url = esc_url(add_query_arg('sf_path', $pid));
+      $mode_label = (($p['mode'] ?? 'free') === 'sequential') ? 'Séquentiel' : 'Libre';
+      $can_delete = class_exists('\Ouinpo\Exercises\PathsService')
+        ? \Ouinpo\Exercises\PathsService::can_user_self_remove_path($pid, $user_id)
+        : false;
+
+      $bar = '<span class="sf-progressbar"><span style="width:'.(int)$pct.'%"></span></span>';
+      $txt = '<strong>'.(int)$pct.'%</strong> ('.(int)$solved.'/'.(int)$total.')';
+
+      $html .= '<tr>';
+      $html .= '<td>'.$pid.'</td>';
+      $html .= '<td>'
+        . esc_html((string)($p['title'] ?? 'Parcours'))
+        . '<br><span class="ouinpo-sf-muted">Mode : '.esc_html($mode_label).'</span>';
+      if (!empty($p['student_note'])) {
+        $html .= '<br><span class="ouinpo-sf-muted">'.wp_kses_post((string)$p['student_note']).'</span>';
+      }
+      $html .= '</td>';
+      $html .= '<td>'.$bar.' '.$txt.'</td>';
+      $html .= '<td class="sf-actions"><a class="ouinpo-sf-btn" href="'.$view_url.'">Voir</a>';
+      if ($can_delete) {
+        $html .= ' <a href="#" class="ouinpo-sf-btn sf-delete-path" data-path-id="'.$pid.'">Supprimer</a>';
+      }
+      $html .= '</td>';
+      $html .= '</tr>';
+    }
+
+    $html .= '</tbody></table>';
+    $html .= '</div>';
+  }
+
+  $comp_json = wp_json_encode($competencies, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  $ajax_url_json = wp_json_encode($ajax_url, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  $nonce_gen_json = wp_json_encode($nonce_gen, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  $nonce_tpl_json = wp_json_encode($nonce_tpl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  $nonce_delete_json = wp_json_encode($nonce_delete, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+  $html .= <<<HTML
+<script>
+(function(){
+  const ajaxUrl = {$ajax_url_json};
+  const nonce = {
+    gen: {$nonce_gen_json},
+    tpl: {$nonce_tpl_json},
+    del: {$nonce_delete_json}
+  };
+  const comps = {$comp_json};
+
+const prefill = {
+  domain: {$prefill_domain_json},
+  compId: {$prefill_comp_id_json}
+};
+
+  const selDomain = document.getElementById("sf-gen-domain");
+  const selComp = document.getElementById("sf-gen-comp");
+  const inpLimit = document.getElementById("sf-gen-limit");
+  const btn = document.getElementById("sf-gen-btn");
+  const msg = document.getElementById("sf-gen-msg");
+const tplMsg = document.getElementById("sf-template-msg");
+const tplDomain = document.getElementById("sf-template-domain");
+const tplGoal = document.getElementById("sf-template-goal");
+const tplEmpty = document.getElementById("sf-template-empty");
+const tplFilterBtn = document.getElementById("sf-template-filter-btn");
+
+
+
+  function setMsg(target, text){
+    if (target) target.textContent = text || "";
+  }
+
+  function escHtml(s){
+    return (s || "").replace(/[&<>"']/g, function(m){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m] || m;
+    });
+  }
+
+  function renderCompsForDomain(domainVal){
+    if (!selComp) return;
+
+    const d = (domainVal || "").trim();
+    if (!d) {
+      selComp.innerHTML = '<option value="0">— Toutes —</option>';
+      selComp.disabled = true;
+      return;
+    }
+
+    const list = comps.filter(function(c){
+      const slug = (c.domain_slug || "").trim();
+      const dom = (c.domain || "").trim();
+      return slug ? slug === d : dom === d;
+    });
+
+    let html = '<option value="0">— Toutes —</option>';
+    let curTrack = "";
+
+    list.forEach(function(c){
+      const track = (c.track || "").trim();
+      const cid = parseInt(c.id, 10) || 0;
+      const comp = (c.competency || "").trim();
+      const label = comp.trim();
+      if (!cid) return;
+
+      if (track !== curTrack) {
+        if (curTrack) html += '</optgroup>';
+        curTrack = track;
+        html += '<optgroup label="' + escHtml(curTrack || 'Compétences') + '">';
+      }
+
+      html += '<option value="' + cid + '">' + escHtml(label) + '</option>';
+    });
+
+    if (curTrack) html += '</optgroup>';
+    selComp.innerHTML = html;
+    selComp.disabled = false;
+  }
+
+function applyPrefill(){
+  if (selDomain && prefill.domain) {
+    selDomain.value = prefill.domain;
+    renderCompsForDomain(prefill.domain);
+  } else if (selDomain) {
+    renderCompsForDomain(selDomain.value);
+  }
+
+  if (selComp && prefill.compId) {
+    selComp.value = String(prefill.compId);
+  }
+}
+
+  async function postAction(params){
+    const body = new URLSearchParams();
+    Object.keys(params).forEach(function(k){
+      body.set(k, String(params[k]));
+    });
+
+    const res = await fetch(ajaxUrl, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8"},
+      body: body.toString()
+    });
+
+    return await res.json();
+  }
+
+  async function generate(){
+    const domain = (selDomain && selDomain.value || "").trim();
+    if (!domain) {
+      setMsg(msg, "Choisis un domaine.");
+      return;
+    }
+
+    const compId = (selComp && !selComp.disabled) ? (parseInt(selComp.value, 10) || 0) : 0;
+    let limit = parseInt(inpLimit && inpLimit.value, 10) || 7;
+    if (limit < 1) limit = 1;
+    if (limit > 25) limit = 25;
+
+    setMsg(msg, "Génération…");
+
+    let data = null;
+    try {
+      data = await postAction({
+        action: "ouinpo_sf_student_generate_path",
+        nonce: nonce.gen,
+        domain_value: domain,
+        competency_id: compId,
+        limit: limit
+      });
+    } catch(e) {
+      setMsg(msg, "Erreur réseau (AJAX).");
+      return;
+    }
+
+    if (!data || !data.success) {
+      setMsg(msg, "Erreur lors de la génération.");
+      return;
+    }
+
+    if (data.data && data.data.ok) {
+      const pathId = data.data.path_id;
+      setMsg(msg, "Parcours créé (" + (data.data.count || 0) + " exos). Ouverture…");
+      const url = new URL(window.location.href);
+      url.searchParams.set("sf_path", String(pathId));
+      window.location.href = url.toString();
+      return;
+    }
+
+    setMsg(msg, "Aucun exercice trouvé pour ce domaine (ou déjà tous réussis).");
+  }
+
+  async function useTemplate(templateId){
+    if (!templateId) return;
+
+    setMsg(tplMsg, "Création du parcours depuis le modèle…");
+
+    let data = null;
+    try {
+      data = await postAction({
+        action: "ouinpo_sf_student_use_template",
+        nonce: nonce.tpl,
+        template_id: templateId
+      });
+    } catch(e) {
+      setMsg(tplMsg, "Erreur réseau (AJAX).");
+      return;
+    }
+
+    if (!data || !data.success || !data.data || !data.data.ok) {
+      setMsg(tplMsg, "Impossible de créer ce parcours à partir du modèle.");
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("sf_path", String(data.data.path_id));
+    window.location.href = url.toString();
+  }
+
+  async function deletePath(pathId){
+    if (!pathId) return;
+    if (!window.confirm("Supprimer ce parcours de ton espace élève ?")) return;
+
+    let data = null;
+    try {
+      data = await postAction({
+        action: "ouinpo_sf_student_delete_path",
+        nonce: nonce.del,
+        path_id: pathId
+      });
+    } catch(e) {
+      window.alert("Erreur réseau.");
+      return;
+    }
+
+    if (!data || !data.success) {
+      window.alert("Suppression impossible pour ce parcours.");
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("sf_path") === String(pathId)) {
+      url.searchParams.delete("sf_path");
+    }
+    window.location.href = url.toString();
+  }
+
+function filterTemplates(){
+  const domainVal = (tplDomain && tplDomain.value || "").trim();
+  const goalVal = (tplGoal && tplGoal.value || "").trim();
+  const rows = Array.from(document.querySelectorAll(".sf-template-row"));
+
+  let visibleCount = 0;
+
+  rows.forEach(function(row){
+    const rowDomain = (row.getAttribute("data-domain") || "").trim();
+    const rowGoal = (row.getAttribute("data-goal") || "").trim();
+
+    const okDomain = !domainVal || rowDomain === domainVal;
+    const okGoal = !goalVal || rowGoal === goalVal;
+    const show = okDomain && okGoal;
+
+    row.style.display = show ? "" : "none";
+    if (show) visibleCount++;
+  });
+
+  if (tplEmpty) {
+    tplEmpty.style.display = visibleCount === 0 ? "" : "none";
+  }
+
+  setMsg(tplMsg, "");
+}
+
+if (selDomain) {
+  selDomain.addEventListener("change", function(){
+    renderCompsForDomain(selDomain.value);
+    setMsg(msg, "");
+  });
+}
+
+applyPrefill();
+
+if (btn) btn.addEventListener("click", generate);
+
+if (tplFilterBtn) tplFilterBtn.addEventListener("click", filterTemplates);
+if (tplDomain) tplDomain.addEventListener("change", function(){ setMsg(tplMsg, ""); });
+if (tplGoal) tplGoal.addEventListener("change", function(){ setMsg(tplMsg, ""); });
+filterTemplates();
+
+  document.addEventListener("click", function(ev){
+    const tplBtn = ev.target.closest(".sf-use-template");
+    if (tplBtn) {
+      ev.preventDefault();
+      useTemplate(parseInt(tplBtn.getAttribute("data-template-id"), 10) || 0);
+      return;
+    }
+
+    const delBtn = ev.target.closest(".sf-delete-path");
+    if (delBtn) {
+      ev.preventDefault();
+      deletePath(parseInt(delBtn.getAttribute("data-path-id"), 10) || 0);
+    }
+  });
+})();
+</script>
+HTML;
+
+  return $html;
+});

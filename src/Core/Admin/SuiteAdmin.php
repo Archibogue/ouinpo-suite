@@ -1,0 +1,2021 @@
+<?php
+
+namespace Ouinpo\Suite\Core\Admin;
+
+use Ouinpo\Suite\Core\Bootstrap;
+use Ouinpo\Suite\Core\ModuleSettings;
+use Ouinpo\Suite\Core\PedagogicalPackImporter;
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+final class SuiteAdmin
+{
+    public const ROOT_SLUG = 'ouinpo-suite';
+
+    public static function init(): void
+    {
+        if (!defined('OUINPO_SUITE_ADMIN_SLUG')) {
+            define('OUINPO_SUITE_ADMIN_SLUG', self::ROOT_SLUG);
+        }
+
+        add_action('admin_menu', [self::class, 'registerRootMenu'], 5);
+        add_action('admin_head', [self::class, 'hideLegacySubmenusCss']);
+        add_action('admin_head', [self::class, 'adminStyles']);
+    }
+
+    public static function registerRootMenu(): void
+    {
+        add_menu_page(
+            'OuInPo Suite',
+            'OuInPo Suite',
+            'edit_posts',
+            self::ROOT_SLUG,
+            [self::class, 'renderDashboard'],
+            'dashicons-screenoptions',
+            55
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Tableau de bord',
+            'Tableau de bord',
+            'edit_posts',
+            self::ROOT_SLUG,
+            [self::class, 'renderDashboard']
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Contenus',
+            'Contenus',
+            'edit_posts',
+            'ouinpo-suite-contents',
+            [self::class, 'renderContentsHub']
+        );
+
+        if (ModuleSettings::isEnabled('flashcards')) {
+            add_submenu_page(
+                self::ROOT_SLUG,
+                'Révisions',
+                'Révisions',
+                'edit_posts',
+                'ouinpo-suite-revisions',
+                [self::class, 'renderRevisionsHub']
+            );
+        }
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Évaluations',
+            'Évaluations',
+            'edit_posts',
+            'ouinpo-suite-evaluations',
+            [self::class, 'renderEvaluationsHub']
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Classes & élèves',
+            'Classes & élèves',
+            'edit_posts',
+            'ouinpo-suite-classes',
+            [self::class, 'renderClassesHub']
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Référentiel BO',
+            'Référentiel BO',
+            'edit_posts',
+            'ouinpo-suite-referentiel',
+            [self::class, 'renderReferentielHub']
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Badges',
+            'Badges',
+            'manage_options',
+            'ouinpo-suite-badges',
+            [self::class, 'renderBadgesHub']
+        );
+
+        if (self::hasAiOrPathModule()) {
+            add_submenu_page(
+                self::ROOT_SLUG,
+                'IA & parcours',
+                'IA & parcours',
+                'edit_posts',
+                'ouinpo-suite-ai',
+                [self::class, 'renderAiHub']
+            );
+        }
+
+        add_submenu_page(
+            self::ROOT_SLUG,
+            'Réglages',
+            'Réglages',
+            'edit_posts',
+            'ouinpo-suite-settings',
+            [self::class, 'renderSettingsHub']
+        );
+    }
+
+    public static function hideLegacySubmenusCss(): void
+    {
+        ?>
+        <style>
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-exercices"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-badges"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assessments"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-import-exercises"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-competencies"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-groups"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assignments"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-courses-competencies"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="edit.php?post_type=ouinpo_submission"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="edit.php?post_type=ouinpo_resource"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-segfault"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-segfault-progress"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-meta-social"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-years"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-badge-assignments"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-paths"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assessment-builder"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-practical-subjects"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-flashcards"],
+            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-exercises-settings"] {
+                display: none !important;
+            }
+        </style>
+        <?php
+    }
+
+    public static function adminStyles(): void
+    {
+        ?>
+        <style>
+            .ouinpo-suite-wrap .card {
+                border-radius: 10px;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 16px;
+                max-width: 1200px;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-grid-wide {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 16px;
+                max-width: 1200px;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-grid-compact {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 16px;
+                max-width: 1200px;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-muted {
+                color: #50575e;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-section {
+                margin-top: 28px;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-card-title {
+                margin-top: 0;
+                margin-bottom: 8px;
+            }
+
+            .ouinpo-suite-wrap .ouinpo-suite-empty {
+                padding: 16px;
+                background: #fff;
+                border: 1px solid #dcdcde;
+                border-radius: 10px;
+                max-width: 1200px;
+            }
+
+            .ouinpo-suite-wrap .nav-tab-wrapper {
+                margin-bottom: 16px;
+            }
+        </style>
+        <?php
+    }
+
+    private static function hasAiOrPathModule(): bool
+    {
+        return ModuleSettings::isEnabled('segfault')
+            || ModuleSettings::isEnabled('gate')
+            || ModuleSettings::isEnabled('rechtext');
+    }
+
+    private static function mainTabs(): array
+    {
+        $tabs = [
+            self::ROOT_SLUG         => 'Tableau de bord',
+            'ouinpo-suite-contents' => 'Contenus',
+        ];
+
+        if (ModuleSettings::isEnabled('flashcards')) {
+            $tabs['ouinpo-suite-revisions'] = 'Révisions';
+        }
+
+        $tabs['ouinpo-suite-evaluations'] = 'Évaluations';
+        $tabs['ouinpo-suite-classes'] = 'Classes & élèves';
+        $tabs['ouinpo-suite-referentiel'] = 'Référentiel BO';
+
+        if (current_user_can('manage_options')) {
+            $tabs['ouinpo-suite-badges'] = 'Badges';
+        }
+
+        if (self::hasAiOrPathModule()) {
+            $tabs['ouinpo-suite-ai'] = 'IA & parcours';
+        }
+
+        $tabs['ouinpo-suite-settings'] = 'Réglages';
+
+        return $tabs;
+    }
+
+    private static function pageIntro(string $title, string $text): void
+    {
+        ?>
+        <div class="wrap ouinpo-suite-wrap">
+            <h1><?php echo esc_html($title); ?></h1>
+            <p class="ouinpo-suite-muted"><?php echo esc_html($text); ?></p>
+        <?php
+    }
+
+    private static function endPage(): void
+    {
+        echo '</div>';
+    }
+
+    private static function tabs(array $tabs, string $current): void
+    {
+        echo '<nav class="nav-tab-wrapper">';
+
+        foreach ($tabs as $slug => $label) {
+            $class = ($slug === $current) ? ' nav-tab-active' : '';
+            echo '<a class="nav-tab' . esc_attr($class) . '" href="' . esc_url(admin_url('admin.php?page=' . $slug)) . '">'
+                . esc_html($label) . '</a>';
+        }
+
+        echo '</nav>';
+    }
+
+    private static function currentTab(string $default = 'catalogue'): string
+    {
+        $tab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : $default;
+        return $tab !== '' ? $tab : $default;
+    }
+
+    private static function subTabs(string $page, array $tabs, string $current): void
+    {
+        if (empty($tabs)) {
+            return;
+        }
+
+        echo '<nav class="nav-tab-wrapper" style="margin:12px 0 18px 0;">';
+
+        foreach ($tabs as $slug => $label) {
+            $class = ($slug === $current) ? ' nav-tab-active' : '';
+            $url = add_query_arg([
+                'page' => $page,
+                'tab'  => $slug,
+            ], admin_url('admin.php'));
+
+            echo '<a class="nav-tab' . esc_attr($class) . '" href="' . esc_url($url) . '">'
+                . esc_html($label) . '</a>';
+        }
+
+        echo '</nav>';
+    }
+
+    private static function metricCard(string $title, string $value, string $caption = '', ?string $url = null): void
+    {
+        ?>
+        <div class="card" style="padding:16px;">
+            <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
+            <div style="font-size:28px;font-weight:700;line-height:1.1;margin-bottom:8px;">
+                <?php echo esc_html($value); ?>
+            </div>
+            <?php if ($caption !== ''): ?>
+                <p class="ouinpo-suite-muted" style="margin:0 0 12px 0;"><?php echo esc_html($caption); ?></p>
+            <?php endif; ?>
+            <?php if ($url): ?>
+                <p style="margin:0;">
+                    <a class="button button-secondary" href="<?php echo esc_url($url); ?>">Voir</a>
+                </p>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    private static function quickAction(string $title, string $text, string $url): void
+    {
+        ?>
+        <div class="card" style="padding:16px;">
+            <h3 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h3>
+            <p><?php echo esc_html($text); ?></p>
+            <p style="margin-bottom:0;">
+                <a class="button button-primary" href="<?php echo esc_url($url); ?>">Ouvrir</a>
+            </p>
+        </div>
+        <?php
+    }
+
+    private static function statusBadge(bool $ok, string $okLabel = 'OK', string $koLabel = 'À vérifier'): void
+    {
+        $label  = $ok ? $okLabel : $koLabel;
+        $bg     = $ok ? '#edfaef' : '#fff4e5';
+        $border = $ok ? '#46b450' : '#dba617';
+        $color  = $ok ? '#1e4620' : '#6b4f00';
+
+        echo '<span style="display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid '
+            . esc_attr($border)
+            . ';background:' . esc_attr($bg)
+            . ';color:' . esc_attr($color)
+            . ';font-size:12px;font-weight:600;">'
+            . esc_html($label)
+            . '</span>';
+    }
+
+    private static function tableExists(string $table): bool
+    {
+        global $wpdb;
+
+        $found = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+        return $found === $table;
+    }
+
+    private static function safeTableCount(string $table, string $where = '1=1'): ?int
+    {
+        global $wpdb;
+
+        if (!self::tableExists($table)) {
+            return null;
+        }
+
+        $sql = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
+        $value = $wpdb->get_var($sql);
+
+        return ($value === null) ? null : (int) $value;
+    }
+
+    private static function recentPosts(string $postType, int $limit = 5): array
+    {
+        if (!post_type_exists($postType)) {
+            return [];
+        }
+
+        $posts = get_posts([
+            'post_type'      => $postType,
+            'post_status'    => 'any',
+            'posts_per_page' => $limit,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ]);
+
+        return is_array($posts) ? $posts : [];
+    }
+
+    private static function renderRecentPostsPanel(string $title, string $postType, string $listUrl): void
+    {
+        $posts = self::recentPosts($postType, 5);
+        ?>
+        <div class="card" style="padding:16px;">
+            <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
+
+            <?php if (!$posts): ?>
+                <div class="ouinpo-suite-empty">Aucun élément récent.</div>
+            <?php else: ?>
+                <ul style="margin:0 0 12px 18px;">
+                    <?php foreach ($posts as $post): ?>
+                        <li style="margin:0 0 8px 0;">
+                            <a href="<?php echo esc_url(get_edit_post_link($post->ID)); ?>">
+                                <?php echo esc_html(get_the_title($post->ID) ?: '(sans titre)'); ?>
+                            </a>
+                            <br>
+                            <span class="ouinpo-suite-muted">
+                                <?php echo esc_html(get_the_date('d/m/Y H:i', $post->ID)); ?>
+                            </span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+            <p style="margin-bottom:0;">
+                <a class="button button-secondary" href="<?php echo esc_url($listUrl); ?>">Voir tout</a>
+            </p>
+        </div>
+        <?php
+    }
+
+    private static function dashboardStats(): array
+    {
+        global $wpdb;
+
+        $t_exercises   = $wpdb->prefix . 'ouin_exo_exercises';
+        $t_groups      = $wpdb->prefix . 'ouin_exo_groups';
+        $t_members     = $wpdb->prefix . 'ouin_exo_group_members';
+        $t_paths       = $wpdb->prefix . 'ouin_sf_paths';
+        $t_suggestions = $wpdb->prefix . 'ouin_sf_suggestions';
+        $t_progress    = $wpdb->prefix . 'ouinpo_progress';
+
+        $submissionTotal = 0;
+        $resourceTotal   = 0;
+        $submission7d    = 0;
+
+        if (ModuleSettings::isEnabled('submissions') && post_type_exists('ouinpo_submission')) {
+            $c = wp_count_posts('ouinpo_submission');
+
+            if ($c) {
+                foreach (get_object_vars($c) as $n) {
+                    $submissionTotal += (int) $n;
+                }
+            }
+
+            $submission7d = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(ID)
+                 FROM {$wpdb->posts}
+                 WHERE post_type = %s
+                   AND post_status NOT IN ('trash','auto-draft')
+                   AND post_date_gmt >= %s",
+                'ouinpo_submission',
+                gmdate('Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS)
+            ));
+        }
+
+        if (ModuleSettings::isEnabled('submissions') && post_type_exists('ouinpo_resource')) {
+            $c = wp_count_posts('ouinpo_resource');
+
+            if ($c) {
+                foreach (get_object_vars($c) as $n) {
+                    $resourceTotal += (int) $n;
+                }
+            }
+        }
+
+        return [
+            'exercises_total'   => self::safeTableCount($t_exercises),
+            'exercises_active'  => self::safeTableCount($t_exercises, 'is_active = 1'),
+            'groups_total'      => self::safeTableCount($t_groups),
+            'members_total'     => self::safeTableCount($t_members),
+            'paths_active'      => ModuleSettings::isEnabled('segfault') ? self::safeTableCount($t_paths, 'is_active = 1') : null,
+            'suggestions_total' => ModuleSettings::isEnabled('segfault') ? self::safeTableCount($t_suggestions) : null,
+            'gate_progress'     => ModuleSettings::isEnabled('gate') ? self::safeTableCount($t_progress) : null,
+            'submissions_total' => $submissionTotal,
+            'submissions_7d'    => $submission7d,
+            'resources_total'   => $resourceTotal,
+        ];
+    }
+
+    public static function renderDashboard(): void
+    {
+        $stats = self::dashboardStats();
+
+        self::pageIntro('OuInPo Suite', 'Vue d’ensemble de la suite et accès rapides aux actions les plus utiles.');
+        self::tabs(self::mainTabs(), self::ROOT_SLUG);
+        ?>
+
+        <h2 class="ouinpo-suite-section">Vue d’ensemble</h2>
+        <div class="ouinpo-suite-grid-compact">
+            <?php
+            self::metricCard(
+                'Exercices',
+                ($stats['exercises_total'] !== null ? number_format_i18n($stats['exercises_total']) : '—'),
+                ($stats['exercises_active'] !== null ? number_format_i18n($stats['exercises_active']) . ' actifs' : 'table non disponible'),
+                admin_url('admin.php?page=ouinpo-suite-contents')
+            );
+
+            self::metricCard(
+                'Classes & élèves',
+                ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : '—'),
+                ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) . ' affectations' : 'groupes ou affectations indisponibles'),
+                admin_url('admin.php?page=ouinpo-suite-classes')
+            );
+
+            if (ModuleSettings::isEnabled('submissions')) {
+                self::metricCard(
+                    'Dépôts élèves',
+                    number_format_i18n((int) $stats['submissions_total']),
+                    number_format_i18n((int) $stats['submissions_7d']) . ' sur 7 jours',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+            }
+
+            if (self::hasAiOrPathModule()) {
+                self::metricCard(
+                    'IA & parcours',
+                    ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : '—'),
+                    'suggestions' . ($stats['paths_active'] !== null ? ' · ' . number_format_i18n($stats['paths_active']) . ' parcours actifs' : ''),
+                    admin_url('admin.php?page=ouinpo-suite-ai')
+                );
+            }
+            ?>
+        </div>
+
+        <h2 class="ouinpo-suite-section">Actions rapides</h2>
+        <div class="ouinpo-suite-grid">
+            <?php
+            self::quickAction(
+                'Créer / gérer les contenus',
+                'Accès au catalogue des exercices et sujets pratiques.',
+                admin_url('admin.php?page=ouinpo-suite-contents')
+            );
+
+            if (ModuleSettings::isEnabled('flashcards')) {
+                self::quickAction(
+                    'Préparer les révisions',
+                    'Gérer les flashcards et paquets de cartes.',
+                    admin_url('admin.php?page=ouinpo-suite-revisions')
+                );
+            }
+
+            self::quickAction(
+                'Importer des exercices',
+                'Ajouter rapidement de nouveaux exercices.',
+                admin_url('admin.php?page=ouinpo-suite-contents&tab=import')
+            );
+
+            self::quickAction(
+                'Devoirs surveillés',
+                'Gérer les DS et évaluations.',
+                admin_url('admin.php?page=ouinpo-suite-evaluations&tab=ds')
+            );
+
+            if (current_user_can('edit_users')) {
+                self::quickAction(
+                    'Groupes',
+                    'Organiser les classes et affectations.',
+                    admin_url('admin.php?page=ouinpo-suite-classes')
+                );
+            }
+
+            if (ModuleSettings::isEnabled('submissions')) {
+                self::quickAction(
+                    'Dépôts élèves',
+                    'Voir les travaux récents des élèves.',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+            }
+
+            if (current_user_can('manage_options') && self::hasAiOrPathModule()) {
+                self::quickAction(
+                    'IA & parcours',
+                    'Configurer les assistants, les parcours et l’indexation.',
+                    admin_url('admin.php?page=ouinpo-suite-ai')
+                );
+            }
+            ?>
+        </div>
+
+        <?php if (ModuleSettings::isEnabled('submissions')): ?>
+            <h2 class="ouinpo-suite-section">Activité récente</h2>
+            <div class="ouinpo-suite-grid-wide">
+                <?php
+                self::renderRecentPostsPanel(
+                    'Derniers dépôts élèves',
+                    'ouinpo_submission',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+
+                self::renderRecentPostsPanel(
+                    'Dernières ressources prof',
+                    'ouinpo_resource',
+                    admin_url('edit.php?post_type=ouinpo_resource')
+                );
+                ?>
+            </div>
+        <?php endif; ?>
+
+        <?php
+        self::endPage();
+    }
+
+    public static function renderContentsHub(): void
+    {
+        $tab   = self::currentTab('catalogue');
+        $stats = self::dashboardStats();
+
+        self::pageIntro('Contenus', 'Exercices, sujets pratiques, imports et paramètres des contenus pédagogiques.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-contents');
+
+        self::subTabs('ouinpo-suite-contents', [
+            'catalogue' => 'Catalogue',
+            'pratiques' => 'Sujets pratiques',
+            'import'    => 'Import',
+            'options'   => 'Options',
+        ], $tab);
+
+        if ($tab === 'catalogue') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::metricCard(
+                    'Exercices',
+                    ($stats['exercises_total'] !== null ? number_format_i18n($stats['exercises_total']) : '—'),
+                    ($stats['exercises_active'] !== null ? number_format_i18n($stats['exercises_active']) . ' actifs' : 'table non disponible'),
+                    admin_url('admin.php?page=ouinpo-exercices')
+                );
+
+                self::quickAction(
+                    'Gérer les exercices',
+                    'Créer, modifier et organiser les exercices du catalogue.',
+                    admin_url('admin.php?page=ouinpo-exercices')
+                );
+
+                self::quickAction(
+                    'Exercices type bac',
+                    'Retrouver les exercices orientés bac et leurs métadonnées.',
+                    admin_url('admin.php?page=ouinpo-exercices')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'pratiques') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Sujets pratiques',
+                    'Gérer les sujets pratiques et leurs appels.',
+                    admin_url('admin.php?page=ouinpo-practical-subjects')
+                );
+
+                self::quickAction(
+                    'Catalogue des exercices',
+                    'Revenir au catalogue principal des exercices.',
+                    admin_url('admin.php?page=ouinpo-exercices')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'import') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Importer des exercices',
+                    'Ajouter rapidement de nouveaux exercices au catalogue.',
+                    admin_url('admin.php?page=ouinpo-import-exercises')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'options') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (current_user_can('manage_options')) {
+                    self::quickAction(
+                        'Options des contenus',
+                        'Configurer les réglages du module Exercices.',
+                        admin_url('admin.php?page=ouinpo-exercises-settings')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Options</h3>
+                        <p>Ces réglages sont réservés aux administrateurs.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    public static function renderRevisionsHub(): void
+    {
+        if (!ModuleSettings::isEnabled('flashcards')) {
+            wp_safe_redirect(admin_url('admin.php?page=' . self::ROOT_SLUG));
+            exit;
+        }
+
+        global $wpdb;
+
+        $tab = self::currentTab('flashcards');
+
+        $tDecks = $wpdb->prefix . 'ouin_fc_decks';
+        $tCards = $wpdb->prefix . 'ouin_fc_cards';
+
+        $decksCount = self::safeTableCount($tDecks);
+        $cardsCount = self::safeTableCount($tCards);
+
+        self::pageIntro('Révisions', 'Flashcards, paquets de cartes et mémorisation active.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-revisions');
+
+        self::subTabs('ouinpo-suite-revisions', [
+            'flashcards' => 'Flashcards',
+            'import'     => 'Import',
+        ], $tab);
+
+        if ($tab === 'flashcards') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::metricCard(
+                    'Paquets de cartes',
+                    ($decksCount !== null ? number_format_i18n($decksCount) : '—'),
+                    $decksCount !== null ? 'paquets enregistrés' : 'table non disponible',
+                    current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-flashcards&tab=decks') : null
+                );
+
+                self::metricCard(
+                    'Cartes',
+                    ($cardsCount !== null ? number_format_i18n($cardsCount) : '—'),
+                    $cardsCount !== null ? 'cartes enregistrées' : 'table non disponible',
+                    current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-flashcards&tab=cards') : null
+                );
+
+                if (current_user_can('manage_options')) {
+                    self::quickAction(
+                        'Gérer les flashcards',
+                        'Créer les paquets, modifier les cartes et préparer les révisions.',
+                        admin_url('admin.php?page=ouinpo-flashcards')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Flashcards</h3>
+                        <p>La gestion des flashcards est réservée aux administrateurs.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'import') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (current_user_can('manage_options')) {
+                    self::quickAction(
+                        'Importer des cartes',
+                        'Importer des flashcards dans un paquet existant.',
+                        admin_url('admin.php?page=ouinpo-flashcards&tab=import')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Import</h3>
+                        <p>Import réservé aux administrateurs.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    public static function renderClassesHub(): void
+    {
+        $tab   = self::currentTab('groupes');
+        $stats = self::dashboardStats();
+
+        self::pageIntro('Classes & élèves', 'Organisation des classes, affectations et productions des élèves.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-classes');
+
+        $classTabs = [
+            'groupes'      => 'Classes',
+            'affectations' => 'Affectations',
+        ];
+
+        if (ModuleSettings::isEnabled('submissions')) {
+            $classTabs['depots'] = 'Dépôts';
+            $classTabs['ressources'] = 'Ressources';
+        }
+
+        if (!isset($classTabs[$tab])) {
+            $tab = 'groupes';
+        }
+
+        self::subTabs('ouinpo-suite-classes', $classTabs, $tab);
+
+        if ($tab === 'groupes') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::metricCard(
+                    'Classes',
+                    ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : '—'),
+                    ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) . ' affectations' : 'indisponible'),
+                    current_user_can('edit_users') ? admin_url('admin.php?page=ouinpo-groups') : null
+                );
+
+                if (current_user_can('edit_users')) {
+                    self::quickAction(
+                        'Gérer les classes',
+                        'Créer, modifier et organiser les groupes.',
+                        admin_url('admin.php?page=ouinpo-groups')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Groupes</h3>
+                        <p>La gestion des groupes est réservée aux profils autorisés.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'affectations') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::metricCard(
+                    'Affectations',
+                    ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) : '—'),
+                    'élèves liés à des classes',
+                    current_user_can('edit_users') ? admin_url('admin.php?page=ouinpo-assignments') : null
+                );
+
+                if (current_user_can('edit_users')) {
+                    self::quickAction(
+                        'Gérer les affectations',
+                        'Associer les élèves aux classes.',
+                        admin_url('admin.php?page=ouinpo-assignments')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Affectations</h3>
+                        <p>La gestion des affectations est réservée aux profils autorisés.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'depots' && ModuleSettings::isEnabled('submissions')) {
+            ?>
+            <div class="ouinpo-suite-grid-wide">
+                <?php
+                self::metricCard(
+                    'Dépôts élèves',
+                    number_format_i18n((int) $stats['submissions_total']),
+                    number_format_i18n((int) $stats['submissions_7d']) . ' sur 7 jours',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+
+                self::quickAction(
+                    'Voir tous les dépôts',
+                    'Accéder à la liste complète des travaux déposés.',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+
+                self::renderRecentPostsPanel(
+                    'Derniers dépôts élèves',
+                    'ouinpo_submission',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'ressources' && ModuleSettings::isEnabled('submissions')) {
+            ?>
+            <div class="ouinpo-suite-grid-wide">
+                <?php
+                self::metricCard(
+                    'Ressources prof',
+                    number_format_i18n((int) $stats['resources_total']),
+                    'ressources enregistrées',
+                    admin_url('edit.php?post_type=ouinpo_resource')
+                );
+
+                self::quickAction(
+                    'Voir les ressources',
+                    'Accéder à la liste complète des ressources pédagogiques.',
+                    admin_url('edit.php?post_type=ouinpo_resource')
+                );
+
+                self::renderRecentPostsPanel(
+                    'Dernières ressources prof',
+                    'ouinpo_resource',
+                    admin_url('edit.php?post_type=ouinpo_resource')
+                );
+                ?>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    public static function renderReferentielHub(): void
+    {
+        $tab = self::currentTab('competencies');
+
+        self::pageIntro('Référentiel BO', 'Compétences BO, associations pédagogiques et structuration du référentiel.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-referentiel');
+        self::subTabs('ouinpo-suite-referentiel', [
+            'competencies' => 'Compétences BO',
+            'courses'      => 'Cours ↔ compétences',
+            'years'        => 'Années scolaires',
+        ], $tab);
+
+        if ($tab === 'competencies') {
+            self::renderReferentielCompetenciesTable();
+        } elseif ($tab === 'courses') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Cours ↔ compétences BO',
+                    'Associer les cours WordPress aux compétences du BO.',
+                    admin_url('admin.php?page=ouinpo-courses-competencies')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'years') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Années scolaires',
+                    'Créer les futures années et choisir l’année active.',
+                    admin_url('admin.php?page=ouinpo-years')
+                );
+                ?>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    private static function renderReferentielCompetenciesTable(): void
+    {
+        if (!current_user_can('edit_users')) {
+            ?>
+            <div class="card" style="padding:16px;max-width:1200px;">
+                <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
+                <p>Accès réservé aux profils autorisés.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        global $wpdb;
+
+        $tComp = $wpdb->prefix . 'ouin_exo_competencies';
+        $tPost = $wpdb->prefix . 'ouin_exo_post_competency';
+        $tExo  = $wpdb->prefix . 'ouin_exo_exercise_competency';
+
+        if (!self::tableExists($tComp)) {
+            ?>
+            <div class="card" style="padding:16px;max-width:1200px;">
+                <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
+                <p>La table des compétences n’existe pas encore.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        $track = isset($_GET['ref_track']) ? sanitize_text_field((string) $_GET['ref_track']) : '';
+        $level = isset($_GET['ref_level']) ? sanitize_text_field((string) $_GET['ref_level']) : '';
+        $search = isset($_GET['ref_s']) ? sanitize_text_field((string) $_GET['ref_s']) : '';
+
+        $where = ['1=1'];
+        $args  = [];
+
+        if (in_array($track, ['SNT', 'NSI', 'Transversal'], true)) {
+            $where[] = 'c.track = %s';
+            $args[] = $track;
+        }
+
+        if (in_array($level, ['Seconde', 'Première', 'Terminale', 'Transversal'], true)) {
+            $where[] = 'c.level = %s';
+            $args[] = $level;
+        }
+
+        if ($search !== '') {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $where[] = '(c.domain LIKE %s OR c.competency LIKE %s OR c.slug LIKE %s)';
+            $args[] = $like;
+            $args[] = $like;
+            $args[] = $like;
+        }
+
+        $sql = "
+            SELECT
+                c.id,
+                c.domain,
+                c.track,
+                c.level,
+                c.competency,
+                c.slug,
+                c.active,
+                (
+                    SELECT COUNT(*)
+                    FROM {$tPost} pc
+                    WHERE pc.competency_id = c.id
+                ) AS course_count,
+                (
+                    SELECT COUNT(*)
+                    FROM {$tExo} ec
+                    WHERE ec.competency_id = c.id
+                ) AS exercise_count
+            FROM {$tComp} c
+            WHERE " . implode(' AND ', $where) . "
+            ORDER BY
+                FIELD(c.track, 'SNT', 'NSI', 'Transversal'),
+                FIELD(c.level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
+                c.domain ASC,
+                c.id ASC
+        ";
+
+        if (!empty($args)) {
+            $sql = $wpdb->prepare($sql, ...$args);
+        }
+
+        $rows = $wpdb->get_results($sql);
+        ?>
+        <div class="card" style="padding:16px;max-width:1200px;">
+            <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
+
+            <form method="get" style="margin-bottom:16px;">
+                <input type="hidden" name="page" value="ouinpo-suite-referentiel">
+                <input type="hidden" name="tab" value="competencies">
+
+                <select name="ref_track">
+                    <option value="">Toutes les pistes</option>
+                    <option value="SNT" <?php selected($track, 'SNT'); ?>>SNT</option>
+                    <option value="NSI" <?php selected($track, 'NSI'); ?>>NSI</option>
+                    <option value="Transversal" <?php selected($track, 'Transversal'); ?>>Transversal</option>
+                </select>
+
+                <select name="ref_level">
+                    <option value="">Tous les niveaux</option>
+                    <option value="Seconde" <?php selected($level, 'Seconde'); ?>>Seconde</option>
+                    <option value="Première" <?php selected($level, 'Première'); ?>>Première</option>
+                    <option value="Terminale" <?php selected($level, 'Terminale'); ?>>Terminale</option>
+                    <option value="Transversal" <?php selected($level, 'Transversal'); ?>>Transversal</option>
+                </select>
+
+                <input type="search" name="ref_s" value="<?php echo esc_attr($search); ?>" placeholder="Rechercher domaine / compétence / slug">
+
+                <?php submit_button('Filtrer', 'secondary', '', false); ?>
+            </form>
+
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th style="width:22%;">Domaine</th>
+                        <th style="width:10%;">Piste</th>
+                        <th style="width:10%;">Niveau</th>
+                        <th>Compétence</th>
+                        <th style="width:8%;">Cours</th>
+                        <th style="width:8%;">Exos</th>
+                        <th style="width:10%;">Actif</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!$rows): ?>
+                        <tr>
+                            <td colspan="7">Aucune compétence trouvée.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($rows as $row): ?>
+                            <tr>
+                                <td>
+                                    <strong><?php echo esc_html($row->domain); ?></strong><br>
+                                    <span class="ouinpo-suite-muted"><?php echo esc_html((string) $row->slug); ?></span>
+                                </td>
+                                <td><?php echo esc_html($row->track); ?></td>
+                                <td><?php echo esc_html($row->level); ?></td>
+                                <td><?php echo esc_html($row->competency); ?></td>
+                                <td><?php echo number_format_i18n((int) $row->course_count); ?></td>
+                                <td><?php echo number_format_i18n((int) $row->exercise_count); ?></td>
+                                <td><?php echo ((int) $row->active === 1) ? 'Oui' : 'Non'; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    public static function renderEvaluationsHub(): void
+    {
+        $tab = self::currentTab('suivi');
+
+        self::pageIntro('Évaluations', 'Devoirs surveillés et suivi des compétences des élèves.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-evaluations');
+
+        $tabs = [
+            'suivi' => 'Suivi des compétences',
+            'ds'    => 'Devoirs surveillés',
+        ];
+
+        if (ModuleSettings::isEnabled('submissions')) {
+            $tabs['depots'] = 'Dépôts élèves';
+        }
+
+        if (!isset($tabs[$tab])) {
+            $tab = 'suivi';
+        }
+
+        self::subTabs('ouinpo-suite-evaluations', $tabs, $tab);
+
+        if ($tab === 'suivi') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Suivi des compétences',
+                    'Accéder à l’écran de suivi par année, classe, domaine et élève.',
+                    admin_url('admin.php?page=ouinpo-competencies')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'ds') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Devoirs surveillés',
+                    'Créer et gérer les DS.',
+                    admin_url('admin.php?page=ouinpo-assessments')
+                );
+
+                self::quickAction(
+                    'Concepteur de devoirs',
+                    'Composer un devoir à partir des exercices du catalogue.',
+                    admin_url('admin.php?page=ouinpo-assessment-builder')
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'depots' && ModuleSettings::isEnabled('submissions')) {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Dépôts élèves',
+                    'Voir les travaux récents pour croiser évaluation et entraînement.',
+                    admin_url('edit.php?post_type=ouinpo_submission')
+                );
+                ?>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    public static function renderAiHub(): void
+    {
+        $aiTabs = [];
+
+        if (ModuleSettings::isEnabled('segfault')) {
+            $aiTabs['segfault'] = 'SegFault';
+        }
+
+        if (ModuleSettings::isEnabled('gate')) {
+            $aiTabs['gate'] = 'Gate';
+        }
+
+        if (ModuleSettings::isEnabled('rechtext')) {
+            $aiTabs['rechtext'] = 'Recherche textuelle';
+        }
+
+        $defaultTab = array_key_first($aiTabs) ?: 'none';
+        $tab = self::currentTab($defaultTab);
+
+        if (!isset($aiTabs[$tab])) {
+            $tab = $defaultTab;
+        }
+
+        $stats = self::dashboardStats();
+
+        self::pageIntro('IA & parcours', 'Outils d’accompagnement, recommandations, parcours et assistants.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-ai');
+
+        if (empty($aiTabs)) {
+            ?>
+            <div class="card" style="padding:16px;max-width:1200px;">
+                <h2 class="ouinpo-suite-card-title">IA & parcours</h2>
+                <p>Aucun module IA ou parcours n’est activé.</p>
+            </div>
+            <?php
+            self::endPage();
+            return;
+        }
+
+        self::subTabs('ouinpo-suite-ai', $aiTabs, $tab);
+
+        if ($tab === 'segfault') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::metricCard(
+                    'Suggestions',
+                    ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : '—'),
+                    'suggestions enregistrées',
+                    current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-segfault') : null
+                );
+
+                if (current_user_can('manage_options')) {
+                    self::quickAction(
+                        'Ouvrir SegFault',
+                        'Accéder aux outils, sources, indexation et paramètres SegFault.',
+                        admin_url('admin.php?page=ouinpo-segfault')
+                    );
+
+                    self::quickAction(
+                        'Suivi élèves SegFault',
+                        'Consulter le suivi des élèves lié à SegFault.',
+                        admin_url('admin.php?page=ouinpo-segfault-progress')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">SegFault</h3>
+                        <p>Les réglages SegFault sont réservés aux administrateurs.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'gate') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::metricCard(
+                    'Progressions Gate',
+                    ($stats['gate_progress'] !== null ? number_format_i18n($stats['gate_progress']) : '—'),
+                    'entrées de progression',
+                    current_user_can('list_users') ? admin_url('admin.php?page=ouinpo') : null
+                );
+
+                if (current_user_can('list_users')) {
+                    self::quickAction(
+                        'Ouvrir Gate',
+                        'Accéder au suivi global et aux certificats.',
+                        admin_url('admin.php?page=ouinpo')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Gate</h3>
+                        <p>L’accès à Gate est réservé aux profils autorisés.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'rechtext') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <div class="card" style="padding:16px;">
+                    <h3 class="ouinpo-suite-card-title">Recherche textuelle</h3>
+                    <p>
+                        Le module Recherche textuelle fournit principalement un shortcode pédagogique
+                        pour visualiser la recherche dans un texte. Il n’a pas encore d’écran d’administration dédié.
+                    </p>
+                    <p><code>[ouinpo_recherche_textuelle]</code></p>
+                </div>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    private static function renderDiagnosticHub(): void
+    {
+        global $wpdb;
+
+        $upload = wp_upload_dir();
+        $upload_ok = empty($upload['error']) && !empty($upload['basedir']) && is_writable((string) $upload['basedir']);
+
+        $environment = [
+            'Version OuInPo Suite' => defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '—',
+            'Version WordPress'    => get_bloginfo('version'),
+            'Version PHP'          => PHP_VERSION,
+            'Préfixe des tables'   => $wpdb->prefix,
+            'Jeu de caractères BD' => $wpdb->get_charset_collate(),
+            'Fuseau horaire'       => wp_timezone_string() ?: '—',
+            'Dossier uploads'      => $upload_ok ? 'Accessible en écriture' : 'À vérifier',
+        ];
+
+        $options = [
+            'Version BD suite'       => (string) get_option('ouinpo_suite_version', 'non installée'),
+            'Version BD exercices'   => (string) get_option('ouinpo_exo_db_version', 'non installée'),
+            'Version BD flashcards'  => (string) get_option('ouinpo_flashcards_db_version', 'non installée'),
+            'IA Albert'              => ((int) get_option('ouinpo_sf_albert_enabled', 0) === 1) ? 'Activée' : 'Désactivée',
+            'IA publique Albert'     => ((int) get_option('ouinpo_sf_public_albert_enabled', 0) === 1) ? 'Activée' : 'Désactivée',
+            'Clé Albert'             => trim((string) get_option('ouinpo_sf_albert_api_key', '')) !== '' ? 'Présente, valeur masquée' : 'Absente',
+            'Clé OpenAI'             => trim((string) get_option('ouinpo_sf_openai_api_key', '')) !== '' ? 'Présente, valeur masquée' : 'Absente',
+            'Index WXR SegFault'     => trim((string) get_option('ouinpo_sf_wxr_path', '')) !== '' ? 'Chemin configuré' : 'Non configuré',
+        ];
+        ?>
+        <div class="notice notice-info" style="padding:12px 16px;max-width:1200px;">
+            <p style="margin:0;">
+                <strong>Diagnostic de diffusion.</strong>
+                Cette page sert à vérifier qu’une installation OuInPo est saine et à repérer ce qui ne doit jamais partir dans une archive partagée : clés API, données élèves, logs, réponses, chemins locaux.
+            </p>
+        </div>
+
+        <div class="ouinpo-suite-grid" style="margin-top:16px;">
+            <?php
+            self::renderKeyValueCard('Environnement', $environment);
+            self::renderKeyValueCard('Options principales', $options);
+            ?>
+        </div>
+        <?php
+        self::renderTablesDiagnostic();
+        self::renderDistributionWarnings();
+    }
+
+    private static function renderKeyValueCard(string $title, array $rows): void
+    {
+        ?>
+        <div class="card" style="padding:16px;">
+            <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
+            <table class="widefat striped">
+                <tbody>
+                    <?php foreach ($rows as $label => $value): ?>
+                        <tr>
+                            <th style="width:42%;"><?php echo esc_html((string) $label); ?></th>
+                            <td><?php echo esc_html((string) $value); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    private static function diagnosticTableGroups(): array
+    {
+        global $wpdb;
+
+        $p = $wpdb->prefix;
+
+        return [
+            'Noyau OuInPo / Gate' => [
+                $p . 'ouinpo_progress'   => 'Progression Gate',
+                $p . 'ouinpo_logs'       => 'Logs Gate',
+                $p . 'ouinpo_signatures' => 'Signatures / certificats',
+            ],
+            'SegFault / parcours' => [
+                $p . 'ouin_sf_paths'        => 'Parcours individualisés',
+                $p . 'ouin_sf_path_items'   => 'Éléments de parcours',
+                $p . 'ouin_sf_path_targets' => 'Affectations de parcours',
+                $p . 'ouin_sf_suggestions'  => 'Suggestions IA / exercices',
+            ],
+            'Exercices' => [
+                $p . 'ouin_exo_academic_years'          => 'Années scolaires',
+                $p . 'ouin_exo_school_levels'           => 'Niveaux',
+                $p . 'ouin_exo_groups'                  => 'Classes / groupes',
+                $p . 'ouin_exo_group_members'           => 'Membres des classes',
+                $p . 'ouin_exo_exercises'               => 'Exercices',
+                $p . 'ouin_exo_exercise_school_level'   => 'Niveaux des exercices',
+                $p . 'ouin_exo_difficulties'            => 'Difficultés',
+                $p . 'ouin_exo_hints'                   => 'Indices',
+                $p . 'ouin_exo_solutions'               => 'Solutions',
+                $p . 'ouin_exo_competencies'            => 'Compétences BO',
+                $p . 'ouin_exo_exercise_competency'     => 'Liens exercices / compétences',
+                $p . 'ouin_exo_post_competency'         => 'Liens cours / compétences',
+                $p . 'ouin_exo_user_status'             => 'Statuts élèves',
+                $p . 'ouin_exo_user_reveals'            => 'Indices / solutions révélés',
+                $p . 'ouin_exo_user_competencies'       => 'Compétences élèves',
+                $p . 'ouin_exo_competency_teaching'     => 'Compétences vues en classe',
+                $p . 'ouin_exo_exam_meta'               => 'Métadonnées bac',
+                $p . 'ouin_exo_practical_calls'         => 'Appels pratiques',
+                $p . 'ouin_exo_practical_files'         => 'Fichiers pratiques',
+                $p . 'ouin_exo_practical_call_attempts' => 'Tentatives pratiques',
+                $p . 'ouin_exo_practical_call_status'   => 'Statuts pratiques',
+                $p . 'ouin_exo_badges'                  => 'Badges',
+                $p . 'ouin_exo_user_badges'             => 'Badges élèves',
+                $p . 'ouin_exo_assessments'             => 'Devoirs',
+                $p . 'ouin_exo_assessment_items'        => 'Exercices des devoirs',
+                $p . 'ouin_exo_assessment_competencies' => 'Compétences des devoirs',
+                $p . 'ouin_exo_assessment_results'      => 'Résultats des devoirs',
+                $p . 'ouin_exo_assessment_attendance'   => 'Présences aux devoirs',
+                $p . 'ouin_exo_ai_attempts'             => 'Tentatives IA',
+            ],
+            'Flashcards' => [
+                $p . 'ouin_fc_decks'           => 'Paquets de cartes',
+                $p . 'ouin_fc_cards'           => 'Cartes',
+                $p . 'ouin_fc_card_competency' => 'Liens cartes / compétences',
+                $p . 'ouin_fc_user_cards'      => 'État des cartes par élève',
+                $p . 'ouin_fc_reviews'         => 'Historique de révision',
+            ],
+        ];
+    }
+
+    private static function renderTablesDiagnostic(): void
+    {
+        ?>
+        <div class="card" style="padding:16px;max-width:1200px;margin-top:16px;">
+            <h2 class="ouinpo-suite-card-title">Tables attendues</h2>
+            <p class="ouinpo-suite-muted">
+                Les compteurs sont utiles pour vérifier une installation. Pour une archive de diffusion, les tables contenant des données élèves doivent être vides ou absentes du paquet exporté.
+            </p>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th style="width:22%;">Module</th>
+                        <th>Table</th>
+                        <th style="width:26%;">Rôle</th>
+                        <th style="width:12%;">État</th>
+                        <th style="width:10%;">Lignes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach (self::diagnosticTableGroups() as $group => $tables): ?>
+                        <?php foreach ($tables as $table => $label): ?>
+                            <?php
+                            $exists = self::tableExists($table);
+                            $count = $exists ? self::safeTableCount($table) : null;
+                            ?>
+                            <tr>
+                                <td><?php echo esc_html((string) $group); ?></td>
+                                <td><code><?php echo esc_html((string) $table); ?></code></td>
+                                <td><?php echo esc_html((string) $label); ?></td>
+                                <td><?php self::statusBadge($exists, 'OK', 'Absente'); ?></td>
+                                <td><?php echo $count === null ? '—' : esc_html(number_format_i18n($count)); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    private static function renderDistributionWarnings(): void
+    {
+        global $wpdb;
+
+        $sensitiveTables = [
+            $wpdb->prefix . 'ouinpo_logs'                    => 'réponses aux énigmes / exercices interactifs',
+            $wpdb->prefix . 'ouinpo_progress'                => 'progression Gate',
+            $wpdb->prefix . 'ouinpo_signatures'              => 'signatures et messages',
+            $wpdb->prefix . 'ouin_exo_group_members'         => 'composition des classes',
+            $wpdb->prefix . 'ouin_exo_user_status'           => 'statuts d’exercices par élève',
+            $wpdb->prefix . 'ouin_exo_user_reveals'          => 'indices et solutions révélés',
+            $wpdb->prefix . 'ouin_exo_user_competencies'     => 'compétences attribuées aux élèves',
+            $wpdb->prefix . 'ouin_exo_user_badges'           => 'badges attribués',
+            $wpdb->prefix . 'ouin_exo_assessment_results'    => 'résultats de devoirs',
+            $wpdb->prefix . 'ouin_exo_assessment_attendance' => 'présences aux devoirs',
+            $wpdb->prefix . 'ouin_exo_ai_attempts'           => 'traces de tentatives IA',
+            $wpdb->prefix . 'ouin_fc_user_cards'             => 'état des flashcards par élève',
+            $wpdb->prefix . 'ouin_fc_reviews'                => 'historique des révisions',
+            $wpdb->prefix . 'ouin_sf_suggestions'            => 'suggestions personnalisées',
+        ];
+        ?>
+        <div class="card" style="padding:16px;max-width:1200px;margin-top:16px;">
+            <h2 class="ouinpo-suite-card-title">Contrôle avant partage</h2>
+            <p class="ouinpo-suite-muted">
+                Ces éléments ne doivent pas être inclus dans une archive destinée à d’autres professeurs.
+            </p>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th>Élément sensible</th>
+                        <th style="width:16%;">Lignes</th>
+                        <th style="width:22%;">Conclusion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($sensitiveTables as $table => $label): ?>
+                        <?php $count = self::safeTableCount($table); ?>
+                        <tr>
+                            <td>
+                                <code><?php echo esc_html($table); ?></code><br>
+                                <span class="ouinpo-suite-muted"><?php echo esc_html($label); ?></span>
+                            </td>
+                            <td><?php echo $count === null ? '—' : esc_html(number_format_i18n($count)); ?></td>
+                            <td>
+                                <?php
+                                if ($count === null || $count === 0) {
+                                    self::statusBadge(true, 'OK', 'OK');
+                                } else {
+                                    self::statusBadge(false, 'Ne pas exporter', 'Ne pas exporter');
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr>
+                        <td><code>ouinpo_sf_albert_api_key</code><br><span class="ouinpo-suite-muted">clé API Albert</span></td>
+                        <td>—</td>
+                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_albert_api_key', '')) === '', 'Absente', 'Présente : ne pas exporter'); ?></td>
+                    </tr>
+                    <tr>
+                        <td><code>ouinpo_sf_openai_api_key</code><br><span class="ouinpo-suite-muted">clé API OpenAI</span></td>
+                        <td>—</td>
+                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_openai_api_key', '')) === '', 'Absente', 'Présente : ne pas exporter'); ?></td>
+                    </tr>
+                    <tr>
+                        <td><code>ouinpo_sf_wxr_path</code><br><span class="ouinpo-suite-muted">chemin local vers un export WordPress / RAG</span></td>
+                        <td>—</td>
+                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_wxr_path', '')) === '', 'Absent', 'Présent : chemin local à nettoyer'); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    private static function renderModulesSettings(): void
+    {
+        if (!current_user_can('manage_options')) {
+            ?>
+            <div class="notice notice-error">
+                <p>Ces réglages sont réservés aux administrateurs.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        $plugin = Bootstrap::makePlugin();
+
+        $modules = [];
+        foreach ($plugin->modules() as $module) {
+            $modules[$module->id()] = $module->name();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ouinpo_suite_modules_nonce'])) {
+            check_admin_referer('ouinpo_suite_modules', 'ouinpo_suite_modules_nonce');
+
+            $posted = isset($_POST['ouinpo_suite_enabled_modules']) && is_array($_POST['ouinpo_suite_enabled_modules'])
+                ? array_map('sanitize_key', wp_unslash($_POST['ouinpo_suite_enabled_modules']))
+                : [];
+
+            ModuleSettings::saveEnabledModules($posted);
+
+            wp_safe_redirect(add_query_arg(
+                [
+                    'page'    => 'ouinpo-suite-settings',
+                    'tab'     => 'modules',
+                    'updated' => '1',
+                ],
+                admin_url('admin.php')
+            ));
+            exit;
+        }
+
+        $enabled = ModuleSettings::getEnabledModules();
+        $locked  = ModuleSettings::lockedModules();
+
+        if (isset($_GET['updated']) && $_GET['updated'] === '1') {
+            echo '<div class="notice notice-success is-dismissible"><p>Réglages des modules enregistrés.</p></div>';
+        }
+        ?>
+        <div class="card" style="padding:16px;max-width:1200px;">
+            <h2 class="ouinpo-suite-card-title">Modules de la suite</h2>
+
+            <p class="ouinpo-suite-muted">
+                Désactiver un module empêche son chargement, ses menus, shortcodes ou fonctionnalités,
+                mais ne supprime aucune table ni aucune donnée.
+            </p>
+
+            <form method="post">
+                <?php wp_nonce_field('ouinpo_suite_modules', 'ouinpo_suite_modules_nonce'); ?>
+
+                <table class="widefat striped">
+                    <thead>
+                        <tr>
+                            <th style="width:22%;">État</th>
+                            <th>Module</th>
+                            <th style="width:35%;">Remarque</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($modules as $id => $name): ?>
+                            <?php
+                            $isLocked  = in_array($id, $locked, true);
+                            $isEnabled = in_array($id, $enabled, true) || $isLocked;
+                            ?>
+                            <tr>
+                                <td>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            name="ouinpo_suite_enabled_modules[]"
+                                            value="<?php echo esc_attr($id); ?>"
+                                            <?php checked($isEnabled); ?>
+                                            <?php disabled($isLocked); ?>
+                                        >
+                                        <?php echo $isEnabled ? 'Activé' : 'Désactivé'; ?>
+                                    </label>
+
+                                    <?php if ($isLocked): ?>
+                                        <input type="hidden" name="ouinpo_suite_enabled_modules[]" value="<?php echo esc_attr($id); ?>">
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <strong><?php echo esc_html($name); ?></strong><br>
+                                    <code><?php echo esc_html($id); ?></code>
+                                </td>
+                                <td>
+                                    <?php if ($id === 'exercises'): ?>
+                                        Socle de la suite. Non désactivable dans cette version.
+                                    <?php elseif ($id === 'segfault'): ?>
+                                        Chat, RAG, suggestions et parcours individualisés.
+                                    <?php elseif ($id === 'flashcards'): ?>
+                                        Cartes de révision et mémorisation.
+                                    <?php elseif ($id === 'submissions'): ?>
+                                        Dépôts élèves et ressources.
+                                    <?php elseif ($id === 'gate'): ?>
+                                        Énigmes, progression Gate et certificats.
+                                    <?php elseif ($id === 'rechtext'): ?>
+                                        Recherche textuelle.
+                                    <?php elseif ($id === 'meta'): ?>
+                                        Balises meta, Open Graph et image sociale.
+                                    <?php else: ?>
+                                        Module optionnel.
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+
+                <p><?php submit_button('Enregistrer les modules', 'primary', 'submit', false); ?></p>
+            </form>
+        </div>
+        <?php
+    }
+
+    private static function renderPedagogicalImportHub(): void
+    {
+        if (!current_user_can('manage_options')) {
+            ?>
+            <div class="notice notice-error">
+                <p>Import réservé aux administrateurs.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        $result = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ouinpo_pack_import_nonce'])) {
+            check_admin_referer('ouinpo_pack_import', 'ouinpo_pack_import_nonce');
+
+            $source = isset($_POST['ouinpo_pack_source'])
+                ? sanitize_text_field((string) wp_unslash($_POST['ouinpo_pack_source']))
+                : '';
+
+            if ($source === 'bundled') {
+                $pack = isset($_POST['ouinpo_pack_file'])
+                    ? sanitize_file_name((string) wp_unslash($_POST['ouinpo_pack_file']))
+                    : '';
+
+                $path = trailingslashit(OUINPO_SUITE_DIR) . 'packs/' . $pack;
+
+                if ($pack === '' || !str_ends_with($pack, '.json')) {
+                    $result = [
+                        'ok' => false,
+                        'message' => 'Pack intégré invalide.',
+                        'details' => [],
+                    ];
+                } else {
+                    $result = PedagogicalPackImporter::importFromFile($path);
+                }
+            } elseif ($source === 'upload') {
+                if (
+                    empty($_FILES['ouinpo_pack_upload'])
+                    || !isset($_FILES['ouinpo_pack_upload']['tmp_name'])
+                    || !is_uploaded_file((string) $_FILES['ouinpo_pack_upload']['tmp_name'])
+                ) {
+                    $result = [
+                        'ok' => false,
+                        'message' => 'Aucun fichier JSON envoyé.',
+                        'details' => [],
+                    ];
+                } else {
+                    $name = isset($_FILES['ouinpo_pack_upload']['name'])
+                        ? sanitize_file_name((string) $_FILES['ouinpo_pack_upload']['name'])
+                        : '';
+
+                    if (!str_ends_with($name, '.json')) {
+                        $result = [
+                            'ok' => false,
+                            'message' => 'Le fichier envoyé doit être un JSON.',
+                            'details' => [],
+                        ];
+                    } else {
+                        $result = PedagogicalPackImporter::importFromFile((string) $_FILES['ouinpo_pack_upload']['tmp_name']);
+                    }
+                }
+            } else {
+                $result = [
+                    'ok' => false,
+                    'message' => 'Source d’import inconnue.',
+                    'details' => [],
+                ];
+            }
+        }
+
+        $packsDir = trailingslashit(OUINPO_SUITE_DIR) . 'packs/';
+        $bundledPacks = [];
+
+        if (is_dir($packsDir)) {
+            foreach (glob($packsDir . '*.json') ?: [] as $file) {
+                $base = basename($file);
+
+                if ($base === 'ouinpo-pack.schema.json') {
+                    continue;
+                }
+
+                $bundledPacks[] = $base;
+            }
+
+            sort($bundledPacks);
+        }
+
+        if ($result !== null) {
+            $class = !empty($result['ok']) ? 'notice notice-success' : 'notice notice-error';
+            ?>
+            <div class="<?php echo esc_attr($class); ?> is-dismissible">
+                <p><strong><?php echo esc_html((string) $result['message']); ?></strong></p>
+
+                <?php if (!empty($result['details']) && is_array($result['details'])): ?>
+                    <ul style="list-style:disc;margin-left:20px;">
+                        <?php foreach ($result['details'] as $key => $value): ?>
+                            <?php if ($key === 'warnings' && is_array($value)): ?>
+                                <li>
+                                    <strong>Avertissements :</strong>
+                                    <?php echo esc_html((string) count($value)); ?>
+                                </li>
+                            <?php elseif (!is_array($value)): ?>
+                                <li>
+                                    <?php echo esc_html((string) $key); ?> :
+                                    <?php echo esc_html((string) $value); ?>
+                                </li>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </ul>
+
+                    <?php if (!empty($result['details']['warnings']) && is_array($result['details']['warnings'])): ?>
+                        <details>
+                            <summary>Voir les avertissements</summary>
+                            <ul style="list-style:disc;margin-left:20px;">
+                                <?php foreach ($result['details']['warnings'] as $warning): ?>
+                                    <li><?php echo esc_html((string) $warning); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </details>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+            <?php
+        }
+
+        ?>
+        <div class="card" style="padding:16px;max-width:1200px;">
+            <h2 class="ouinpo-suite-card-title">Import pédagogique</h2>
+
+            <p class="ouinpo-suite-muted">
+                Cette version importe uniquement les niveaux, difficultés et compétences BO.
+                Les exercices, flashcards et sujets pratiques seront traités dans les versions suivantes de l’importeur.
+            </p>
+
+            <form method="post" enctype="multipart/form-data">
+                <?php wp_nonce_field('ouinpo_pack_import', 'ouinpo_pack_import_nonce'); ?>
+
+                <table class="form-table" role="presentation">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Pack intégré</th>
+                            <td>
+                                <label>
+                                    <input type="radio" name="ouinpo_pack_source" value="bundled" checked>
+                                    Importer un pack fourni avec l’extension
+                                </label>
+
+                                <br><br>
+
+                                <select name="ouinpo_pack_file">
+                                    <?php if (!$bundledPacks): ?>
+                                        <option value="">Aucun pack disponible</option>
+                                    <?php else: ?>
+                                        <?php foreach ($bundledPacks as $pack): ?>
+                                            <option value="<?php echo esc_attr($pack); ?>">
+                                                <?php echo esc_html($pack); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Fichier externe</th>
+                            <td>
+                                <label>
+                                    <input type="radio" name="ouinpo_pack_source" value="upload">
+                                    Importer un fichier JSON depuis l’ordinateur
+                                </label>
+
+                                <br><br>
+
+                                <input type="file" name="ouinpo_pack_upload" accept="application/json,.json">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <?php submit_button('Importer le pack'); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    public static function renderBadgesHub(): void
+    {
+        $tab = self::currentTab('catalogue');
+
+        self::pageIntro(
+            'Badges',
+            'Gestion des badges, titres et attributions manuelles.'
+        );
+
+        self::tabs(self::mainTabs(), 'ouinpo-suite-badges');
+
+        self::subTabs('ouinpo-suite-badges', [
+            'catalogue'    => 'Catalogue des badges',
+            'attributions' => 'Attributions manuelles',
+        ], $tab);
+
+        if ($tab === 'catalogue') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Catalogue des badges',
+                    'Créer, modifier et organiser les badges disponibles.',
+                    admin_url('admin.php?page=ouinpo-badges')
+                );
+
+                self::quickAction(
+                    'Attributions manuelles',
+                    'Attribuer ou retirer des badges à des élèves.',
+                    admin_url('admin.php?page=ouinpo-badge-assignments')
+                );
+                ?>
+            </div>
+            <?php
+
+        } elseif ($tab === 'attributions') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Attributions manuelles',
+                    'Attribuer un badge à un élève, une classe ou vérifier les badges existants.',
+                    admin_url('admin.php?page=ouinpo-badge-assignments')
+                );
+
+                self::quickAction(
+                    'Catalogue des badges',
+                    'Revenir à la gestion des badges.',
+                    admin_url('admin.php?page=ouinpo-badges')
+                );
+                ?>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+
+    public static function renderSettingsHub(): void
+    {
+        $tab = self::currentTab('modules');
+
+        self::pageIntro('Réglages', 'Paramètres, diagnostic et maintenance légère de la suite.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-settings');
+
+        $settingsTabs = [
+            'modules' => 'Modules',
+        ];
+
+        if (ModuleSettings::isEnabled('meta')) {
+            $settingsTabs['meta'] = 'Meta & Social';
+        }
+
+        $settingsTabs['import'] = 'Import pédagogique';
+        $settingsTabs['diagnostic'] = 'Diagnostic';
+        $settingsTabs['maintenance'] = 'Maintenance';
+
+        if (!isset($settingsTabs[$tab])) {
+            $tab = 'modules';
+        }
+
+        self::subTabs('ouinpo-suite-settings', $settingsTabs, $tab);
+
+        if ($tab === 'modules') {
+            self::renderModulesSettings();
+        } elseif ($tab === 'meta' && ModuleSettings::isEnabled('meta')) {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (current_user_can('manage_options')) {
+                    self::quickAction(
+                        'Meta & Social',
+                        'Gérer les balises meta, Open Graph et réglages sociaux.',
+                        admin_url('admin.php?page=ouinpo-meta-social')
+                    );
+                } else {
+                    ?>
+                    <div class="card" style="padding:16px;">
+                        <h3 class="ouinpo-suite-card-title">Meta & Social</h3>
+                        <p>Ces réglages avancés sont réservés aux administrateurs.</p>
+                    </div>
+                    <?php
+                }
+
+                self::quickAction(
+                    'Retour au tableau de bord',
+                    'Revenir à la vue d’ensemble de la suite.',
+                    admin_url('admin.php?page=' . self::ROOT_SLUG)
+                );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'import') {
+            self::renderPedagogicalImportHub();
+
+        } elseif ($tab === 'diagnostic') {
+            self::renderDiagnosticHub();
+        } elseif ($tab === 'maintenance') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                self::quickAction(
+                    'Importer des exercices',
+                    'Accéder rapidement à l’écran d’import.',
+                    admin_url('admin.php?page=ouinpo-import-exercises')
+                );
+
+                self::quickAction(
+                    'Options exercices',
+                    'Accéder aux réglages spécifiques du module Exercices.',
+                    admin_url('admin.php?page=ouinpo-suite-contents&tab=options')
+                );
+
+                if (ModuleSettings::isEnabled('submissions')) {
+                    self::quickAction(
+                        'Voir les dépôts élèves',
+                        'Consulter les productions récentes.',
+                        admin_url('edit.php?post_type=ouinpo_submission')
+                    );
+
+                    self::quickAction(
+                        'Voir les ressources prof',
+                        'Accéder aux ressources pédagogiques.',
+                        admin_url('edit.php?post_type=ouinpo_resource')
+                    );
+                }
+
+                if (current_user_can('manage_options') && ModuleSettings::isEnabled('segfault')) {
+                    self::quickAction(
+                        'SegFault',
+                        'Accéder aux réglages et outils SegFault.',
+                        admin_url('admin.php?page=ouinpo-segfault')
+                    );
+                }
+                ?>
+            </div>
+
+            <div class="card" style="padding:16px;max-width:1200px;margin-top:16px;">
+                <h2 class="ouinpo-suite-card-title">Rappel</h2>
+                <p>Les opérations lourdes ou sensibles restent volontairement sur leurs écrans métier d’origine. Cette page sert surtout de point d’entrée, de contrôle et d’accès rapide.</p>
+            </div>
+            <?php
+        }
+
+        self::endPage();
+    }
+}

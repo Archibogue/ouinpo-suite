@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "ouinpo-pack-test-sujet-pratique",
+    "title": "Pack de test sujet pratique",
+    "description": "Pack de test pour vérifier l'import d'un sujet pratique avec appels.",
+    "author": "OuInPo",
+    "license": "Contenu de test non destiné à la diffusion",
+    "created_at": "2026-05-01"
+  },
+  "school_levels": [],
+  "difficulties": [],
+  "competencies": [
+    {
+      "slug": "nsi-terminale-pratique-test-001",
+      "track": "NSI",
+      "level": "Terminale",
+      "cycle": "terminale",
+      "domain": "Algorithmique",
+      "domain_slug": "algorithmique",
+      "competency": "Écrire et tester un programme répondant à une spécification.",
+      "capacity": "Décomposer un problème en fonctions simples.",
+      "example": "Épreuve pratique de type bac.",
+      "reference_url": "",
+      "active": 1
+    }
+  ],
+  "exercises": [
+    {
+      "title": "Sujet pratique — La somme des nombres pairs",
+      "slug": "sujet-pratique-somme-pairs",
+      "level_slug": "terminale",
+      "difficulty_slug": "confirme",
+      "statement": "<p>On dispose d’une liste d’entiers. Le but est d’écrire une fonction qui calcule la somme des valeurs paires.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "nsi-terminale-pratique-test-001"
+      ],
+      "hints": [],
+      "solutions": [],
+      "exam_meta": {
+        "exam_type": "practical_subject",
+        "source_type": "type_bac",
+        "session_label": "",
+        "year_label": "",
+        "center_label": "",
+        "theme_bac": "algorithmique",
+        "bac_format": "ecriture_complete",
+        "estimated_minutes": 50,
+        "is_exam_like": 1,
+        "subject_group": "test-pratique",
+        "sort_in_subject": 1
+      },
+      "practical_calls": [
+        {
+          "call_order": 1,
+          "title": "Écrire la fonction",
+          "prompt_html": "<p>Écris une fonction <code>somme_pairs(tab)</code> qui renvoie la somme des entiers pairs présents dans le tableau <code>tab</code>.</p>",
+          "ai_rubric": "La fonction doit parcourir le tableau, tester la parité avec modulo 2, accumuler les valeurs paires et renvoyer la somme.",
+          "answer_mode": "code",
+          "max_points": 10,
+          "is_active": 1
+        },
+        {
+          "call_order": 2,
+          "title": "Tester la fonction",
+          "prompt_html": "<p>Propose au moins trois tests pertinents, dont un tableau sans nombre pair.</p>",
+          "ai_rubric": "Les tests doivent couvrir un cas standard, un cas sans pair et un cas avec nombres négatifs ou zéro.",
+          "answer_mode": "mixed",
+          "max_points": 5,
+          "is_active": 1
+        }
+      ],
+      "practical_files": [
+        {
+          "label": "Sujet de test",
+          "file_url": "",
+          "file_kind": "subject",
+          "file_order": 1,
+          "practical_call_order": null
+        }
+      ]
+    }
+  ],
+  "flashcards": [],
+  "badges": []
+}
