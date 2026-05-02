@@ -758,3 +758,76 @@ button[data-ouinpo-sf-open]:hover {
   border-left: 4px solid #f59e0b;
   color: #78350f;
 }
+
+/* ==========================================================
+   Flashcards — thème sobre
+   ========================================================== */
+
+.ouinpo-fc-app {
+  color: #111827;
+  background: #ffffff;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ouinpo-fc-header {
+  border-bottom-color: #e5e7eb;
+}
+
+.ouinpo-fc-subtitle,
+.ouinpo-fc-deck-card p,
+.ouinpo-fc-deck-meta,
+.ouinpo-fc-prep-text,
+.ouinpo-fc-session-summary,
+.ouinpo-fc-context-summary,
+.ouinpo-fc-kpi-label {
+  color: #6b7280;
+  opacity: 1;
+}
+
+.ouinpo-fc-toolbar,
+.ouinpo-fc-deck-tools,
+.ouinpo-fc-prep-head,
+.ouinpo-fc-session-head,
+.ouinpo-fc-kpi,
+.ouinpo-fc-chooser,
+.ouinpo-fc-card,
+.ouinpo-fc-login,
+.ouinpo-fc-deck-card {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.ouinpo-fc-pill,
+.ouinpo-fc-meta span,
+.ouinpo-fc-deck-meta span {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.ouinpo-fc-toolbar select {
+  background: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+.ouinpo-fc-toolbar select:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: #2563eb;
+}
+
+.ouinpo-fc-kpi-value {
+  color: #2563eb;
+}
+
+.ouinpo-fc-back {
+  border-top-color: #d1d5db;
+}
+
+.ouinpo-fc-deck-card.is-selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+}

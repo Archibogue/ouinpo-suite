@@ -1,0 +1,330 @@
+.ouinpo-rt {
+
+    margin: 2rem 0;
+
+    padding: 1.25rem;
+
+    border: 1px solid rgba(201, 167, 92, 0.35);
+
+    border-radius: 14px;
+
+    background: rgba(20, 20, 22, 0.92);
+
+    color: #f3ead7;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+}
+
+.ouinpo-rt__title {
+
+    margin: 0 0 0.35rem;
+
+    color: #f0d9a1;
+
+}
+
+.ouinpo-rt__subtitle {
+
+    margin: 0 0 1rem;
+
+    opacity: 0.9;
+
+}
+
+.ouinpo-rt__controls,
+
+.ouinpo-rt__buttons,
+
+.ouinpo-rt__panels {
+
+    display: grid;
+
+    gap: 0.9rem;
+
+}
+
+.ouinpo-rt__controls {
+
+    grid-template-columns: 1fr 1fr 160px;
+
+    margin-bottom: 1rem;
+
+}
+
+.ouinpo-rt__buttons {
+
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+    margin-bottom: 1rem;
+
+}
+
+.ouinpo-rt__field label {
+
+    display: block;
+
+    font-weight: 700;
+
+    margin-bottom: 0.35rem;
+
+    color: #f0d9a1;
+
+}
+
+.ouinpo-rt__input,
+
+.ouinpo-rt button {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    border-radius: 10px;
+
+    border: 1px solid rgba(201, 167, 92, 0.4);
+
+    background: rgba(255,255,255,0.06);
+
+    color: #f7f2e8;
+
+    padding: 0.7rem 0.8rem;
+
+    font-size: 0.95rem;
+
+}
+
+.ouinpo-rt button {
+
+    cursor: pointer;
+
+    font-weight: 700;
+
+    transition: transform 0.15s ease, background 0.15s ease;
+
+}
+
+.ouinpo-rt button:hover {
+
+    transform: translateY(-1px);
+
+    background: rgba(201, 167, 92, 0.12);
+
+}
+
+.ouinpo-rt__status,
+
+.ouinpo-rt__stats,
+
+.ouinpo-rt__explain,
+
+.ouinpo-rt__table-wrap {
+
+    margin-top: 0.75rem;
+
+    padding: 0.8rem;
+
+    border-radius: 10px;
+
+    background: rgba(255,255,255,0.05);
+
+}
+
+.ouinpo-rt__status {
+
+    margin-bottom: 1rem;
+
+    border-left: 4px solid #c9a75c;
+
+}
+
+.ouinpo-rt__panels {
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    align-items: start;
+
+}
+
+.ouinpo-rt__panel {
+
+    min-width: 0;
+
+    padding: 1rem;
+
+    border-radius: 12px;
+
+    background: rgba(255,255,255,0.04);
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+}
+
+.ouinpo-rt__panel h4,
+
+.ouinpo-rt__panel h5 {
+
+    margin-top: 0;
+
+    color: #f0d9a1;
+
+}
+
+.ouinpo-rt__viz {
+
+    overflow-x: auto;
+
+    padding-bottom: 0.5rem;
+
+}
+
+.ouinpo-rt__row {
+
+    display: flex;
+
+    gap: 0.2rem;
+
+    margin: 0.3rem 0;
+
+    min-height: 2.3rem;
+
+    align-items: center;
+
+}
+
+.ouinpo-rt__label {
+
+    min-width: 72px;
+
+    font-weight: 700;
+
+    color: #f0d9a1;
+
+}
+
+.ouinpo-rt__cell {
+
+    width: 2rem;
+
+    height: 2rem;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 8px;
+
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    font-size: 0.95rem;
+
+    border: 1px solid rgba(255,255,255,0.14);
+
+    background: rgba(255,255,255,0.04);
+
+    flex: 0 0 2rem;
+
+}
+
+.ouinpo-rt__cell--empty {
+
+    visibility: hidden;
+
+}
+
+.ouinpo-rt__cell--match {
+
+    background: rgba(48, 144, 81, 0.28);
+
+    border-color: rgba(84, 196, 121, 0.8);
+
+}
+
+.ouinpo-rt__cell--mismatch {
+
+    background: rgba(153, 49, 49, 0.28);
+
+    border-color: rgba(233, 108, 108, 0.85);
+
+}
+
+.ouinpo-rt__cell--active {
+
+    outline: 2px solid #f0d9a1;
+
+    outline-offset: 1px;
+
+}
+
+.ouinpo-rt__cell--found {
+
+    background: rgba(102, 84, 190, 0.35);
+
+    border-color: rgba(171, 150, 255, 0.9);
+
+}
+
+.ouinpo-rt__meta {
+
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+
+    gap: 0.5rem;
+
+}
+
+.ouinpo-rt__badge {
+
+    padding: 0.45rem 0.6rem;
+
+    border-radius: 8px;
+
+    background: rgba(255,255,255,0.04);
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+}
+
+.ouinpo-rt__bc-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    font-size: 0.95rem;
+
+}
+
+.ouinpo-rt__bc-table th,
+
+.ouinpo-rt__bc-table td {
+
+    border: 1px solid rgba(255,255,255,0.12);
+
+    padding: 0.45rem 0.55rem;
+
+    text-align: center;
+
+}
+
+.ouinpo-rt__bc-table th {
+
+    color: #f0d9a1;
+
+}
+
+@media (max-width: 900px) {
+
+    .ouinpo-rt__controls,
+
+    .ouinpo-rt__panels {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+

@@ -27,6 +27,9 @@ final class Shortcodes
         ], $atts, 'ouinpo_flashcards');
 
         wp_enqueue_style('ouinpo-flashcards');
+        if (wp_style_is('ouinpo-theme-css', 'registered')) {
+            wp_enqueue_style('ouinpo-theme-css');
+        }
         wp_enqueue_script('ouinpo-flashcards');
 
         $config = [

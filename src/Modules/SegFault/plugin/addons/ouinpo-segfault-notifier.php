@@ -34,17 +34,34 @@ class OuInPo_Segfault_Notifier {
 
         // CSS badge
 
-        $css = '.sf-badge{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#d00;color:#fff;font:700 11px/18px system-ui,Arial,sans-serif;text-align:center}
+        $css_rel = 'assets/css/front/segfault-notifier.css';
 
-.sf-launcher, #segfault-launcher{position:relative}';
+        $css_path = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR . $css_rel
+            : '';
 
+        $css_url = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL . $css_rel
+            : '';
 
+        if ($css_url !== '') {
+            $css_ver = ($css_path !== '' && file_exists($css_path))
+                ? (string) filemtime($css_path)
+                : self::VERSION;
 
-        wp_register_style('ouinpo-segfault-notify-css', false, array(), self::VERSION);
+            $deps = [];
 
-        wp_enqueue_style('ouinpo-segfault-notify-css');
+            if (wp_style_is('ouinpo-core-css', 'registered')) {
+                $deps[] = 'ouinpo-core-css';
+            }
 
-        wp_add_inline_style('ouinpo-segfault-notify-css', $css);
+            wp_enqueue_style(
+                'ouinpo-segfault-notifier',
+                $css_url,
+                $deps,
+                $css_ver
+            );
+        }
 
 
 

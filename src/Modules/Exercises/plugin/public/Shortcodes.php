@@ -3326,48 +3326,6 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
       $out .= '
 
-      <style>
-
-        .ouinpo-palmares-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;}
-
-        .ouinpo-palmares-year-filter{font-size:0.9rem;}
-
-        .ouinpo-palmares-year-filter select{min-width:150px;padding:0.25rem 0.55rem;border-radius:8px;border:1px solid rgba(255,215,128,0.6);background:rgba(10,10,20,0.85);color:#f7f3e9;}
-
-        .ouinpo-palmares .ouinpo-badges-grid{display:flex;flex-direction:column;gap:1.4rem;}
-
-        .ouinpo-palmares .ouinpo-badge-item{padding:1.1rem 1.4rem;}
-
-        .ouinpo-palmares-layout{display:grid;grid-template-columns:170px minmax(0,1fr);gap:1.6rem;align-items:center;}
-
-        .ouinpo-palmares-left{display:flex;justify-content:center;align-items:center;}
-
-        .ouinpo-palmares-right{display:flex;flex-direction:column;gap:0.4rem;}
-
-        .ouinpo-palmares .ouinpo-badge-bigimg{width:140px;height:140px;}
-
-        .ouinpo-palmares .ouinpo-badge-earned{margin-top:0.4rem;text-align:left;font-size:0.85rem;}
-
-        .ouinpo-palmares-count{font-weight:600;margin-bottom:0.3rem;}
-
-        .ouinpo-palmares-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.25rem 1.2rem;}
-
-        .ouinpo-palmares-list li{white-space:normal;}
-
-        @media (max-width:800px){
-
-          .ouinpo-palmares-header{flex-direction:column;align-items:flex-start;}
-
-          .ouinpo-palmares-layout{grid-template-columns:1fr;text-align:center;}
-
-          .ouinpo-palmares-right{align-items:center;}
-
-          .ouinpo-palmares .ouinpo-badge-earned{text-align:left;width:100%;}
-
-        }
-
-      </style>
-
       <script>
 
         (function(){

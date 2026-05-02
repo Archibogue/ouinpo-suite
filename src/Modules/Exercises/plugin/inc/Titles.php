@@ -166,7 +166,18 @@ class Titles {
 
         }
 
+        $css_rel = 'assets/css/front/titles.css';
+        $css_path = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR . $css_rel : '';
+        $css_url  = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL . $css_rel : '';
 
+        wp_enqueue_style(
+            'ouinpo-titles-css',
+            $css_url,
+            [],
+            ($css_path !== '' && file_exists($css_path))
+                ? (string) filemtime($css_path)
+                : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0')
+        );
 
         $user_id = get_current_user_id();
 
@@ -312,45 +323,7 @@ class Titles {
 
         </div>
 
-        <style>
-
-            .ouinpo-badges-grid {
-
-                display: grid;
-
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-
-                gap: 1rem;
-
-                margin-top: 1rem;
-
-            }
-
-            .ouinpo-badge-card {
-
-                border: 1px solid rgba(255,255,255,0.2);
-
-                padding: 0.75rem 1rem;
-
-                background: rgba(0,0,0,0.15);
-
-            }
-
-            .ouinpo-badge-card h4 {
-
-                margin-top: 0;
-
-                margin-bottom: 0.5rem;
-
-            }
-
-            .ouinpo-badge-card button {
-
-                margin-top: 0.5rem;
-
-            }
-
-        </style>
+ 
 
         <?php
 

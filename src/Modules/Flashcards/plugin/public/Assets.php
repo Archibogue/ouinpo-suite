@@ -33,27 +33,35 @@ final class Assets
             ? OUINPO_SUITE_VERSION
             : '1.0.0';
 
-        $css = 'assets/css/front/flashcards.css';
-        $js  = 'src/Modules/Flashcards/plugin/public/assets/js/flashcards.js';
+        $files = [
+            'css' => 'assets/css/front/flashcards.css',
+            'js'  => 'src/Modules/Flashcards/plugin/public/assets/js/flashcards.js',
+        ];
 
-        $css_ver = file_exists($base_path . $css)
-            ? (string) filemtime($base_path . $css)
+        $css_ver = file_exists($base_path . $files['css'])
+            ? (string) filemtime($base_path . $files['css'])
             : $fallback_version;
 
-        $js_ver = file_exists($base_path . $js)
-            ? (string) filemtime($base_path . $js)
+        $js_ver = file_exists($base_path . $files['js'])
+            ? (string) filemtime($base_path . $files['js'])
             : $fallback_version;
+
+        $deps = [];
+
+        if (wp_style_is('ouinpo-core-css', 'registered')) {
+            $deps[] = 'ouinpo-core-css';
+        }
 
         wp_register_style(
             'ouinpo-flashcards',
-            $base_url . $css,
-            [],
+            $base_url . $files['css'],
+            $deps,
             $css_ver
         );
 
         wp_register_script(
             'ouinpo-flashcards',
-            $base_url . $js,
+            $base_url . $files['js'],
             [],
             $js_ver,
             true
