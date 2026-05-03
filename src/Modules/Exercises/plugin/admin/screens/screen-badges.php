@@ -221,81 +221,6 @@ class Screen_Badges {
             <div class="notice notice-<?php echo esc_attr($notice_type); ?> is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
         <?php endif; ?>
 
-        <style>
-            .ouinpo-badge-admin-grid {
-                display: grid;
-                grid-template-columns: minmax(380px, 520px) 1fr;
-                gap: 24px;
-                align-items: start;
-                margin-top: 16px;
-            }
-            .ouinpo-badge-admin-card {
-                background: #fff;
-                border: 1px solid #dcdcde;
-                border-radius: 8px;
-                padding: 18px;
-                box-shadow: 0 1px 2px rgba(0,0,0,.04);
-            }
-            .ouinpo-badge-preview-box {
-                margin-top: 8px;
-                min-height: 56px;
-            }
-            .ouinpo-badge-preview-box img {
-                max-width: 96px;
-                max-height: 96px;
-                height: auto;
-                display: block;
-                border: 1px solid #ccd0d4;
-                background: #fff;
-                padding: 4px;
-                border-radius: 6px;
-            }
-            .ouinpo-badge-actions {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-            .ouinpo-badge-toolbar {
-                display: flex;
-                gap: 10px;
-                align-items: end;
-                flex-wrap: wrap;
-                margin: 14px 0 18px;
-            }
-            .ouinpo-badge-toolbar .field {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-            .ouinpo-badge-list-thumb {
-                width: 54px;
-                text-align: center;
-            }
-            .ouinpo-badge-list-thumb img {
-                max-width: 42px;
-                max-height: 42px;
-                height: auto;
-                display: inline-block;
-                border: 1px solid #ccd0d4;
-                background: #fff;
-                padding: 2px;
-                border-radius: 6px;
-            }
-            .ouinpo-badge-muted {
-                color: #646970;
-            }
-            .ouinpo-inline-form {
-                display: inline-block;
-                margin: 0;
-            }
-            @media (max-width: 1100px) {
-                .ouinpo-badge-admin-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-        </style>
-
         <h1>Badges</h1>
         <p class="ouinpo-badge-muted">
             Création, modification et choix d’image via la médiathèque WordPress.
@@ -309,7 +234,7 @@ class Screen_Badges {
 
         <div class="ouinpo-badge-admin-grid">
             <div class="ouinpo-badge-admin-card">
-                <h2 style="margin-top:0;"><?php echo $editing ? 'Modifier un badge' : 'Ajouter un badge'; ?></h2>
+                <h2 class="ouinpo-badge-card-title"><?php echo $editing ? 'Modifier un badge' : 'Ajouter un badge'; ?></h2>
 
                 <form method="post">
                     <?php wp_nonce_field('save_badge', 'ouin_badge_nonce'); ?>
@@ -362,7 +287,7 @@ class Screen_Badges {
             </div>
 
             <div class="ouinpo-badge-admin-card">
-                <h2 style="margin-top:0;">Badges existants</h2>
+                <h2 class="ouinpo-badge-card-title">Badges existants</h2>
 
                 <form method="get" class="ouinpo-badge-toolbar">
                     <input type="hidden" name="page" value="ouinpo-badges">
@@ -403,7 +328,7 @@ class Screen_Badges {
                             <th>Slug</th>
                             <th>Thème</th>
                             <th>Attribué</th>
-                            <th style="width:190px;">Actions</th>
+                            <th class="ouinpo-badge-actions-col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -420,7 +345,7 @@ class Screen_Badges {
                                 <td>
                                     <strong><?php echo esc_html($b->title); ?></strong>
                                     <?php if (!empty($b->description)): ?>
-                                        <div class="ouinpo-badge-muted" style="margin-top:4px;">
+                                        <div class="ouinpo-badge-muted ouinpo-badge-description-excerpt">
                                             <?php echo esc_html(wp_trim_words(wp_strip_all_tags($b->description), 18)); ?>
                                         </div>
                                     <?php endif; ?>

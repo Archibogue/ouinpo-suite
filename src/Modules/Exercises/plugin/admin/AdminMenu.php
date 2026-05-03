@@ -23,6 +23,10 @@ class AdminMenu {
                 'handle' => 'ouinpo-badges-admin',
                 'file'   => 'assets/css/admin/badges.css',
             ],
+            'ouinpo-badge-assignments' => [
+                'handle' => 'ouinpo-badges-admin',
+                'file'   => 'assets/css/admin/badges.css',
+            ],
         ];
 
         if (!isset($styles[$page])) {
