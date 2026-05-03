@@ -203,59 +203,6 @@ final class SuiteAdmin
 
     public static function adminStyles(): void
     {
-        ?>
-        <style>
-            .ouinpo-suite-wrap .card {
-                border-radius: 10px;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-                gap: 16px;
-                max-width: 1200px;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-grid-wide {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                gap: 16px;
-                max-width: 1200px;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-grid-compact {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                gap: 16px;
-                max-width: 1200px;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-muted {
-                color: #50575e;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-section {
-                margin-top: 28px;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-card-title {
-                margin-top: 0;
-                margin-bottom: 8px;
-            }
-
-            .ouinpo-suite-wrap .ouinpo-suite-empty {
-                padding: 16px;
-                background: #fff;
-                border: 1px solid #dcdcde;
-                border-radius: 10px;
-                max-width: 1200px;
-            }
-
-            .ouinpo-suite-wrap .nav-tab-wrapper {
-                margin-bottom: 16px;
-            }
-        </style>
-        <?php
     }
 
     private static function hasAiOrPathModule(): bool
@@ -332,7 +279,7 @@ final class SuiteAdmin
             return;
         }
 
-        echo '<nav class="nav-tab-wrapper" style="margin:12px 0 18px 0;">';
+        echo '<nav class="nav-tab-wrapper ouinpo-suite-tabs">';
 
         foreach ($tabs as $slug => $label) {
             $class = ($slug === $current) ? ' nav-tab-active' : '';
@@ -351,16 +298,16 @@ final class SuiteAdmin
     private static function metricCard(string $title, string $value, string $caption = '', ?string $url = null): void
     {
         ?>
-        <div class="card" style="padding:16px;">
+        <div class="card ouinpo-suite-card">
             <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
-            <div style="font-size:28px;font-weight:700;line-height:1.1;margin-bottom:8px;">
+            <div class="ouinpo-suite-metric-value">
                 <?php echo esc_html($value); ?>
             </div>
             <?php if ($caption !== ''): ?>
-                <p class="ouinpo-suite-muted" style="margin:0 0 12px 0;"><?php echo esc_html($caption); ?></p>
+                <p class="ouinpo-suite-muted ouinpo-suite-card-caption"><?php echo esc_html($caption); ?></p>
             <?php endif; ?>
             <?php if ($url): ?>
-                <p style="margin:0;">
+                <p class="ouinpo-suite-no-margin">
                     <a class="button button-secondary" href="<?php echo esc_url($url); ?>">Voir</a>
                 </p>
             <?php endif; ?>
@@ -371,10 +318,10 @@ final class SuiteAdmin
     private static function quickAction(string $title, string $text, string $url): void
     {
         ?>
-        <div class="card" style="padding:16px;">
+        <div class="card ouinpo-suite-card">
             <h3 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h3>
             <p><?php echo esc_html($text); ?></p>
-            <p style="margin-bottom:0;">
+            <p class="ouinpo-suite-bottomless">
                 <a class="button button-primary" href="<?php echo esc_url($url); ?>">Ouvrir</a>
             </p>
         </div>
@@ -384,15 +331,9 @@ final class SuiteAdmin
     private static function statusBadge(bool $ok, string $okLabel = 'OK', string $koLabel = 'À vérifier'): void
     {
         $label  = $ok ? $okLabel : $koLabel;
-        $bg     = $ok ? '#edfaef' : '#fff4e5';
-        $border = $ok ? '#46b450' : '#dba617';
-        $color  = $ok ? '#1e4620' : '#6b4f00';
+        $class = $ok ? 'ouinpo-suite-status ouinpo-suite-status--ok' : 'ouinpo-suite-status ouinpo-suite-status--warning';
 
-        echo '<span style="display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid '
-            . esc_attr($border)
-            . ';background:' . esc_attr($bg)
-            . ';color:' . esc_attr($color)
-            . ';font-size:12px;font-weight:600;">'
+        echo '<span class="' . esc_attr($class) . '">'
             . esc_html($label)
             . '</span>';
     }
@@ -440,15 +381,15 @@ final class SuiteAdmin
     {
         $posts = self::recentPosts($postType, 5);
         ?>
-        <div class="card" style="padding:16px;">
+        <div class="card ouinpo-suite-card">
             <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
 
             <?php if (!$posts): ?>
                 <div class="ouinpo-suite-empty">Aucun élément récent.</div>
             <?php else: ?>
-                <ul style="margin:0 0 12px 18px;">
+                <ul class="ouinpo-suite-list">
                     <?php foreach ($posts as $post): ?>
-                        <li style="margin:0 0 8px 0;">
+                        <li class="ouinpo-suite-list-item">
                             <a href="<?php echo esc_url(get_edit_post_link($post->ID)); ?>">
                                 <?php echo esc_html(get_the_title($post->ID) ?: '(sans titre)'); ?>
                             </a>
@@ -461,7 +402,7 @@ final class SuiteAdmin
                 </ul>
             <?php endif; ?>
 
-            <p style="margin-bottom:0;">
+            <p class="ouinpo-suite-bottomless">
                 <a class="button button-secondary" href="<?php echo esc_url($listUrl); ?>">Voir tout</a>
             </p>
         </div>
@@ -732,7 +673,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Options</h3>
                         <p>Ces réglages sont réservés aux administrateurs.</p>
                     </div>
@@ -797,7 +738,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Flashcards</h3>
                         <p>La gestion des flashcards est réservée aux administrateurs.</p>
                     </div>
@@ -818,7 +759,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Import</h3>
                         <p>Import réservé aux administrateurs.</p>
                     </div>
@@ -875,7 +816,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Groupes</h3>
                         <p>La gestion des groupes est réservée aux profils autorisés.</p>
                     </div>
@@ -903,7 +844,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Affectations</h3>
                         <p>La gestion des affectations est réservée aux profils autorisés.</p>
                     </div>
@@ -1225,7 +1166,7 @@ final class SuiteAdmin
     {
         if (!current_user_can('edit_users')) {
             ?>
-            <div class="card" style="padding:16px;max-width:1200px;">
+            <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
                 <p>Accès réservé aux profils autorisés.</p>
             </div>
@@ -1244,7 +1185,7 @@ final class SuiteAdmin
 
         if (!self::tableExists($tComp)) {
             ?>
-            <div class="card" style="padding:16px;max-width:1200px;">
+            <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
                 <p>La table des compétences n’existe pas encore.</p>
             </div>
@@ -1346,7 +1287,7 @@ final class SuiteAdmin
         ?>
 
         <?php if (current_user_can('manage_options')): ?>
-            <div id="ouinpo-bo-form" class="card" style="padding:16px;margin:16px 0;background:#fff;max-width:1200px;">
+            <div id="ouinpo-bo-form" class="card ouinpo-suite-form-card">
                 <h2 class="ouinpo-suite-card-title">
                     <?php echo $editRow ? 'Modifier une compétence BO' : 'Ajouter une compétence BO'; ?>
                 </h2>
@@ -1518,10 +1459,10 @@ final class SuiteAdmin
             </div>
         <?php endif; ?>
 
-        <div class="card" style="padding:16px;max-width:1200px;">
+        <div class="card ouinpo-suite-card-bounded">
             <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
 
-            <form method="get" style="margin-bottom:16px;">
+            <form method="get" class="ouinpo-suite-filter-form">
                 <input type="hidden" name="page" value="ouinpo-suite-referentiel">
                 <input type="hidden" name="tab" value="competences">
 
@@ -1547,14 +1488,14 @@ final class SuiteAdmin
             <table class="widefat striped">
                 <thead>
                     <tr>
-                        <th style="width:22%;">Domaine</th>
-                        <th style="width:10%;">Piste</th>
-                        <th style="width:10%;">Niveau</th>
+                        <th class="ouinpo-suite-col-22">Domaine</th>
+                        <th class="ouinpo-suite-col-10">Piste</th>
+                        <th class="ouinpo-suite-col-10">Niveau</th>
                         <th>Compétence</th>
-                        <th style="width:8%;">Cours</th>
-                        <th style="width:8%;">Exos</th>
-                        <th style="width:8%;">Actif</th>
-                        <th style="width:18%;">Actions</th>
+                        <th class="ouinpo-suite-col-8">Cours</th>
+                        <th class="ouinpo-suite-col-8">Exos</th>
+                        <th class="ouinpo-suite-col-8">Actif</th>
+                        <th class="ouinpo-suite-col-18">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1585,7 +1526,7 @@ final class SuiteAdmin
                                             Modifier
                                         </a>
 
-                                        <form method="post" style="display:inline;">
+                                        <form method="post" class="ouinpo-suite-inline-form">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="toggle_competency">
                                             <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
@@ -1593,7 +1534,7 @@ final class SuiteAdmin
                                             <?php submit_button(((int) $row->active === 1) ? 'Désactiver' : 'Réactiver', 'secondary small', '', false); ?>
                                         </form>
 
-                                        <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer cette compétence ? Si elle est liée à des exercices, cours ou suivis, elle sera seulement désactivée.');">
+                                        <form method="post" class="ouinpo-suite-inline-form" onsubmit="return confirm('Supprimer cette compétence ? Si elle est liée à des exercices, cours ou suivis, elle sera seulement désactivée.');">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="delete_competency">
                                             <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
@@ -1616,7 +1557,7 @@ final class SuiteAdmin
     {
         if (!current_user_can('edit_users')) {
             ?>
-            <div class="card" style="padding:16px;max-width:1200px;">
+            <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">Domaines BO</h2>
                 <p>Accès réservé aux profils autorisés.</p>
             </div>
@@ -1646,7 +1587,7 @@ final class SuiteAdmin
         ?>
 
         <?php if (current_user_can('manage_options')): ?>
-            <div id="ouinpo-bo-domain-form" class="card" style="padding:16px;margin:16px 0;background:#fff;max-width:1200px;">
+            <div id="ouinpo-bo-domain-form" class="card ouinpo-suite-form-card">
                 <h2 class="ouinpo-suite-card-title">
                     <?php echo $editDomain ? 'Modifier un domaine BO' : 'Créer un domaine BO'; ?>
                 </h2>
@@ -1746,7 +1687,7 @@ final class SuiteAdmin
             </div>
         <?php endif; ?>
 
-        <div class="card" style="padding:16px;max-width:1200px;">
+        <div class="card ouinpo-suite-card-bounded">
             <h2 class="ouinpo-suite-card-title">Domaines BO</h2>
 
             <table class="widefat striped">
@@ -1756,10 +1697,10 @@ final class SuiteAdmin
                         <th>Slug</th>
                         <th>Piste</th>
                         <th>Niveau</th>
-                        <th style="width:10%;">Compétences</th>
-                        <th style="width:10%;">Actives</th>
-                        <th style="width:10%;">État</th>
-                        <th style="width:24%;">Actions</th>
+                        <th class="ouinpo-suite-col-10">Compétences</th>
+                        <th class="ouinpo-suite-col-10">Actives</th>
+                        <th class="ouinpo-suite-col-10">État</th>
+                        <th class="ouinpo-suite-col-24">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1792,7 +1733,7 @@ final class SuiteAdmin
                                             Modifier
                                         </a>
 
-                                        <form method="post" style="display:inline;">
+                                        <form method="post" class="ouinpo-suite-inline-form">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="toggle_domain">
                                             <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
@@ -1800,7 +1741,7 @@ final class SuiteAdmin
                                             <?php submit_button($isActive ? 'Masquer' : 'Réactiver', 'secondary small', '', false); ?>
                                         </form>
 
-                                        <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer ce domaine du registre ? Les compétences déjà liées ne seront pas supprimées.');">
+                                        <form method="post" class="ouinpo-suite-inline-form" onsubmit="return confirm('Supprimer ce domaine du registre ? Les compétences déjà liées ne seront pas supprimées.');">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="delete_domain">
                                             <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
@@ -2297,7 +2238,7 @@ final class SuiteAdmin
 
         if (empty($aiTabs)) {
             ?>
-            <div class="card" style="padding:16px;max-width:1200px;">
+            <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">IA & parcours</h2>
                 <p>Aucun module IA ou parcours n’est activé.</p>
             </div>
@@ -2333,7 +2274,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">SegFault</h3>
                         <p>Les réglages SegFault sont réservés aux administrateurs.</p>
                     </div>
@@ -2361,7 +2302,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Gate</h3>
                         <p>L’accès à Gate est réservé aux profils autorisés.</p>
                     </div>
@@ -2373,7 +2314,7 @@ final class SuiteAdmin
         } elseif ($tab === 'rechtext') {
             ?>
             <div class="ouinpo-suite-grid">
-                <div class="card" style="padding:16px;">
+                <div class="card ouinpo-suite-card">
                     <h3 class="ouinpo-suite-card-title">Recherche textuelle</h3>
                     <p>
                         Le module Recherche textuelle fournit principalement un shortcode pédagogique
@@ -2416,14 +2357,14 @@ final class SuiteAdmin
             'Index WXR SegFault'     => trim((string) get_option('ouinpo_sf_wxr_path', '')) !== '' ? 'Chemin configuré' : 'Non configuré',
         ];
         ?>
-        <div class="notice notice-info" style="padding:12px 16px;max-width:1200px;">
-            <p style="margin:0;">
+        <div class="notice notice-info ouinpo-suite-notice">
+            <p class="ouinpo-suite-no-margin">
                 <strong>Diagnostic de diffusion.</strong>
                 Cette page sert à vérifier qu’une installation OuInPo est saine et à repérer ce qui ne doit jamais partir dans une archive partagée : clés API, données élèves, logs, réponses, chemins locaux.
             </p>
         </div>
 
-        <div class="ouinpo-suite-grid" style="margin-top:16px;">
+        <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
             <?php
             self::renderKeyValueCard('Environnement', $environment);
             self::renderKeyValueCard('Options principales', $options);
@@ -2437,13 +2378,13 @@ final class SuiteAdmin
     private static function renderKeyValueCard(string $title, array $rows): void
     {
         ?>
-        <div class="card" style="padding:16px;">
+        <div class="card ouinpo-suite-card">
             <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
             <table class="widefat striped">
                 <tbody>
                     <?php foreach ($rows as $label => $value): ?>
                         <tr>
-                            <th style="width:42%;"><?php echo esc_html((string) $label); ?></th>
+                            <th class="ouinpo-suite-col-42"><?php echo esc_html((string) $label); ?></th>
                             <td><?php echo esc_html((string) $value); ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -2515,7 +2456,7 @@ final class SuiteAdmin
     private static function renderTablesDiagnostic(): void
     {
         ?>
-        <div class="card" style="padding:16px;max-width:1200px;margin-top:16px;">
+        <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
             <h2 class="ouinpo-suite-card-title">Tables attendues</h2>
             <p class="ouinpo-suite-muted">
                 Les compteurs sont utiles pour vérifier une installation. Pour une archive de diffusion, les tables contenant des données élèves doivent être vides ou absentes du paquet exporté.
@@ -2523,11 +2464,11 @@ final class SuiteAdmin
             <table class="widefat striped">
                 <thead>
                     <tr>
-                        <th style="width:22%;">Module</th>
+                        <th class="ouinpo-suite-col-22">Module</th>
                         <th>Table</th>
-                        <th style="width:26%;">Rôle</th>
-                        <th style="width:12%;">État</th>
-                        <th style="width:10%;">Lignes</th>
+                        <th class="ouinpo-suite-col-26">Rôle</th>
+                        <th class="ouinpo-suite-col-12">État</th>
+                        <th class="ouinpo-suite-col-10">Lignes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2573,7 +2514,7 @@ final class SuiteAdmin
             $wpdb->prefix . 'ouin_sf_suggestions'            => 'suggestions personnalisées',
         ];
         ?>
-        <div class="card" style="padding:16px;max-width:1200px;margin-top:16px;">
+        <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
             <h2 class="ouinpo-suite-card-title">Contrôle avant partage</h2>
             <p class="ouinpo-suite-muted">
                 Ces éléments ne doivent pas être inclus dans une archive destinée à d’autres professeurs.
@@ -2582,8 +2523,8 @@ final class SuiteAdmin
                 <thead>
                     <tr>
                         <th>Élément sensible</th>
-                        <th style="width:16%;">Lignes</th>
-                        <th style="width:22%;">Conclusion</th>
+                        <th class="ouinpo-suite-col-16">Lignes</th>
+                        <th class="ouinpo-suite-col-22">Conclusion</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2647,7 +2588,7 @@ final class SuiteAdmin
         }
 
         ?>
-        <div class="card" style="padding:16px;max-width:1200px;">
+        <div class="card ouinpo-suite-card-bounded">
             <h2 class="ouinpo-suite-card-title">Apparence publique</h2>
 
             <p class="ouinpo-suite-muted">
@@ -2664,7 +2605,7 @@ final class SuiteAdmin
                             <th scope="row">Style de l’interface</th>
                             <td>
                                 <fieldset>
-                                    <label style="display:block;margin-bottom:10px;">
+                                    <label class="ouinpo-suite-settings-choice">
                                         <input
                                             type="radio"
                                             name="<?php echo esc_attr($option_name); ?>"
@@ -2677,7 +2618,7 @@ final class SuiteAdmin
                                         </span>
                                     </label>
 
-                                    <label style="display:block;margin-bottom:10px;">
+                                    <label class="ouinpo-suite-settings-choice">
                                         <input
                                             type="radio"
                                             name="<?php echo esc_attr($option_name); ?>"
@@ -2750,7 +2691,7 @@ final class SuiteAdmin
             echo '<div class="notice notice-success is-dismissible"><p>Réglages des modules enregistrés.</p></div>';
         }
         ?>
-        <div class="card" style="padding:16px;max-width:1200px;">
+        <div class="card ouinpo-suite-card-bounded">
             <h2 class="ouinpo-suite-card-title">Modules de la suite</h2>
 
             <p class="ouinpo-suite-muted">
@@ -2764,9 +2705,9 @@ final class SuiteAdmin
                 <table class="widefat striped">
                     <thead>
                         <tr>
-                            <th style="width:22%;">État</th>
+                            <th class="ouinpo-suite-col-22">État</th>
                             <th>Module</th>
-                            <th style="width:35%;">Remarque</th>
+                            <th class="ouinpo-suite-col-35">Remarque</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2921,7 +2862,7 @@ final class SuiteAdmin
                 <p><strong><?php echo esc_html((string) $result['message']); ?></strong></p>
 
                 <?php if (!empty($result['details']) && is_array($result['details'])): ?>
-                    <ul style="list-style:disc;margin-left:20px;">
+                    <ul class="ouinpo-suite-disc-list">
                         <?php foreach ($result['details'] as $key => $value): ?>
                             <?php if ($key === 'warnings' && is_array($value)): ?>
                                 <li>
@@ -2940,7 +2881,7 @@ final class SuiteAdmin
                     <?php if (!empty($result['details']['warnings']) && is_array($result['details']['warnings'])): ?>
                         <details>
                             <summary>Voir les avertissements</summary>
-                            <ul style="list-style:disc;margin-left:20px;">
+                            <ul class="ouinpo-suite-disc-list">
                                 <?php foreach ($result['details']['warnings'] as $warning): ?>
                                     <li><?php echo esc_html((string) $warning); ?></li>
                                 <?php endforeach; ?>
@@ -2953,7 +2894,7 @@ final class SuiteAdmin
         }
 
         ?>
-        <div class="card" style="padding:16px;max-width:1200px;">
+        <div class="card ouinpo-suite-card-bounded">
             <h2 class="ouinpo-suite-card-title">Import pédagogique</h2>
 
             <p class="ouinpo-suite-muted">
@@ -3114,7 +3055,7 @@ final class SuiteAdmin
                     );
                 } else {
                     ?>
-                    <div class="card" style="padding:16px;">
+                    <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Meta & Social</h3>
                         <p>Ces réglages avancés sont réservés aux administrateurs.</p>
                     </div>
@@ -3174,7 +3115,7 @@ final class SuiteAdmin
                 ?>
             </div>
 
-            <div class="card" style="padding:16px;max-width:1200px;margin-top:16px;">
+            <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
                 <h2 class="ouinpo-suite-card-title">Rappel</h2>
                 <p>Les opérations lourdes ou sensibles restent volontairement sur leurs écrans métier d’origine. Cette page sert surtout de point d’entrée, de contrôle et d’accès rapide.</p>
             </div>
