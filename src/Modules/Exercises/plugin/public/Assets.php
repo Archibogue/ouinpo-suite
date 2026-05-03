@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) exit;
 class Assets {
 
     public static function init() {
-        add_action('wp_enqueue_scripts', [self::class, 'register']);
+        add_action('wp_enqueue_scripts', [self::class, 'register'], 1);
     }
 
     public static function register() {

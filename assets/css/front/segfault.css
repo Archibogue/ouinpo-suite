@@ -473,3 +473,67 @@
     max-height: 7rem !important;
   }
 }
+
+/* ==========================================================
+   SegFault — icônes structurelles des boutons fenêtre
+   ========================================================== */
+
+#sf-chat-floating .sf-header-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+#sf-chat-floating .sf-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0;
+  line-height: 1;
+}
+
+/* On garde les SVG s’ils s’affichent correctement */
+#sf-chat-floating .sf-btn .sf-icon-svg {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Mais on force un fallback lisible si le SVG est invisible */
+#sf-chat-floating .sf-btn::before {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff4d6;
+  font-weight: 900;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.75);
+  pointer-events: none;
+}
+
+#sf-chat-floating .sf-fullscreen::before {
+  content: "⛶";
+  font-size: 1.05rem;
+}
+
+#sf-chat-floating .sf-close::before {
+  content: "×";
+  font-size: 1.45rem;
+  transform: translateY(-0.05rem);
+}
+
+/* Si le SVG est là mais trop discret, on le masque pour éviter la superposition */
+#sf-chat-floating .sf-fullscreen .sf-icon-svg,
+#sf-chat-floating .sf-close .sf-icon-svg {
+  opacity: 0;
+}
