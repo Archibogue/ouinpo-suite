@@ -380,7 +380,7 @@ add_shortcode('segfault_mes_parcours', function ($atts) {
     }
 
     $html .= '<p class="ouinpo-sf-muted">';
-    $html .= '<span class="sf-progressbar"><span style="width:'.(int)$pct.'%"></span></span>';
+    $html .= '<span class="sf-progressbar" style="--progress: '.(int)$pct.'%;"><span></span></span>';
     $html .= '<strong>'.(int)$pct.'%</strong> ('.(int)$solved.'/'.(int)$total.' réussis, '.(int)$attempted.' tentés)';
     $html .= '</p>';
 
@@ -588,24 +588,24 @@ if (!empty($templates)) {
 
   $html .= '</div>';
 
-  $html .= '<p id="sf-template-empty" class="ouinpo-sf-muted" style="display:none;">Aucun modèle ne correspond à ces filtres.</p>';
+  $html .= '<p id="sf-template-empty" class="ouinpo-sf-muted is-hidden">Aucun modèle ne correspond à ces filtres.</p>';
   $html .= '<div id="sf-template-msg" class="ouinpo-sf-muted ouinpo-sf-gen-msg"></div>';
 
-  $html .= '<table class="ouinpo-sf-table" style="table-layout:fixed; width:100%; border-collapse:collapse;">';
+  $html .= '<table class="ouinpo-sf-table ouinpo-sf-template-table">';
   $html .= '<colgroup>'
-    . '<col style="width:34%;">'
-    . '<col style="width:25%;">'
-    . '<col style="width:16%;">'
-    . '<col style="width:10%;">'
-    . '<col style="width:15%;">'
+    . '<col class="ouinpo-sf-col-template-title">'
+    . '<col class="ouinpo-sf-col-template-domain">'
+    . '<col class="ouinpo-sf-col-template-goal">'
+    . '<col class="ouinpo-sf-col-template-mode">'
+    . '<col class="ouinpo-sf-col-template-action">'
     . '</colgroup>';
 
   $html .= '<thead><tr>'
-    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Modèle</div></th>'
-    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Domaine</div></th>'
-    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Objectif</div></th>'
-    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Mode</div></th>'
-    . '<th><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">Action</div></th>'
+    . '<th><div class="ouinpo-sf-cell-wrap">Modèle</div></th>'
+    . '<th><div class="ouinpo-sf-cell-wrap">Domaine</div></th>'
+    . '<th><div class="ouinpo-sf-cell-wrap">Objectif</div></th>'
+    . '<th><div class="ouinpo-sf-cell-wrap">Mode</div></th>'
+    . '<th><div class="ouinpo-sf-cell-wrap">Action</div></th>'
     . '</tr></thead><tbody id="sf-template-tbody">';
 
   foreach ($templates as $tpl) {
@@ -620,16 +620,16 @@ if (!empty($templates)) {
 
     $html .= '<tr class="sf-template-row" data-domain="'.esc_attr($tpl_domain_slug).'" data-goal="'.esc_attr($tpl_goal_slug).'">';
 
-    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">';
+    $html .= '<td><div class="ouinpo-sf-cell-wrap">';
     $html .= '<strong>'.esc_html((string)($tpl['title'] ?? 'Modèle')).'</strong>';
     if (!empty($tpl['student_note'])) {
       $html .= '<br><span class="ouinpo-sf-muted">'.wp_kses_post((string)$tpl['student_note']).'</span>';
     }
     $html .= '</div></td>';
 
-    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">'.esc_html($tpl_domain_label).'</div></td>';
-    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">'.esc_html($tpl_goal_label).'</div></td>';
-    $html .= '<td><div style="white-space:normal; line-height:1.35; overflow-wrap:anywhere; word-break:break-word;">'.esc_html($tpl_mode_label).'</div></td>';
+    $html .= '<td><div class="ouinpo-sf-cell-wrap">'.esc_html($tpl_domain_label).'</div></td>';
+    $html .= '<td><div class="ouinpo-sf-cell-wrap">'.esc_html($tpl_goal_label).'</div></td>';
+    $html .= '<td><div class="ouinpo-sf-cell-wrap">'.esc_html($tpl_mode_label).'</div></td>';
     $html .= '<td class="sf-actions"><a href="#" class="ouinpo-sf-btn sf-use-template" data-template-id="'.$tpl_id.'">Choisir</a></td>';
 
     $html .= '</tr>';
@@ -673,7 +673,7 @@ if (!empty($templates)) {
         ? \Ouinpo\Exercises\PathsService::can_user_self_remove_path($pid, $user_id)
         : false;
 
-      $bar = '<span class="sf-progressbar"><span style="width:'.(int)$pct.'%"></span></span>';
+      $bar = '<span class="sf-progressbar" style="--progress: '.(int)$pct.'%;"><span></span></span>';
       $txt = '<strong>'.(int)$pct.'%</strong> ('.(int)$solved.'/'.(int)$total.')';
 
       $html .= '<tr>';

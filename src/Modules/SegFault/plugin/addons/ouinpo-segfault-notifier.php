@@ -275,7 +275,7 @@ class OuInPo_Segfault_Notifier {
 
       if(!arr.length) return;
 
-      html += '<div style="margin:.25rem 0 .25rem .25rem"><strong>'+labels[key]+' :</strong><ul style="margin:.25rem 0 0 1.1rem">';
+      html += '<div class="sf-notifier-section"><strong>'+labels[key]+' :</strong><ul class="sf-notifier-list">';
 
       arr.slice(0,5).forEach(function(it){
 
@@ -283,7 +283,7 @@ class OuInPo_Segfault_Notifier {
 
         if (it.date){
 
-          html += ' <span style="opacity:.7">('+esc(it.date)+')</span>';
+          html += ' <span class="sf-notifier-date">('+esc(it.date)+')</span>';
 
         }
 
