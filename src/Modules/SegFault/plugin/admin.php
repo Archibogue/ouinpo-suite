@@ -6,6 +6,31 @@ namespace OuInPo\SegFault;
 
 if (!defined('ABSPATH')) exit;
 
+add_action('admin_enqueue_scripts', function (string $hook = ''): void {
+  $page = isset($_GET['page']) ? sanitize_key(wp_unslash((string) $_GET['page'])) : '';
+
+  if (!in_array($page, ['ouinpo-segfault', 'ouinpo-segfault-progress'], true)) {
+    return;
+  }
+
+  $rel = 'assets/css/admin/segfault-admin.css';
+  $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
+  $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
+
+  if ($base_url === '') {
+    return;
+  }
+
+  $file = $base_dir !== '' ? $base_dir . $rel : '';
+  $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+  if ($file !== '' && file_exists($file)) {
+    $version = (string) filemtime($file);
+  }
+
+  wp_enqueue_style('ouinpo-segfault-admin', $base_url . $rel, [], $version);
+});
+
 
 
 add_action('admin_menu', function () {
@@ -1634,15 +1659,15 @@ function ouinpo_sf_render_rag_status_box(): void {
 
     ?>
 
-    <div class="notice notice-info" style="padding:14px 16px; border-left-color:#2271b1;">
+    <div class="notice notice-info" class="ouinpo-sf-admin-notice ouinpo-sf-admin-notice--rag">
 
-      <h2 style="margin:0 0 10px;">État du RAG SegFault</h2>
+      <h2 class="ouinpo-sf-title-compact">État du RAG SegFault</h2>
 
 
 
       <?php if ($missing): ?>
 
-        <p style="color:#b32d2e; margin:0 0 10px;">
+        <p class="ouinpo-sf-error ouinpo-sf-admin-message">
 
           <strong>Schéma incomplet :</strong>
 
@@ -1654,7 +1679,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
       <?php else: ?>
 
-        <p style="color:#008a20; margin:0 0 10px;">
+        <p class="ouinpo-sf-ok ouinpo-sf-admin-message">
 
           <strong>Schéma SQLite OK.</strong>
 
@@ -1666,27 +1691,27 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:12px 0;">
+      <div class="ouinpo-sf-grid">
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Chunks indexés</strong><br>
 
-          <span style="font-size:24px;"><?php echo esc_html((string)$total_chunks); ?></span>
+          <span class="ouinpo-sf-admin-number"><?php echo esc_html((string)$total_chunks); ?></span>
 
         </div>
 
 
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Chunks avec section</strong><br>
 
-          <span style="font-size:24px;"><?php echo esc_html((string)$with_sections); ?></span>
+          <span class="ouinpo-sf-admin-number"><?php echo esc_html((string)$with_sections); ?></span>
 
           <?php if ($total_chunks > 0): ?>
 
-            <span style="opacity:.75;">
+            <span class="ouinpo-sf-muted">
 
               — <?php echo esc_html((string)round(100 * $with_sections / max(1, $total_chunks))); ?> %
 
@@ -1698,7 +1723,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Moteur embedding actif</strong><br>
 
@@ -1714,13 +1739,13 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Reranker</strong><br>
 
           <code><?php echo esc_html($albert_reranker); ?></code><br>
 
-          <span style="opacity:.75;"><?php echo esc_html((string)$rerank_candidates); ?> candidats</span>
+          <span class="ouinpo-sf-muted"><?php echo esc_html((string)$rerank_candidates); ?> candidats</span>
 
         </div>
 
@@ -1728,9 +1753,9 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px;">
+      <div class="ouinpo-sf-grid-wide">
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Répartition par visibilité</strong>
 
@@ -1740,7 +1765,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
           <?php else: ?>
 
-            <ul style="margin-bottom:0;">
+            <ul class="ouinpo-sf-list-bottomless">
 
               <?php foreach ($visibility_rows as $r): ?>
 
@@ -1762,7 +1787,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Répartition par origine</strong>
 
@@ -1772,7 +1797,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
           <?php else: ?>
 
-            <ul style="margin-bottom:0;">
+            <ul class="ouinpo-sf-list-bottomless">
 
               <?php foreach ($origin_rows as $r): ?>
 
@@ -1794,7 +1819,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-        <div style="background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:10px;">
+        <div class="ouinpo-sf-admin-card">
 
           <strong>Embeddings stockés</strong>
 
@@ -1804,7 +1829,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
           <?php else: ?>
 
-            <ul style="margin-bottom:0;">
+            <ul class="ouinpo-sf-list-bottomless">
 
               <?php foreach ($embedding_rows as $r): ?>
 
@@ -1832,7 +1857,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 
 
-      <p style="margin:12px 0 0;">
+      <p class="ouinpo-sf-admin-row">
 
         <strong>Batch WXR :</strong>
 
@@ -1854,7 +1879,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
         <?php if ($done === 1): ?>
 
-          — <strong style="color:#008a20;">terminé</strong>
+          — <strong class="ouinpo-sf-ok">terminé</strong>
 
         <?php endif; ?>
 
@@ -1868,7 +1893,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
   } catch (\Throwable $e) {
 
-    echo '<div class="notice notice-error" style="padding:12px 14px;"><p><strong>Diagnostic RAG impossible :</strong> '
+    echo '<div class="notice notice-error" class="ouinpo-sf-admin-notice"><p><strong>Diagnostic RAG impossible :</strong> '
 
       . esc_html($e->getMessage())
 
@@ -1922,7 +1947,7 @@ function ouinpo_sf_render_rag_tester(): void {
 
 
 
-  <form method="post" style="margin:12px 0 18px; padding:12px; border:1px solid #ddd; background:#fff;">
+  <form method="post" class="ouinpo-sf-boxed-form">
 
     <?php wp_nonce_field('ouinpo_sf_rag_test'); ?>
 
@@ -1942,7 +1967,7 @@ function ouinpo_sf_render_rag_tester(): void {
 
         class="regular-text"
 
-        style="width:min(760px, 100%);"
+        class="ouinpo-sf-query-input"
 
         value="<?php echo esc_attr($question); ?>"
 
@@ -1972,15 +1997,15 @@ function ouinpo_sf_render_rag_tester(): void {
 
   <?php if (is_array($result)): ?>
 
-    <div class="notice notice-info" style="padding:14px 16px;">
+    <div class="notice notice-info" class="ouinpo-sf-admin-notice">
 
-      <h3 style="margin-top:0;">Résultat du test RAG</h3>
+      <h3 class="ouinpo-sf-title-tight">Résultat du test RAG</h3>
 
 
 
       <?php if (!empty($result['error'])): ?>
 
-        <p style="color:#b32d2e;">
+        <p class="ouinpo-sf-error">
 
           <strong>Erreur :</strong> <?php echo esc_html((string)$result['error']); ?>
 
@@ -2046,17 +2071,17 @@ function ouinpo_sf_render_rag_tester(): void {
 
 
 
-            echo '<table class="widefat striped" style="margin:8px 0 18px;">';
+            echo '<table class="widefat striped" class="ouinpo-sf-table-spaced">';
 
             echo '<thead><tr>';
 
-            echo '<th style="width:70px;">Score</th>';
+            echo '<th class="ouinpo-sf-col-score">Score</th>';
 
             echo '<th>Document</th>';
 
-            echo '<th style="width:130px;">Origine</th>';
+            echo '<th class="ouinpo-sf-col-origin">Origine</th>';
 
-            echo '<th style="width:110px;">Visibilité</th>';
+            echo '<th class="ouinpo-sf-col-visibility">Visibilité</th>';
 
             echo '<th>Extrait</th>';
 
@@ -2094,7 +2119,7 @@ function ouinpo_sf_render_rag_tester(): void {
 
               if ($section !== '') {
 
-                echo '<br><span style="opacity:.75;">section : ' . esc_html($section) . '</span>';
+                echo '<br><span class="ouinpo-sf-muted">section : ' . esc_html($section) . '</span>';
 
               }
 
@@ -3742,9 +3767,9 @@ try {
 
   ?>
 
-  <div class="notice notice-warning" style="padding:14px 16px;">
+  <div class="notice notice-warning" class="ouinpo-sf-admin-notice">
 
-    <h2 style="margin-top:0;">Audit couverture RAG WordPress → SQLite</h2>
+    <h2 class="ouinpo-sf-title-tight">Audit couverture RAG WordPress → SQLite</h2>
 
 
 
@@ -3756,11 +3781,11 @@ try {
 
       Présents dans SQLite :
 
-      <strong style="color:#008a20;"><?php echo esc_html((string)$audit['present_count']); ?></strong><br>
+      <strong class="ouinpo-sf-ok"><?php echo esc_html((string)$audit['present_count']); ?></strong><br>
 
       Absents de SQLite :
 
-      <strong style="color:#b32d2e;"><?php echo esc_html((string)$audit['missing_count']); ?></strong>
+      <strong class="ouinpo-sf-error"><?php echo esc_html((string)$audit['missing_count']); ?></strong>
 
     </p>
 
@@ -3768,7 +3793,7 @@ try {
 
     <?php if (!empty($audit['missing'])): ?>
 
-<form method="post" style="margin:12px 0;">
+      <form method="post" class="ouinpo-sf-form-row">
 
   <?php wp_nonce_field('ouinpo_sf_index_missing'); ?>
 
@@ -3788,7 +3813,7 @@ try {
 
 
 
-      <table class="widefat striped" style="margin-top:10px;">
+      <table class="widefat striped" class="ouinpo-sf-table-top">
 
         <thead>
 
@@ -3856,7 +3881,7 @@ try {
 
     <?php else: ?>
 
-      <p style="color:#008a20;">
+      <p class="ouinpo-sf-ok">
 
         Tous les contenus WordPress indexables semblent présents dans SQLite.
 
@@ -3870,7 +3895,7 @@ try {
 
 } catch (\Throwable $e) {
 
-  echo '<div class="notice notice-error" style="padding:12px 14px;"><p><strong>Audit couverture RAG impossible :</strong> '
+  echo '<div class="notice notice-error" class="ouinpo-sf-admin-notice"><p><strong>Audit couverture RAG impossible :</strong> '
 
     . esc_html($e->getMessage())
 
@@ -3890,9 +3915,9 @@ try {
 
   ?>
 
-  <div class="notice notice-info" style="padding:14px 16px;">
+  <div class="notice notice-info" class="ouinpo-sf-admin-notice">
 
-    <h2 style="margin-top:0;">Audit RAG des exercices MySQL → SQLite</h2>
+    <h2 class="ouinpo-sf-title-tight">Audit RAG des exercices MySQL → SQLite</h2>
 
 
 
@@ -3904,11 +3929,11 @@ try {
 
       Présents dans SQLite :
 
-      <strong style="color:#008a20;"><?php echo esc_html((string)$exo_audit['present_count']); ?></strong><br>
+      <strong class="ouinpo-sf-ok"><?php echo esc_html((string)$exo_audit['present_count']); ?></strong><br>
 
       Absents de SQLite :
 
-      <strong style="color:#b32d2e;"><?php echo esc_html((string)$exo_audit['missing_count']); ?></strong>
+      <strong class="ouinpo-sf-error"><?php echo esc_html((string)$exo_audit['missing_count']); ?></strong>
 
     </p>
 
@@ -3920,7 +3945,7 @@ try {
 
     
 
-        <form method="post" style="margin:12px 0;">
+      <form method="post" class="ouinpo-sf-form-row">
 
           <?php wp_nonce_field('ouinpo_sf_index_missing_exercises'); ?>
 
@@ -3944,7 +3969,7 @@ try {
 
     
 
-    <table class="widefat striped" style="margin-top:10px;">
+    <table class="widefat striped" class="ouinpo-sf-table-top">
 
       <thead>
 
@@ -4004,7 +4029,7 @@ try {
 
     <?php else: ?>
 
-      <p style="color:#008a20;">Tous les exercices actifs semblent présents dans SQLite.</p>
+      <p class="ouinpo-sf-ok">Tous les exercices actifs semblent présents dans SQLite.</p>
 
     <?php endif; ?>
 
@@ -4016,7 +4041,7 @@ try {
 
   ?>
 
-  <div class="notice notice-error" style="padding:12px 14px;">
+  <div class="notice notice-error" class="ouinpo-sf-admin-notice">
 
     <p>
 
@@ -4062,9 +4087,9 @@ try {
 
             <td>
 
-              <div style="max-width:860px; padding:12px 14px; border-left:4px solid #2271b1; background:#f6f7f7;">
+              <div class="ouinpo-sf-info-box">
 
-                <p style="margin-top:0;">
+                <p class="ouinpo-sf-title-tight">
 
                   <strong>Albert API</strong> est le moteur principal utilisé par SegFault pour les réponses IA :
 
@@ -4274,7 +4299,7 @@ try {
 
                 <input type="number" min="1" name="ouinpo_sf_public_hourly_limit"
 
-                  value="<?php echo esc_attr((int)get_option('ouinpo_sf_public_hourly_limit', 5)); ?>" style="width:80px" />
+                  value="<?php echo esc_attr((int)get_option('ouinpo_sf_public_hourly_limit', 5)); ?>" class="ouinpo-sf-input-small" />
 
               </label>
 
@@ -4284,7 +4309,7 @@ try {
 
                 <input type="number" min="1" name="ouinpo_sf_public_daily_limit"
 
-                  value="<?php echo esc_attr((int)get_option('ouinpo_sf_public_daily_limit', 100)); ?>" style="width:80px" />
+                  value="<?php echo esc_attr((int)get_option('ouinpo_sf_public_daily_limit', 100)); ?>" class="ouinpo-sf-input-small" />
 
               </label>
 
@@ -4515,7 +4540,7 @@ try {
 
       value="<?php echo esc_attr((int)get_option('ouinpo_sf_rag_rerank_candidates', 40)); ?>"
 
-      style="width:90px" />
+      class="ouinpo-sf-input-medium" />
 
     <p class="description">
 
@@ -4655,7 +4680,7 @@ try {
 
               value="<?php echo esc_attr((int)get_option('ouinpo_sf_max_embeddings_run', 120)); ?>"
 
-              style="width:90px"
+              class="ouinpo-sf-input-medium"
 
             />
 
@@ -4685,7 +4710,7 @@ try {
 
 <h2>Générer un WXR propre pour SegFault</h2>
 
-<form method="post" style="margin:12px 0 18px; padding:12px; border:1px solid #ddd; background:#fff;">
+<form method="post" class="ouinpo-sf-boxed-form">
 
   <?php wp_nonce_field('ouinpo_sf_generate_clean_wxr'); ?>
 
@@ -4701,7 +4726,7 @@ try {
 
   />
 
-  <p class="description" style="margin-top:8px;">
+  <p class="description" class="ouinpo-sf-spaced">
 
     Génère un export XML minimal dans
 
@@ -4725,7 +4750,7 @@ try {
 
   </p>
 
-  <p class="description" style="margin-top:6px;">
+  <p class="description" class="ouinpo-sf-spaced-small">
 
     Inclus : <strong>posts/pages publiés</strong>.<br>
 
@@ -4739,7 +4764,7 @@ try {
 
     <h2>Actions rapides</h2>
 
-    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+    <div class="ouinpo-sf-flex">
 
 
 
@@ -4795,7 +4820,7 @@ try {
 
 
 
-    <p class="description" style="margin-top:10px;">
+    <p class="description" class="ouinpo-sf-table-top">
 
       Préfère <strong>“cron maintenant (diff)”</strong> ou le <strong>batch WXR</strong> ci-dessous pour éviter les 503.
 
@@ -4845,23 +4870,23 @@ try {
 
 
 
-    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+    <div class="ouinpo-sf-flex">
 
-      <form method="post" style="border:1px solid #ddd; padding:10px;">
+      <form method="post" class="ouinpo-sf-admin-mini-form">
 
         <?php wp_nonce_field('ouinpo_sf_wxr_init'); ?>
 
         <input type="submit" name="ouinpo_sf_wxr_init" class="button button-secondary" value="🚀 Init batch (purge + reset curseur)">
 
-        <div style="margin-top:8px;">
+        <div class="ouinpo-sf-spaced">
 
-          <label style="display:block; margin:2px 0;">
+          <label class="ouinpo-sf-check-label">
 
             <input type="checkbox" name="purge_memory" value="1"> Purger aussi la mémoire chat
 
           </label>
 
-          <label style="display:block; margin:2px 0;">
+          <label class="ouinpo-sf-check-label">
 
             <input type="checkbox" name="clear_sources" value="1"> Vider <code>sources/</code> (md/txt/pdf) — ne supprime pas le XML
 
@@ -4873,17 +4898,17 @@ try {
 
 
 
-      <form method="post" style="border:1px solid #ddd; padding:10px;">
+      <form method="post" class="ouinpo-sf-admin-mini-form">
 
         <?php wp_nonce_field('ouinpo_sf_wxr_step'); ?>
 
         <input type="hidden" name="ouinpo_sf_wxr_step" value="1" />
 
-        <input type="number" name="batch_items" value="10" min="1" max="50" style="width:70px;">
+        <input type="number" name="batch_items" value="10" min="1" max="50" class="ouinpo-sf-col-score">
 
         <input type="submit" class="button button-primary" value="▶ Continuer (batch)">
 
-        <p class="description" style="margin:6px 0 0;">
+        <p class="description" class="ouinpo-sf-spaced-small">
 
           10 conseillé. Monte à 20 si ça passe sans problème.
 
@@ -4893,7 +4918,7 @@ try {
 
 
 
-      <form method="post" style="border:1px solid #ddd; padding:10px;">
+      <form method="post" class="ouinpo-sf-admin-mini-form">
 
         <?php wp_nonce_field('ouinpo_sf_wxr_reset'); ?>
 
@@ -6089,19 +6114,19 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
 
 
-    <form method="get" style="margin:16px 0 20px; padding:12px; border:1px solid #ddd; border-radius:10px; background:#fff;">
+    <form method="get" class="ouinpo-sf-filter-form">
 
       <input type="hidden" name="page" value="ouinpo-segfault-progress">
 
 
 
-      <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="ouinpo-sf-filter-row">
 
         <div>
 
           <label for="sf_year_id"><strong>Année scolaire</strong></label><br>
 
-          <select name="sf_year_id" id="sf_year_id" style="min-width:180px;">
+          <select name="sf_year_id" id="sf_year_id" class="ouinpo-sf-select-year">
 
             <option value="0">— Toutes —</option>
 
@@ -6133,7 +6158,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
           <label for="sf_group_id"><strong>Classe</strong></label><br>
 
-          <select name="sf_group_id" id="sf_group_id" style="min-width:220px;">
+          <select name="sf_group_id" id="sf_group_id" class="ouinpo-sf-select-group">
 
             <option value="0">— Toutes —</option>
 
@@ -6157,7 +6182,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
           <label for="sf_user_id"><strong>Élève</strong></label><br>
 
-          <select name="sf_user_id" id="sf_user_id" style="min-width:260px;">
+          <select name="sf_user_id" id="sf_user_id" class="ouinpo-sf-select-user">
 
             <option value="0">— Tous —</option>
 
@@ -6200,60 +6225,6 @@ $paths = ouinpo_sf_filter_paths($paths, [
       <p>Aucun parcours correspondant aux filtres.</p>
 
     <?php else: ?>
-
-      <style>
-
-        .sf-progressbar{height:10px;background:#e5e5e5;border-radius:999px;overflow:hidden;width:220px;display:inline-block;vertical-align:middle;margin-right:10px}
-
-        .sf-progressbar>span{display:block;height:100%;background:#2e7d32}
-
-        .sf-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;margin-left:8px}
-
-        .sf-pill.ok{background:#e8f5e9;color:#1b5e20}
-
-        .sf-pill.warn{background:#fff8e1;color:#8d6e63}
-
-        .sf-pill.none{background:#f5f5f5;color:#616161}
-
-        .sf-items{margin:10px 0 18px}
-
-        .sf-items li{margin:4px 0}
-
-        .sf-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 14px 8px;margin:12px 0}
-
-        .sf-meta{color:#555;font-size:12px;margin-top:4px}
-
-        .sf-students-detail{margin:8px 0 0 0}
-
-        .sf-students-detail summary{cursor:pointer;color:#444}
-
-        .sf-students-list{margin:8px 0 0 18px}
-
-        .sf-students-list li{margin:3px 0}
-
-        .sf-mini-pill{
-
-          display:inline-block;
-
-          padding:1px 6px;
-
-          border-radius:999px;
-
-          font-size:11px;
-
-          margin-left:6px;
-
-        }
-
-        .sf-mini-pill.ok{background:#e8f5e9;color:#1b5e20}
-
-        .sf-mini-pill.warn{background:#fff8e1;color:#8d6e63}
-
-        .sf-mini-pill.none{background:#f5f5f5;color:#616161}
-
-        .sf-date{color:#777;font-size:11px;margin-left:6px}
-
-      </style>
 
 
 
@@ -6299,7 +6270,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
         <div class="sf-card">
 
-          <h3 style="margin:0;"><?php echo esc_html($p['title']); ?></h3>
+          <h3 class="ouinpo-sf-progress-title"><?php echo esc_html($p['title']); ?></h3>
 
 
 
@@ -6317,9 +6288,9 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
 
 
-          <p style="margin:10px 0 6px;">
+          <p class="ouinpo-sf-progress-line">
 
-            <span class="sf-progressbar"><span style="width:<?php echo $pct; ?>%"></span></span>
+          <span class="sf-progressbar" style="--progress: <?php echo $pct; ?>%;"><span></span></span>
 
             <strong><?php echo $pct; ?>%</strong>
 
@@ -6463,7 +6434,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
                           <?php if (!empty($stu['user_login'])): ?>
 
-                            <span style="color:#777;">(@<?php echo esc_html($stu['user_login']); ?>)</span>
+                            <span class="ouinpo-sf-login-muted">(@<?php echo esc_html($stu['user_login']); ?>)</span>
 
                           <?php endif; ?>
 
