@@ -216,26 +216,26 @@ class Assets {
     }
 
     public static function protect_ouinpo_scripts($tag, $handle, $src) {
-    $protected = [
-        'ouinpo-exo-js',
-        'ouinpo-practical-js',
-        'ouinpo-student-competencies',
-        'ouinpo-teacher-competencies',
-        'ouinpo-student-badges',
-    ];
+        $protected = [
+            'ouinpo-exo-js',
+            'ouinpo-practical-js',
+            'ouinpo-student-competencies',
+            'ouinpo-teacher-competencies',
+            'ouinpo-student-badges',
+        ];
 
-    if (!in_array($handle, $protected, true)) {
+        if (!in_array($handle, $protected, true)) {
+            return $tag;
+        }
+
+        if (strpos($tag, 'data-cfasync=') === false) {
+            $tag = str_replace(
+                '<script ',
+                '<script data-cfasync="false" data-no-defer="1" data-no-optimize="1" data-noptimize="1" ',
+                $tag
+            );
+        }
+
         return $tag;
     }
-
-    if (strpos($tag, 'data-cfasync=') === false) {
-        $tag = str_replace(
-            '<script ',
-            '<script data-cfasync="false" data-no-defer="1" data-no-optimize="1" data-noptimize="1" ',
-            $tag
-        );
-    }
-
-    return $tag;
-}
 }
