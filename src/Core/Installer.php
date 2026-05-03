@@ -35,7 +35,7 @@ final class Installer
             solved_json LONGTEXT NOT NULL,
             progress INT NOT NULL DEFAULT 0,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY user_page (user_id, page_slug)
         ) {$schema_suffix};");
 
@@ -47,7 +47,7 @@ final class Installer
             ok TINYINT(1) NOT NULL DEFAULT 1,
             answer_norm TEXT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY user_page (user_id, page_slug)
         ) {$schema_suffix};");
 
@@ -61,7 +61,7 @@ final class Installer
             ip VARCHAR(45) NULL,
             ua TEXT NULL,
             date_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
+            PRIMARY KEY  (id)
         ) {$schema_suffix};");
 
         // SegFault / parcours prof
@@ -86,7 +86,7 @@ final class Installer
             level_slug VARCHAR(30) NULL DEFAULT NULL,
             domain_slug VARCHAR(120) NULL DEFAULT NULL,
             goal_slug VARCHAR(40) NULL DEFAULT NULL,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY student_id (student_id),
             KEY teacher_id (teacher_id),
             KEY is_active (is_active),
@@ -107,7 +107,7 @@ final class Installer
             position INT NOT NULL DEFAULT 0,
             exercise_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
             note TEXT NULL,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY uq_sf_path_items_path_position (path_id, position),
             KEY path_id (path_id),
             KEY exercise_id (exercise_id)
@@ -120,7 +120,7 @@ final class Installer
             assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             assigned_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL,
-            PRIMARY KEY (path_id, target_type, target_id),
+            PRIMARY KEY  (path_id, target_type, target_id),
             KEY idx_target (target_type, target_id),
             KEY idx_path (path_id)
         ) {$schema_suffix};");
@@ -135,7 +135,7 @@ final class Installer
             last_session VARCHAR(128) NOT NULL DEFAULT '',
             last_page_url TEXT NULL,
             last_query TEXT NULL,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY user_exo (user_id, exercise_id),
             KEY user_id (user_id),
             KEY last_suggested_at (last_suggested_at),

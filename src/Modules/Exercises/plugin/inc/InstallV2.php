@@ -62,7 +62,7 @@ class InstallV2 {
 
             is_active TINYINT(1) NOT NULL DEFAULT 0,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             UNIQUE KEY slug (slug)
 
@@ -78,7 +78,7 @@ class InstallV2 {
 
             label VARCHAR(50) NOT NULL,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             UNIQUE KEY slug (slug)
 
@@ -98,7 +98,7 @@ class InstallV2 {
 
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             KEY year_id (year_id),
 
@@ -113,7 +113,7 @@ class InstallV2 {
             user_id BIGINT UNSIGNED NOT NULL,
             role ENUM('student','teacher') NOT NULL DEFAULT 'student',
             school_level_id_override TINYINT UNSIGNED NULL,
-            PRIMARY KEY (group_id, user_id),
+            PRIMARY KEY  (group_id, user_id),
             KEY school_level_id_override (school_level_id_override),
             KEY idx_user_role_group (user_id, role, group_id)
         ) $charset_innodb;";
@@ -129,7 +129,7 @@ class InstallV2 {
             statement MEDIUMTEXT NOT NULL,
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY slug (slug),
             KEY level_id (level_id),
             KEY difficulty_id (difficulty_id),
@@ -144,7 +144,7 @@ class InstallV2 {
 
             school_level_id TINYINT UNSIGNED NOT NULL,
 
-            PRIMARY KEY (exercise_id, school_level_id),
+            PRIMARY KEY  (exercise_id, school_level_id),
 
             KEY school_level_id (school_level_id)
 
@@ -162,7 +162,7 @@ class InstallV2 {
 
             content MEDIUMTEXT NOT NULL,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             UNIQUE KEY exo_order (exercise_id, hint_order),
 
@@ -190,7 +190,7 @@ class InstallV2 {
 
             updated_at DATETIME NULL,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             UNIQUE KEY exo_order (exercise_id, solution_order),
 
@@ -212,7 +212,7 @@ class InstallV2 {
 
             revealed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (user_id, exercise_id, kind, ref),
+            PRIMARY KEY  (user_id, exercise_id, kind, ref),
 
             KEY exo_kind (exercise_id, kind)
 
@@ -238,7 +238,7 @@ class InstallV2 {
 
             source ENUM('manual','exercise','assessment','import') NOT NULL DEFAULT 'manual',
 
-            PRIMARY KEY (user_id, competency_id, year_id),
+            PRIMARY KEY  (user_id, competency_id, year_id),
 
             KEY competency_id (competency_id),
 
@@ -270,7 +270,7 @@ class InstallV2 {
 
             updated_by BIGINT UNSIGNED NULL,
 
-            PRIMARY KEY (year_id, group_id, competency_id),
+            PRIMARY KEY  (year_id, group_id, competency_id),
 
             KEY competency_id (competency_id),
 
@@ -290,7 +290,7 @@ class InstallV2 {
 
             competency_id BIGINT UNSIGNED NOT NULL,
 
-            PRIMARY KEY (post_id, competency_id),
+            PRIMARY KEY  (post_id, competency_id),
 
             KEY competency_id (competency_id)
 
@@ -306,7 +306,7 @@ class InstallV2 {
 
             label VARCHAR(100) NOT NULL,
 
-            PRIMARY KEY (id)
+            PRIMARY KEY  (id)
 
         ) $charset_innodb;";
 
@@ -324,7 +324,7 @@ class InstallV2 {
 
             declared_at DATETIME NULL,
           
-            PRIMARY KEY (user_id, exercise_id),
+            PRIMARY KEY  (user_id, exercise_id),
 
             KEY exercise_id (exercise_id),
 
@@ -362,7 +362,7 @@ class InstallV2 {
 
             cycle VARCHAR(20) DEFAULT NULL,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             UNIQUE KEY uk_slug (slug),
 
@@ -388,7 +388,7 @@ class InstallV2 {
             reference_url VARCHAR(255) NULL,
             slug VARCHAR(191) NOT NULL,
             active TINYINT(1) NOT NULL DEFAULT 1,
-            PRIMARY KEY (id)
+            PRIMARY KEY  (id)
         ) $charset_innodb;";
 
         $sql_exo_comp = "CREATE TABLE {$p}exercise_competency (
@@ -397,7 +397,7 @@ class InstallV2 {
 
             competency_id BIGINT UNSIGNED NOT NULL,
 
-            PRIMARY KEY (exercise_id, competency_id),
+            PRIMARY KEY  (exercise_id, competency_id),
 
             KEY competency_id (competency_id)
 
@@ -435,7 +435,7 @@ class InstallV2 {
 
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (exercise_id),
+            PRIMARY KEY  (exercise_id),
 
             KEY exam_type (exam_type),
 
@@ -477,7 +477,7 @@ class InstallV2 {
 
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             UNIQUE KEY exo_call_order (exercise_id, call_order),
 
@@ -509,7 +509,7 @@ class InstallV2 {
 
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             KEY exercise_id (exercise_id),
 
@@ -543,7 +543,7 @@ class InstallV2 {
 
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             KEY idx_user_call (user_id, practical_call_id),
 
@@ -569,7 +569,7 @@ class InstallV2 {
 
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (user_id, exercise_id, practical_call_id),
+            PRIMARY KEY  (user_id, exercise_id, practical_call_id),
 
             KEY exercise_id (exercise_id),
 
@@ -595,7 +595,7 @@ class InstallV2 {
 
             image_url VARCHAR(255) NULL,
 
-            PRIMARY KEY (id)
+            PRIMARY KEY  (id)
 
         ) $charset_innodb;";
 
@@ -611,7 +611,7 @@ class InstallV2 {
 
             source ENUM('auto','manual') NOT NULL DEFAULT 'auto',
 
-            PRIMARY KEY (user_id, badge_id),
+            PRIMARY KEY  (user_id, badge_id),
 
             KEY badge_id (badge_id)
 
@@ -633,7 +633,7 @@ class InstallV2 {
 
             notes TEXT NULL,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             KEY group_id (group_id),
 
@@ -649,7 +649,7 @@ class InstallV2 {
             exercise_id BIGINT UNSIGNED NOT NULL,
             sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 1,
             points DECIMAL(5,2) NULL,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY assessment_id (assessment_id),
             KEY exercise_id (exercise_id)
         ) $charset_innodb;";
@@ -662,7 +662,7 @@ class InstallV2 {
 
             competency_id BIGINT UNSIGNED NOT NULL,
 
-            PRIMARY KEY (assessment_id, competency_id),
+            PRIMARY KEY  (assessment_id, competency_id),
 
             KEY competency_id (competency_id)
 
@@ -686,7 +686,7 @@ class InstallV2 {
 
             updated_by BIGINT UNSIGNED NULL,
 
-            PRIMARY KEY (assessment_id, user_id, competency_id),
+            PRIMARY KEY  (assessment_id, user_id, competency_id),
 
             KEY user_id (user_id),
 
@@ -712,7 +712,7 @@ class InstallV2 {
 
             updated_by BIGINT UNSIGNED NULL,
 
-            PRIMARY KEY (assessment_id, user_id),
+            PRIMARY KEY  (assessment_id, user_id),
 
             KEY user_id (user_id),
 
@@ -740,7 +740,7 @@ class InstallV2 {
 
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
 
             KEY idx_user_exo (user_id, exercise_id),
 
