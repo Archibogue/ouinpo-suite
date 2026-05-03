@@ -8897,3 +8897,56 @@
     padding: 0 14px !important;
   }
 }
+
+/* ==========================================================
+   Module Recherche textuelle — thème OuInPo
+   ========================================================== */
+
+.ouinpo-rt {
+  --rt-bg:
+    radial-gradient(circle at top left, rgba(214, 163, 98, 0.13), transparent 32rem),
+    linear-gradient(180deg, rgba(28, 22, 18, 0.92), rgba(20, 20, 22, 0.94));
+
+  --rt-bg-soft: rgba(255, 255, 255, 0.05);
+  --rt-panel-bg: rgba(255, 255, 255, 0.04);
+
+  --rt-border: rgba(201, 167, 92, 0.38);
+  --rt-border-soft: rgba(255, 255, 255, 0.10);
+
+  --rt-text: #f3ead7;
+  --rt-muted: rgba(243, 234, 215, 0.86);
+
+  --rt-accent: #f0d9a1;
+  --rt-accent-strong: #c9a75c;
+
+  --rt-input-bg: rgba(255, 255, 255, 0.06);
+  --rt-input-border: rgba(201, 167, 92, 0.42);
+
+  --rt-button-bg:
+    linear-gradient(180deg, var(--ouin-accent, #d6a362), var(--ouin-accent-dark, #a77b3e));
+  --rt-button-bg-hover:
+    linear-gradient(180deg, #e3b36f, #b98948);
+  --rt-button-border: var(--ouin-accent, #d6a362);
+  --rt-button-border-hover: #e3b36f;
+  --rt-button-text: #2b1a0a;
+  --rt-button-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+
+  --rt-cell-bg: rgba(255, 255, 255, 0.04);
+  --rt-badge-bg: rgba(255, 255, 255, 0.04);
+  --rt-table-header-bg: rgba(255, 255, 255, 0.04);
+
+  --rt-good-bg: rgba(48, 144, 81, 0.28);
+  --rt-good-border: rgba(84, 196, 121, 0.82);
+
+  --rt-danger-bg: rgba(153, 49, 49, 0.28);
+  --rt-danger-border: rgba(233, 108, 108, 0.86);
+
+  --rt-found-bg: rgba(102, 84, 190, 0.35);
+  --rt-found-border: rgba(171, 150, 255, 0.9);
+
+  --rt-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+  --rt-inner-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+  --rt-active-shadow: 0 0 0 4px rgba(240, 217, 161, 0.12);
+}

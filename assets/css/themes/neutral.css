@@ -1050,3 +1050,49 @@ button[data-ouinpo-sf-open]:hover {
   color: var(--ouin-neutral-muted);
   opacity: 1;
 }
+
+/* ==========================================================
+   Module Recherche textuelle — thème neutre
+   ========================================================== */
+
+.ouinpo-rt {
+  --rt-bg: var(--ouin-neutral-bg);
+  --rt-bg-soft: var(--ouin-neutral-bg-soft);
+  --rt-panel-bg: var(--ouin-neutral-bg-soft);
+
+  --rt-border: var(--ouin-neutral-border);
+  --rt-border-soft: var(--ouin-neutral-border-soft);
+
+  --rt-text: var(--ouin-neutral-text);
+  --rt-muted: var(--ouin-neutral-muted);
+
+  --rt-accent: var(--ouin-neutral-primary);
+  --rt-accent-strong: var(--ouin-neutral-primary-dark);
+
+  --rt-input-bg: #ffffff;
+  --rt-input-border: var(--ouin-neutral-border);
+
+  --rt-button-bg: var(--ouin-neutral-primary);
+  --rt-button-bg-hover: var(--ouin-neutral-primary-dark);
+  --rt-button-border: var(--ouin-neutral-primary);
+  --rt-button-border-hover: var(--ouin-neutral-primary-dark);
+  --rt-button-text: #ffffff;
+  --rt-button-shadow: none;
+
+  --rt-cell-bg: #ffffff;
+  --rt-badge-bg: #ffffff;
+  --rt-table-header-bg: var(--ouin-neutral-bg-soft);
+
+  --rt-good-bg: rgba(21, 128, 61, 0.12);
+  --rt-good-border: var(--ouin-neutral-success);
+
+  --rt-danger-bg: rgba(185, 28, 28, 0.12);
+  --rt-danger-border: var(--ouin-neutral-danger);
+
+  --rt-found-bg: rgba(37, 99, 235, 0.12);
+  --rt-found-border: var(--ouin-neutral-primary);
+
+  --rt-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --rt-inner-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  --rt-active-shadow: none;
+}
