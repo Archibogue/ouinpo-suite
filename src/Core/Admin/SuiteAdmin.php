@@ -13,6 +13,7 @@ if (!defined('ABSPATH')) {
 final class SuiteAdmin
 {
     public const ROOT_SLUG = 'ouinpo-suite';
+    private const OPTION_BO_DOMAINS = 'ouinpo_suite_bo_domains';
 
     public static function init(): void
     {
@@ -920,20 +921,227 @@ final class SuiteAdmin
         self::endPage();
     }
 
+    private static function boTrackOptions(): array
+    {
+        return [
+            'SNT' => 'SNT',
+            'NSI' => 'NSI',
+        ];
+    }
+
+    private static function boLevelOptions(): array
+    {
+        return [
+            'Seconde'     => 'Seconde',
+            'Première'    => 'Première',
+            'Terminale'   => 'Terminale',
+            'Transversal' => 'Transversal',
+        ];
+    }
+
+    private static function normalizeBoTrack(string $track): string
+    {
+        $track = strtoupper(trim($track));
+        return array_key_exists($track, self::boTrackOptions()) ? $track : 'NSI';
+    }
+
+    private static function normalizeBoLevel(string $level): string
+    {
+        $level = trim($level);
+
+        $map = [
+            'seconde'     => 'Seconde',
+            'premiere'    => 'Première',
+            'première'    => 'Première',
+            'terminal'    => 'Terminale',
+            'terminale'   => 'Terminale',
+            'transversal' => 'Transversal',
+        ];
+
+        $key = strtolower(remove_accents($level));
+        $key = str_replace('è', 'e', $key);
+
+        if (isset($map[$key])) {
+            return $map[$key];
+        }
+
+        return array_key_exists($level, self::boLevelOptions()) ? $level : 'Première';
+    }
+
+    private static function normalizeBoDomainSlug(string $slug, string $domain = ''): string
+    {
+        $source = trim($slug) !== '' ? $slug : $domain;
+        $source = sanitize_title(remove_accents((string) $source));
+        return $source !== '' ? $source : 'domaine';
+    }
+
+    private static function boDomainKey(string $domainSlug, string $track, string $level): string
+    {
+        return self::normalizeBoDomainSlug($domainSlug) . '|' . self::normalizeBoTrack($track) . '|' . self::normalizeBoLevel($level);
+    }
+
+    private static function parseBoDomainKey(string $domainKey): array
+    {
+        $parts = explode('|', $domainKey);
+
+        return [
+            'domain_slug' => isset($parts[0]) ? self::normalizeBoDomainSlug((string) $parts[0]) : '',
+            'track'       => isset($parts[1]) ? self::normalizeBoTrack((string) $parts[1]) : 'NSI',
+            'level'       => isset($parts[2]) ? self::normalizeBoLevel((string) $parts[2]) : 'Première',
+        ];
+    }
+
+    private static function storedBoDomains(): array
+    {
+        $raw = get_option(self::OPTION_BO_DOMAINS, []);
+
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $domains = [];
+
+        foreach ($raw as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $domain = isset($item['domain'])
+                ? sanitize_text_field((string) $item['domain'])
+                : '';
+
+            $domainSlug = isset($item['domain_slug'])
+                ? self::normalizeBoDomainSlug((string) $item['domain_slug'], $domain)
+                : self::normalizeBoDomainSlug('', $domain);
+
+            $track = isset($item['track'])
+                ? self::normalizeBoTrack((string) $item['track'])
+                : 'NSI';
+
+            $level = isset($item['level'])
+                ? self::normalizeBoLevel((string) $item['level'])
+                : 'Première';
+
+            $active = isset($item['active']) ? (int) $item['active'] : 1;
+
+            if ($domain === '' || $domainSlug === '') {
+                continue;
+            }
+
+            $key = self::boDomainKey($domainSlug, $track, $level);
+
+            $domains[$key] = [
+                'domain'       => $domain,
+                'domain_slug'  => $domainSlug,
+                'track'        => $track,
+                'level'        => $level,
+                'active'       => $active === 1 ? 1 : 0,
+                'total'        => 0,
+                'active_total' => 0,
+            ];
+        }
+
+        return $domains;
+    }
+
+    private static function saveStoredBoDomains(array $domains): void
+    {
+        update_option(self::OPTION_BO_DOMAINS, array_values($domains), false);
+    }
+
+    private static function referentielBoDomains(string $tComp, bool $activeOnly = false): array
+    {
+        global $wpdb;
+
+        $domains = self::storedBoDomains();
+
+        if (self::tableExists($tComp)) {
+            $rows = $wpdb->get_results(
+                "SELECT
+                    domain,
+                    domain_slug,
+                    track,
+                    level,
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) AS active_total
+                FROM {$tComp}
+                WHERE domain IS NOT NULL
+                  AND domain <> ''
+                  AND domain_slug IS NOT NULL
+                  AND domain_slug <> ''
+                GROUP BY domain, domain_slug, track, level
+                ORDER BY
+                    FIELD(track, 'SNT', 'NSI'),
+                    FIELD(level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
+                    domain ASC"
+            );
+
+            foreach ($rows as $row) {
+                $domain = sanitize_text_field((string) $row->domain);
+                $domainSlug = self::normalizeBoDomainSlug((string) $row->domain_slug, $domain);
+                $track = self::normalizeBoTrack((string) $row->track);
+                $level = self::normalizeBoLevel((string) $row->level);
+
+                if ($domain === '' || $domainSlug === '') {
+                    continue;
+                }
+
+                $key = self::boDomainKey($domainSlug, $track, $level);
+
+                if (!isset($domains[$key])) {
+                    $domains[$key] = [
+                        'domain'       => $domain,
+                        'domain_slug'  => $domainSlug,
+                        'track'        => $track,
+                        'level'        => $level,
+                        'active'       => ((int) $row->active_total > 0) ? 1 : 0,
+                        'total'        => (int) $row->total,
+                        'active_total' => (int) $row->active_total,
+                    ];
+                } else {
+                    $domains[$key]['domain'] = $domain;
+                    $domains[$key]['domain_slug'] = $domainSlug;
+                    $domains[$key]['track'] = $track;
+                    $domains[$key]['level'] = $level;
+                    $domains[$key]['total'] = (int) $row->total;
+                    $domains[$key]['active_total'] = (int) $row->active_total;
+                }
+            }
+        }
+
+        if ($activeOnly) {
+            $domains = array_filter($domains, static function ($domain) {
+                return (int) ($domain['active'] ?? 1) === 1;
+            });
+        }
+
+        uasort($domains, static function ($a, $b) {
+            return strcasecmp(
+                ($a['track'] ?? '') . ' ' . ($a['level'] ?? '') . ' ' . ($a['domain'] ?? ''),
+                ($b['track'] ?? '') . ' ' . ($b['level'] ?? '') . ' ' . ($b['domain'] ?? '')
+            );
+        });
+
+        return $domains;
+    }
+
     public static function renderReferentielHub(): void
     {
-        $tab = self::currentTab('competencies');
+        $tab = self::currentTab('competences');
 
-        self::pageIntro('Référentiel BO', 'Compétences BO, associations pédagogiques et structuration du référentiel.');
+        self::pageIntro('Référentiel BO', 'Domaines, compétences officielles et associations pédagogiques.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-referentiel');
+
         self::subTabs('ouinpo-suite-referentiel', [
-            'competencies' => 'Compétences BO',
-            'courses'      => 'Cours ↔ compétences',
-            'years'        => 'Années scolaires',
+            'competences' => 'Compétences BO',
+            'domaines'   => 'Domaines BO',
+            'courses'    => 'Cours ↔ compétences',
+            'years'      => 'Années scolaires',
         ], $tab);
 
-        if ($tab === 'competencies') {
-            self::renderReferentielCompetenciesTable();
+        if ($tab === 'domaines') {
+            self::renderReferentielDomainsTable();
+
         } elseif ($tab === 'courses') {
             ?>
             <div class="ouinpo-suite-grid">
@@ -946,6 +1154,7 @@ final class SuiteAdmin
                 ?>
             </div>
             <?php
+
         } elseif ($tab === 'years') {
             ?>
             <div class="ouinpo-suite-grid">
@@ -958,6 +1167,9 @@ final class SuiteAdmin
                 ?>
             </div>
             <?php
+
+        } else {
+            self::renderReferentielCompetenciesTable();
         }
 
         self::endPage();
@@ -994,19 +1206,30 @@ final class SuiteAdmin
             return;
         }
 
-        $track = isset($_GET['ref_track']) ? sanitize_text_field((string) $_GET['ref_track']) : '';
-        $level = isset($_GET['ref_level']) ? sanitize_text_field((string) $_GET['ref_level']) : '';
+        $trackRaw = isset($_GET['ref_track']) ? sanitize_text_field((string) $_GET['ref_track']) : '';
+        $levelRaw = isset($_GET['ref_level']) ? sanitize_text_field((string) $_GET['ref_level']) : '';
+
+        $track = $trackRaw !== '' ? self::normalizeBoTrack($trackRaw) : '';
+        $level = $levelRaw !== '' ? self::normalizeBoLevel($levelRaw) : '';
         $search = isset($_GET['ref_s']) ? sanitize_text_field((string) $_GET['ref_s']) : '';
+
+        if ($track !== '' && !isset(self::boTrackOptions()[$track])) {
+            $track = '';
+        }
+
+        if ($level !== '' && !isset(self::boLevelOptions()[$level])) {
+            $level = '';
+        }
 
         $where = ['1=1'];
         $args  = [];
 
-        if (in_array($track, ['SNT', 'NSI', 'Transversal'], true)) {
+        if ($track !== '') {
             $where[] = 'c.track = %s';
             $args[] = $track;
         }
 
-        if (in_array($level, ['Seconde', 'Première', 'Terminale', 'Transversal'], true)) {
+        if ($level !== '') {
             $where[] = 'c.level = %s';
             $args[] = $level;
         }
@@ -1042,7 +1265,7 @@ final class SuiteAdmin
             FROM {$tComp} c
             WHERE " . implode(' AND ', $where) . "
             ORDER BY
-                FIELD(c.track, 'SNT', 'NSI', 'Transversal'),
+                FIELD(c.track, 'SNT', 'NSI'),
                 FIELD(c.level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
                 c.domain ASC,
                 c.id ASC
@@ -1053,27 +1276,221 @@ final class SuiteAdmin
         }
 
         $rows = $wpdb->get_results($sql);
+
+        $editId = isset($_GET['edit_competency_id']) ? (int) $_GET['edit_competency_id'] : 0;
+        $editRow = null;
+
+        if ($editId > 0 && current_user_can('manage_options')) {
+            $editRow = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$tComp} WHERE id = %d",
+                $editId
+            ));
+        }
+
+        $domainOptions = self::referentielBoDomains($tComp, true);
+        $selectedDomainKey = '';
+
+        if ($editRow) {
+            $selectedDomainKey = self::boDomainKey(
+                (string) $editRow->domain_slug,
+                (string) $editRow->track,
+                (string) $editRow->level
+            );
+        }
         ?>
+
+        <?php if (current_user_can('manage_options')): ?>
+            <div id="ouinpo-bo-form" class="card" style="padding:16px;margin:16px 0;background:#fff;max-width:1200px;">
+                <h2 class="ouinpo-suite-card-title">
+                    <?php echo $editRow ? 'Modifier une compétence BO' : 'Ajouter une compétence BO'; ?>
+                </h2>
+
+                <form method="post">
+                    <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+                    <input type="hidden" name="ouinpo_ref_action" value="save_competency">
+                    <input type="hidden" name="competency_id" value="<?php echo $editRow ? (int) $editRow->id : 0; ?>">
+
+                    <table class="form-table" role="presentation">
+                        <tbody>
+                            <tr>
+                                <th><label for="bo_domain_choice">Domaine BO</label></th>
+                                <td>
+                                    <?php if (!$domainOptions): ?>
+                                        <p class="description">
+                                            Aucun domaine BO n’est disponible. Crée d’abord un domaine dans l’onglet “Domaines BO”.
+                                        </p>
+                                    <?php else: ?>
+                                        <select id="bo_domain_choice" required>
+                                            <option value="">— Choisir un domaine —</option>
+
+                                            <?php foreach ($domainOptions as $key => $domainItem): ?>
+                                                <option
+                                                    value="<?php echo esc_attr($key); ?>"
+                                                    data-domain="<?php echo esc_attr($domainItem['domain']); ?>"
+                                                    data-domain-slug="<?php echo esc_attr($domainItem['domain_slug']); ?>"
+                                                    data-track="<?php echo esc_attr($domainItem['track']); ?>"
+                                                    data-level="<?php echo esc_attr($domainItem['level']); ?>"
+                                                    <?php selected($selectedDomainKey, $key); ?>
+                                                >
+                                                    <?php echo esc_html($domainItem['domain'] . ' — ' . $domainItem['track'] . ' / ' . $domainItem['level']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+
+                                        <p id="bo_domain_summary" class="description"></p>
+                                    <?php endif; ?>
+
+                                    <input id="bo_domain" type="hidden" name="domain" value="<?php echo esc_attr($editRow->domain ?? ''); ?>">
+                                    <input id="bo_domain_slug" type="hidden" name="domain_slug" value="<?php echo esc_attr($editRow->domain_slug ?? ''); ?>">
+                                    <input id="bo_track" type="hidden" name="track" value="<?php echo esc_attr($editRow->track ?? 'NSI'); ?>">
+                                    <input id="bo_level" type="hidden" name="level" value="<?php echo esc_attr($editRow->level ?? 'Première'); ?>">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="bo_competency">Compétence</label></th>
+                                <td>
+                                    <textarea id="bo_competency" name="competency" rows="4" class="large-text" required><?php
+                                        echo esc_textarea($editRow->competency ?? '');
+                                    ?></textarea>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="bo_slug">Slug compétence</label></th>
+                                <td>
+                                    <input id="bo_slug" type="text" name="slug" class="regular-text"
+                                        value="<?php echo esc_attr($editRow->slug ?? ''); ?>"
+                                        placeholder="ex : algorithmique-parcours-tableau">
+                                    <p class="description">
+                                        Laisse vide pour générer automatiquement le slug à partir du domaine et de la compétence.
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>Active</th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="active" value="1" <?php checked((int)($editRow->active ?? 1), 1); ?>>
+                                        Compétence active
+                                    </label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <?php submit_button($editRow ? 'Enregistrer les modifications' : 'Ajouter la compétence'); ?>
+
+                    <?php if ($editRow): ?>
+                        <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-referentiel&tab=competences')); ?>">
+                            Annuler
+                        </a>
+                    <?php endif; ?>
+                </form>
+
+                <script>
+                (function () {
+                    const domainChoice = document.getElementById('bo_domain_choice');
+                    const domainInput = document.getElementById('bo_domain');
+                    const domainSlugInput = document.getElementById('bo_domain_slug');
+                    const trackInput = document.getElementById('bo_track');
+                    const levelInput = document.getElementById('bo_level');
+                    const summary = document.getElementById('bo_domain_summary');
+
+                    const competencyInput = document.getElementById('bo_competency');
+                    const slugInput = document.getElementById('bo_slug');
+
+                    function slugify(value, separator) {
+                        return String(value || '')
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '')
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, separator)
+                            .replace(new RegExp('^' + separator + '+|' + separator + '+$', 'g'), '');
+                    }
+
+                    function syncDomain() {
+                        if (!domainChoice) return;
+
+                        const option = domainChoice.options[domainChoice.selectedIndex];
+
+                        if (!option || !option.value) {
+                            if (summary) summary.textContent = '';
+                            return;
+                        }
+
+                        const domain = option.dataset.domain || '';
+                        const domainSlug = option.dataset.domainSlug || '';
+                        const track = option.dataset.track || '';
+                        const level = option.dataset.level || '';
+
+                        if (domainInput) domainInput.value = domain;
+                        if (domainSlugInput) domainSlugInput.value = domainSlug;
+                        if (trackInput) trackInput.value = track;
+                        if (levelInput) levelInput.value = level;
+
+                        if (summary) {
+                            summary.textContent = 'Domaine sélectionné : ' + domain + ' — ' + track + ' / ' + level;
+                        }
+
+                        syncCompetencySlug();
+                    }
+
+                    function syncCompetencySlug() {
+                        if (!slugInput || !competencyInput || !domainSlugInput) return;
+                        if (slugInput.dataset.manual === '1') return;
+
+                        const compPart = slugify(competencyInput.value, '-');
+                        const domainPart = slugify(domainSlugInput.value, '-');
+
+                        if (!compPart) return;
+
+                        slugInput.value = domainPart ? domainPart + '-' + compPart : compPart;
+                    }
+
+                    if (domainChoice) {
+                        domainChoice.addEventListener('change', syncDomain);
+                        syncDomain();
+                    }
+
+                    if (competencyInput) {
+                        competencyInput.addEventListener('input', syncCompetencySlug);
+                    }
+
+                    if (slugInput) {
+                        slugInput.addEventListener('input', function () {
+                            slugInput.dataset.manual = '1';
+                        });
+
+                        if (!slugInput.value) {
+                            slugInput.dataset.manual = '0';
+                        }
+                    }
+                })();
+                </script>
+            </div>
+        <?php endif; ?>
+
         <div class="card" style="padding:16px;max-width:1200px;">
             <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
 
             <form method="get" style="margin-bottom:16px;">
                 <input type="hidden" name="page" value="ouinpo-suite-referentiel">
-                <input type="hidden" name="tab" value="competencies">
+                <input type="hidden" name="tab" value="competences">
 
                 <select name="ref_track">
                     <option value="">Toutes les pistes</option>
-                    <option value="SNT" <?php selected($track, 'SNT'); ?>>SNT</option>
-                    <option value="NSI" <?php selected($track, 'NSI'); ?>>NSI</option>
-                    <option value="Transversal" <?php selected($track, 'Transversal'); ?>>Transversal</option>
+                    <?php foreach (self::boTrackOptions() as $value => $label): ?>
+                        <option value="<?php echo esc_attr($value); ?>" <?php selected($track, $value); ?>><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
                 </select>
 
                 <select name="ref_level">
                     <option value="">Tous les niveaux</option>
-                    <option value="Seconde" <?php selected($level, 'Seconde'); ?>>Seconde</option>
-                    <option value="Première" <?php selected($level, 'Première'); ?>>Première</option>
-                    <option value="Terminale" <?php selected($level, 'Terminale'); ?>>Terminale</option>
-                    <option value="Transversal" <?php selected($level, 'Transversal'); ?>>Transversal</option>
+                    <?php foreach (self::boLevelOptions() as $value => $label): ?>
+                        <option value="<?php echo esc_attr($value); ?>" <?php selected($level, $value); ?>><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
                 </select>
 
                 <input type="search" name="ref_s" value="<?php echo esc_attr($search); ?>" placeholder="Rechercher domaine / compétence / slug">
@@ -1116,7 +1533,7 @@ final class SuiteAdmin
                                     <?php if (current_user_can('manage_options')): ?>
                                         <a class="button button-small" href="<?php echo esc_url(add_query_arg([
                                             'page' => 'ouinpo-suite-referentiel',
-                                            'tab' => self::currentTab('competencies'),
+                                            'tab' => 'competences',
                                             'edit_competency_id' => (int) $row->id,
                                         ], admin_url('admin.php'))); ?>#ouinpo-bo-form">
                                             Modifier
@@ -1147,6 +1564,592 @@ final class SuiteAdmin
             </table>
         </div>
         <?php
+    }
+
+    private static function renderReferentielDomainsTable(): void
+    {
+        if (!current_user_can('edit_users')) {
+            ?>
+            <div class="card" style="padding:16px;max-width:1200px;">
+                <h2 class="ouinpo-suite-card-title">Domaines BO</h2>
+                <p>Accès réservé aux profils autorisés.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        global $wpdb;
+
+        $tComp = $wpdb->prefix . 'ouin_exo_competencies';
+
+        self::handleReferentielBoActions($tComp);
+        settings_errors('ouinpo_ref_bo');
+
+        $domains = self::referentielBoDomains($tComp, false);
+        $levelOptions = self::boLevelOptions();
+
+        $editDomainKey = isset($_GET['edit_domain_key'])
+            ? sanitize_text_field((string) wp_unslash($_GET['edit_domain_key']))
+            : '';
+
+        $editDomain = null;
+
+        if ($editDomainKey !== '' && current_user_can('manage_options') && isset($domains[$editDomainKey])) {
+            $editDomain = $domains[$editDomainKey];
+        }
+        ?>
+
+        <?php if (current_user_can('manage_options')): ?>
+            <div id="ouinpo-bo-domain-form" class="card" style="padding:16px;margin:16px 0;background:#fff;max-width:1200px;">
+                <h2 class="ouinpo-suite-card-title">
+                    <?php echo $editDomain ? 'Modifier un domaine BO' : 'Créer un domaine BO'; ?>
+                </h2>
+
+                <form method="post">
+                    <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+
+                    <input type="hidden" name="ouinpo_ref_action" value="save_domain">
+                    <input type="hidden" name="old_domain_key" value="<?php echo esc_attr($editDomainKey); ?>">
+
+                    <table class="form-table" role="presentation">
+                        <tbody>
+                            <tr>
+                                <th><label for="bo_domain_name">Nom du domaine</label></th>
+                                <td>
+                                    <input id="bo_domain_name" type="text" name="domain" class="regular-text"
+                                        value="<?php echo esc_attr($editDomain['domain'] ?? ''); ?>" required>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="bo_domain_slug">Slug domaine</label></th>
+                                <td>
+                                    <input id="bo_domain_slug" type="text" name="domain_slug" class="regular-text"
+                                        value="<?php echo esc_attr($editDomain['domain_slug'] ?? ''); ?>" required>
+                                    <p class="description">Il est rempli automatiquement à partir du nom, mais peut être corrigé avant enregistrement.</p>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="bo_domain_track">Piste</label></th>
+                                <td>
+                                    <select id="bo_domain_track" name="track">
+                                        <?php foreach (self::boTrackOptions() as $value => $label): ?>
+                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($editDomain['track'] ?? 'NSI', $value); ?>>
+                                                <?php echo esc_html($label); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th><label for="bo_domain_level">Niveau</label></th>
+                                <td>
+                                    <select id="bo_domain_level" name="level">
+                                        <?php foreach (self::boLevelOptions() as $value => $label): ?>
+                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($editDomain['level'] ?? 'Première', $value); ?>>
+                                                <?php echo esc_html($label); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <?php submit_button($editDomain ? 'Enregistrer le domaine' : 'Créer le domaine'); ?>
+
+                    <?php if ($editDomain): ?>
+                        <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-referentiel&tab=domaines')); ?>">
+                            Annuler
+                        </a>
+                    <?php endif; ?>
+                </form>
+
+                <script>
+                (function () {
+                    const nameInput = document.getElementById('bo_domain_name');
+                    const slugInput = document.getElementById('bo_domain_slug');
+
+                    if (!nameInput || !slugInput) return;
+
+                    function slugifyDomain(value) {
+                        return String(value || '')
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '')
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                    }
+
+                    nameInput.addEventListener('input', function () {
+                        if (slugInput.dataset.manual === '1') return;
+                        slugInput.value = slugifyDomain(nameInput.value);
+                    });
+
+                    slugInput.addEventListener('input', function () {
+                        slugInput.dataset.manual = '1';
+                    });
+
+                    if (!slugInput.value) {
+                        slugInput.dataset.manual = '0';
+                    }
+                })();
+                </script>
+            </div>
+        <?php endif; ?>
+
+        <div class="card" style="padding:16px;max-width:1200px;">
+            <h2 class="ouinpo-suite-card-title">Domaines BO</h2>
+
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th>Domaine</th>
+                        <th>Slug</th>
+                        <th>Piste</th>
+                        <th>Niveau</th>
+                        <th style="width:10%;">Compétences</th>
+                        <th style="width:10%;">Actives</th>
+                        <th style="width:10%;">État</th>
+                        <th style="width:24%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!$domains): ?>
+                        <tr>
+                            <td colspan="8">Aucun domaine trouvé.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($domains as $domainKey => $row): ?>
+                            <?php
+                            $total = isset($row['total']) ? (int) $row['total'] : 0;
+                            $activeTotal = isset($row['active_total']) ? (int) $row['active_total'] : 0;
+                            $isActive = (int) ($row['active'] ?? 1) === 1;
+                            ?>
+                            <tr>
+                                <td><?php echo esc_html($row['domain']); ?></td>
+                                <td><code><?php echo esc_html($row['domain_slug']); ?></code></td>
+                                <td><?php echo esc_html($row['track']); ?></td>
+                                <td><?php echo esc_html($levelOptions[$row['level']] ?? $row['level']); ?></td>
+                                <td><?php echo number_format_i18n($total); ?></td>
+                                <td><?php echo number_format_i18n($activeTotal); ?></td>
+                                <td><?php echo $isActive ? 'Actif' : 'Masqué'; ?></td>
+                                <td>
+                                    <?php if (current_user_can('manage_options')): ?>
+                                        <a class="button button-small" href="<?php echo esc_url(add_query_arg([
+                                            'page' => 'ouinpo-suite-referentiel',
+                                            'tab' => 'domaines',
+                                            'edit_domain_key' => $domainKey,
+                                        ], admin_url('admin.php'))); ?>#ouinpo-bo-domain-form">
+                                            Modifier
+                                        </a>
+
+                                        <form method="post" style="display:inline;">
+                                            <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+                                            <input type="hidden" name="ouinpo_ref_action" value="toggle_domain">
+                                            <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
+                                            <input type="hidden" name="active" value="<?php echo $isActive ? '0' : '1'; ?>">
+                                            <?php submit_button($isActive ? 'Masquer' : 'Réactiver', 'secondary small', '', false); ?>
+                                        </form>
+
+                                        <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer ce domaine du registre ? Les compétences déjà liées ne seront pas supprimées.');">
+                                            <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+                                            <input type="hidden" name="ouinpo_ref_action" value="delete_domain">
+                                            <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
+                                            <?php submit_button('Supprimer', 'delete small', '', false); ?>
+                                        </form>
+                                    <?php else: ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    private static function handleReferentielBoActions(string $tComp): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $action = isset($_POST['ouinpo_ref_action'])
+            ? sanitize_key((string) wp_unslash($_POST['ouinpo_ref_action']))
+            : '';
+
+        if ($action === '') {
+            return;
+        }
+
+        check_admin_referer('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce');
+
+        global $wpdb;
+
+        if ($action === 'save_competency') {
+            if (!self::tableExists($tComp)) {
+                add_settings_error('ouinpo_ref_bo', 'bo_missing_table', 'La table des compétences n’existe pas encore.', 'error');
+                return;
+            }
+
+            $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
+
+            $domain = isset($_POST['domain'])
+                ? sanitize_text_field((string) wp_unslash($_POST['domain']))
+                : '';
+
+            $domainSlug = isset($_POST['domain_slug'])
+                ? self::normalizeBoDomainSlug((string) wp_unslash($_POST['domain_slug']), $domain)
+                : self::normalizeBoDomainSlug('', $domain);
+
+            $track = isset($_POST['track'])
+                ? self::normalizeBoTrack((string) wp_unslash($_POST['track']))
+                : 'NSI';
+
+            $level = isset($_POST['level'])
+                ? self::normalizeBoLevel((string) wp_unslash($_POST['level']))
+                : 'Première';
+
+            $competency = isset($_POST['competency'])
+                ? wp_kses_post((string) wp_unslash($_POST['competency']))
+                : '';
+
+            $slug = isset($_POST['slug'])
+                ? sanitize_title((string) wp_unslash($_POST['slug']))
+                : '';
+
+            $active = isset($_POST['active']) ? 1 : 0;
+
+            if ($domain === '' || $domainSlug === '' || trim(wp_strip_all_tags($competency)) === '') {
+                add_settings_error('ouinpo_ref_bo', 'bo_missing', 'Domaine et compétence sont obligatoires.', 'error');
+                return;
+            }
+
+            $domainKey = self::boDomainKey($domainSlug, $track, $level);
+            $domains = self::referentielBoDomains($tComp, true);
+
+            if (!isset($domains[$domainKey])) {
+                add_settings_error('ouinpo_ref_bo', 'bo_domain_unknown', 'Choisis un domaine BO existant avant de créer une compétence.', 'error');
+                return;
+            }
+
+            if ($slug === '') {
+                $slug = sanitize_title($domainSlug . '-' . wp_strip_all_tags($competency));
+                $slug = substr($slug, 0, 120);
+            }
+
+            $duplicateId = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$tComp} WHERE slug = %s AND id <> %d LIMIT 1",
+                $slug,
+                $id
+            ));
+
+            if ($duplicateId > 0) {
+                add_settings_error('ouinpo_ref_bo', 'bo_duplicate_slug', 'Ce slug de compétence existe déjà.', 'error');
+                return;
+            }
+
+            $label = trim(wp_strip_all_tags($domain . ' — ' . $competency));
+
+            $data = [
+                'domain'      => $domain,
+                'domain_slug' => $domainSlug,
+                'track'       => $track,
+                'level'       => $level,
+                'competency'  => $competency,
+                'slug'        => $slug,
+                'active'      => $active,
+                'label'       => $label,
+            ];
+
+            $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s'];
+
+            if ($id > 0) {
+                $wpdb->update($tComp, $data, ['id' => $id], $formats, ['%d']);
+                add_settings_error('ouinpo_ref_bo', 'bo_updated', 'Compétence BO modifiée.', 'updated');
+            } else {
+                $wpdb->insert($tComp, $data, $formats);
+                add_settings_error('ouinpo_ref_bo', 'bo_inserted', 'Compétence BO ajoutée.', 'updated');
+            }
+
+            return;
+        }
+
+        if ($action === 'toggle_competency') {
+            if (!self::tableExists($tComp)) {
+                return;
+            }
+
+            $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
+            $active = isset($_POST['active']) ? (int) $_POST['active'] : 0;
+            $active = $active === 1 ? 1 : 0;
+
+            if ($id > 0) {
+                $wpdb->update($tComp, ['active' => $active], ['id' => $id], ['%d'], ['%d']);
+                add_settings_error(
+                    'ouinpo_ref_bo',
+                    'bo_toggled',
+                    $active ? 'Compétence réactivée.' : 'Compétence désactivée.',
+                    'updated'
+                );
+            }
+
+            return;
+        }
+
+        if ($action === 'delete_competency') {
+            if (!self::tableExists($tComp)) {
+                return;
+            }
+
+            $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
+
+            if ($id <= 0) {
+                return;
+            }
+
+            $refs = self::referentielCompetencyReferenceCount($id);
+
+            if ($refs > 0) {
+                $wpdb->update($tComp, ['active' => 0], ['id' => $id], ['%d'], ['%d']);
+                add_settings_error(
+                    'ouinpo_ref_bo',
+                    'bo_soft_deleted',
+                    'Cette compétence est liée à des contenus ou suivis. Elle a été désactivée au lieu d’être supprimée.',
+                    'updated'
+                );
+                return;
+            }
+
+            $wpdb->delete($tComp, ['id' => $id], ['%d']);
+            add_settings_error('ouinpo_ref_bo', 'bo_deleted', 'Compétence supprimée définitivement.', 'updated');
+            return;
+        }
+
+        if ($action === 'save_domain') {
+            $oldKey = isset($_POST['old_domain_key'])
+                ? sanitize_text_field((string) wp_unslash($_POST['old_domain_key']))
+                : '';
+
+            $domain = isset($_POST['domain'])
+                ? sanitize_text_field((string) wp_unslash($_POST['domain']))
+                : '';
+
+            $domainSlug = isset($_POST['domain_slug'])
+                ? self::normalizeBoDomainSlug((string) wp_unslash($_POST['domain_slug']), $domain)
+                : self::normalizeBoDomainSlug('', $domain);
+
+            $track = isset($_POST['track'])
+                ? self::normalizeBoTrack((string) wp_unslash($_POST['track']))
+                : 'NSI';
+
+            $level = isset($_POST['level'])
+                ? self::normalizeBoLevel((string) wp_unslash($_POST['level']))
+                : 'Première';
+
+            if ($domain === '' || $domainSlug === '') {
+                add_settings_error('ouinpo_ref_bo', 'domain_missing', 'Nom de domaine obligatoire.', 'error');
+                return;
+            }
+
+            $domains = self::storedBoDomains();
+            $newKey = self::boDomainKey($domainSlug, $track, $level);
+
+            if ($oldKey !== '' && $oldKey !== $newKey) {
+                $old = self::parseBoDomainKey($oldKey);
+
+                if (self::tableExists($tComp)) {
+                    $conflict = (int) $wpdb->get_var($wpdb->prepare(
+                        "SELECT COUNT(*)
+                         FROM {$tComp}
+                         WHERE domain_slug = %s
+                           AND track = %s
+                           AND level = %s
+                           AND NOT (domain_slug = %s AND track = %s AND level = %s)",
+                        $domainSlug,
+                        $track,
+                        $level,
+                        $old['domain_slug'],
+                        $old['track'],
+                        $old['level']
+                    ));
+
+                    if ($conflict > 0) {
+                        add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe déjà.', 'error');
+                        return;
+                    }
+
+                    $wpdb->update(
+                        $tComp,
+                        [
+                            'domain'      => $domain,
+                            'domain_slug' => $domainSlug,
+                            'track'       => $track,
+                            'level'       => $level,
+                        ],
+                        [
+                            'domain_slug' => $old['domain_slug'],
+                            'track'       => $old['track'],
+                            'level'       => $old['level'],
+                        ],
+                        ['%s', '%s', '%s', '%s'],
+                        ['%s', '%s', '%s']
+                    );
+                }
+
+                if (isset($domains[$oldKey])) {
+                    unset($domains[$oldKey]);
+                }
+            }
+
+            if ($oldKey !== '' && $oldKey === $newKey && self::tableExists($tComp)) {
+                $old = self::parseBoDomainKey($oldKey);
+
+                $wpdb->update(
+                    $tComp,
+                    ['domain' => $domain],
+                    [
+                        'domain_slug' => $old['domain_slug'],
+                        'track'       => $old['track'],
+                        'level'       => $old['level'],
+                    ],
+                    ['%s'],
+                    ['%s', '%s', '%s']
+                );
+            }
+
+            $domains[$newKey] = [
+                'domain'       => $domain,
+                'domain_slug'  => $domainSlug,
+                'track'        => $track,
+                'level'        => $level,
+                'active'       => 1,
+                'total'        => 0,
+                'active_total' => 0,
+            ];
+
+            self::saveStoredBoDomains($domains);
+
+            add_settings_error('ouinpo_ref_bo', 'domain_saved', 'Domaine BO enregistré.', 'updated');
+            return;
+        }
+
+        if ($action === 'toggle_domain') {
+            $domainKey = isset($_POST['domain_key'])
+                ? sanitize_text_field((string) wp_unslash($_POST['domain_key']))
+                : '';
+
+            $active = isset($_POST['active']) ? (int) $_POST['active'] : 0;
+            $active = $active === 1 ? 1 : 0;
+
+            if ($domainKey === '') {
+                return;
+            }
+
+            $allDomains = self::referentielBoDomains($tComp, false);
+            $domains = self::storedBoDomains();
+
+            if (isset($allDomains[$domainKey])) {
+                $domains[$domainKey] = [
+                    'domain'       => (string) $allDomains[$domainKey]['domain'],
+                    'domain_slug'  => (string) $allDomains[$domainKey]['domain_slug'],
+                    'track'        => (string) $allDomains[$domainKey]['track'],
+                    'level'        => (string) $allDomains[$domainKey]['level'],
+                    'active'       => $active,
+                    'total'        => 0,
+                    'active_total' => 0,
+                ];
+
+                self::saveStoredBoDomains($domains);
+
+                add_settings_error(
+                    'ouinpo_ref_bo',
+                    'domain_toggled',
+                    $active ? 'Domaine réactivé.' : 'Domaine masqué pour les nouvelles compétences.',
+                    'updated'
+                );
+            }
+
+            return;
+        }
+
+        if ($action === 'delete_domain') {
+            $domainKey = isset($_POST['domain_key'])
+                ? sanitize_text_field((string) wp_unslash($_POST['domain_key']))
+                : '';
+
+            if ($domainKey === '') {
+                return;
+            }
+
+            $domains = self::storedBoDomains();
+
+            if (isset($domains[$domainKey])) {
+                unset($domains[$domainKey]);
+                self::saveStoredBoDomains($domains);
+            } else {
+                $allDomains = self::referentielBoDomains($tComp, false);
+
+                if (isset($allDomains[$domainKey])) {
+                    $domains[$domainKey] = [
+                        'domain'       => (string) $allDomains[$domainKey]['domain'],
+                        'domain_slug'  => (string) $allDomains[$domainKey]['domain_slug'],
+                        'track'        => (string) $allDomains[$domainKey]['track'],
+                        'level'        => (string) $allDomains[$domainKey]['level'],
+                        'active'       => 0,
+                        'total'        => 0,
+                        'active_total' => 0,
+                    ];
+
+                    self::saveStoredBoDomains($domains);
+                }
+            }
+
+            add_settings_error('ouinpo_ref_bo', 'domain_deleted', 'Domaine BO retiré du registre. Les compétences existantes ne sont pas supprimées.', 'updated');
+            return;
+        }
+    }
+
+    private static function referentielCompetencyReferenceCount(int $competencyId): int
+    {
+        global $wpdb;
+
+        $prefixExo = $wpdb->prefix . 'ouin_exo_';
+        $prefixFc  = $wpdb->prefix . 'ouin_fc_';
+
+        $checks = [
+            [$prefixExo . 'post_competency', 'competency_id'],
+            [$prefixExo . 'exercise_competency', 'competency_id'],
+            [$prefixExo . 'user_competencies', 'competency_id'],
+            [$prefixExo . 'competency_teaching', 'competency_id'],
+            [$prefixExo . 'assessment_competencies', 'competency_id'],
+            [$prefixExo . 'assessment_results', 'competency_id'],
+            [$prefixFc . 'card_competency', 'competency_id'],
+        ];
+
+        $total = 0;
+
+        foreach ($checks as [$table, $column]) {
+            if (!self::tableExists($table)) {
+                continue;
+            }
+
+            $total += (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d",
+                $competencyId
+            ));
+        }
+
+        return $total;
     }
 
     public static function renderEvaluationsHub(): void
@@ -1390,114 +2393,6 @@ final class SuiteAdmin
         ?>
         <div class="card" style="padding:16px;">
             <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
-                <?php
-                $editId = isset($_GET['edit_competency_id']) ? (int) $_GET['edit_competency_id'] : 0;
-                $editRow = null;
-
-                if ($editId > 0 && current_user_can('manage_options')) {
-                    $editRow = $wpdb->get_row($wpdb->prepare(
-                        "SELECT * FROM {$tComp} WHERE id = %d",
-                        $editId
-                    ));
-                }
-                ?>
-
-                <?php if (current_user_can('manage_options')): ?>
-                    <div class="card" style="padding:16px;margin:16px 0;background:#fff;">
-                        <h3 class="ouinpo-suite-card-title">
-                            <?php echo $editRow ? 'Modifier une compétence BO' : 'Ajouter une compétence BO'; ?>
-                        </h3>
-
-                        <form method="post">
-                            <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
-                            <input type="hidden" name="ouinpo_ref_action" value="save_competency">
-                            <input type="hidden" name="competency_id" value="<?php echo $editRow ? (int) $editRow->id : 0; ?>">
-
-                            <table class="form-table" role="presentation">
-                                <tbody>
-                                    <tr>
-                                        <th><label for="bo_domain">Domaine</label></th>
-                                        <td>
-                                            <input id="bo_domain" type="text" name="domain" class="regular-text"
-                                                value="<?php echo esc_attr($editRow->domain ?? ''); ?>" required>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th><label for="bo_domain_slug">Slug domaine</label></th>
-                                        <td>
-                                            <input id="bo_domain_slug" type="text" name="domain_slug" class="regular-text"
-                                                value="<?php echo esc_attr($editRow->domain_slug ?? ''); ?>"
-                                                placeholder="ex : algorithmique">
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th><label for="bo_track">Piste</label></th>
-                                        <td>
-                                            <select id="bo_track" name="track">
-                                                <?php foreach (['SNT', 'NSI', 'Transversal'] as $opt): ?>
-                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($editRow->track ?? 'NSI', $opt); ?>>
-                                                        <?php echo esc_html($opt); ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th><label for="bo_level">Niveau</label></th>
-                                        <td>
-                                            <select id="bo_level" name="level">
-                                                <?php foreach (['Seconde', 'Première', 'Terminale', 'Transversal'] as $opt): ?>
-                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($editRow->level ?? 'Première', $opt); ?>>
-                                                        <?php echo esc_html($opt); ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th><label for="bo_competency">Compétence</label></th>
-                                        <td>
-                                            <textarea id="bo_competency" name="competency" rows="4" class="large-text" required><?php
-                                                echo esc_textarea($editRow->competency ?? '');
-                                            ?></textarea>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th><label for="bo_slug">Slug compétence</label></th>
-                                        <td>
-                                            <input id="bo_slug" type="text" name="slug" class="regular-text"
-                                                value="<?php echo esc_attr($editRow->slug ?? ''); ?>"
-                                                placeholder="ex : nsi-algorithmique-parcours-tableau">
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th>Active</th>
-                                        <td>
-                                            <label>
-                                                <input type="checkbox" name="active" value="1" <?php checked((int)($editRow->active ?? 1), 1); ?>>
-                                                Compétence active
-                                            </label>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            <?php submit_button($editRow ? 'Enregistrer les modifications' : 'Ajouter la compétence'); ?>
-
-                            <?php if ($editRow): ?>
-                                <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-referentiel&tab=competencies')); ?>">
-                                    Annuler
-                                </a>
-                            <?php endif; ?>
-                        </form>
-                    </div>
-                <?php endif; ?>            
             <table class="widefat striped">
                 <tbody>
                     <?php foreach ($rows as $label => $value): ?>
@@ -1699,10 +2594,10 @@ final class SuiteAdmin
 
         $option_name = 'ouinpo_suite_style_mode';
 
-        $current = get_option($option_name, 'neutral');
+        $current = get_option($option_name, 'ouinpo');
 
         if (!in_array($current, ['ouinpo', 'neutral'], true)) {
-            $current = 'neutral';
+            $current = 'ouinpo';
         }
 
         ?>
@@ -2242,190 +3137,4 @@ final class SuiteAdmin
 
         self::endPage();
     }
-
-    private static function handleReferentielBoActions(string $tComp): void
-{
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        return;
-    }
-
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-
-    $action = isset($_POST['ouinpo_ref_action'])
-        ? sanitize_key((string) wp_unslash($_POST['ouinpo_ref_action']))
-        : '';
-
-    if ($action === '') {
-        return;
-    }
-
-    check_admin_referer('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce');
-
-    global $wpdb;
-
-    if ($action === 'save_competency') {
-        $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
-
-        $domain = isset($_POST['domain'])
-            ? sanitize_text_field((string) wp_unslash($_POST['domain']))
-            : '';
-
-        $domainSlug = isset($_POST['domain_slug'])
-            ? sanitize_key((string) wp_unslash($_POST['domain_slug']))
-            : '';
-
-        $track = isset($_POST['track'])
-            ? sanitize_text_field((string) wp_unslash($_POST['track']))
-            : 'NSI';
-
-        $level = isset($_POST['level'])
-            ? sanitize_text_field((string) wp_unslash($_POST['level']))
-            : 'Première';
-
-        $competency = isset($_POST['competency'])
-            ? wp_kses_post((string) wp_unslash($_POST['competency']))
-            : '';
-
-        $slug = isset($_POST['slug'])
-            ? sanitize_title((string) wp_unslash($_POST['slug']))
-            : '';
-
-        $active = isset($_POST['active']) ? 1 : 0;
-
-        if ($domain === '' || trim(wp_strip_all_tags($competency)) === '') {
-            add_settings_error('ouinpo_ref_bo', 'bo_missing', 'Domaine et compétence sont obligatoires.', 'error');
-            return;
-        }
-
-        if ($domainSlug === '') {
-            $domainSlug = sanitize_key($domain);
-        }
-
-        if ($slug === '') {
-            $slug = sanitize_title($domainSlug . '-' . wp_strip_all_tags($competency));
-            $slug = substr($slug, 0, 120);
-        }
-
-        if (!in_array($track, ['SNT', 'NSI', 'Transversal'], true)) {
-            $track = 'NSI';
-        }
-
-        if (!in_array($level, ['Seconde', 'Première', 'Terminale', 'Transversal'], true)) {
-            $level = 'Première';
-        }
-
-        $duplicateId = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$tComp} WHERE slug = %s AND id <> %d LIMIT 1",
-            $slug,
-            $id
-        ));
-
-        if ($duplicateId > 0) {
-            add_settings_error('ouinpo_ref_bo', 'bo_duplicate_slug', 'Ce slug de compétence existe déjà.', 'error');
-            return;
-        }
-
-        $label = trim(wp_strip_all_tags($domain . ' — ' . $competency));
-
-        $data = [
-            'domain'      => $domain,
-            'domain_slug' => $domainSlug,
-            'track'       => $track,
-            'level'       => $level,
-            'competency'  => $competency,
-            'slug'        => $slug,
-            'active'      => $active,
-            'label'       => $label,
-        ];
-
-        $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s'];
-
-        if ($id > 0) {
-            $wpdb->update($tComp, $data, ['id' => $id], $formats, ['%d']);
-            add_settings_error('ouinpo_ref_bo', 'bo_updated', 'Compétence BO modifiée.', 'updated');
-        } else {
-            $wpdb->insert($tComp, $data, $formats);
-            add_settings_error('ouinpo_ref_bo', 'bo_inserted', 'Compétence BO ajoutée.', 'updated');
-        }
-
-        return;
-    }
-
-    if ($action === 'toggle_competency') {
-        $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
-        $active = isset($_POST['active']) ? (int) $_POST['active'] : 0;
-        $active = $active === 1 ? 1 : 0;
-
-        if ($id > 0) {
-            $wpdb->update($tComp, ['active' => $active], ['id' => $id], ['%d'], ['%d']);
-            add_settings_error(
-                'ouinpo_ref_bo',
-                'bo_toggled',
-                $active ? 'Compétence réactivée.' : 'Compétence désactivée.',
-                'updated'
-            );
-        }
-
-        return;
-    }
-
-    if ($action === 'delete_competency') {
-        $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
-
-        if ($id <= 0) {
-            return;
-        }
-
-        $refs = self::referentielCompetencyReferenceCount($id);
-
-        if ($refs > 0) {
-            $wpdb->update($tComp, ['active' => 0], ['id' => $id], ['%d'], ['%d']);
-            add_settings_error(
-                'ouinpo_ref_bo',
-                'bo_soft_deleted',
-                'Cette compétence est liée à des contenus ou suivis. Elle a été désactivée au lieu d’être supprimée.',
-                'updated'
-            );
-            return;
-        }
-
-        $wpdb->delete($tComp, ['id' => $id], ['%d']);
-        add_settings_error('ouinpo_ref_bo', 'bo_deleted', 'Compétence supprimée définitivement.', 'updated');
-    }
-}
-
-private static function referentielCompetencyReferenceCount(int $competencyId): int
-{
-    global $wpdb;
-
-    $prefixExo = $wpdb->prefix . 'ouin_exo_';
-    $prefixFc  = $wpdb->prefix . 'ouin_fc_';
-
-    $checks = [
-        [$prefixExo . 'post_competency', 'competency_id'],
-        [$prefixExo . 'exercise_competency', 'competency_id'],
-        [$prefixExo . 'user_competencies', 'competency_id'],
-        [$prefixExo . 'competency_teaching', 'competency_id'],
-        [$prefixExo . 'assessment_competencies', 'competency_id'],
-        [$prefixExo . 'assessment_results', 'competency_id'],
-        [$prefixFc . 'card_competency', 'competency_id'],
-    ];
-
-    $total = 0;
-
-    foreach ($checks as [$table, $column]) {
-        if (!self::tableExists($table)) {
-            continue;
-        }
-
-        $total += (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d",
-            $competencyId
-        ));
-    }
-
-    return $total;
-}
 }
