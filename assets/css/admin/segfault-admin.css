@@ -1,0 +1,293 @@
+/* ==========================================================
+   OuInPo Suite — SegFault admin
+   CSS module fonctionnel
+   ========================================================== */
+
+.ouinpo-sf-admin-notice {
+  padding:14px 16px;
+}
+
+.ouinpo-sf-admin-notice--rag {
+  border-left-color:#2271b1;
+}
+
+.ouinpo-sf-title-tight {
+  margin-top:0;
+}
+
+.ouinpo-sf-title-compact {
+  margin:0 0 10px;
+}
+
+.ouinpo-sf-ok {
+  color:#008a20;
+}
+
+.ouinpo-sf-error {
+  color:#b32d2e;
+}
+
+.ouinpo-sf-admin-message {
+  margin:0 0 10px;
+}
+
+.ouinpo-sf-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:12px;
+  margin:12px 0;
+}
+
+.ouinpo-sf-grid-wide {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+  gap:12px;
+}
+
+.ouinpo-sf-admin-card {
+  background:#fff;
+  border:1px solid #dcdcde;
+  border-radius:8px;
+  padding:10px;
+}
+
+.ouinpo-sf-admin-number {
+  font-size:24px;
+}
+
+.ouinpo-sf-muted {
+  opacity:.75;
+}
+
+.ouinpo-sf-list-bottomless {
+  margin-bottom:0;
+}
+
+.ouinpo-sf-admin-row {
+  margin:12px 0 0;
+}
+
+.ouinpo-sf-form-row {
+  margin:12px 0;
+}
+
+.ouinpo-sf-boxed-form {
+  margin:12px 0 18px;
+  padding:12px;
+  border:1px solid #ddd;
+  background:#fff;
+}
+
+.ouinpo-sf-query-input {
+  width:min(760px, 100%);
+}
+
+.ouinpo-sf-table-spaced {
+  margin:8px 0 18px;
+}
+
+.ouinpo-sf-table-top {
+  margin-top:10px;
+}
+
+.ouinpo-sf-col-score {
+  width:70px;
+}
+
+.ouinpo-sf-col-origin {
+  width:130px;
+}
+
+.ouinpo-sf-col-visibility {
+  width:110px;
+}
+
+.ouinpo-sf-info-box {
+  max-width:860px;
+  padding:12px 14px;
+  border-left:4px solid #2271b1;
+  background:#f6f7f7;
+}
+
+.ouinpo-sf-input-small {
+  width:80px;
+}
+
+.ouinpo-sf-input-medium {
+  width:90px;
+}
+
+.ouinpo-sf-input-mini {
+  width:70px;
+}
+
+.ouinpo-sf-flex {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+
+.ouinpo-sf-admin-mini-form {
+  border:1px solid #ddd;
+  padding:10px;
+}
+
+.ouinpo-sf-spaced-small {
+  margin-top:6px;
+}
+
+.ouinpo-sf-spaced {
+  margin-top:8px;
+}
+
+.ouinpo-sf-spaced-large {
+  margin-top:10px;
+}
+
+.ouinpo-sf-check-label {
+  display:block;
+  margin:2px 0;
+}
+
+.ouinpo-sf-filter-form {
+  margin:16px 0 20px;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  background:#fff;
+}
+
+.ouinpo-sf-filter-row {
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+
+.ouinpo-sf-select-year {
+  min-width:180px;
+}
+
+.ouinpo-sf-select-group {
+  min-width:220px;
+}
+
+.ouinpo-sf-select-user {
+  min-width:260px;
+}
+
+.sf-progressbar {
+  height:10px;
+  background:#e5e5e5;
+  border-radius:999px;
+  overflow:hidden;
+  width:220px;
+  display:inline-block;
+  vertical-align:middle;
+  margin-right:10px;
+}
+
+.sf-progressbar > span {
+  display:block;
+  height:100%;
+  width:var(--progress, 0%);
+  background:#2e7d32;
+}
+
+.sf-pill {
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:12px;
+  margin-left:8px;
+}
+
+.sf-pill.ok {
+  background:#e8f5e9;
+  color:#1b5e20;
+}
+
+.sf-pill.warn {
+  background:#fff8e1;
+  color:#8d6e63;
+}
+
+.sf-pill.none {
+  background:#f5f5f5;
+  color:#616161;
+}
+
+.sf-items {
+  margin:10px 0 18px;
+}
+
+.sf-items li {
+  margin:4px 0;
+}
+
+.sf-card {
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:14px 14px 8px;
+  margin:12px 0;
+}
+
+.sf-meta {
+  color:#555;
+  font-size:12px;
+  margin-top:4px;
+}
+
+.sf-students-detail {
+  margin:8px 0 0;
+}
+
+.sf-students-list {
+  margin:8px 0 0 18px;
+}
+
+.sf-students-list li {
+  margin:3px 0;
+}
+
+.sf-mini-pill {
+  display:inline-block;
+  padding:1px 6px;
+  border-radius:999px;
+  font-size:11px;
+}
+
+.sf-mini-pill.ok {
+  background:#e8f5e9;
+  color:#1b5e20;
+}
+
+.sf-mini-pill.warn {
+  background:#fff8e1;
+  color:#8d6e63;
+}
+
+.sf-mini-pill.none {
+  background:#f5f5f5;
+  color:#616161;
+}
+
+.sf-date {
+  color:#777;
+  font-size:11px;
+  margin-left:6px;
+}
+
+.ouinpo-sf-progress-title {
+  margin:0;
+}
+
+.ouinpo-sf-progress-line {
+  margin:10px 0 6px;
+}
+
+.ouinpo-sf-login-muted {
+  color:#777;
+}

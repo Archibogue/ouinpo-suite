@@ -89,7 +89,7 @@ final class SettingsPage
                         </th>
                         <td>
                             <fieldset>
-                                <label style="display:block; margin-bottom:10px;">
+                                <label class="ouinpo-suite-settings-choice">
                                     <input
                                         type="radio"
                                         name="<?php echo esc_attr(self::OPTION_STYLE_MODE); ?>"
@@ -97,12 +97,12 @@ final class SettingsPage
                                         <?php checked($current, 'ouinpo'); ?>
                                     >
                                     <strong>OuInPo</strong>
-                                    <span style="color:#666;">
+                                    <span class="ouinpo-suite-settings-muted">
                                         — style actuel, littéraire et pataphysique.
                                     </span>
                                 </label>
 
-                                <label style="display:block; margin-bottom:10px;">
+                                <label class="ouinpo-suite-settings-choice">
                                     <input
                                         type="radio"
                                         name="<?php echo esc_attr(self::OPTION_STYLE_MODE); ?>"
@@ -110,7 +110,7 @@ final class SettingsPage
                                         <?php checked($current, 'neutral'); ?>
                                     >
                                     <strong>Sobre</strong>
-                                    <span style="color:#666;">
+                                    <span class="ouinpo-suite-settings-muted">
                                         — style clair et neutre, adapté à une version partageable.
                                     </span>
                                 </label>

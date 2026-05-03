@@ -1901,7 +1901,7 @@ add_shortcode('segfault_parcours', function ($atts) {
 
 
 
-    <div class="sf-parcours-filter" style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin: 1rem 0;">
+    <div class="sf-parcours-filter">
 
       <label for="sf-domain"><strong>Domaine :</strong></label>
 
@@ -1911,7 +1911,7 @@ add_shortcode('segfault_parcours', function ($atts) {
 
       </select>
 
-      <span id="sf-parcours-status" style="opacity:.85;"></span>
+      <span id="sf-parcours-status" class="sf-parcours-status"></span>
 
     </div>
 

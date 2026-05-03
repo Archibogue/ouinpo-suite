@@ -91,8 +91,8 @@ settings_errors('ouinpo_groups');
   <h1 class="wp-heading-inline">Classes</h1>
   <hr class="wp-header-end"/>
 
-  <div style="display:flex; gap:24px; align-items:flex-start; margin-top:12px;">
-    <div style="flex:1 1 60%;">
+        <div class="ouinpo-admin-layout">
+            <div class="ouinpo-admin-layout-main">
       <h2 class="title">Liste des classes</h2>
       <table class="widefat fixed striped">
         <thead>
@@ -112,7 +112,7 @@ settings_errors('ouinpo_groups');
               <td><?php echo esc_html($g->created_at); ?></td>
               <td>
                 <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-groups&action=edit&id='.$g->id)); ?>">Modifier</a>
-                <form method="post" style="display:inline" onsubmit="return confirm('Supprimer cette classe ?');">
+                                <form method="post" class="ouinpo-admin-inline-form" onsubmit="return confirm('Supprimer cette classe ?');">
                   <?php wp_nonce_field('ouinpo_groups_form','ouinpo_groups_nonce'); ?>
                   <input type="hidden" name="label" value="">
                   <input type="hidden" name="year_id" value="">
@@ -128,7 +128,7 @@ settings_errors('ouinpo_groups');
       </table>
     </div>
 
-    <div style="flex:1 1 40%; position:sticky; top:32px;">
+            <div class="ouinpo-admin-layout-side ouinpo-admin-layout-side--sticky">
       <h2 class="title"><?php echo $current->id ? 'Modifier la classe' : 'Nouvelle classe'; ?></h2>
       <form method="post">
         <?php wp_nonce_field('ouinpo_groups_form','ouinpo_groups_nonce'); ?>

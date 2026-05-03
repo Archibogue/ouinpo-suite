@@ -93,8 +93,8 @@ class Screen_Paths
 
         if ($show_models_list && $assigning): ?>
             <hr>
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-                <h2 style="margin:0;">Affecter un modèle</h2>
+        <div class="ouinpo-admin-header-row">
+            <h2 class="ouinpo-admin-heading-tight">Affecter un modèle</h2>
                 <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&view=models')); ?>">
                     Retour aux modèles
                 </a>
@@ -105,12 +105,12 @@ class Screen_Paths
                     <strong>Modèle sélectionné :</strong>
                     <?php echo esc_html($assigning['title']); ?>
                 </p>
-                <p class="description" style="margin:0;">
+            <p class="description ouinpo-admin-description-tight">
                     Cette action crée un nouveau parcours assigné à partir du modèle, sans modifier le modèle lui-même.
                 </p>
             </div>
 
-            <form method="post" style="margin-top:16px;">
+        <form method="post" class="ouinpo-admin-form-spaced">
                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                 <input type="hidden" name="paths_action" value="instantiate">
                 <input type="hidden" name="template_id" value="<?php echo (int) $assigning['id']; ?>">
@@ -134,7 +134,7 @@ class Screen_Paths
                         <tr>
                             <th scope="row">Classes</th>
                             <td>
-                                <select name="assign_group_ids[]" multiple size="8" style="min-width:320px;">
+            <select name="assign_group_ids[]" multiple size="8" class="ouinpo-admin-select-groups">
                                     <?php foreach ($groups as $group): ?>
                                         <option value="<?php echo (int) $group['id']; ?>">
                                             <?php echo esc_html($group['label']); ?>
@@ -148,7 +148,7 @@ class Screen_Paths
                         <tr>
                             <th scope="row">Élèves</th>
                             <td>
-                                <select name="assign_user_ids[]" multiple size="10" style="min-width:420px;">
+            <select name="assign_user_ids[]" multiple size="10" class="ouinpo-admin-select-users">
                                     <?php foreach ($students as $student): ?>
                                         <option value="<?php echo (int) $student['id']; ?>">
                                             <?php
@@ -172,8 +172,8 @@ class Screen_Paths
 
         <?php if ($show_create_form): ?>
             <hr>
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-                <h2 style="margin:0;"><?php echo $editing ? 'Modifier un parcours' : 'Créer un parcours'; ?></h2>
+        <div class="ouinpo-admin-header-row">
+            <h2 class="ouinpo-admin-heading-tight"><?php echo $editing ? 'Modifier un parcours' : 'Créer un parcours'; ?></h2>
 
                 <?php if ($editing): ?>
                     <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&view=create')); ?>">
@@ -325,15 +325,15 @@ class Screen_Paths
                                 ><?php echo esc_textarea($exercise_csv); ?></textarea>
                                 <p class="description">Saisis les <strong>ID des exercices</strong> dans l’ordre voulu, séparés par des virgules.</p>
 
-                                <details style="margin-top:10px;">
+            <details class="ouinpo-admin-details-spaced">
                                     <summary><strong>Voir les exercices disponibles</strong></summary>
-                                    <div style="margin-top:10px; max-height:260px; overflow:auto; border:1px solid #ddd; background:#fff; padding:10px;">
+                <div class="ouinpo-admin-scroll-box">
                                         <table class="widefat striped">
                                             <thead>
                                                 <tr>
-                                                    <th style="width:80px;">ID</th>
+                            <th class="ouinpo-admin-col-id-wide">ID</th>
                                                     <th>Titre</th>
-                                                    <th style="width:100px;">Actif</th>
+                            <th class="ouinpo-admin-col-count">Actif</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -354,7 +354,7 @@ class Screen_Paths
                         <tr class="ouinpo-targets-row">
                             <th scope="row">Classes</th>
                             <td>
-                                <select name="group_ids[]" multiple size="8" style="min-width:320px;">
+            <select name="group_ids[]" multiple size="8" class="ouinpo-admin-select-groups">
                                     <?php foreach ($groups as $group): ?>
                                         <option
                                             value="<?php echo (int) $group['id']; ?>"
@@ -371,7 +371,7 @@ class Screen_Paths
                         <tr class="ouinpo-targets-row">
                             <th scope="row">Élèves</th>
                             <td>
-                                <select name="user_ids[]" multiple size="10" style="min-width:420px;">
+            <select name="user_ids[]" multiple size="10" class="ouinpo-admin-select-users">
                                     <?php foreach ($students as $student): ?>
                                         <option
                                             value="<?php echo (int) $student['id']; ?>"
@@ -451,14 +451,14 @@ class Screen_Paths
         <table class="widefat striped">
             <thead>
                 <tr>
-                    <th style="width:70px;">ID</th>
+                        <th class="ouinpo-admin-col-id">ID</th>
                     <th>Titre</th>
-                    <th style="width:220px;">Cibles</th>
-                    <th style="width:120px;">Source</th>
-                    <th style="width:120px;">Mode</th>
-                    <th style="width:100px;">Actif</th>
-                    <th style="width:100px;">Exos</th>
-                    <th style="width:320px;">Actions</th>
+                        <th class="ouinpo-admin-col-targets">Cibles</th>
+                        <th class="ouinpo-admin-col-source">Source</th>
+                        <th class="ouinpo-admin-col-mode">Mode</th>
+                        <th class="ouinpo-admin-col-count">Actif</th>
+                        <th class="ouinpo-admin-col-count">Exos</th>
+                        <th class="ouinpo-admin-col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -478,7 +478,7 @@ class Screen_Paths
                         <td><?php echo (int) $path['id']; ?></td>
                         <td>
                             <strong><?php echo esc_html($path['title']); ?></strong><br>
-                            <span style="color:#666;">
+                                <span class="ouinpo-admin-soft-muted">
                                 <?php echo esc_html($path['items_preview'] ?: ''); ?>
                             </span>
                         </td>
@@ -490,14 +490,14 @@ class Screen_Paths
                         <td>
                             <a class="button button-small" href="<?php echo esc_url($edit_url); ?>">Modifier</a>
 
-                            <form method="post" style="display:inline-block; margin-left:6px;">
+                                <form method="post" class="ouinpo-admin-inline-form-spaced">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="paths_action" value="duplicate">
                                 <input type="hidden" name="path_id" value="<?php echo (int) $path['id']; ?>">
                                 <button type="submit" class="button button-small">Dupliquer</button>
                             </form>
 
-                            <form method="post" style="display:inline-block; margin-left:6px;" onsubmit="return confirm('Supprimer ce parcours ?');">
+                                <form method="post" class="ouinpo-admin-inline-form-spaced" onsubmit="return confirm('Supprimer ce parcours ?');">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="paths_action" value="delete">
                                 <input type="hidden" name="path_id" value="<?php echo (int) $path['id']; ?>">
@@ -518,15 +518,15 @@ class Screen_Paths
         <table class="widefat striped">
             <thead>
                 <tr>
-                    <th style="width:70px;">ID</th>
+                        <th class="ouinpo-admin-col-id">ID</th>
                     <th>Titre</th>
-                    <th style="width:110px;">Niveau</th>
-                    <th style="width:180px;">Domaine BO</th>
-                    <th style="width:140px;">Objectif</th>
-                    <th style="width:120px;">Mode</th>
-                    <th style="width:100px;">Actif</th>
-                    <th style="width:100px;">Exos</th>
-                    <th style="width:320px;">Actions</th>
+                        <th class="ouinpo-admin-col-level">Niveau</th>
+                        <th class="ouinpo-admin-col-domain">Domaine BO</th>
+                        <th class="ouinpo-admin-col-goal">Objectif</th>
+                        <th class="ouinpo-admin-col-mode">Mode</th>
+                        <th class="ouinpo-admin-col-count">Actif</th>
+                        <th class="ouinpo-admin-col-count">Exos</th>
+                        <th class="ouinpo-admin-col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -550,7 +550,7 @@ class Screen_Paths
                         <td><?php echo (int) $path['id']; ?></td>
                         <td>
                             <strong><?php echo esc_html($path['title']); ?></strong><br>
-                            <span style="color:#666;">
+                                <span class="ouinpo-admin-soft-muted">
                                 <?php echo esc_html($path['items_preview'] ?: ''); ?>
                             </span>
                         </td>
@@ -562,16 +562,16 @@ class Screen_Paths
                         <td><?php echo (int) $path['items_count']; ?></td>
                         <td>
                             <a class="button button-small" href="<?php echo esc_url($edit_url); ?>">Modifier</a>
-                            <a class="button button-small button-primary" style="margin-left:6px;" href="<?php echo esc_url($assign_url); ?>">Affecter</a>
+                                <a class="button button-small button-primary ouinpo-admin-button-spaced" href="<?php echo esc_url($assign_url); ?>">Affecter</a>
 
-                            <form method="post" style="display:inline-block; margin-left:6px;">
+                                <form method="post" class="ouinpo-admin-inline-form-spaced">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="paths_action" value="duplicate">
                                 <input type="hidden" name="path_id" value="<?php echo (int) $path['id']; ?>">
                                 <button type="submit" class="button button-small">Dupliquer</button>
                             </form>
 
-                            <form method="post" style="display:inline-block; margin-left:6px;" onsubmit="return confirm('Supprimer ce modèle ?');">
+                                <form method="post" class="ouinpo-admin-inline-form-spaced" onsubmit="return confirm('Supprimer ce modèle ?');">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="paths_action" value="delete">
                                 <input type="hidden" name="path_id" value="<?php echo (int) $path['id']; ?>">

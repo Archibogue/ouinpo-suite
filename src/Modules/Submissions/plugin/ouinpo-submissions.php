@@ -510,6 +510,21 @@ class Ouinpo_Submissions_Plugin {
 
 
 
+        if (in_array($ptype, array(self::CPT_RESOURCE), true) || in_array((string) $hook, array('profile.php', 'user-edit.php'), true)) {
+            $css_rel = 'assets/css/admin/submissions-admin.css';
+            $css_path = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR . $css_rel : '';
+            $css_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL . $css_rel : '';
+
+            if ($css_url !== '') {
+                wp_enqueue_style(
+                    'ouinpo-submissions-admin',
+                    $css_url,
+                    [],
+                    ($css_path !== '' && file_exists($css_path)) ? (string) filemtime($css_path) : self::VERSION
+                );
+            }
+        }
+
         if (in_array($ptype, array(self::CPT_RESOURCE), true)) {
 
             wp_register_script('ouinpo-admin', false, array('jquery'), self::VERSION, true);
@@ -572,7 +587,7 @@ class Ouinpo_Submissions_Plugin {
 
 
 
-                var li = $('<li/>', { 'data-id': id, style:'margin:.15rem 0' });
+                var li = $('<li/>', { 'data-id': id, class:'ouinpo-res-file-item' });
 
 
 
@@ -646,13 +661,7 @@ class Ouinpo_Submissions_Plugin {
 
               function highlight(on){
 
-                dz.css({
-
-                  borderColor: on ? '#b98c5a' : '#bbb',
-
-                  background:  on ? '#fff6ee' : '#fafafa'
-
-                });
+                dz.toggleClass('is-dragover', !!on);
 
               }
 
@@ -1314,7 +1323,7 @@ class Ouinpo_Submissions_Plugin {
 
                         <?php foreach($terms as $t): ?>
 
-                            <label style="display:block">
+                            <label class="ouinpo-submissions-check-label">
 
                                 <input type="checkbox" name="ouinpo_user_classes[]" value="<?php echo esc_attr($t->term_id); ?>" <?php checked(in_array($t->term_id,$selected)); ?> />
 
@@ -1416,7 +1425,7 @@ class Ouinpo_Submissions_Plugin {
 
                 printf(
 
-                    '<label style="display:block"><input type="checkbox" name="ouinpo_allowed_groups[]" value="%d" %s/> %s</label>',
+                    '<label class="ouinpo-submissions-check-label"><input type="checkbox" name="ouinpo_allowed_groups[]" value="%d" %s/> %s</label>',
 
                     $gid,
 
@@ -1440,11 +1449,11 @@ class Ouinpo_Submissions_Plugin {
 
         } else {
 
-            echo '<div style="max-height:180px;overflow:auto;border:1px solid #ddd;padding:.5rem;border-radius:.25rem">';
+            echo '<div class="ouinpo-submissions-scroll-box">';
 
             foreach($eleves as $u){
 
-                printf('<label style="display:block"><input type="checkbox" name="ouinpo_allowed_users[]" value="%d" %s/> %s (%s)</label>',
+                printf('<label class="ouinpo-submissions-check-label"><input type="checkbox" name="ouinpo_allowed_users[]" value="%d" %s/> %s (%s)</label>',
 
                     $u->ID, checked(in_array($u->ID,$allowed_users), true, false),
 
@@ -1494,17 +1503,17 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-        echo '<div id="ouinpo_res_current" style="margin:.5rem 0;padding:.5rem;border:1px solid #ddd;border-radius:4px;background:#fff;">';
+        echo '<div id="ouinpo_res_current" class="ouinpo-res-current">';
 
     
 
-        $empty_style = !empty($list_ids) ? ' style="display:none"' : '';
+        $empty_class = !empty($list_ids) ? ' is-hidden' : '';
 
-        echo '<p class="ouinpo-empty"'.$empty_style.'><em>Aucun fichier sélectionné.</em></p>';
+        echo '<p class="ouinpo-empty'.$empty_class.'"><em>Aucun fichier sélectionné.</em></p>';
 
     
 
-        echo '<ul id="ouinpo_res_files_list" style="margin:0;padding-left:1.1rem;">';
+        echo '<ul id="ouinpo_res_files_list" class="ouinpo-res-files-list">';
 
         foreach ($list_ids as $aid) {
 
@@ -1522,7 +1531,7 @@ class Ouinpo_Submissions_Plugin {
 
             $title = get_the_title($aid);
 
-            echo '<li data-id="'.(int)$aid.'" style="margin:.15rem 0">';
+            echo '<li data-id="'.(int)$aid.'" class="ouinpo-res-file-item">';
 
             echo '<a href="'.esc_url($url).'" target="_blank">'.esc_html($title).'</a> (#'.(int)$aid.') ';
 
@@ -1542,13 +1551,13 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-        echo '<div id="ouinpo-dropzone" style="border:2px dashed #bbb;border-radius:6px;padding:20px;text-align:center;background:#fafafa;cursor:pointer;">
+        echo '<div id="ouinpo-dropzone" class="ouinpo-dropzone">
 
-                <strong>Déposez vos fichiers ici</strong><br><span style="opacity:.7">ou cliquez pour parcourir…</span>
+                <strong>Déposez vos fichiers ici</strong><br><span class="ouinpo-dropzone-help">ou cliquez pour parcourir…</span>
 
               </div>
 
-              <input type="file" id="ouinpo-hidden-file" style="display:none" multiple />';
+              <input type="file" id="ouinpo-hidden-file" class="ouinpo-hidden-file" multiple />';
 
     }
 
@@ -1802,7 +1811,7 @@ class Ouinpo_Submissions_Plugin {
 
             <p><label>Titre (optionnel)<br/>
 
-                <input type="text" name="ouinpo_title" style="width:100%"/></label>
+                <input type="text" name="ouinpo_title" class="ouinpo-submissions-full-width"/></label>
 
             </p>
 
@@ -2496,7 +2505,7 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-                        echo '<p style="font-size:.8rem;opacity:.8;margin-top:.5rem;">(Affichage limité aux 200 dépôts les plus récents de l\'année active.)</p>';
+                            echo '<p class="ouinpo-submissions-limit-note">(Affichage limité aux 200 dépôts les plus récents de l\'année active.)</p>';
 
                     }
 
@@ -2638,7 +2647,7 @@ class Ouinpo_Submissions_Plugin {
 
         printf('<label>%s%s<br/>', esc_html($atts['label']), $required ? ' *' : '');
 
-        printf('<select name="ouinpo_user_classes%s" %s style="width:100%%">', $multiple ? '[]' : '', $multiple ? 'multiple size="4"' : '');
+        printf('<select name="ouinpo_user_classes%s" %s class="ouinpo-submissions-full-width">', $multiple ? '[]' : '', $multiple ? 'multiple size="4"' : '');
 
         foreach($terms as $t){ printf('<option value="%d">%s</option>', $t->term_id, esc_html($t->name)); }
 
@@ -3307,13 +3316,13 @@ class Ouinpo_Submissions_Plugin {
 
       if (!arr.length) return;
 
-      html.push('<div style=\"margin:.5rem 0 .25rem;font-weight:600\">'+labels[k]+'</div><ul style=\"margin:.25rem 0 .75rem .95rem\">');
+      html.push('<div class=\"ouinpo-res-notif-section-title\">'+labels[k]+'</div><ul class=\"ouinpo-res-notif-list\">');
 
       arr.slice(0,5).forEach(function(it){
 
     var href = (typeof it.url === 'string' && it.url) ? esc(it.url) : '#';
 
-    html.push('<li><a href=\"'+href+'\">'+esc(it.title)+'</a> <span style=\"opacity:.7\">('+esc(it.date)+')</span></li>');
+    html.push('<li><a href=\"'+href+'\">'+esc(it.title)+'</a> <span class=\"ouinpo-res-notif-date\">('+esc(it.date)+')</span></li>');
 
       });
 

@@ -159,6 +159,42 @@
 
   }
 
+  .ouinpo-submissions-full-width{
+
+    width:100%;
+
+  }
+
+  .ouinpo-submissions-limit-note{
+
+    font-size:.8rem;
+
+    opacity:.8;
+
+    margin-top:.5rem;
+
+  }
+
+  .ouinpo-res-notif-section-title{
+
+    margin:.5rem 0 .25rem;
+
+    font-weight:600;
+
+  }
+
+  .ouinpo-res-notif-list{
+
+    margin:.25rem 0 .75rem .95rem;
+
+  }
+
+  .ouinpo-res-notif-date{
+
+    opacity:.7;
+
+  }
+
   .ouinpo-files-list li{
 
     margin:.1rem 0;

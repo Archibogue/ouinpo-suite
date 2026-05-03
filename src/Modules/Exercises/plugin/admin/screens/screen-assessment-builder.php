@@ -56,29 +56,6 @@ class Screen_Assessment_Builder {
         <a href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-assessments')); ?>" class="page-title-action">Voir les DS</a>
         <hr class="wp-header-end">
 
-        <style>
-            .ouinpo-builder-layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:18px;margin-top:16px;align-items:start;}
-            .ouinpo-builder-card{background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:14px;box-shadow:0 1px 1px rgba(0,0,0,.04);}
-            .ouinpo-builder-card h2{margin-top:0;}
-            .ouinpo-builder-field{margin-bottom:10px;}
-            .ouinpo-builder-field label{font-weight:600;display:block;margin-bottom:3px;}
-            .ouinpo-builder-field input[type="text"],.ouinpo-builder-field input[type="number"],.ouinpo-builder-field input[type="date"],.ouinpo-builder-field select,.ouinpo-builder-field textarea{width:100%;max-width:100%;}
-            .ouinpo-builder-field select[multiple]{min-height:120px;}
-            .ouinpo-builder-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px;}
-            .ouinpo-builder-kpi{background:#f6f7f7;border:1px solid #dcdcde;border-radius:8px;padding:8px;text-align:center;}
-            .ouinpo-builder-kpi span{display:block;color:#646970;font-size:12px;}
-            .ouinpo-builder-kpi strong{font-size:18px;}
-            .ouinpo-builder-exo{display:grid;grid-template-columns:28px 1fr 90px 90px;gap:12px;align-items:start;border:1px solid #dcdcde;border-radius:10px;padding:12px;margin:10px 0;background:#fff;}
-            .ouinpo-builder-exo.is-selected{border-color:#2271b1;background:#f0f6fc;}
-            .ouinpo-builder-title{font-weight:700;}
-            .ouinpo-builder-meta{color:#646970;margin-top:3px;}
-            .ouinpo-builder-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
-            .ouinpo-builder-tag{background:#f6f7f7;border:1px solid #dcdcde;border-radius:999px;padding:2px 7px;font-size:12px;}
-            .ouinpo-builder-small{width:80px!important;}
-            #ouinpo-builder-warning{display:none;margin:10px 0;padding:8px 10px;border-left:4px solid #dba617;background:#fff8e5;}
-            @media(max-width:1000px){.ouinpo-builder-layout{grid-template-columns:1fr}.ouinpo-builder-exo{grid-template-columns:28px 1fr}.ouinpo-builder-small{width:130px!important}}
-        </style>
-
         <div class="notice notice-info">
             <p>Ce concepteur compose un DS à partir des exercices existants. Les sujets pratiques complets sont exclus par défaut.</p>
         </div>
@@ -245,7 +222,7 @@ class Screen_Assessment_Builder {
                     <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                     <input type="hidden" name="op" value="create_assessment_from_builder">
 
-                    <div class="ouinpo-builder-card" style="margin-bottom:14px;">
+                    <div class="ouinpo-builder-card ouinpo-builder-card--summary">
                         <h2>Informations du devoir</h2>
 
                         <div class="ouinpo-builder-field">
@@ -360,7 +337,7 @@ class Screen_Assessment_Builder {
                             <?php endforeach; ?>
                         <?php endif; ?>
 
-                        <p style="margin-top:16px;">
+                        <p class="ouinpo-builder-submit-row">
                             <button type="submit" class="button button-primary button-hero">Créer le DS avec la sélection</button>
                         </p>
                     </div>

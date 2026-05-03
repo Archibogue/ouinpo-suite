@@ -4,75 +4,136 @@
    ========================================================== */
 
 .ouinpo-badge-admin-grid {
-                display: grid;
-                grid-template-columns: minmax(380px, 520px) 1fr;
-                gap: 24px;
-                align-items: start;
-                margin-top: 16px;
-            }
-            .ouinpo-badge-admin-card {
-                background: #fff;
-                border: 1px solid #dcdcde;
-                border-radius: 8px;
-                padding: 18px;
-                box-shadow: 0 1px 2px rgba(0,0,0,.04);
-            }
-            .ouinpo-badge-preview-box {
-                margin-top: 8px;
-                min-height: 56px;
-            }
-            .ouinpo-badge-preview-box img {
-                max-width: 96px;
-                max-height: 96px;
-                height: auto;
-                display: block;
-                border: 1px solid #ccd0d4;
-                background: #fff;
-                padding: 4px;
-                border-radius: 6px;
-            }
-            .ouinpo-badge-actions {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-            .ouinpo-badge-toolbar {
-                display: flex;
-                gap: 10px;
-                align-items: end;
-                flex-wrap: wrap;
-                margin: 14px 0 18px;
-            }
-            .ouinpo-badge-toolbar .field {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-            .ouinpo-badge-list-thumb {
-                width: 54px;
-                text-align: center;
-            }
-            .ouinpo-badge-list-thumb img {
-                max-width: 42px;
-                max-height: 42px;
-                height: auto;
-                display: inline-block;
-                border: 1px solid #ccd0d4;
-                background: #fff;
-                padding: 2px;
-                border-radius: 6px;
-            }
-            .ouinpo-badge-muted {
-                color: #646970;
-            }
-            .ouinpo-inline-form {
-                display: inline-block;
-                margin: 0;
-            }
-            @media (max-width: 1100px) {
-                .ouinpo-badge-admin-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
+    display: grid;
+    grid-template-columns: minmax(380px, 520px) 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-top: 16px;
+}
+
+.ouinpo-badge-admin-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+.ouinpo-badge-card-title {
+    margin-top: 0;
+}
+
+.ouinpo-badge-preview-box {
+    margin-top: 8px;
+    min-height: 56px;
+}
+
+.ouinpo-badge-preview-box img {
+    max-width: 96px;
+    max-height: 96px;
+    height: auto;
+    display: block;
+    border: 1px solid #ccd0d4;
+    background: #fff;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.ouinpo-badge-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.ouinpo-badge-actions-col {
+    width: 190px;
+}
+
+.ouinpo-badge-description-excerpt {
+    margin-top: 4px;
+}
+
+.ouinpo-badge-toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    flex-wrap: wrap;
+    margin: 14px 0 18px;
+}
+
+.ouinpo-badge-toolbar .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ouinpo-badge-list-thumb {
+    width: 54px;
+    text-align: center;
+}
+
+.ouinpo-badge-list-thumb img {
+    max-width: 42px;
+    max-height: 42px;
+    height: auto;
+    display: inline-block;
+    border: 1px solid #ccd0d4;
+    background: #fff;
+    padding: 2px;
+    border-radius: 6px;
+}
+
+.ouinpo-badge-muted {
+    color: #646970;
+}
+
+.ouinpo-inline-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.ouinpo-badge-assign-filter {
+    margin: 12px 0 24px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.ouinpo-badge-select-wide {
+    min-width: 320px;
+}
+
+.ouinpo-badge-bulk-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ouinpo-badge-check-col {
+    width: 40px;
+}
+
+.ouinpo-badge-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.ouinpo-badge-status--manual {
+    border: 1px solid #8bc48b;
+    background: #edf7ed;
+}
+
+.ouinpo-badge-status--auto {
+    border: 1px solid #84aef2;
+    background: #eef4ff;
+}
+
+@media (max-width: 1100px) {
+    .ouinpo-badge-admin-grid {
+        grid-template-columns: 1fr;
+    }
+}
 

@@ -1803,7 +1803,7 @@ return '
 
     . $ai_notice .
 
-    '<div class="ouinpo-practical-progress" style="display:none;"></div>
+    '<div class="ouinpo-practical-progress is-hidden"></div>
 
     <div class="ouinpo-practical-calls"></div>
 
@@ -2015,17 +2015,17 @@ $is_logged = is_user_logged_in();
 
     $answer_box = '
 
-      <div class="exo-answer-box" style="margin:1em 0;">
+      <div class="exo-answer-box">
 
         <h4>Ma réponse</h4>
 
-        <button type="button" class="exo-insert-code" style="float: right;">Insérer un bloc code</button>
+        <button type="button" class="exo-insert-code">Insérer un bloc code</button>
 
         <textarea class="exo-answer-text" rows="10" placeholder="Rédige ici ta réponse.
 
     Si tu ajoutes du code, encadre-le avec [code] et [/code]."></textarea>
 
-        <p class="exo-answer-help" style="margin:.5em 0 0 0;">
+        <p class="exo-answer-help">
 
           <em>Pour du code, encadre-le avec <code>[code]</code> et <code>[/code]</code>.</em>
 
@@ -2033,19 +2033,19 @@ $is_logged = is_user_logged_in();
 
         . (!$is_logged ? '
 
-        <p class="exo-answer-help exo-answer-help--public" style="margin:.5em 0 0 0;">
+        <p class="exo-answer-help exo-answer-help--public">
 
           <em>Mode visiteur : SegFault donne un retour, mais aucune progression, note, badge ou tentative n’est enregistré.</em>
 
         </p>' : '') .
 
-        '<div class="exo-answer-actions" style="margin-top:.75em; display:flex; gap:.5em; flex-wrap:wrap;">
+        '<div class="exo-answer-actions exo-answer-actions--submit">
 
           <button type="button" class="exo-submit-answer">Soumettre à SegFault</button>
 
         </div>
 
-        <div class="exo-ai-feedback" style="margin-top:1em;"></div>
+        <div class="exo-ai-feedback"></div>
 
       </div>';
 
@@ -2067,7 +2067,7 @@ $is_logged = is_user_logged_in();
 
       . $answer_box
 
-      .'<div class="exo-hints" style="margin:1em 0;">
+      .'<div class="exo-hints">
 
         <button data-hint="1">Indice 1</button>
 
@@ -2085,7 +2085,7 @@ $is_logged = is_user_logged_in();
 
       </div>
 
-      <div class="exo-reveal" style="margin-top:1em;"></div>
+      <div class="exo-reveal"></div>
 
     </div>';
 
@@ -2278,7 +2278,7 @@ public static function render_progress($atts = array(), $content = '') {
 
 
 
-        <div class="ouinpo-me-detail" id="detail-block" style="display:none;">
+        <div class="ouinpo-me-detail is-hidden" id="detail-block">
 
           <h3>Détail par compétence — priorités d’entraînement</h3>
 
@@ -2344,7 +2344,7 @@ public static function render_progress($atts = array(), $content = '') {
 
 
 
-  <div class="ouinpo-ds-filter js-ds-assessment-filter" style="display:none;">
+  <div class="ouinpo-ds-filter js-ds-assessment-filter is-hidden">
 
     <label for="ouinpo-ds-assessment-select">Choisir un devoir noté</label>
 

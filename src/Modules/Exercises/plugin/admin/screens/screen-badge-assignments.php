@@ -387,7 +387,7 @@ settings_errors('ouinpo_badge_assign');
         Les badges automatiques restent gérés par le moteur de progression.
     </p>
 
-    <form method="get" style="margin:12px 0 24px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+    <form method="get" class="ouinpo-badge-assign-filter">
         <input type="hidden" name="page" value="ouinpo-badge-assignments">
 
         <div>
@@ -407,7 +407,7 @@ settings_errors('ouinpo_badge_assign');
 
         <div>
             <label for="badge_id"><strong>Badge</strong></label><br>
-            <select name="badge_id" id="badge_id" style="min-width:320px;">
+            <select name="badge_id" id="badge_id" class="ouinpo-badge-select-wide">
                 <option value="">— Choisir un badge —</option>
                 <?php foreach ($badges as $badge): ?>
                     <option value="<?php echo intval($badge->id); ?>" <?php selected($badge_id, intval($badge->id)); ?>>
@@ -458,7 +458,7 @@ settings_errors('ouinpo_badge_assign');
         <input type="hidden" name="s" value="<?php echo esc_attr($search); ?>">
         <input type="hidden" name="badge_level" value="<?php echo esc_attr($badge_level_filter); ?>">
 
-        <p style="display:flex; gap:10px; flex-wrap:wrap;">
+        <p class="ouinpo-badge-bulk-actions">
             <button class="button button-primary" type="submit" name="bulk_action" value="assign_manual">
                 Attribuer le badge manuellement aux sélectionnés
             </button>
@@ -470,7 +470,7 @@ settings_errors('ouinpo_badge_assign');
         <table class="widefat fixed striped">
             <thead>
                 <tr>
-                    <th style="width:40px;"><input type="checkbox" id="ouin-check-all"></th>
+                    <th class="ouinpo-badge-check-col"><input type="checkbox" id="ouin-check-all"></th>
                     <th>Élève</th>
                     <th>E-mail</th>
                     <th>Groupe</th>
@@ -500,17 +500,17 @@ settings_errors('ouinpo_badge_assign');
                         </td>
                         <td>
                             <strong><?php echo esc_html($user->display_name ? $user->display_name : $user->user_login); ?></strong><br>
-                            <span style="color:#646970;"><?php echo esc_html($user->user_login); ?></span>
+                            <span class="ouinpo-badge-muted"><?php echo esc_html($user->user_login); ?></span>
                         </td>
                         <td><?php echo esc_html($user->user_email); ?></td>
                         <td><?php echo esc_html($group_label); ?></td>
                         <td>
                             <?php if (!$status): ?>
-                                <span style="color:#646970;">non possédé</span>
+                                <span class="ouinpo-badge-muted">non possédé</span>
                             <?php elseif ($status['source'] === 'manual'): ?>
-                                <span style="display:inline-block; padding:2px 8px; border:1px solid #8bc48b; border-radius:999px; background:#edf7ed;">manuel</span>
+                                <span class="ouinpo-badge-status ouinpo-badge-status--manual">manuel</span>
                             <?php else: ?>
-                                <span style="display:inline-block; padding:2px 8px; border:1px solid #84aef2; border-radius:999px; background:#eef4ff;">automatique</span>
+                                <span class="ouinpo-badge-status ouinpo-badge-status--auto">automatique</span>
                             <?php endif; ?>
                         </td>
                         <td><?php echo (!empty($status) && !empty($status['awarded_at'])) ? esc_html($status['awarded_at']) : '—'; ?></td>

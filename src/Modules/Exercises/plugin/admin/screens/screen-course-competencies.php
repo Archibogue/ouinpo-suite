@@ -364,7 +364,7 @@ function ouinpo_render_courses_competencies_page() {
                  id="menu_item_search"
                  value="<?php echo esc_attr($menu_item_search); ?>"
                  placeholder="Ex. « Piles », « SQL », « Listes chaînées »"
-                 style="min-width: 260px;">
+            class="ouinpo-admin-select-wide">
           <button class="button">Filtrer</button>
         </p>
       </form>
@@ -383,7 +383,7 @@ function ouinpo_render_courses_competencies_page() {
             <em>Astuce : Ctrl+clic (ou Cmd+clic sur Mac) pour sélectionner plusieurs compétences.</em>
           </p>
 
-          <select name="competency_ids[]" multiple size="8" style="width: 100%; max-width: 700px;">
+        <select name="competency_ids[]" multiple size="8" class="ouinpo-admin-full-width">
             <?php foreach ($competencies as $c): ?>
               <option value="<?php echo (int)$c['id']; ?>">
                 <?php echo esc_html($c['slug'] . ' — ' . wp_trim_words($c['competency'], 12, '…')); ?>
@@ -391,12 +391,12 @@ function ouinpo_render_courses_competencies_page() {
             <?php endforeach; ?>
           </select>
 
-          <h2 style="margin-top:1.5rem;">2. Sélectionner les cours (articles/pages dans le menu choisi)</h2>
+    <h2 class="ouinpo-admin-section-title">2. Sélectionner les cours (articles/pages dans le menu choisi)</h2>
 
           <table class="widefat fixed striped">
             <thead>
               <tr>
-                <th style="width:40px;"><input type="checkbox" id="ouinpo-cc-checkall"></th>
+            <th class="ouinpo-admin-col-checkbox"><input type="checkbox" id="ouinpo-cc-checkall"></th>
                 <th>Titre</th>
                 <th>Type</th>
                 <th>Menu(s)</th>
@@ -419,7 +419,7 @@ function ouinpo_render_courses_competencies_page() {
                   <td><?php echo esc_html($p['post_type']); ?></td>
                   <td><?php echo esc_html($p['menus'] ?? ''); ?></td>
                   <td><?php echo esc_html($p['menu_items'] ?? ''); ?></td>
-                  <td><?php echo $comps !== '' ? esc_html($comps) : '<span style="color:#888;">—</span>'; ?></td>
+                <td><?php echo $comps !== '' ? esc_html($comps) : '<span class="ouinpo-admin-empty">—</span>'; ?></td>
                 </tr>
               <?php endforeach; ?>
             <?php else: ?>
@@ -428,7 +428,7 @@ function ouinpo_render_courses_competencies_page() {
             </tbody>
           </table>
 
-          <p style="margin-top:1rem;">
+    <p class="ouinpo-admin-submit-row">
             <button type="submit" name="ouinpo_cc_action" value="add" class="button button-primary">
               Ajouter ces compétences aux cours sélectionnés
             </button>

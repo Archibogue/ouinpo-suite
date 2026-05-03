@@ -126,10 +126,10 @@ final class ScreenPractical
             echo '<div class="notice notice-success is-dismissible"><p>Sujet pratique enregistré.</p></div>';
         }
 
-        echo '<div style="display:grid; grid-template-columns: 1.1fr 1.4fr; gap: 24px; align-items:start;">';
+    echo '<div class="ouinpo-admin-practical-layout">';
 
-        echo '<div class="postbox" style="padding:16px;">';
-        echo '<h2 style="margin-top:0;">Sujets existants</h2>';
+    echo '<div class="postbox ouinpo-admin-postbox">';
+    echo '<h2 class="ouinpo-admin-heading-topless">Sujets existants</h2>';
 
         if (!$subjects) {
             echo '<p>Aucun sujet pratique pour le moment.</p>';
@@ -154,14 +154,14 @@ final class ScreenPractical
             echo '</tbody></table>';
         }
 
-        echo '<p style="margin-top:12px;">';
+    echo '<p class="ouinpo-admin-form-spaced">';
         echo '<a class="button" href="' . esc_url(self::redirect_url()) . '">Nouveau sujet</a>';
         echo '</p>';
 
         echo '</div>';
 
-        echo '<div class="postbox" style="padding:16px;">';
-        echo '<h2 style="margin-top:0;">' . ($subject ? 'Éditer le sujet #' . (int) $subject['id'] : 'Créer un sujet pratique') . '</h2>';
+    echo '<div class="postbox ouinpo-admin-postbox">';
+    echo '<h2 class="ouinpo-admin-heading-topless">' . ($subject ? 'Éditer le sujet #' . (int) $subject['id'] : 'Créer un sujet pratique') . '</h2>';
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field('ouinpo_save_practical_subject');
@@ -182,7 +182,7 @@ final class ScreenPractical
         echo '<tr><th scope="row">Niveaux</th><td>';
         foreach ($levels as $level) {
             $checked = in_array((int) $level['id'], $selected_levels, true) ? 'checked' : '';
-            echo '<label style="display:inline-block; margin-right:16px;">';
+    echo '<label class="ouinpo-admin-inline-label">';
             echo '<input type="checkbox" name="school_levels[]" value="' . (int) $level['id'] . '" ' . $checked . '> ';
             echo esc_html($level['label']);
             echo '</label>';
@@ -273,8 +273,8 @@ final class ScreenPractical
                 'is_active' => 1,
             ];
 
-            echo '<div style="border:1px solid #dcdcde; padding:12px; margin:0 0 16px 0; background:#fff;">';
-            echo '<h3 style="margin-top:0;">Appel ' . $i . '</h3>';
+        echo '<div class="ouinpo-admin-call-box">';
+        echo '<h3 class="ouinpo-admin-heading-topless">Appel ' . $i . '</h3>';
 
             echo '<input type="hidden" name="calls[' . $i . '][id]" value="' . (int) $call['id'] . '">';
             echo '<input type="hidden" name="calls[' . $i . '][call_order]" value="' . $i . '">';
@@ -297,11 +297,11 @@ final class ScreenPractical
             echo '</label></p>';
 
             echo '<p><label>Consigne visible (<code>prompt_html</code>)<br>';
-            echo '<textarea name="calls[' . $i . '][prompt_html]" rows="5" style="width:100%;">' . esc_textarea((string) $call['prompt_html']) . '</textarea>';
+        echo '<textarea name="calls[' . $i . '][prompt_html]" rows="5" class="ouinpo-admin-full-width">' . esc_textarea((string) $call['prompt_html']) . '</textarea>';
             echo '</label></p>';
 
             echo '<p><label>Rubric IA (<code>ai_rubric</code>)<br>';
-            echo '<textarea name="calls[' . $i . '][ai_rubric]" rows="10" style="width:100%;">' . esc_textarea((string) $call['ai_rubric']) . '</textarea>';
+        echo '<textarea name="calls[' . $i . '][ai_rubric]" rows="10" class="ouinpo-admin-full-width">' . esc_textarea((string) $call['ai_rubric']) . '</textarea>';
             echo '</label></p>';
 
             $checked = !empty($call['is_active']) ? 'checked' : '';

@@ -170,8 +170,8 @@ settings_errors('ouinpo_years');
   <a class="page-title-action" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-years&action=new')); ?>">Ajouter</a>
   <hr class="wp-header-end"/>
 
-  <div style="display:flex; gap:24px; align-items:flex-start; margin-top:12px;">
-    <div style="flex:1 1 60%;">
+        <div class="ouinpo-admin-layout">
+            <div class="ouinpo-admin-layout-main">
       <h2 class="title">Liste des années</h2>
       <table class="widefat fixed striped">
         <thead>
@@ -195,13 +195,13 @@ settings_errors('ouinpo_years');
                 <td><strong><?php echo esc_html($y->slug); ?></strong></td>
                 <td><?php echo esc_html($y->starts_on); ?></td>
                 <td><?php echo esc_html($y->ends_on); ?></td>
-                <td><?php echo (int) $y->is_active === 1 ? '<span style="color:#008a20;font-weight:600;">Active</span>' : 'Inactive'; ?></td>
+                                <td><?php echo (int) $y->is_active === 1 ? '<span class="ouinpo-admin-status-active">Active</span>' : 'Inactive'; ?></td>
                 <td><?php echo (int) $y->groups_count; ?></td>
                 <td>
                   <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-years&action=edit&id=' . $y->id)); ?>">Modifier</a>
 
                   <?php if ((int) $y->is_active !== 1): ?>
-                    <form method="post" style="display:inline;">
+                                        <form method="post" class="ouinpo-admin-inline-form">
                       <?php wp_nonce_field('ouinpo_years_form', 'ouinpo_years_nonce'); ?>
                       <input type="hidden" name="action" value="activate">
                       <input type="hidden" name="id" value="<?php echo (int) $y->id; ?>">
@@ -209,7 +209,7 @@ settings_errors('ouinpo_years');
                     </form>
                   <?php endif; ?>
 
-                  <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer cette année scolaire ?');">
+                                        <form method="post" class="ouinpo-admin-inline-form" onsubmit="return confirm('Supprimer cette année scolaire ?');">
                     <?php wp_nonce_field('ouinpo_years_form', 'ouinpo_years_nonce'); ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?php echo (int) $y->id; ?>">
@@ -223,7 +223,7 @@ settings_errors('ouinpo_years');
       </table>
     </div>
 
-    <div style="flex:1 1 40%; min-width:320px;">
+            <div class="ouinpo-admin-layout-side">
       <h2 class="title"><?php echo $current->id ? 'Modifier l\'année' : 'Créer une année'; ?></h2>
       <form method="post">
         <?php wp_nonce_field('ouinpo_years_form', 'ouinpo_years_nonce'); ?>

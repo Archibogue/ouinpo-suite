@@ -1,0 +1,32 @@
+/* ==========================================================
+   OuInPo Suite — Gate
+   CSS module fonctionnel
+   ========================================================== */
+
+.ouinpo-gate-progress {
+  margin:0.5rem 0;
+}
+
+.ouinpo-gate-question {
+  margin-top:1rem;
+}
+
+.ouinpo-gate-final {
+  margin-top:1.2rem;
+}
+
+.ouinpo-gate-hidden {
+  display:none;
+}
+
+.ouinpo-gate-msg {
+  margin-top:0.5rem;
+}
+
+.ouinpo-gate-sign-result {
+  margin-top:0.75rem;
+}
+
+.ouinpo-gate-sign-title {
+  margin-top:1rem;
+}

@@ -1,5 +1,6 @@
 .ouinpo-builder-layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:18px;margin-top:16px;align-items:start;}
 .ouinpo-builder-card{background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:14px;box-shadow:0 1px 1px rgba(0,0,0,.04);}
+.ouinpo-builder-card--summary{margin-bottom:14px;}
 .ouinpo-builder-card h2{margin-top:0;}
 .ouinpo-builder-field{margin-bottom:10px;}
 .ouinpo-builder-field label{font-weight:600;display:block;margin-bottom:3px;}
@@ -17,4 +18,5 @@
 .ouinpo-builder-tag{background:#f6f7f7;border:1px solid #dcdcde;border-radius:999px;padding:2px 7px;font-size:12px;}
 .ouinpo-builder-small{width:80px!important;}
 #ouinpo-builder-warning{display:none;margin:10px 0;padding:8px 10px;border-left:4px solid #dba617;background:#fff8e5;}
+.ouinpo-builder-submit-row{margin-top:16px;}
 @media(max-width:1000px){.ouinpo-builder-layout{grid-template-columns:1fr}.ouinpo-builder-exo{grid-template-columns:28px 1fr}.ouinpo-builder-small{width:130px!important}}

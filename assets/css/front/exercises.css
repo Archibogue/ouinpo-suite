@@ -80,6 +80,24 @@
   align-items: center;
 }
 
+.ouinpo-exo .exo-answer-actions--submit {
+  margin-top: 0.75em;
+  gap: 0.5em;
+}
+
+.ouinpo-exo .exo-insert-code {
+  float: right;
+}
+
+.ouinpo-exo .exo-answer-help {
+  margin: 0.5em 0 0;
+}
+
+.ouinpo-exo .exo-ai-feedback,
+.ouinpo-exo .exo-reveal {
+  margin-top: 1em;
+}
+
 .ouinpo-exo .exo-hints {
   display: flex;
   flex-wrap: wrap;
@@ -1431,8 +1449,9 @@
 }
 
 #ouinpo-exo-list[hidden],
-.ouinpo-exercises-legacy[hidden] {
-  display: none !important;
+.ouinpo-exercises-legacy[hidden],
+.is-hidden {
+  display: none;
 }
 
 /* ===========================

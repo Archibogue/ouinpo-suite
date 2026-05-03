@@ -1,0 +1,284 @@
+.ouinpo-admin-filter-box {
+    margin:12px 0 16px;
+    padding:12px;
+    background:#fff;
+    border:1px solid #ccd0d4;
+}
+
+.ouinpo-admin-filter-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:12px;
+    align-items:end;
+    max-width:1200px;
+}
+
+.ouinpo-admin-field-label {
+    display:block;
+    margin-bottom:4px;
+    font-weight:600;
+}
+
+.ouinpo-admin-full-width {
+    width:100%;
+}
+
+.ouinpo-admin-select-wide {
+    min-width:260px;
+}
+
+.ouinpo-admin-select-groups {
+    min-width:320px;
+}
+
+.ouinpo-admin-select-users {
+    min-width:420px;
+}
+
+.ouinpo-admin-actions-row {
+    margin:12px 0 0;
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+.ouinpo-admin-actions-row--loose {
+    gap:12px;
+}
+
+.ouinpo-admin-muted {
+    color:#50575e;
+}
+
+.ouinpo-admin-soft-muted {
+    color:#666;
+}
+
+.ouinpo-admin-empty {
+    color:#888;
+}
+
+.ouinpo-admin-inline-check {
+    display:inline-block;
+    margin-right:1rem;
+}
+
+.ouinpo-admin-inline-label {
+    display:inline-block;
+    margin-right:16px;
+}
+
+.ouinpo-admin-table-wide {
+    min-width:960px;
+}
+
+.ouinpo-admin-meta-grid {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(260px, 1fr));
+    gap:12px 24px;
+    max-width:1100px;
+}
+
+.ouinpo-admin-input-order {
+    width:80px;
+}
+
+.ouinpo-admin-cell-centered {
+    text-align:center;
+}
+
+.ouinpo-admin-header-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.ouinpo-admin-heading-tight {
+    margin:0;
+}
+
+.ouinpo-admin-description-tight {
+    margin:0;
+}
+
+.ouinpo-admin-form-spaced {
+    margin-top:16px;
+}
+
+.ouinpo-admin-details-spaced {
+    margin-top:10px;
+}
+
+.ouinpo-admin-scroll-box {
+    margin-top:10px;
+    max-height:260px;
+    overflow:auto;
+    border:1px solid #ddd;
+    background:#fff;
+    padding:10px;
+}
+
+.ouinpo-admin-layout {
+    display:flex;
+    gap:24px;
+    align-items:flex-start;
+    margin-top:12px;
+}
+
+.ouinpo-admin-layout-main {
+    flex:1 1 60%;
+}
+
+.ouinpo-admin-layout-side {
+    flex:1 1 40%;
+    min-width:320px;
+}
+
+.ouinpo-admin-layout-side--sticky {
+    position:sticky;
+    top:32px;
+}
+
+.ouinpo-admin-inline-form {
+    display:inline;
+}
+
+.ouinpo-admin-inline-form-spaced {
+    display:inline-block;
+    margin-left:6px;
+}
+
+.ouinpo-admin-button-spaced {
+    margin-left:6px;
+}
+
+.ouinpo-admin-status-active {
+    color:#008a20;
+    font-weight:600;
+}
+
+.ouinpo-admin-picker-form {
+    margin:12px 0 24px;
+}
+
+.ouinpo-admin-label-spaced {
+    margin-right:8px;
+}
+
+.ouinpo-admin-grid-two {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    align-items:start;
+}
+
+.ouinpo-admin-practical-layout {
+    display:grid;
+    grid-template-columns:1.1fr 1.4fr;
+    gap:24px;
+    align-items:start;
+}
+
+.ouinpo-admin-postbox {
+    padding:16px;
+}
+
+.ouinpo-admin-heading-topless {
+    margin-top:0;
+}
+
+.ouinpo-admin-call-box {
+    border:1px solid #dcdcde;
+    padding:12px;
+    margin:0 0 16px;
+    background:#fff;
+}
+
+.ouinpo-admin-section-title {
+    margin-top:1.5rem;
+}
+
+.ouinpo-admin-submit-row {
+    margin-top:1rem;
+}
+
+.ouinpo-admin-card-padded {
+    padding:12px;
+}
+
+.ouinpo-admin-description-spaced {
+    margin:8px 0 16px;
+}
+
+.ouinpo-admin-col-id {
+    width:70px;
+}
+
+.ouinpo-admin-col-id-wide,
+.ouinpo-admin-col-active {
+    width:80px;
+}
+
+.ouinpo-admin-col-checkbox {
+    width:40px;
+}
+
+.ouinpo-admin-col-remove {
+    width:36px;
+}
+
+.ouinpo-admin-col-level {
+    width:110px;
+}
+
+.ouinpo-admin-col-domain {
+    width:180px;
+}
+
+.ouinpo-admin-col-goal {
+    width:140px;
+}
+
+.ouinpo-admin-col-source,
+.ouinpo-admin-col-mode {
+    width:120px;
+}
+
+.ouinpo-admin-col-targets {
+    width:220px;
+}
+
+.ouinpo-admin-col-count {
+    width:100px;
+}
+
+.ouinpo-admin-col-actions {
+    width:320px;
+}
+
+.ouinpo-admin-col-override {
+    width:220px;
+}
+
+.ouinpo-admin-select-override {
+    min-width:200px;
+}
+
+@media(max-width:1100px) {
+    .ouinpo-admin-layout,
+    .ouinpo-admin-grid-two,
+    .ouinpo-admin-practical-layout {
+        display:block;
+    }
+
+    .ouinpo-admin-layout-side {
+        min-width:0;
+    }
+
+    .ouinpo-admin-layout-side--sticky {
+        position:static;
+        margin-top:24px;
+    }
+}
