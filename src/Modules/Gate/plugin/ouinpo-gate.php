@@ -29,6 +29,21 @@ function ouinpo_norm($s){
 }
 function ouinpo_hash($s){ return hash('sha256', ouinpo_gate_salt().ouinpo_norm($s)); }
 
+function ouinpo_gate_enqueue_assets(): void {
+  $rel = 'assets/css/front/gate.css';
+  $root_file = dirname(__DIR__, 4) . '/ouinpo-suite.php';
+  $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : plugin_dir_url($root_file);
+  $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : dirname(__DIR__, 4) . '/';
+  $file = $base_dir . $rel;
+  $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+  if (file_exists($file)) {
+    $version = (string) filemtime($file);
+  }
+
+  wp_enqueue_style('ouinpo-gate-css', $base_url . $rel, [], $version);
+}
+
 /* ================= Corpus des 42 énigmes ================= */
 function ouinpo_enigmes(){
   return [
@@ -124,6 +139,8 @@ function ouinpo_hashes(){
    Usage : [ouinpo_gate page="sample-page" needed="42" reveal="embed|link|redirect"]
 */
 add_shortcode('ouinpo_gate', function($atts){
+  ouinpo_gate_enqueue_assets();
+
   if(!is_user_logged_in()){
     return '<p>🔒 Cette quête ouinpienne est réservée aux membres. <a href="'.esc_url(wp_login_url(get_permalink())).'">Connecte-toi</a> pour commencer.</a></p>';
   }
@@ -150,13 +167,13 @@ add_shortcode('ouinpo_gate', function($atts){
        data-reveal="<?php echo esc_attr($reveal);?>" data-plink="<?php echo esc_url($plink);?>">
     <blockquote class="eldritch">« Quarante-deux verrous, un seul sourire : le tien. » — Prof. Archibald Bogue</blockquote>
 
-    <div id="ouinpo-progress" style="margin:.5rem 0;">
+    <div id="ouinpo-progress" class="ouinpo-gate-progress">
       Progression : <strong><span id="ouinpo-count"><?php echo $progress;?></span> / <span id="ouinpo-needed"><?php echo $needed;?></span></strong>
     </div>
 
-    <div id="ouinpo-question" style="margin-top:1rem;"></div>
+    <div id="ouinpo-question" class="ouinpo-gate-question"></div>
 
-    <div id="ouinpo-final" style="display:<?php echo ($progress >= $needed ? 'block' : 'none');?>; margin-top:1.2rem;">
+    <div id="ouinpo-final" class="ouinpo-gate-final<?php echo ($progress >= $needed ? '' : ' ouinpo-gate-hidden'); ?>">
       <h2>🎉 Félicitations !</h2>
       <div id="ouinpo-secret-content">
         <?php if($progress >= $needed): ?>
@@ -202,7 +219,7 @@ add_shortcode('ouinpo_gate', function($atts){
           <p>${e.prompt}</p>
           <input id="ouinpo-answer" placeholder="Ta réponse">
           <button id="ouinpo-submit" type="button">Valider</button>
-          <div id="ouinpo-msg" style="margin-top:.5rem;"></div>
+          <div id="ouinpo-msg" class="ouinpo-gate-msg"></div>
         </div>`;
       document.getElementById('ouinpo-submit').addEventListener('click', () => {
         const ans = document.getElementById('ouinpo-answer').value || '';
@@ -404,6 +421,8 @@ function ouinpo_secret(){
    Usage: [ouinpo_signpad page="sample-page" needed="42" show_list="1"]
 */
 add_shortcode('ouinpo_signpad', function($atts){
+  ouinpo_gate_enqueue_assets();
+
   if(!is_user_logged_in()){
     return '<p>🔒 Réservé aux membres connectés.</p>';
   }
@@ -451,7 +470,7 @@ if($progress < $needed){
         <input type="hidden" name="nonce" value="<?php echo esc_attr($nonce);?>">
         <button type="submit">Signer</button>
       </form>
-      <div id="ouinpo-sign-result" style="margin-top:.75rem;"></div>
+      <div id="ouinpo-sign-result" class="ouinpo-gate-sign-result"></div>
     <?php endif; ?>
 
     <?php if($show_list):
@@ -460,7 +479,7 @@ if($progress < $needed){
         $page
       ));
       if($signs): ?>
-        <h4 style="margin-top:1rem;">Signatures récentes</h4>
+        <h4 class="ouinpo-gate-sign-title">Signatures récentes</h4>
         <ul>
           <?php foreach($signs as $S): ?>
             <li>
