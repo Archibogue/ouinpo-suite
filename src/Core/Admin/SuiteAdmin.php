@@ -1116,9 +1116,9 @@ final class SuiteAdmin
                                     <?php if (current_user_can('manage_options')): ?>
                                         <a class="button button-small" href="<?php echo esc_url(add_query_arg([
                                             'page' => 'ouinpo-suite-referentiel',
-                                            'tab' => 'competencies',
+                                            'tab' => self::currentTab('competencies'),
                                             'edit_competency_id' => (int) $row->id,
-                                        ], admin_url('admin.php'))); ?>">
+                                        ], admin_url('admin.php'))); ?>#ouinpo-bo-form">
                                             Modifier
                                         </a>
 
