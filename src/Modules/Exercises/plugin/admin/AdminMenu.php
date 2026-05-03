@@ -5,6 +5,65 @@ if (!defined('ABSPATH')) exit;
 
 class AdminMenu {
 
+    public static function enqueue_admin_styles(string $hook = ''): void {
+        $page = isset($_GET['page'])
+            ? sanitize_key(wp_unslash((string) $_GET['page']))
+            : '';
+
+        $styles = [
+            'ouinpo-assessment-builder' => [
+                'handle' => 'ouinpo-assessment-builder-admin',
+                'file'   => 'assets/css/admin/assessment-builder.css',
+            ],
+            'ouinpo-assessments' => [
+                'handle' => 'ouinpo-assessments-admin',
+                'file'   => 'assets/css/admin/assessments.css',
+            ],
+            'ouinpo-badges' => [
+                'handle' => 'ouinpo-badges-admin',
+                'file'   => 'assets/css/admin/badges.css',
+            ],
+        ];
+
+        if (!isset($styles[$page])) {
+            return;
+        }
+
+        self::enqueue_admin_css(
+            $styles[$page]['handle'],
+            $styles[$page]['file']
+        );
+    }
+
+    private static function enqueue_admin_css(string $handle, string $relativePath): void
+    {
+        $baseUrl = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL
+            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_url(OUINPO_EXO_PLUGIN_FILE) : '');
+
+        if ($baseUrl === '') {
+            return;
+        }
+
+        $baseDir = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR
+            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_path(OUINPO_EXO_PLUGIN_FILE) : '');
+
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
+
+        if ($file !== '' && file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_style(
+            $handle,
+            $baseUrl . $relativePath,
+            [],
+            $version
+        );
+    }
+
     public static function register_menu() {
         $parent = defined('OUINPO_SUITE_ADMIN_SLUG')
             ? OUINPO_SUITE_ADMIN_SLUG

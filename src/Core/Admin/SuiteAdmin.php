@@ -22,8 +22,54 @@ final class SuiteAdmin
         }
 
         add_action('admin_menu', [self::class, 'registerRootMenu'], 5);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueAdminStyles']);
         add_action('admin_head', [self::class, 'hideLegacySubmenusCss']);
         add_action('admin_head', [self::class, 'adminStyles']);
+    }
+
+    public static function enqueueAdminStyles(string $hook = ''): void
+    {
+        $page = isset($_GET['page'])
+            ? sanitize_key(wp_unslash((string) $_GET['page']))
+            : '';
+
+        if ($page !== self::ROOT_SLUG && strpos($page, self::ROOT_SLUG . '-') !== 0) {
+            return;
+        }
+
+        self::enqueueCss(
+            'ouinpo-suite-admin',
+            'assets/css/admin/suite-admin.css'
+        );
+    }
+
+    private static function enqueueCss(string $handle, string $relativePath): void
+    {
+        $baseUrl = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL
+            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_url(OUINPO_SUITE_FILE) : '');
+
+        if ($baseUrl === '') {
+            return;
+        }
+
+        $baseDir = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR
+            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_path(OUINPO_SUITE_FILE) : '');
+
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
+
+        if ($file !== '' && file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_style(
+            $handle,
+            $baseUrl . $relativePath,
+            [],
+            $version
+        );
     }
 
     public static function registerRootMenu(): void
