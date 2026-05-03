@@ -1,0 +1,56 @@
+/* ==========================================================
+   OuInPo Suite — Submissions admin
+   CSS module fonctionnel
+   ========================================================== */
+
+.ouinpo-submissions-check-label {
+  display:block;
+}
+
+.ouinpo-submissions-scroll-box {
+  max-height:180px;
+  overflow:auto;
+  border:1px solid #ddd;
+  padding:0.5rem;
+  border-radius:0.25rem;
+}
+
+.ouinpo-res-current {
+  margin:0.5rem 0;
+  padding:0.5rem;
+  border:1px solid #ddd;
+  border-radius:4px;
+  background:#fff;
+}
+
+.ouinpo-res-files-list {
+  margin:0;
+  padding-left:1.1rem;
+}
+
+.ouinpo-res-file-item {
+  margin:0.15rem 0;
+}
+
+.ouinpo-dropzone {
+  border:2px dashed #bbb;
+  border-radius:6px;
+  padding:20px;
+  text-align:center;
+  background:#fafafa;
+  cursor:pointer;
+}
+
+.ouinpo-dropzone.is-dragover {
+  border-color:#b98c5a;
+  background:#fff6ee;
+}
+
+.ouinpo-dropzone-help {
+  opacity:0.7;
+}
+
+.ouinpo-hidden-file,
+.is-hidden {
+  display:none;
+}
