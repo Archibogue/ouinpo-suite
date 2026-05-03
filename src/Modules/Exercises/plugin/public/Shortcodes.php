@@ -1803,7 +1803,7 @@ return '
 
     . $ai_notice .
 
-    '<div class="ouinpo-practical-progress" style="display:none;"></div>
+    '<div class="ouinpo-practical-progress is-hidden"></div>
 
     <div class="ouinpo-practical-calls"></div>
 

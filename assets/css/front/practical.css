@@ -54,6 +54,10 @@
   border-radius: 16px;
 }
 
+.ouinpo-practical-progress.is-hidden {
+  display: none;
+}
+
 .ouinpo-practical-title {
   margin: 0;
   font-size: clamp(1.45rem, 2.2vw, 2rem);
