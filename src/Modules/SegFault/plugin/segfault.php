@@ -1060,6 +1060,8 @@ function ouinpo_sf_get_user_competency_trends(int $user_id, ?int $year_id = null
 
   $tblR = $wpdb->prefix.'ouin_exo_assessment_results';
 
+  $tblG = $wpdb->prefix.'ouin_exo_groups';
+
 
 
   if ($year_id === null || $group_id === null) {
@@ -1096,13 +1098,15 @@ function ouinpo_sf_get_user_competency_trends(int $user_id, ?int $year_id = null
 
      FROM {$tblR} r
 
-     INNER JOIN {$tblA} a ON a.id = r.assessment_id
+      INNER JOIN {$tblA} a ON a.id = r.assessment_id
 
-     WHERE r.user_id = %d
+      INNER JOIN {$tblG} g ON g.id = a.group_id
 
-       AND a.year_id = %d
+      WHERE r.user_id = %d
 
-       AND a.group_id = %d
+        AND g.year_id = %d
+
+        AND a.group_id = %d
 
      ORDER BY a.due_on DESC, r.assessment_id DESC, r.updated_at DESC",
 

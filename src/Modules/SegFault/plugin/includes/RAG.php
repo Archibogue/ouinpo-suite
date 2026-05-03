@@ -3443,7 +3443,9 @@ private static function student_competency_context(int $user_id, string $level =
             WHEN 'acquired' THEN 3
             ELSE 9
           END ASC,
-          r.id DESC
+          r.updated_at DESC,
+          r.assessment_id DESC,
+          r.competency_id DESC
         LIMIT 40
       ", ...$args), ARRAY_A) ?: [];
 
