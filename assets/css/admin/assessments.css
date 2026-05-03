@@ -453,3 +453,223 @@ a {
     margin-top:14px;
 }
 
+.ouinpo-assessment-card {
+    max-width:none;
+    padding:16px;
+    margin-top:12px;
+}
+
+.ouinpo-assessment-card--student {
+    margin:14px 0;
+    padding:14px;
+}
+
+.ouinpo-assessment-card-title {
+    margin:0 0 6px;
+}
+
+.ouinpo-assessment-card-line {
+    margin:0;
+}
+
+.ouinpo-assessment-card-line-spaced {
+    margin:0 0 8px;
+}
+
+.ouinpo-assessment-card-notes {
+    margin:10px 0 0;
+}
+
+.ouinpo-assessment-spaced {
+    margin-top:10px;
+}
+
+.ouinpo-assessment-tag--source {
+    margin-top:4px;
+    margin-bottom:0;
+}
+
+.ouinpo-assessment-warning-box,
+.ouinpo-assessment-ok-box {
+    margin-top:12px;
+    padding:10px;
+}
+
+.ouinpo-assessment-warning-box {
+    border-left:4px solid #dba617;
+    background:#fff8e5;
+}
+
+.ouinpo-assessment-ok-box {
+    border-left:4px solid #00a32a;
+    background:#edfaef;
+}
+
+.ouinpo-assessment-notice-spaced,
+.ouinpo-assessment-table-spaced,
+.ouinpo-assessment-form-spaced {
+    margin-top:16px;
+}
+
+.ouinpo-assessment-col-difficulty,
+.ouinpo-assessment-col-duration {
+    width:120px;
+}
+
+.ouinpo-assessment-col-action {
+    width:160px;
+}
+
+.ouinpo-assessment-col-order {
+    width:80px;
+}
+
+.ouinpo-assessment-col-points,
+.ouinpo-assessment-col-remove {
+    width:110px;
+}
+
+.ouinpo-assessment-col-replace {
+    width:130px;
+}
+
+.ouinpo-assessment-inline-form {
+    display:inline;
+}
+
+.ouinpo-assessment-action-button {
+    cursor:pointer;
+}
+
+.ouinpo-assessment-points-label {
+    font-weight:normal;
+}
+
+.ouinpo-assessment-helper-row {
+    margin:8px 0;
+}
+
+.ouinpo-assessment-overview-layout {
+    display:flex;
+    gap:24px;
+    align-items:flex-start;
+    margin-top:12px;
+}
+
+.ouinpo-assessment-overview-list {
+    flex:1 1 56%;
+    min-width:520px;
+}
+
+.ouinpo-assessment-overview-editor {
+    flex:1 1 44%;
+    min-width:420px;
+    position:sticky;
+    top:32px;
+}
+
+.ouinpo-assessment-filter-form {
+    margin:0 0 12px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.ouinpo-assessment-note-meta {
+    color:#666;
+    font-size:12px;
+    margin-top:4px;
+}
+
+.ouinpo-assessment-selected-group {
+    margin:8px 0 12px;
+    color:#555;
+}
+
+.ouinpo-assessment-section-title {
+    margin-top:18px;
+}
+
+.ouinpo-assessment-competency-box {
+    max-height:420px;
+    overflow:auto;
+    border:1px solid #dcdcde;
+    background:#fff;
+    padding:12px;
+}
+
+.ouinpo-assessment-competency-details {
+    margin-bottom:10px;
+}
+
+.ouinpo-assessment-competency-summary,
+.ouinpo-assessment-competency-domain-title {
+    font-weight:600;
+}
+
+.ouinpo-assessment-competency-domain {
+    margin:8px 0 12px 14px;
+}
+
+.ouinpo-assessment-competency-domain-title {
+    margin-bottom:6px;
+}
+
+.ouinpo-assessment-competency-option {
+    display:block;
+    margin:4px 0;
+    line-height:1.35;
+}
+
+.ouinpo-assessment-student-head {
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.ouinpo-assessment-student-id {
+    color:#666;
+    font-size:12px;
+    margin-top:2px;
+}
+
+.ouinpo-assessment-absent-label {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:600;
+}
+
+.ouinpo-assessment-student-results {
+    margin-top:12px;
+}
+
+.ouinpo-assessment-student-results.is-absent {
+    opacity:.55;
+}
+
+.ouinpo-assessment-absent-note {
+    margin:0 0 10px;
+    color:#8a2424;
+    font-weight:600;
+}
+
+@media(max-width:1200px) {
+    .ouinpo-assessment-overview-layout {
+        display:block;
+    }
+
+    .ouinpo-assessment-overview-list,
+    .ouinpo-assessment-overview-editor {
+        min-width:0;
+    }
+
+    .ouinpo-assessment-overview-editor {
+        position:static;
+        margin-top:24px;
+    }
+}
+

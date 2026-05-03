@@ -1651,17 +1651,17 @@ class Screen_Assessments {
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . (int) $assessmentId)); ?>" class="page-title-action">Corrigé</a>
         <hr class="wp-header-end">
     
-        <div class="card" style="max-width:none; padding:16px; margin-top:12px;">
-            <p style="margin:0 0 8px;">
+        <div class="card ouinpo-assessment-card">
+            <p class="ouinpo-assessment-card-line-spaced">
                 <strong>DS :</strong> <?php echo esc_html($assessment->title); ?>
             </p>
     
-            <p style="margin:0 0 8px;">
+            <p class="ouinpo-assessment-card-line-spaced">
                 <strong>Exercice à remplacer :</strong>
                 #<?php echo (int) $source->exercise_id; ?> — <?php echo esc_html($source->title); ?>
             </p>
     
-            <p style="margin:0;">
+            <p class="ouinpo-assessment-card-line">
                 <strong>Difficulté :</strong> <?php echo esc_html($source->difficulty_label ?: '—'); ?>
                 <?php if (!empty($source->estimated_minutes)): ?>
                     &nbsp;|&nbsp; <strong>Durée :</strong> <?php echo (int) $source->estimated_minutes; ?> min
@@ -1672,10 +1672,10 @@ class Screen_Assessments {
             </p>
     
             <?php if (!empty($sourceCompetencies)): ?>
-                <div style="margin-top:10px;">
+                <div class="ouinpo-assessment-spaced">
                     <strong>Compétences de l’exercice source :</strong><br>
                     <?php foreach ($sourceCompetencies as $label): ?>
-                        <span style="display:inline-block; margin:4px 4px 0 0; padding:2px 7px; border:1px solid #dcdcde; border-radius:999px; background:#f6f7f7; font-size:12px;">
+                        <span class="ouinpo-assessment-tag ouinpo-assessment-tag--source">
                             <?php echo esc_html($label); ?>
                         </span>
                     <?php endforeach; ?>
@@ -1684,7 +1684,7 @@ class Screen_Assessments {
             
             <?php if ($groupId > 0): ?>
                 <?php if ($sourceSeenCount > 0): ?>
-                    <div style="margin-top:12px; padding:10px; border-left:4px solid #dba617; background:#fff8e5;">
+                    <div class="ouinpo-assessment-warning-box">
                         <strong>Attention :</strong>
                         cet exercice a déjà été tenté ou réussi par
                         <?php echo (int) $sourceSeenCount; ?> élève(s) de cette classe
@@ -1694,7 +1694,7 @@ class Screen_Assessments {
                         Les remplaçants proposés ci-dessous excluent les exercices déjà vus par la classe.
                     </div>
                 <?php else: ?>
-                    <div style="margin-top:12px; padding:10px; border-left:4px solid #00a32a; background:#edfaef;">
+                    <div class="ouinpo-assessment-ok-box">
                         Cet exercice ne semble pas avoir été tenté par les élèves de cette classe.
                         Les remplaçants proposés excluent tout de même les exercices déjà vus par la classe.
                     </div>
@@ -1704,19 +1704,19 @@ class Screen_Assessments {
         </div>
     
         <?php if (empty($candidates)): ?>
-            <div class="notice notice-warning" style="margin-top:16px;">
+            <div class="notice notice-warning ouinpo-assessment-notice-spaced">
                 <p>Aucun remplaçant trouvé avec les critères actuels. Il faudra soit élargir la banque d’exercices, soit remplacer manuellement depuis le concepteur.</p>
             </div>
             <?php return; ?>
         <?php endif; ?>
     
-        <table class="widefat striped" style="margin-top:16px;">
+        <table class="widefat striped ouinpo-assessment-table-spaced">
             <thead>
                 <tr>
                     <th>Exercice proposé</th>
-                    <th style="width:120px;">Difficulté</th>
-                    <th style="width:120px;">Durée</th>
-                    <th style="width:160px;">Action</th>
+                    <th class="ouinpo-assessment-col-difficulty">Difficulté</th>
+                    <th class="ouinpo-assessment-col-duration">Durée</th>
+                    <th class="ouinpo-assessment-col-action">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -1729,7 +1729,7 @@ class Screen_Assessments {
                         <td>
                             <strong>#<?php echo (int) $candidate->id; ?> — <?php echo esc_html($candidate->title); ?></strong>
     
-                            <div style="color:#646970; font-size:12px; margin-top:4px;">
+                            <div class="ouinpo-assessment-item-meta">
                                 Compétences communes : <?php echo (int) $candidate->nb_common_competencies; ?>
                                 · Déjà vu par la classe : <?php echo (int) $candidateSeenCount; ?>
     
@@ -1743,9 +1743,9 @@ class Screen_Assessments {
                             </div>
     
                             <?php if (!empty($candidateCompetencies)): ?>
-                                <div style="margin-top:8px;">
+                                <div class="ouinpo-assessment-tags">
                                     <?php foreach (array_slice($candidateCompetencies, 0, 4) as $label): ?>
-                                        <span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 7px; border:1px solid #dcdcde; border-radius:999px; background:#f6f7f7; font-size:12px;">
+                                        <span class="ouinpo-assessment-tag">
                                             <?php echo esc_html($label); ?>
                                         </span>
                                     <?php endforeach; ?>
@@ -1809,11 +1809,11 @@ class Screen_Assessments {
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=subject&id=' . $assessmentId)); ?>" class="page-title-action">Sujet</a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . $assessmentId)); ?>" class="page-title-action">Corrigé</a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=edit&id=' . $assessmentId)); ?>" class="page-title-action">Modifier le DS</a>
-        <form method="post" style="display:inline;" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
+        <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="create_version_b">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
-            <button type="submit" class="page-title-action" style="cursor:pointer;">Créer une version B</button>
+            <button type="submit" class="page-title-action ouinpo-assessment-action-button">Créer une version B</button>
         </form>        
         <hr class="wp-header-end">
     
@@ -1853,13 +1853,13 @@ class Screen_Assessments {
         <?php self::render_version_b_report($assessmentId); ?>
     
         <?php if (empty($items)): ?>
-            <div class="notice notice-warning" style="margin-top:16px;">
+            <div class="notice notice-warning ouinpo-assessment-notice-spaced">
                 <p>Ce DS ne contient aucun exercice dans <code>assessment_items</code>. Il a peut-être été créé avec l’ancien système uniquement par compétences.</p>
             </div>
             <?php return; ?>
         <?php endif; ?>
     
-        <form method="post" style="margin-top:16px;">
+        <form method="post" class="ouinpo-assessment-form-spaced">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="save_assessment_items">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
@@ -1867,12 +1867,12 @@ class Screen_Assessments {
             <table class="widefat striped ouinpo-ds-table">
                 <thead>
                     <tr>
-                        <th style="width:80px;">Ordre</th>
+                        <th class="ouinpo-assessment-col-order">Ordre</th>
                         <th>Exercice</th>
-                        <th style="width:110px;">Points</th>
-                        <th style="width:120px;">Durée</th>
-                        <th style="width:130px;">Remplacer</th>
-                        <th style="width:110px;">Retirer</th>
+                        <th class="ouinpo-assessment-col-points">Points</th>
+                        <th class="ouinpo-assessment-col-duration">Durée</th>
+                        <th class="ouinpo-assessment-col-replace">Remplacer</th>
+                        <th class="ouinpo-assessment-col-remove">Retirer</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2086,7 +2086,7 @@ class Screen_Assessments {
                             Exercice <?php echo (int) ($index + 1); ?>
                             — <?php echo esc_html($item->title); ?>
                             <?php if ($points !== '—'): ?>
-                                <span style="font-weight:normal;">— <?php echo esc_html($points); ?> point<?php echo ((float) str_replace(',', '.', $points) > 1 ? 's' : ''); ?></span>
+                                <span class="ouinpo-assessment-points-label">— <?php echo esc_html($points); ?> point<?php echo ((float) str_replace(',', '.', $points) > 1 ? 's' : ''); ?></span>
                             <?php endif; ?>
                         </h2>
     
@@ -2230,7 +2230,7 @@ class Screen_Assessments {
                             Exercice <?php echo (int) ($index + 1); ?>
                             — <?php echo esc_html($item->title); ?>
                             <?php if ($points !== '—'): ?>
-                                <span style="font-weight:normal;">— <?php echo esc_html($points); ?> point<?php echo ((float) str_replace(',', '.', $points) > 1 ? 's' : ''); ?></span>
+                                <span class="ouinpo-assessment-points-label">— <?php echo esc_html($points); ?> point<?php echo ((float) str_replace(',', '.', $points) > 1 ? 's' : ''); ?></span>
                             <?php endif; ?>
                         </h2>
     
@@ -2258,7 +2258,7 @@ class Screen_Assessments {
                                     $hintOrder = (int) $hint->hint_order;
                                     $hintContent = self::clean_hint_content_for_print((string) $hint->content, $hintOrder);
                                     ?>
-                                    <div style="margin:8px 0;">
+                                    <div class="ouinpo-assessment-helper-row">
                                         <strong>Indice <?php echo $hintOrder; ?></strong>
                                         <div><?php echo wp_kses_post($hintContent); ?></div>
                                     </div>
@@ -2301,10 +2301,10 @@ class Screen_Assessments {
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=new')); ?>" class="page-title-action">Nouveau DS</a>
         <hr class="wp-header-end">
 
-        <div style="display:flex; gap:24px; align-items:flex-start; margin-top:12px;">
-            <div style="flex:1 1 56%; min-width:520px;">
+        <div class="ouinpo-assessment-overview-layout">
+            <div class="ouinpo-assessment-overview-list">
                 <h2 class="title">Liste des DS</h2>
-                <form method="get" style="margin:0 0 12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <form method="get" class="ouinpo-assessment-filter-form">
                     <input type="hidden" name="page" value="<?php echo esc_attr(self::PAGE_SLUG); ?>">
                     <label for="list-group-id"><strong>Filtrer par classe</strong></label>
                     <select name="list_group_id" id="list-group-id">
@@ -2344,7 +2344,7 @@ class Screen_Assessments {
                                 <td>
                                     <strong><?php echo esc_html($row->title); ?></strong>
                                     <?php if (!empty($row->notes)): ?>
-                                        <div style="color:#666; font-size:12px; margin-top:4px;">
+                                        <div class="ouinpo-assessment-note-meta">
                                             <?php echo esc_html(wp_trim_words(wp_strip_all_tags((string) $row->notes), 14)); ?>
                                         </div>
                                     <?php endif; ?>
@@ -2361,21 +2361,21 @@ class Screen_Assessments {
                                         <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . (int) $row->id)); ?>">Corrigé</a>
                                         <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=edit&id=' . (int) $row->id)); ?>">Modifier</a>
 
-                                    <form method="post" style="display:inline;" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
+                                    <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
                                         <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                         <input type="hidden" name="op" value="create_version_b">
                                         <input type="hidden" name="assessment_id" value="<?php echo (int) $row->id; ?>">
                                         <button type="submit" class="button button-small">Version B</button>
                                     </form>
                                         
-                                    <form method="post" style="display:inline;">
+                                    <form method="post" class="ouinpo-assessment-inline-form">
                                         <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                         <input type="hidden" name="op" value="duplicate_assessment">
                                         <input type="hidden" name="assessment_id" value="<?php echo (int) $row->id; ?>">
                                         <button type="submit" class="button button-small">Dupliquer</button>
                                     </form>                                        
                                         
-                                    <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer ce DS ?');">
+                                    <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Supprimer ce DS ?');">
                                         <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                         <input type="hidden" name="op" value="delete_assessment">
                                         <input type="hidden" name="assessment_id" value="<?php echo (int) $row->id; ?>">
@@ -2389,7 +2389,7 @@ class Screen_Assessments {
                 </table>
             </div>
 
-            <div style="flex:1 1 44%; min-width:420px; position:sticky; top:32px;">
+            <div class="ouinpo-assessment-overview-editor">
                 <h2 class="title"><?php echo !empty($current->id) ? 'Modifier le DS' : 'Créer un DS'; ?></h2>
                 <form method="post">
                     <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
@@ -2439,7 +2439,7 @@ class Screen_Assessments {
                     </table>
 
                     <?php if ($selectedGroup): ?>
-                        <p style="margin:8px 0 12px; color:#555;">
+                        <p class="ouinpo-assessment-selected-group">
                             Filtre actuel :
                             <strong><?php echo esc_html($selectedGroup->label); ?></strong>
                             <?php if (!empty($selectedGroup->level_label)): ?>
@@ -2448,19 +2448,19 @@ class Screen_Assessments {
                         </p>
                     <?php endif; ?>
 
-                    <h3 style="margin-top:18px;">Compétences BO associées</h3>
-                    <div style="max-height:420px; overflow:auto; border:1px solid #dcdcde; background:#fff; padding:12px;">
+                    <h3 class="ouinpo-assessment-section-title">Compétences BO associées</h3>
+                    <div class="ouinpo-assessment-competency-box">
                         <?php if (empty($groupedCompetencies)): ?>
                             <p>Aucune compétence disponible.</p>
                         <?php else: ?>
                             <?php foreach ($groupedCompetencies as $bucket => $domains): ?>
-                                <details open style="margin-bottom:10px;">
-                                    <summary style="font-weight:600;"><?php echo esc_html($bucket); ?></summary>
+                                <details open class="ouinpo-assessment-competency-details">
+                                    <summary class="ouinpo-assessment-competency-summary"><?php echo esc_html($bucket); ?></summary>
                                     <?php foreach ($domains as $domain => $items): ?>
-                                        <div style="margin:8px 0 12px 14px;">
-                                            <div style="font-weight:600; margin-bottom:6px;"><?php echo esc_html($domain); ?></div>
+                                        <div class="ouinpo-assessment-competency-domain">
+                                            <div class="ouinpo-assessment-competency-domain-title"><?php echo esc_html($domain); ?></div>
                                             <?php foreach ($items as $comp): ?>
-                                                <label style="display:block; margin:4px 0; line-height:1.35;">
+                                                <label class="ouinpo-assessment-competency-option">
                                                     <input type="checkbox" name="competency_ids[]" value="<?php echo (int) $comp->id; ?>" <?php checked(in_array((int) $comp->id, $selectedCompetencyIds, true)); ?>>
                                                     <?php echo esc_html($comp->competency); ?>
                                                 </label>
@@ -2507,31 +2507,31 @@ class Screen_Assessments {
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . $assessmentId)); ?>" class="page-title-action">Corrigé professeur</a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=edit&id=' . $assessmentId)); ?>" class="page-title-action">Modifier le DS</a>
 
-        <form method="post" style="display:inline;" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
+        <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="create_version_b">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
-            <button type="submit" class="page-title-action" style="cursor:pointer;">Créer une version B</button>
+            <button type="submit" class="page-title-action ouinpo-assessment-action-button">Créer une version B</button>
         </form>
         
-        <form method="post" style="display:inline;">
+        <form method="post" class="ouinpo-assessment-inline-form">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="duplicate_assessment">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
-            <button type="submit" class="page-title-action" style="cursor:pointer;">Dupliquer le DS</button>
+            <button type="submit" class="page-title-action ouinpo-assessment-action-button">Dupliquer le DS</button>
         </form>        
         
         <hr class="wp-header-end">
 
-        <div class="card" style="max-width:none; padding:16px; margin-top:12px;">
-            <p style="margin:0 0 6px;"><strong><?php echo esc_html($assessment->title); ?></strong></p>
-            <p style="margin:0;">
+        <div class="card ouinpo-assessment-card">
+            <p class="ouinpo-assessment-card-title"><strong><?php echo esc_html($assessment->title); ?></strong></p>
+            <p class="ouinpo-assessment-card-line">
                 Date : <strong><?php echo esc_html($assessment->due_on ?: '—'); ?></strong>
                 &nbsp;|&nbsp; Classe : <strong><?php echo esc_html($assessment->group_label ?: '—'); ?></strong>
                 &nbsp;|&nbsp; Année : <strong><?php echo esc_html($assessment->year_slug ?: '—'); ?></strong>
             </p>
             <?php if (!empty($assessment->notes)): ?>
-                <p style="margin:10px 0 0;"><?php echo wp_kses_post(wpautop($assessment->notes)); ?></p>
+                <p class="ouinpo-assessment-card-notes"><?php echo wp_kses_post(wpautop($assessment->notes)); ?></p>
             <?php endif; ?>
         </div>
 
@@ -2545,7 +2545,7 @@ class Screen_Assessments {
             <?php return; ?>
         <?php endif; ?>
 
-        <form method="post" style="margin-top:16px;">
+        <form method="post" class="ouinpo-assessment-form-spaced">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="save_results">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
@@ -2562,13 +2562,13 @@ class Screen_Assessments {
                 $uid = (int) $student->id;
                 $isAbsent = !empty($attendanceMap[$uid]['is_absent']);
                 ?>
-                <div class="card" style="max-width:none; margin:14px 0; padding:14px;">
-                    <div style="display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap;">
+                <div class="card ouinpo-assessment-card ouinpo-assessment-card--student">
+                    <div class="ouinpo-assessment-student-head">
                         <div>
                             <strong><?php echo esc_html($student->display_name); ?></strong>
-                            <div style="color:#666; font-size:12px; margin-top:2px;">ID <?php echo $uid; ?></div>
+                            <div class="ouinpo-assessment-student-id">ID <?php echo $uid; ?></div>
                         </div>
-                        <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                        <label class="ouinpo-assessment-absent-label">
                             <input
                                 type="checkbox"
                                 name="attendance[<?php echo $uid; ?>][is_absent]"
@@ -2581,9 +2581,9 @@ class Screen_Assessments {
                         </label>
                     </div>
 
-                    <div id="student-<?php echo $uid; ?>" style="margin-top:12px; <?php echo $isAbsent ? 'opacity:.55;' : ''; ?>">
+                    <div id="student-<?php echo $uid; ?>" class="ouinpo-assessment-student-results<?php echo $isAbsent ? ' is-absent' : ''; ?>">
                         <?php if ($isAbsent): ?>
-                            <p style="margin:0 0 10px; color:#8a2424; font-weight:600;">Élève marqué absent pour ce devoir.</p>
+                            <p class="ouinpo-assessment-absent-note">Élève marqué absent pour ce devoir.</p>
                         <?php endif; ?>
 
                         <table class="widefat striped">
@@ -2636,7 +2636,7 @@ class Screen_Assessments {
                 if (!target) return;
 
                 const disabled = box.checked;
-                target.style.opacity = disabled ? '.55' : '1';
+                target.classList.toggle('is-absent', disabled);
 
                 target.querySelectorAll('select').forEach(function (el) {
                     el.disabled = disabled;
