@@ -1,27 +1,33 @@
 (function () {
+    window.OUINEXO = window.OUINEXO || {
+    api: window.location.origin + '/wp-json/',
+    nonce: '',
+    is_logged_in: '0'
+  };
 
   function restRoot() {
-
-    const base = (window.OUINEXO && OUINEXO.api) ? OUINEXO.api : '/wp-json/';
+    const base =
+      (window.OUINEXO && OUINEXO.api)
+        ? OUINEXO.api
+        : (window.location.origin + '/wp-json/');
 
     return base.replace(/\/+$/, '') + '/ouinpo/v1';
-
   }
 
 
 
   function commonHeaders() {
-
     const h = { Accept: 'application/json' };
 
-    if (window.OUINEXO && OUINEXO.nonce) {
+    const isLoggedIn =
+      !!(window.OUINEXO && String(OUINEXO.is_logged_in || '0') === '1') ||
+      document.body.classList.contains('logged-in');
 
+    if (isLoggedIn && window.OUINEXO && OUINEXO.nonce) {
       h['X-WP-Nonce'] = OUINEXO.nonce;
-
     }
 
     return h;
-
   }
 
 
@@ -1661,24 +1667,72 @@ function enableTabInAnswerTextareas() {
 
 }
 
-  document.addEventListener('DOMContentLoaded', function () {
-
+  function ouinpoPracticalBoot() {
     enableTabInAnswerTextareas();
 
-    
+    let didWork = false;
 
     const listRoot = document.getElementById('ouinpo-practical-subjects');
 
-    if (listRoot) {
-
+    if (listRoot && listRoot.dataset.ouinpoPracticalListBooted !== '1') {
+      listRoot.dataset.ouinpoPracticalListBooted = '1';
       buildSubjectsFiltersAndLoad(listRoot);
-
+      didWork = true;
     }
 
+    document.querySelectorAll('.ouinpo-practical-subject').forEach(function (subjectRoot) {
+      if (subjectRoot.dataset.ouinpoPracticalDetailBooted === '1') return;
 
+      subjectRoot.dataset.ouinpoPracticalDetailBooted = '1';
+      loadPracticalSubjectDetail(subjectRoot);
+      didWork = true;
+    });
 
-    document.querySelectorAll('.ouinpo-practical-subject').forEach(loadPracticalSubjectDetail);
+    return didWork;
+  }
 
-  });
+  function ouinpoPracticalScheduleBoot() {
+    let tries = 0;
+    const maxTries = 30;
+
+    function attempt() {
+      const ok = ouinpoPracticalBoot();
+
+      if (ok) return;
+
+      tries += 1;
+
+      if (tries <= maxTries) {
+        window.setTimeout(attempt, 150);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attempt);
+    } else {
+      attempt();
+    }
+
+    window.addEventListener('load', attempt);
+
+    if (window.MutationObserver && document.documentElement) {
+      const observer = new MutationObserver(function () {
+        if (ouinpoPracticalBoot()) {
+          observer.disconnect();
+        }
+      });
+
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+
+      window.setTimeout(function () {
+        observer.disconnect();
+      }, 6000);
+    }
+  }
+
+  ouinpoPracticalScheduleBoot();
 
 })();

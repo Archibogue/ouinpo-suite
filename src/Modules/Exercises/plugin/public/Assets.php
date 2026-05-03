@@ -8,6 +8,7 @@ class Assets {
 
     public static function init() {
         add_action('wp_enqueue_scripts', [self::class, 'register'], 1);
+        add_filter('script_loader_tag', [self::class, 'protect_ouinpo_scripts'], 10, 3);
     }
 
     public static function register() {
@@ -202,8 +203,9 @@ class Assets {
         );
 
         $rest_info = [
-            'nonce' => wp_create_nonce('wp_rest'),
-            'api'   => rest_url(),
+            'nonce'        => wp_create_nonce('wp_rest'),
+            'api'          => rest_url(),
+            'is_logged_in' => is_user_logged_in() ? 1 : 0,
         ];
 
         wp_localize_script('ouinpo-exo-js', 'OUINEXO', $rest_info);
@@ -212,4 +214,28 @@ class Assets {
         wp_localize_script('ouinpo-teacher-competencies', 'OUINEXO', $rest_info);
         wp_localize_script('ouinpo-student-badges', 'OUINEXO', $rest_info);
     }
+
+    public static function protect_ouinpo_scripts($tag, $handle, $src) {
+    $protected = [
+        'ouinpo-exo-js',
+        'ouinpo-practical-js',
+        'ouinpo-student-competencies',
+        'ouinpo-teacher-competencies',
+        'ouinpo-student-badges',
+    ];
+
+    if (!in_array($handle, $protected, true)) {
+        return $tag;
+    }
+
+    if (strpos($tag, 'data-cfasync=') === false) {
+        $tag = str_replace(
+            '<script ',
+            '<script data-cfasync="false" data-no-defer="1" data-no-optimize="1" data-noptimize="1" ',
+            $tag
+        );
+    }
+
+    return $tag;
+}
 }

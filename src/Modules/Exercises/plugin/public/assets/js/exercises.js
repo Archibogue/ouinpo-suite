@@ -1,11 +1,20 @@
 (function () {
+    window.OUINEXO = window.OUINEXO || {
+    api: window.location.origin + '/wp-json/',
+    nonce: '',
+    is_logged_in: '0'
+  };
 
 
 
   // Helpers REST
 
   function restRoot() {
-    const base = (window.OUINEXO && OUINEXO.api) ? OUINEXO.api : '/wp-json/';
+    const base =
+      (window.OUINEXO && OUINEXO.api)
+        ? OUINEXO.api
+        : (window.location.origin + '/wp-json/');
+
     return base.replace(/\/+$/, '') + '/ouinpo/v1';
   }
 
@@ -27,7 +36,15 @@
 
   function commonHeaders() {
     const h = { 'Accept': 'application/json' };
-    if (window.OUINEXO && OUINEXO.nonce) h['X-WP-Nonce'] = OUINEXO.nonce;
+
+    const isLoggedIn =
+      !!(window.OUINEXO && String(OUINEXO.is_logged_in || '0') === '1') ||
+      document.body.classList.contains('logged-in');
+
+    if (isLoggedIn && window.OUINEXO && OUINEXO.nonce) {
+      h['X-WP-Nonce'] = OUINEXO.nonce;
+    }
+
     return h;
   }
 
@@ -2897,31 +2914,75 @@ function enableTabInAnswerTextareas() {
 
 }
 
-  document.addEventListener('DOMContentLoaded', function () {
-
+  function ouinpoExercisesBoot() {
     enableTabInAnswerTextareas();
 
-      
+    let didWork = false;
 
     const rootA = document.getElementById('ouinpo-exercises');
-
     const rootB = document.getElementById('ouinpo-exo-list');
-
     const root = rootA || rootB;
 
-
-
-    if (root) {
-
+    if (root && root.dataset.ouinpoListBooted !== '1') {
+      root.dataset.ouinpoListBooted = '1';
       buildFiltersAndLoad(root);
-
+      didWork = true;
     }
 
+    document.querySelectorAll('.ouinpo-exo').forEach(function (exoRoot) {
+      if (exoRoot.dataset.ouinpoDetailBooted === '1') return;
 
+      exoRoot.dataset.ouinpoDetailBooted = '1';
+      loadExerciseDetail(exoRoot);
+      didWork = true;
+    });
 
-    document.querySelectorAll('.ouinpo-exo').forEach(loadExerciseDetail);
+    return didWork;
+  }
 
-  });
+  function ouinpoExercisesScheduleBoot() {
+    let tries = 0;
+    const maxTries = 30;
+
+    function attempt() {
+      const ok = ouinpoExercisesBoot();
+
+      if (ok) return;
+
+      tries += 1;
+
+      if (tries <= maxTries) {
+        window.setTimeout(attempt, 150);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attempt);
+    } else {
+      attempt();
+    }
+
+    window.addEventListener('load', attempt);
+
+    if (window.MutationObserver && document.documentElement) {
+      const observer = new MutationObserver(function () {
+        if (ouinpoExercisesBoot()) {
+          observer.disconnect();
+        }
+      });
+
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+
+      window.setTimeout(function () {
+        observer.disconnect();
+      }, 6000);
+    }
+  }
+
+  ouinpoExercisesScheduleBoot();
 
 
 
