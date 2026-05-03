@@ -1,0 +1,147 @@
+warning: in the working copy of 'src/Core/Admin/SuiteAdmin.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/Modules/Exercises/plugin/admin/AdminMenu.php', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/Core/Admin/SuiteAdmin.php b/src/Core/Admin/SuiteAdmin.php[m
+[1mindex 188dc7c..c00890d 100644[m
+[1m--- a/src/Core/Admin/SuiteAdmin.php[m
+[1m+++ b/src/Core/Admin/SuiteAdmin.php[m
+[36m@@ -22,10 +22,56 @@[m [mfinal class SuiteAdmin[m
+         }[m
+ [m
+         add_action('admin_menu', [self::class, 'registerRootMenu'], 5);[m
+[32m+[m[32m        add_action('admin_enqueue_scripts', [self::class, 'enqueueAdminStyles']);[m
+         add_action('admin_head', [self::class, 'hideLegacySubmenusCss']);[m
+         add_action('admin_head', [self::class, 'adminStyles']);[m
+     }[m
+ [m
+[32m+[m[32m    public static function enqueueAdminStyles(string $hook = ''): void[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $page = isset($_GET['page'])[m
+[32m+[m[32m            ? sanitize_key(wp_unslash((string) $_GET['page']))[m
+[32m+[m[32m            : '';[m
+[32m+[m
+[32m+[m[32m        if ($page !== self::ROOT_SLUG && strpos($page, self::ROOT_SLUG . '-') !== 0) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        self::enqueueCss([m
+[32m+[m[32m            'ouinpo-suite-admin',[m
+[32m+[m[32m            'assets/css/admin/suite-admin.css'[m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private static function enqueueCss(string $handle, string $relativePath): void[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $baseUrl = defined('OUINPO_SUITE_URL')[m
+[32m+[m[32m            ? OUINPO_SUITE_URL[m
+[32m+[m[32m            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_url(OUINPO_SUITE_FILE) : '');[m
+[32m+[m
+[32m+[m[32m        if ($baseUrl === '') {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $baseDir = defined('OUINPO_SUITE_DIR')[m
+[32m+[m[32m            ? OUINPO_SUITE_DIR[m
+[32m+[m[32m            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_path(OUINPO_SUITE_FILE) : '');[m
+[32m+[m
+[32m+[m[32m        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';[m
+[32m+[m[32m        $file = $baseDir !== '' ? $baseDir . $relativePath : '';[m
+[32m+[m
+[32m+[m[32m        if ($file !== '' && file_exists($file)) {[m
+[32m+[m[32m            $version = (string) filemtime($file);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        wp_enqueue_style([m
+[32m+[m[32m            $handle,[m
+[32m+[m[32m            $baseUrl . $relativePath,[m
+[32m+[m[32m            [],[m
+[32m+[m[32m            $version[m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m
+     public static function registerRootMenu(): void[m
+     {[m
+         add_menu_page([m
+[1mdiff --git a/src/Modules/Exercises/plugin/admin/AdminMenu.php b/src/Modules/Exercises/plugin/admin/AdminMenu.php[m
+[1mindex f0899c7..a9dc023 100644[m
+[1m--- a/src/Modules/Exercises/plugin/admin/AdminMenu.php[m
+[1m+++ b/src/Modules/Exercises/plugin/admin/AdminMenu.php[m
+[36m@@ -5,6 +5,65 @@[m [mif (!defined('ABSPATH')) exit;[m
+ [m
+ class AdminMenu {[m
+ [m
+[32m+[m[32m    public static function enqueue_admin_styles(string $hook = ''): void {[m
+[32m+[m[32m        $page = isset($_GET['page'])[m
+[32m+[m[32m            ? sanitize_key(wp_unslash((string) $_GET['page']))[m
+[32m+[m[32m            : '';[m
+[32m+[m
+[32m+[m[32m        $styles = [[m
+[32m+[m[32m            'ouinpo-assessment-builder' => [[m
+[32m+[m[32m                'handle' => 'ouinpo-assessment-builder-admin',[m
+[32m+[m[32m                'file'   => 'assets/css/admin/assessment-builder.css',[m
+[32m+[m[32m            ],[m
+[32m+[m[32m            'ouinpo-assessments' => [[m
+[32m+[m[32m                'handle' => 'ouinpo-assessments-admin',[m
+[32m+[m[32m                'file'   => 'assets/css/admin/assessments.css',[m
+[32m+[m[32m            ],[m
+[32m+[m[32m            'ouinpo-badges' => [[m
+[32m+[m[32m                'handle' => 'ouinpo-badges-admin',[m
+[32m+[m[32m                'file'   => 'assets/css/admin/badges.css',[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m
+[32m+[m[32m        if (!isset($styles[$page])) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        self::enqueue_admin_css([m
+[32m+[m[32m            $styles[$page]['handle'],[m
+[32m+[m[32m            $styles[$page]['file'][m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private static function enqueue_admin_css(string $handle, string $relativePath): void[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $baseUrl = defined('OUINPO_SUITE_URL')[m
+[32m+[m[32m            ? OUINPO_SUITE_URL[m
+[32m+[m[32m            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_url(OUINPO_EXO_PLUGIN_FILE) : '');[m
+[32m+[m
+[32m+[m[32m        if ($baseUrl === '') {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $baseDir = defined('OUINPO_SUITE_DIR')[m
+[32m+[m[32m            ? OUINPO_SUITE_DIR[m
+[32m+[m[32m            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_path(OUINPO_EXO_PLUGIN_FILE) : '');[m
+[32m+[m
+[32m+[m[32m        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';[m
+[32m+[m[32m        $file = $baseDir !== '' ? $baseDir . $relativePath : '';[m
+[32m+[m
+[32m+[m[32m        if ($file !== '' && file_exists($file)) {[m
+[32m+[m[32m            $version = (string) filemtime($file);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        wp_enqueue_style([m
+[32m+[m[32m            $handle,[m
+[32m+[m[32m            $baseUrl . $relativePath,[m
+[32m+[m[32m            [],[m
+[32m+[m[32m            $version[m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m
+     public static function register_menu() {[m
+         $parent = defined('OUINPO_SUITE_ADMIN_SLUG')[m
+             ? OUINPO_SUITE_ADMIN_SLUG[m
+[1mdiff --git a/src/Modules/Exercises/plugin/ouinpo-exercices.php b/src/Modules/Exercises/plugin/ouinpo-exercices.php[m
+[1mindex 111ecb5..dcecc1f 100644[m
+[1m--- a/src/Modules/Exercises/plugin/ouinpo-exercices.php[m
+[1m+++ b/src/Modules/Exercises/plugin/ouinpo-exercices.php[m
+[36m@@ -100,7 +100,8 @@[m [mif (is_admin()) {[m
+     require_once __DIR__ . '/admin/AdminMenu.php';[m
+     require_once __DIR__ . '/admin/screens/screen-exercises.php';[m
+ [m
+[31m-    add_action('admin_menu', ['\\OuInPo\\Exercises\\Admin\\AdminMenu', 'register_menu']);[m
+[32m+[m[32m    add_action('admin_menu', ['\\OuInPo\\Exercises\\Admin\\AdminMenu', 'register_menu']);[m
+[32m+[m[32m    add_action('admin_enqueue_scripts', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'enqueue_admin_styles']);[m
+     add_action('admin_post_ouinpo_export_exercises_csv', ['\\OuInPo\\Exercises\\Admin\\AdminMenu', 'handle_export_exercises_csv']);[m
+     add_action('admin_post_ouinpo_save_practical_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_save']);[m
+     [m

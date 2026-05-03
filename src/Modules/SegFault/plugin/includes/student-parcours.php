@@ -359,6 +359,11 @@ add_shortcode('segfault_mes_parcours', function ($atts) {
       ? \Ouinpo\Exercises\PathsService::can_user_self_remove_path($view_id, $user_id)
       : false;
 
+    $exercise_page = get_page_by_path('exercice');
+    $exercise_base_url = ($exercise_page instanceof \WP_Post)
+    ? get_permalink($exercise_page)
+    : home_url('/exercice/');  
+
     $html = '';
     $html .= '<div class="sf-back">';
     $html .= '<a class="ouinpo-sf-btn" href="'.$back_url.'">← Retour à mes parcours</a>';
@@ -415,7 +420,7 @@ add_shortcode('segfault_mes_parcours', function ($atts) {
           $url = esc_url(add_query_arg([
             'exo'     => $eid,
             'sf_path' => $view_id,
-          ], home_url('/exercice/')));
+          ], $exercise_base_url));
           $action_html = '<a class="ouinpo-sf-btn" href="'.$url.'" target="_blank" rel="noopener noreferrer">Ouvrir</a>';
         }
 

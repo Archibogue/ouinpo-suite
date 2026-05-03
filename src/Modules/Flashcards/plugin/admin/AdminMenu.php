@@ -7,6 +7,32 @@ defined('ABSPATH') || exit;
 
 final class AdminMenu
 {
+    public static function enqueue_admin_styles(string $hook = ''): void
+    {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash((string) $_GET['page'])) : '';
+
+        if ($page !== 'ouinpo-flashcards') {
+            return;
+        }
+
+        $rel = 'assets/css/admin/flashcards-admin.css';
+        $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
+        $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
+
+        if ($base_url === '') {
+            return;
+        }
+
+        $file = $base_dir !== '' ? $base_dir . $rel : '';
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+        if ($file !== '' && file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_style('ouinpo-flashcards-admin', $base_url . $rel, [], $version);
+    }
+
     public static function register_menu(): void
     {
         add_submenu_page(
