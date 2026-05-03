@@ -981,6 +981,9 @@ final class SuiteAdmin
         $tPost = $wpdb->prefix . 'ouin_exo_post_competency';
         $tExo  = $wpdb->prefix . 'ouin_exo_exercise_competency';
 
+        self::handleReferentielBoActions($tComp);
+        settings_errors('ouinpo_ref_bo');
+
         if (!self::tableExists($tComp)) {
             ?>
             <div class="card" style="padding:16px;max-width:1200px;">
@@ -1020,6 +1023,7 @@ final class SuiteAdmin
             SELECT
                 c.id,
                 c.domain,
+                c.domain_slug,
                 c.track,
                 c.level,
                 c.competency,
@@ -1086,13 +1090,14 @@ final class SuiteAdmin
                         <th>Compétence</th>
                         <th style="width:8%;">Cours</th>
                         <th style="width:8%;">Exos</th>
-                        <th style="width:10%;">Actif</th>
+                        <th style="width:8%;">Actif</th>
+                        <th style="width:18%;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$rows): ?>
                         <tr>
-                            <td colspan="7">Aucune compétence trouvée.</td>
+                            <td colspan="8">Aucune compétence trouvée.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($rows as $row): ?>
@@ -1107,6 +1112,34 @@ final class SuiteAdmin
                                 <td><?php echo number_format_i18n((int) $row->course_count); ?></td>
                                 <td><?php echo number_format_i18n((int) $row->exercise_count); ?></td>
                                 <td><?php echo ((int) $row->active === 1) ? 'Oui' : 'Non'; ?></td>
+                                <td>
+                                    <?php if (current_user_can('manage_options')): ?>
+                                        <a class="button button-small" href="<?php echo esc_url(add_query_arg([
+                                            'page' => 'ouinpo-suite-referentiel',
+                                            'tab' => 'competencies',
+                                            'edit_competency_id' => (int) $row->id,
+                                        ], admin_url('admin.php'))); ?>">
+                                            Modifier
+                                        </a>
+
+                                        <form method="post" style="display:inline;">
+                                            <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+                                            <input type="hidden" name="ouinpo_ref_action" value="toggle_competency">
+                                            <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
+                                            <input type="hidden" name="active" value="<?php echo ((int) $row->active === 1) ? '0' : '1'; ?>">
+                                            <?php submit_button(((int) $row->active === 1) ? 'Désactiver' : 'Réactiver', 'secondary small', '', false); ?>
+                                        </form>
+
+                                        <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer cette compétence ? Si elle est liée à des exercices, cours ou suivis, elle sera seulement désactivée.');">
+                                            <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+                                            <input type="hidden" name="ouinpo_ref_action" value="delete_competency">
+                                            <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
+                                            <?php submit_button('Supprimer', 'delete small', '', false); ?>
+                                        </form>
+                                    <?php else: ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -1357,6 +1390,114 @@ final class SuiteAdmin
         ?>
         <div class="card" style="padding:16px;">
             <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
+                <?php
+                $editId = isset($_GET['edit_competency_id']) ? (int) $_GET['edit_competency_id'] : 0;
+                $editRow = null;
+
+                if ($editId > 0 && current_user_can('manage_options')) {
+                    $editRow = $wpdb->get_row($wpdb->prepare(
+                        "SELECT * FROM {$tComp} WHERE id = %d",
+                        $editId
+                    ));
+                }
+                ?>
+
+                <?php if (current_user_can('manage_options')): ?>
+                    <div class="card" style="padding:16px;margin:16px 0;background:#fff;">
+                        <h3 class="ouinpo-suite-card-title">
+                            <?php echo $editRow ? 'Modifier une compétence BO' : 'Ajouter une compétence BO'; ?>
+                        </h3>
+
+                        <form method="post">
+                            <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
+                            <input type="hidden" name="ouinpo_ref_action" value="save_competency">
+                            <input type="hidden" name="competency_id" value="<?php echo $editRow ? (int) $editRow->id : 0; ?>">
+
+                            <table class="form-table" role="presentation">
+                                <tbody>
+                                    <tr>
+                                        <th><label for="bo_domain">Domaine</label></th>
+                                        <td>
+                                            <input id="bo_domain" type="text" name="domain" class="regular-text"
+                                                value="<?php echo esc_attr($editRow->domain ?? ''); ?>" required>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th><label for="bo_domain_slug">Slug domaine</label></th>
+                                        <td>
+                                            <input id="bo_domain_slug" type="text" name="domain_slug" class="regular-text"
+                                                value="<?php echo esc_attr($editRow->domain_slug ?? ''); ?>"
+                                                placeholder="ex : algorithmique">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th><label for="bo_track">Piste</label></th>
+                                        <td>
+                                            <select id="bo_track" name="track">
+                                                <?php foreach (['SNT', 'NSI', 'Transversal'] as $opt): ?>
+                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($editRow->track ?? 'NSI', $opt); ?>>
+                                                        <?php echo esc_html($opt); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th><label for="bo_level">Niveau</label></th>
+                                        <td>
+                                            <select id="bo_level" name="level">
+                                                <?php foreach (['Seconde', 'Première', 'Terminale', 'Transversal'] as $opt): ?>
+                                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($editRow->level ?? 'Première', $opt); ?>>
+                                                        <?php echo esc_html($opt); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th><label for="bo_competency">Compétence</label></th>
+                                        <td>
+                                            <textarea id="bo_competency" name="competency" rows="4" class="large-text" required><?php
+                                                echo esc_textarea($editRow->competency ?? '');
+                                            ?></textarea>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th><label for="bo_slug">Slug compétence</label></th>
+                                        <td>
+                                            <input id="bo_slug" type="text" name="slug" class="regular-text"
+                                                value="<?php echo esc_attr($editRow->slug ?? ''); ?>"
+                                                placeholder="ex : nsi-algorithmique-parcours-tableau">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Active</th>
+                                        <td>
+                                            <label>
+                                                <input type="checkbox" name="active" value="1" <?php checked((int)($editRow->active ?? 1), 1); ?>>
+                                                Compétence active
+                                            </label>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <?php submit_button($editRow ? 'Enregistrer les modifications' : 'Ajouter la compétence'); ?>
+
+                            <?php if ($editRow): ?>
+                                <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-referentiel&tab=competencies')); ?>">
+                                    Annuler
+                                </a>
+                            <?php endif; ?>
+                        </form>
+                    </div>
+                <?php endif; ?>            
             <table class="widefat striped">
                 <tbody>
                     <?php foreach ($rows as $label => $value): ?>
@@ -2101,4 +2242,190 @@ final class SuiteAdmin
 
         self::endPage();
     }
+
+    private static function handleReferentielBoActions(string $tComp): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    $action = isset($_POST['ouinpo_ref_action'])
+        ? sanitize_key((string) wp_unslash($_POST['ouinpo_ref_action']))
+        : '';
+
+    if ($action === '') {
+        return;
+    }
+
+    check_admin_referer('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce');
+
+    global $wpdb;
+
+    if ($action === 'save_competency') {
+        $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
+
+        $domain = isset($_POST['domain'])
+            ? sanitize_text_field((string) wp_unslash($_POST['domain']))
+            : '';
+
+        $domainSlug = isset($_POST['domain_slug'])
+            ? sanitize_key((string) wp_unslash($_POST['domain_slug']))
+            : '';
+
+        $track = isset($_POST['track'])
+            ? sanitize_text_field((string) wp_unslash($_POST['track']))
+            : 'NSI';
+
+        $level = isset($_POST['level'])
+            ? sanitize_text_field((string) wp_unslash($_POST['level']))
+            : 'Première';
+
+        $competency = isset($_POST['competency'])
+            ? wp_kses_post((string) wp_unslash($_POST['competency']))
+            : '';
+
+        $slug = isset($_POST['slug'])
+            ? sanitize_title((string) wp_unslash($_POST['slug']))
+            : '';
+
+        $active = isset($_POST['active']) ? 1 : 0;
+
+        if ($domain === '' || trim(wp_strip_all_tags($competency)) === '') {
+            add_settings_error('ouinpo_ref_bo', 'bo_missing', 'Domaine et compétence sont obligatoires.', 'error');
+            return;
+        }
+
+        if ($domainSlug === '') {
+            $domainSlug = sanitize_key($domain);
+        }
+
+        if ($slug === '') {
+            $slug = sanitize_title($domainSlug . '-' . wp_strip_all_tags($competency));
+            $slug = substr($slug, 0, 120);
+        }
+
+        if (!in_array($track, ['SNT', 'NSI', 'Transversal'], true)) {
+            $track = 'NSI';
+        }
+
+        if (!in_array($level, ['Seconde', 'Première', 'Terminale', 'Transversal'], true)) {
+            $level = 'Première';
+        }
+
+        $duplicateId = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$tComp} WHERE slug = %s AND id <> %d LIMIT 1",
+            $slug,
+            $id
+        ));
+
+        if ($duplicateId > 0) {
+            add_settings_error('ouinpo_ref_bo', 'bo_duplicate_slug', 'Ce slug de compétence existe déjà.', 'error');
+            return;
+        }
+
+        $label = trim(wp_strip_all_tags($domain . ' — ' . $competency));
+
+        $data = [
+            'domain'      => $domain,
+            'domain_slug' => $domainSlug,
+            'track'       => $track,
+            'level'       => $level,
+            'competency'  => $competency,
+            'slug'        => $slug,
+            'active'      => $active,
+            'label'       => $label,
+        ];
+
+        $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s'];
+
+        if ($id > 0) {
+            $wpdb->update($tComp, $data, ['id' => $id], $formats, ['%d']);
+            add_settings_error('ouinpo_ref_bo', 'bo_updated', 'Compétence BO modifiée.', 'updated');
+        } else {
+            $wpdb->insert($tComp, $data, $formats);
+            add_settings_error('ouinpo_ref_bo', 'bo_inserted', 'Compétence BO ajoutée.', 'updated');
+        }
+
+        return;
+    }
+
+    if ($action === 'toggle_competency') {
+        $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
+        $active = isset($_POST['active']) ? (int) $_POST['active'] : 0;
+        $active = $active === 1 ? 1 : 0;
+
+        if ($id > 0) {
+            $wpdb->update($tComp, ['active' => $active], ['id' => $id], ['%d'], ['%d']);
+            add_settings_error(
+                'ouinpo_ref_bo',
+                'bo_toggled',
+                $active ? 'Compétence réactivée.' : 'Compétence désactivée.',
+                'updated'
+            );
+        }
+
+        return;
+    }
+
+    if ($action === 'delete_competency') {
+        $id = isset($_POST['competency_id']) ? (int) $_POST['competency_id'] : 0;
+
+        if ($id <= 0) {
+            return;
+        }
+
+        $refs = self::referentielCompetencyReferenceCount($id);
+
+        if ($refs > 0) {
+            $wpdb->update($tComp, ['active' => 0], ['id' => $id], ['%d'], ['%d']);
+            add_settings_error(
+                'ouinpo_ref_bo',
+                'bo_soft_deleted',
+                'Cette compétence est liée à des contenus ou suivis. Elle a été désactivée au lieu d’être supprimée.',
+                'updated'
+            );
+            return;
+        }
+
+        $wpdb->delete($tComp, ['id' => $id], ['%d']);
+        add_settings_error('ouinpo_ref_bo', 'bo_deleted', 'Compétence supprimée définitivement.', 'updated');
+    }
+}
+
+private static function referentielCompetencyReferenceCount(int $competencyId): int
+{
+    global $wpdb;
+
+    $prefixExo = $wpdb->prefix . 'ouin_exo_';
+    $prefixFc  = $wpdb->prefix . 'ouin_fc_';
+
+    $checks = [
+        [$prefixExo . 'post_competency', 'competency_id'],
+        [$prefixExo . 'exercise_competency', 'competency_id'],
+        [$prefixExo . 'user_competencies', 'competency_id'],
+        [$prefixExo . 'competency_teaching', 'competency_id'],
+        [$prefixExo . 'assessment_competencies', 'competency_id'],
+        [$prefixExo . 'assessment_results', 'competency_id'],
+        [$prefixFc . 'card_competency', 'competency_id'],
+    ];
+
+    $total = 0;
+
+    foreach ($checks as [$table, $column]) {
+        if (!self::tableExists($table)) {
+            continue;
+        }
+
+        $total += (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d",
+            $competencyId
+        ));
+    }
+
+    return $total;
+}
 }
