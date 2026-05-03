@@ -46,7 +46,7 @@ final class ModuleInstaller
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY uq_slug (slug),
             KEY idx_track_level (track, level),
             KEY idx_source_post (source_post_id)
@@ -63,7 +63,7 @@ final class ModuleInstaller
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY idx_deck (deck_id),
             KEY idx_deck_active (deck_id, is_active)
         ) {$charset_innodb};";
@@ -71,7 +71,7 @@ final class ModuleInstaller
         $sqlCardCompetency = "CREATE TABLE {$p}card_competency (
             card_id BIGINT UNSIGNED NOT NULL,
             competency_id BIGINT UNSIGNED NOT NULL,
-            PRIMARY KEY (card_id, competency_id),
+            PRIMARY KEY  (card_id, competency_id),
             KEY idx_competency (competency_id)
         ) {$charset_innodb};";
 
@@ -88,7 +88,7 @@ final class ModuleInstaller
             last_grade ENUM('again','hard','good') NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (user_id, card_id),
+            PRIMARY KEY  (user_id, card_id),
             KEY idx_user_due (user_id, next_review_at),
             KEY idx_card (card_id)
         ) {$charset_innodb};";
@@ -101,7 +101,7 @@ final class ModuleInstaller
             old_box TINYINT UNSIGNED NOT NULL,
             new_box TINYINT UNSIGNED NOT NULL,
             reviewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY idx_user_date (user_id, reviewed_at),
             KEY idx_card_date (card_id, reviewed_at)
         ) {$charset_innodb};";
