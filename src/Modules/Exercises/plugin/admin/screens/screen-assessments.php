@@ -101,29 +101,12 @@ class Screen_Assessments {
     private static function status_badge(string $status): string {
         $labels = self::status_options();
         if (!isset($labels[$status]) || $status === '') {
-            return '<span style="color:#666;">—</span>';
+            return '<span class="ouinpo-assessment-muted">—</span>';
         }
 
-        $bg = match ($status) {
-            'not_acquired'  => '#fbeaea',
-            'in_progress'   => '#fff6dd',
-            'consolidating' => '#eef6ff',
-            'acquired'      => '#e8f6ea',
-            default         => '#f3f3f3',
-        };
-
-        $border = match ($status) {
-            'not_acquired'  => '#d63638',
-            'in_progress'   => '#dba617',
-            'consolidating' => '#2271b1',
-            'acquired'      => '#008a20',
-            default         => '#999',
-        };
-
         return sprintf(
-            '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:%s;border:1px solid %s;font-size:12px;">%s</span>',
-            esc_attr($bg),
-            esc_attr($border),
+            '<span class="ouinpo-assessment-status ouinpo-assessment-status--%s">%s</span>',
+            esc_attr($status),
             esc_html($labels[$status])
         );
     }
@@ -854,21 +837,21 @@ class Screen_Assessments {
         $failed = isset($report['failed']) && is_array($report['failed']) ? $report['failed'] : [];
     
         ?>
-        <div class="notice notice-info" style="padding:12px 14px;">
-            <p style="margin-top:0;">
+        <div class="notice notice-info ouinpo-version-report">
+            <p class="ouinpo-version-report__title">
                 <strong>Bilan de création de la version B</strong>
             </p>
     
-            <ul style="list-style:disc; margin-left:22px;">
+            <ul class="ouinpo-version-report__list">
                 <li><?php echo (int) count($replaced); ?> exercice(s) remplacé(s).</li>
                 <li><?php echo (int) count($kept); ?> exercice(s) conservé(s).</li>
                 <li><?php echo (int) count($failed); ?> exercice(s) déjà vu(s) sans remplaçant trouvé.</li>
             </ul>
     
             <?php if (!empty($replaced)): ?>
-                <details style="margin-top:10px;">
+                <details class="ouinpo-version-report__details">
                     <summary><strong>Voir les remplacements effectués</strong></summary>
-                    <ul style="list-style:disc; margin-left:22px;">
+                    <ul class="ouinpo-version-report__list">
                         <?php foreach ($replaced as $row): ?>
                             <li>
                                 #<?php echo (int) $row['old_id']; ?>
@@ -877,7 +860,7 @@ class Screen_Assessments {
                                 #<?php echo (int) $row['new_id']; ?>
                                 — <?php echo esc_html($row['new_title']); ?>
                                 <br>
-                                <span style="color:#646970;">
+                                <span class="ouinpo-assessment-muted">
                                     Vu par <?php echo (int) $row['seen_count']; ?> élève(s),
                                     réussi par <?php echo (int) $row['solved_count']; ?>.
                                 </span>
@@ -888,15 +871,15 @@ class Screen_Assessments {
             <?php endif; ?>
     
             <?php if (!empty($failed)): ?>
-                <details style="margin-top:10px;">
+                <details class="ouinpo-version-report__details">
                     <summary><strong>Voir les exercices conservés faute de remplaçant</strong></summary>
-                    <ul style="list-style:disc; margin-left:22px;">
+                    <ul class="ouinpo-version-report__list">
                         <?php foreach ($failed as $row): ?>
                             <li>
                                 #<?php echo (int) $row['old_id']; ?>
                                 — <?php echo esc_html($row['old_title']); ?>
                                 <br>
-                                <span style="color:#646970;">
+                                <span class="ouinpo-assessment-muted">
                                     Vu par <?php echo (int) $row['seen_count']; ?> élève(s),
                                     réussi par <?php echo (int) $row['solved_count']; ?>.
                                     Raison : <?php echo esc_html($row['reason']); ?>
@@ -908,15 +891,15 @@ class Screen_Assessments {
             <?php endif; ?>
     
             <?php if (!empty($kept)): ?>
-                <details style="margin-top:10px;">
+                <details class="ouinpo-version-report__details">
                     <summary><strong>Voir les exercices conservés</strong></summary>
-                    <ul style="list-style:disc; margin-left:22px;">
+                    <ul class="ouinpo-version-report__list">
                         <?php foreach ($kept as $row): ?>
                             <li>
                                 #<?php echo (int) $row['old_id']; ?>
                                 — <?php echo esc_html($row['old_title']); ?>
                                 <br>
-                                <span style="color:#646970;">
+                                <span class="ouinpo-assessment-muted">
                                     <?php echo esc_html($row['reason']); ?>
                                 </span>
                             </li>
@@ -1910,14 +1893,14 @@ class Screen_Assessments {
                                     step="1"
                                     name="sort_order[<?php echo $exerciseId; ?>]"
                                     value="<?php echo esc_attr((string) ((int) ($item->sort_order ?? ($index + 1)))); ?>"
-                                    style="width:70px;"
+                                    class="ouinpo-assessment-input-order"
                                 >
                             </td>
     
                             <td>
                                 <strong>#<?php echo $exerciseId; ?> — <?php echo esc_html($item->title); ?></strong>
     
-                                <div style="color:#646970; font-size:12px; margin-top:4px;">
+                                <div class="ouinpo-assessment-item-meta">
                                     <?php if (!empty($item->difficulty_label)): ?>
                                         Difficulté : <?php echo esc_html($item->difficulty_label); ?>
                                     <?php else: ?>
@@ -1934,15 +1917,15 @@ class Screen_Assessments {
                                 </div>
     
                                 <?php if (!empty($competencyLabels)): ?>
-                                    <div style="margin-top:8px;">
+                                    <div class="ouinpo-assessment-tags">
                                         <?php foreach (array_slice($competencyLabels, 0, 4) as $label): ?>
-                                            <span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 7px; border:1px solid #dcdcde; border-radius:999px; background:#f6f7f7; font-size:12px;">
+                                            <span class="ouinpo-assessment-tag">
                                                 <?php echo esc_html($label); ?>
                                             </span>
                                         <?php endforeach; ?>
     
                                         <?php if (count($competencyLabels) > 4): ?>
-                                            <span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 7px; border:1px solid #dcdcde; border-radius:999px; background:#f6f7f7; font-size:12px;">
+                                            <span class="ouinpo-assessment-tag">
                                                 +<?php echo count($competencyLabels) - 4; ?>
                                             </span>
                                         <?php endif; ?>
@@ -1971,7 +1954,7 @@ class Screen_Assessments {
                                     step="0.25"
                                     name="points[<?php echo $exerciseId; ?>]"
                                     value="<?php echo esc_attr($points !== '—' ? str_replace(',', '.', $points) : ''); ?>"
-                                    style="width:90px;"
+                                    class="ouinpo-assessment-input-points"
                                 >
                             </td>
     
@@ -1993,7 +1976,7 @@ class Screen_Assessments {
                             </td>
                             
                             <td>
-                                <label style="color:#b32d2e; font-weight:600;">
+                                <label class="ouinpo-assessment-delete-label">
                                     <input
                                         type="checkbox"
                                         name="delete_exercise_ids[]"
@@ -2007,7 +1990,7 @@ class Screen_Assessments {
                 </tbody>
             </table>
     
-            <p style="margin-top:14px;">
+            <p class="ouinpo-assessment-sync-row">
                 <label>
                     <input type="checkbox" name="sync_competencies" value="1" checked>
                     Resynchroniser les compétences BO du DS avec les exercices restants

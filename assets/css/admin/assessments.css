@@ -368,3 +368,88 @@ a {
     }
 }
 
+.ouinpo-assessment-muted {
+    color:#646970;
+}
+
+.ouinpo-assessment-status {
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:12px;
+}
+
+.ouinpo-assessment-status--not_acquired {
+    background:#fbeaea;
+    border:1px solid #d63638;
+}
+
+.ouinpo-assessment-status--in_progress {
+    background:#fff6dd;
+    border:1px solid #dba617;
+}
+
+.ouinpo-assessment-status--consolidating {
+    background:#eef6ff;
+    border:1px solid #2271b1;
+}
+
+.ouinpo-assessment-status--acquired {
+    background:#e8f6ea;
+    border:1px solid #008a20;
+}
+
+.ouinpo-version-report {
+    padding:12px 14px;
+}
+
+.ouinpo-version-report__title {
+    margin-top:0;
+}
+
+.ouinpo-version-report__list {
+    list-style:disc;
+    margin-left:22px;
+}
+
+.ouinpo-version-report__details {
+    margin-top:10px;
+}
+
+.ouinpo-assessment-input-order {
+    width:70px;
+}
+
+.ouinpo-assessment-input-points {
+    width:90px;
+}
+
+.ouinpo-assessment-item-meta {
+    color:#646970;
+    font-size:12px;
+    margin-top:4px;
+}
+
+.ouinpo-assessment-tags {
+    margin-top:8px;
+}
+
+.ouinpo-assessment-tag {
+    display:inline-block;
+    margin:2px 4px 2px 0;
+    padding:2px 7px;
+    border:1px solid #dcdcde;
+    border-radius:999px;
+    background:#f6f7f7;
+    font-size:12px;
+}
+
+.ouinpo-assessment-delete-label {
+    color:#b32d2e;
+    font-weight:600;
+}
+
+.ouinpo-assessment-sync-row {
+    margin-top:14px;
+}
+
