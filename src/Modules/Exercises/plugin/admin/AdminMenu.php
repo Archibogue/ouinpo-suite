@@ -27,6 +27,38 @@ class AdminMenu {
                 'handle' => 'ouinpo-badges-admin',
                 'file'   => 'assets/css/admin/badges.css',
             ],
+            'ouinpo-exercices' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-competencies' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-groups' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-assignments' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-courses-competencies' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-years' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-paths' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-practical-subjects' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
         ];
 
         if (!isset($styles[$page])) {

@@ -398,17 +398,17 @@ class Screen_Exercises {
         <div class="notice notice-success is-dismissible"><p>Exercice(s) supprimé(s).</p></div>
       <?php endif; ?>
 
-      <form method="get" style="margin: 12px 0 16px; padding: 12px; background: #fff; border: 1px solid #ccd0d4;">
+      <form method="get" class="ouinpo-admin-filter-box">
         <input type="hidden" name="page" value="ouinpo-exercices">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items:end; max-width: 1200px;">
+        <div class="ouinpo-admin-filter-grid">
           <label>
-            <span style="display:block; margin-bottom:4px; font-weight:600;">Recherche</span>
-            <input type="search" name="s" value="<?php echo esc_attr($search); ?>" class="regular-text" style="width:100%;">
+            <span class="ouinpo-admin-field-label">Recherche</span>
+            <input type="search" name="s" value="<?php echo esc_attr($search); ?>" class="regular-text ouinpo-admin-full-width">
           </label>
 
           <label>
-            <span style="display:block; margin-bottom:4px; font-weight:600;">Difficulté</span>
-            <select name="filter_difficulty" style="width:100%;">
+            <span class="ouinpo-admin-field-label">Difficulté</span>
+            <select name="filter_difficulty" class="ouinpo-admin-full-width">
               <option value="0">Toutes</option>
               <?php foreach ($difficulties as $diff): ?>
                 <option value="<?php echo (int) $diff->id; ?>" <?php selected($difficulty, (int) $diff->id); ?>>
@@ -419,8 +419,8 @@ class Screen_Exercises {
           </label>
 
           <label>
-            <span style="display:block; margin-bottom:4px; font-weight:600;">Type</span>
-            <select name="filter_exam_like" style="width:100%;">
+            <span class="ouinpo-admin-field-label">Type</span>
+            <select name="filter_exam_like" class="ouinpo-admin-full-width">
               <option value="">Tous</option>
               <option value="yes" <?php selected($exam_like, 'yes'); ?>>Type bac</option>
               <option value="no" <?php selected($exam_like, 'no'); ?>>Classique</option>
@@ -428,8 +428,8 @@ class Screen_Exercises {
           </label>
 
           <label>
-            <span style="display:block; margin-bottom:4px; font-weight:600;">Origine</span>
-            <select name="filter_source_type" style="width:100%;">
+            <span class="ouinpo-admin-field-label">Origine</span>
+            <select name="filter_source_type" class="ouinpo-admin-full-width">
               <option value="">Toutes</option>
               <?php foreach ($source_type_labels as $value => $label): ?>
                 <option value="<?php echo esc_attr($value); ?>" <?php selected($source_type, $value); ?>>
@@ -440,8 +440,8 @@ class Screen_Exercises {
           </label>
 
           <label>
-            <span style="display:block; margin-bottom:4px; font-weight:600;">Thème bac</span>
-            <select name="filter_theme_bac" style="width:100%;">
+            <span class="ouinpo-admin-field-label">Thème bac</span>
+            <select name="filter_theme_bac" class="ouinpo-admin-full-width">
               <option value="">Tous</option>
               <?php foreach ($exam_theme_options as $value => $label): ?>
                 <option value="<?php echo esc_attr($value); ?>" <?php selected($theme_bac, $value); ?>>
@@ -452,8 +452,8 @@ class Screen_Exercises {
           </label>
 
           <label>
-            <span style="display:block; margin-bottom:4px; font-weight:600;">État</span>
-            <select name="filter_active" style="width:100%;">
+            <span class="ouinpo-admin-field-label">État</span>
+            <select name="filter_active" class="ouinpo-admin-full-width">
               <option value="">Tous</option>
               <option value="yes" <?php selected($active, 'yes'); ?>>Actifs</option>
               <option value="no" <?php selected($active, 'no'); ?>>Inactifs</option>
@@ -461,10 +461,10 @@ class Screen_Exercises {
           </label>
         </div>
 
-        <p style="margin:12px 0 0; display:flex; gap:8px; align-items:center;">
+        <p class="ouinpo-admin-actions-row">
           <button type="submit" class="button button-primary">Filtrer</button>
           <a href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-exercices')); ?>" class="button">Réinitialiser</a>
-          <span style="color:#50575e;"><?php echo count($rows); ?> résultat(s) affiché(s)</span>
+          <span class="ouinpo-admin-muted"><?php echo count($rows); ?> résultat(s) affiché(s)</span>
         </p>
       </form>
 
@@ -656,7 +656,7 @@ class Screen_Exercises {
             <th scope="row">Niveaux scolaires</th>
             <td>
               <?php foreach ($levels as $lv): ?>
-                <label style="display:inline-block;margin-right:1rem;">
+                <label class="ouinpo-admin-inline-check">
                   <input type="checkbox" name="school_levels[]" value="<?php echo (int)$lv->id; ?>"
                     <?php checked(in_array((int)$lv->id, array_map('intval',$selected_levels), true)); ?>>
                   <?php echo esc_html($lv->label); ?>
@@ -673,7 +673,7 @@ class Screen_Exercises {
                       name="competencies[]"
                       multiple="multiple"
                       size="8"
-                      style="min-width:960px;">
+                      class="ouinpo-admin-table-wide">
                 <?php
                   $current_group = '';
                   foreach ($competencies as $c):
@@ -704,16 +704,16 @@ class Screen_Exercises {
           <tr>
             <th scope="row">Métadonnées bac</th>
             <td>
-              <fieldset style="display:grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap:12px 24px; max-width:1100px;">
+              <fieldset class="ouinpo-admin-meta-grid">
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Exercice de type bac</span>
+                  <span class="ouinpo-admin-field-label">Exercice de type bac</span>
                   <input type="checkbox" name="exam_meta[is_exam_like]" value="1" <?php checked(!empty($exam_meta['is_exam_like'])); ?>>
                   <span>Oui</span>
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Origine</span>
-                  <select name="exam_meta[source_type]" style="min-width:260px;">
+                  <span class="ouinpo-admin-field-label">Origine</span>
+                  <select name="exam_meta[source_type]" class="ouinpo-admin-select-wide">
                     <option value="">— Aucune —</option>
                     <option value="annale" <?php selected((string) $exam_meta['source_type'], 'annale'); ?>>Annale</option>
                     <option value="inspired" <?php selected((string) $exam_meta['source_type'], 'inspired'); ?>>Inspiré annale</option>
@@ -723,23 +723,23 @@ class Screen_Exercises {
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Session</span>
+                  <span class="ouinpo-admin-field-label">Session</span>
                   <input type="text" class="regular-text" name="exam_meta[session_label]" value="<?php echo esc_attr((string) $exam_meta['session_label']); ?>">
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Année</span>
+                  <span class="ouinpo-admin-field-label">Année</span>
                   <input type="text" class="small-text" name="exam_meta[year_label]" value="<?php echo esc_attr((string) $exam_meta['year_label']); ?>">
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Centre</span>
+                  <span class="ouinpo-admin-field-label">Centre</span>
                   <input type="text" class="regular-text" name="exam_meta[center_label]" value="<?php echo esc_attr((string) $exam_meta['center_label']); ?>">
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Thème bac</span>
-                  <select name="exam_meta[theme_bac]" style="min-width:260px;">
+                  <span class="ouinpo-admin-field-label">Thème bac</span>
+                  <select name="exam_meta[theme_bac]" class="ouinpo-admin-select-wide">
                     <option value="">— Aucun —</option>
                     <?php foreach ($exam_theme_options as $value => $label): ?>
                       <option value="<?php echo esc_attr($value); ?>" <?php selected((string) $exam_meta['theme_bac'], $value); ?>>
@@ -750,8 +750,8 @@ class Screen_Exercises {
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Format bac</span>
-                  <select name="exam_meta[bac_format]" style="min-width:260px;">
+                  <span class="ouinpo-admin-field-label">Format bac</span>
+                  <select name="exam_meta[bac_format]" class="ouinpo-admin-select-wide">
                     <option value="">— Aucun —</option>
                     <?php foreach ($bac_format_options as $value => $label): ?>
                       <option value="<?php echo esc_attr($value); ?>" <?php selected((string) $exam_meta['bac_format'], $value); ?>>
@@ -762,17 +762,17 @@ class Screen_Exercises {
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Durée estimée (minutes)</span>
+                  <span class="ouinpo-admin-field-label">Durée estimée (minutes)</span>
                   <input type="number" min="1" step="1" class="small-text" name="exam_meta[estimated_minutes]" value="<?php echo esc_attr((string) $exam_meta['estimated_minutes']); ?>">
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Groupe de sujet</span>
+                  <span class="ouinpo-admin-field-label">Groupe de sujet</span>
                   <input type="text" class="regular-text" name="exam_meta[subject_group]" value="<?php echo esc_attr((string) $exam_meta['subject_group']); ?>">
                 </label>
 
                 <label>
-                  <span style="display:block; margin-bottom:4px; font-weight:600;">Ordre dans le sujet</span>
+                  <span class="ouinpo-admin-field-label">Ordre dans le sujet</span>
                   <input type="number" min="1" step="1" class="small-text" name="exam_meta[sort_in_subject]" value="<?php echo esc_attr((string) $exam_meta['sort_in_subject']); ?>">
                 </label>
               </fieldset>
@@ -801,7 +801,7 @@ class Screen_Exercises {
                 <textarea id="hint_<?php echo $i; ?>"
                           name="hints[<?php echo $i; ?>]"
                           rows="6"
-                          style="width:100%"><?php echo esc_textarea($hints[$i] ?? ''); ?></textarea>
+                          class="ouinpo-admin-full-width"><?php echo esc_textarea($hints[$i] ?? ''); ?></textarea>
                 <p class="description">Tu peux saisir du HTML simple (bold, listes, liens).</p>
               </td>
             </tr>
@@ -848,11 +848,11 @@ class Screen_Exercises {
       addBtn && addBtn.addEventListener('click', function(){
         const tpl = `
           <tr>
-            <td><input type="number" min="1" name="solutions[\${i}][solution_order]" value="\${i+1}" style="width:80px"></td>
+            <td><input type="number" min="1" name="solutions[\${i}][solution_order]" value="\${i+1}" class="ouinpo-admin-input-order"></td>
 <td><input type="text" name="solutions[\${i}][title]" class="regular-text" value="Soluce"></td>
-<td style="text-align:center"><input type="checkbox" name="solutions[\${i}][is_official]" value="1" checked></td>
+<td class="ouinpo-admin-cell-centered"><input type="checkbox" name="solutions[\${i}][is_official]" value="1" checked></td>
             <td>
-              <textarea name="solutions[\${i}][content]" rows="6" style="width:100%"></textarea>
+              <textarea name="solutions[\${i}][content]" rows="6" class="ouinpo-admin-full-width"></textarea>
               <input type="hidden" name="solutions[\${i}][id]" value="0">
             </td>
           </tr>`;
@@ -873,11 +873,11 @@ class Screen_Exercises {
 ];
     ?>
     <tr>
-      <td><input type="number" min="1" name="solutions[<?php echo $i; ?>][solution_order]" value="<?php echo (int)$sol->solution_order; ?>" style="width:80px"></td>
+      <td><input type="number" min="1" name="solutions[<?php echo $i; ?>][solution_order]" value="<?php echo (int)$sol->solution_order; ?>" class="ouinpo-admin-input-order"></td>
       <td><input type="text" name="solutions[<?php echo $i; ?>][title]" class="regular-text" value="<?php echo esc_attr($sol->title); ?>"></td>
-      <td style="text-align:center"><input type="checkbox" name="solutions[<?php echo $i; ?>][is_official]" value="1" <?php checked((int)$sol->is_official === 1); ?>></td>
+      <td class="ouinpo-admin-cell-centered"><input type="checkbox" name="solutions[<?php echo $i; ?>][is_official]" value="1" <?php checked((int)$sol->is_official === 1); ?>></td>
       <td>
-        <textarea name="solutions[<?php echo $i; ?>][content]" rows="6" style="width:100%"><?php echo esc_textarea(stripslashes($sol->content)); ?></textarea>
+        <textarea name="solutions[<?php echo $i; ?>][content]" rows="6" class="ouinpo-admin-full-width"><?php echo esc_textarea(stripslashes($sol->content)); ?></textarea>
         <input type="hidden" name="solutions[<?php echo $i; ?>][id]" value="<?php echo (int)$sol->id; ?>">
       </td>
     </tr>

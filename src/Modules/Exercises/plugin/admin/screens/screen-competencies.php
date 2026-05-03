@@ -325,7 +325,7 @@ wp_localize_script(
 
 
 
-    echo '<div class="card" style="padding:12px;">';
+        echo '<div class="card ouinpo-admin-card-padded">';
 
     echo '<form method="get" action="">';
 
@@ -527,7 +527,7 @@ wp_localize_script(
 
     if ($mode === 'course') {
 
-      echo '<p class="description" style="margin:8px 0 16px 0;">';
+        echo '<p class="description ouinpo-admin-description-spaced">';
 
       echo 'Ce mode servira à indiquer, pour une classe donnée, quelles compétences ont déjà été vues en cours.';
 

@@ -89,9 +89,9 @@ settings_errors('ouinpo_assign');
   <h1 class="wp-heading-inline">Affectations</h1>
   <hr class="wp-header-end"/>
 
-  <form method="get" style="margin:12px 0 24px;">
+  <form method="get" class="ouinpo-admin-picker-form">
     <input type="hidden" name="page" value="ouinpo-assignments">
-    <label for="group_id" style="margin-right:8px;">Choisir une classe :</label>
+    <label for="group_id" class="ouinpo-admin-label-spaced">Choisir une classe :</label>
     <select name="group_id" id="group_id">
       <option value="">—</option>
       <?php foreach ($groups as $g): ?>
@@ -110,13 +110,13 @@ settings_errors('ouinpo_assign');
     <h2><?php echo esc_html($current_group->label); ?></h2>
     <div class="notice notice-info"><p>Astuce : tu peux ajouter/retirer en masse puis enregistrer. Tu peux aussi surcharger le <em>niveau</em> pour un élève (utile si un élève de Première suit des exos de Seconde).</p></div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+    <div class="ouinpo-admin-grid-two">
       <div>
         <h3>Élèves hors de la classe</h3>
         <form method="post">
           <?php wp_nonce_field('ouinpo_assign_form','ouinpo_assign_nonce'); ?>
           <input type="hidden" name="group_id" value="<?php echo intval($group_id); ?>">
-          <select name="add_users[]" multiple size="18" style="width:100%;">
+          <select name="add_users[]" multiple size="18" class="ouinpo-admin-full-width">
             <?php foreach ($all_users as $u):
               if (isset($members[$u->ID])) continue; ?>
               <option value="<?php echo intval($u->ID); ?>">
@@ -137,10 +137,10 @@ settings_errors('ouinpo_assign');
           <table class="widefat fixed striped">
             <thead>
               <tr>
-                <th style="width:36px;">Retirer</th>
+                <th class="ouinpo-admin-col-remove">Retirer</th>
                 <th>Élève</th>
                 <th>E-mail</th>
-                <th style="width:220px;">Niveau surchargé</th>
+                <th class="ouinpo-admin-col-override">Niveau surchargé</th>
               </tr>
             </thead>
             <tbody>
@@ -152,13 +152,13 @@ settings_errors('ouinpo_assign');
               $override = intval($members[$u->ID]);
             ?>
               <tr>
-                <td style="text-align:center;">
+                <td class="ouinpo-admin-cell-centered">
                   <label><input type="checkbox" name="remove_users[]" value="<?php echo intval($u->ID); ?>"></label>
                 </td>
                 <td><?php echo esc_html($u->display_name); ?></td>
                 <td><?php echo esc_html($u->user_email); ?></td>
                 <td>
-                  <select name="override_level[<?php echo intval($u->ID); ?>]" style="min-width:200px;">
+                  <select name="override_level[<?php echo intval($u->ID); ?>]" class="ouinpo-admin-select-override">
                     <option value="">— (par défaut de la classe)</option>
                     <?php foreach ($levels as $l): ?>
                       <option value="<?php echo intval($l->id); ?>" <?php selected($override, intval($l->id)); ?>>
@@ -174,7 +174,7 @@ settings_errors('ouinpo_assign');
             </tbody>
           </table>
 
-          <p style="display:flex; gap:12px;">
+          <p class="ouinpo-admin-actions-row ouinpo-admin-actions-row--loose">
             <?php submit_button('Enregistrer les surcharges', 'secondary', '', false); ?>
             <?php submit_button('Retirer les cochés', 'delete', '', false); ?>
           </p>
