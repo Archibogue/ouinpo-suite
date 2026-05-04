@@ -4,8 +4,6 @@
 
   var badge = null;
 
-
-
   var __OUINPO_INJECTED_THIS_VIEW = false;
 
   function maybeInjectNow(){
@@ -16,13 +14,16 @@
 
     injectFromMemory();
 
-    getNew(false).then(function(d){ persistAndMaybeUpdate(d); });
+    getNew(false).then(function(d){
+      if (!d) return;
+      persistAndMaybeUpdate(d);
+      injectMessage(d);
+    });
 
   }
 
-
-
   var __OUINPO_LAST_INJECT_KEY = null;
+  var __OUINPO_PENDING_INJECT_KEY = null;
 
   function _payloadKey(data){
 
@@ -32,9 +33,9 @@
 
       ['cours','corriges','tp','projets','ressources'].forEach(function(k){
 
-        (data.sections[k]||[]).forEach(function(it){
+        ((data.sections && data.sections[k]) || []).forEach(function(it){
 
-          s += (it.id||it.url||'') + '|';
+          s += (it.id || it.url || '') + '|';
 
         });
 
@@ -47,8 +48,6 @@
     }catch(_){ return 'empty'; }
 
   }
-
-
 
   function ensureBadge(){
 
@@ -66,9 +65,16 @@
 
       var t = document.getElementById('sf-toggle');
 
-      if (t && typeof t.click==='function') t.click();
+      if (t && typeof t.click === 'function') t.click();
 
-      setTimeout(function(){ getNew(false).then(function(d){ if(d) persistAndMaybeUpdate(d); }); }, 50);
+      setTimeout(function(){
+        getNew(false).then(function(d){
+          if (d) {
+            persistAndMaybeUpdate(d);
+            injectMessage(d);
+          }
+        });
+      }, 50);
 
     });
 
@@ -82,11 +88,14 @@
 
     var b = ensureBadge(); if (!b) return;
 
-    if (n>0) { b.textContent = 'Nouvelles ressources ('+n+')'; b.style.display='block'; }
+    if (n > 0) {
+      b.textContent = 'Nouvelles ressources (' + n + ')';
+      b.style.display = 'block';
+    }
 
     else {
 
-      b.style.display='none';
+      b.style.display = 'none';
 
       if (b.parentNode) b.parentNode.removeChild(b);
 
@@ -95,8 +104,6 @@
     }
 
   }
-
-
 
   function readMem(){
 
@@ -108,7 +115,7 @@
 
       var obj = JSON.parse(raw);
 
-      if (!obj || typeof obj.count!=='number') return null;
+      if (!obj || typeof obj.count !== 'number') return null;
 
       return obj;
 
@@ -122,9 +129,9 @@
 
       localStorage.setItem(LS_KEY, JSON.stringify({
 
-        count: data.count||0,
+        count: data.count || 0,
 
-        payload: { count:data.count||0, sections:data.sections||{} },
+        payload: { count:data.count || 0, sections:data.sections || {} },
 
         ts: Date.now()
 
@@ -139,6 +146,7 @@
     try{ localStorage.removeItem(LS_KEY); }catch(_){}
 
     __OUINPO_LAST_INJECT_KEY = null;
+    __OUINPO_PENDING_INJECT_KEY = null;
 
     try{
 
@@ -148,101 +156,131 @@
 
     }catch(_){}
 
+    badge = null;
+
   }
 
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[c];
+    });
+  }
 
+  function safeHref(url){
+    try{
+      var raw = String(url || '');
+      if (!raw) return '#';
 
-  function esc(s){ return String(s).replace(/[&<>\"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'})[c]; }); }
+      var u = new URL(raw, window.location.origin);
 
+      if (u.protocol === 'http:' || u.protocol === 'https:') {
+        return esc(u.href);
+      }
 
+      return '#';
+    }catch(_){
+      return '#';
+    }
+  }
 
   function injectMessage(data){
 
     if (!data || !data.sections) return;
 
-    var total = data.count||0; if (total<=0) return;
-
-
+    var total = data.count || 0; if (total <= 0) return;
 
     var key = _payloadKey(data);
 
-    if (__OUINPO_LAST_INJECT_KEY === key) return;
+    if (__OUINPO_LAST_INJECT_KEY === key || __OUINPO_PENDING_INJECT_KEY === key) return;
 
-    __OUINPO_LAST_INJECT_KEY = key;
+    __OUINPO_PENDING_INJECT_KEY = key;
 
+    var order = ['cours','corriges','tp','projets','ressources'];
 
+    var labels = {cours:'Cours', corriges:'Corrigés', tp:'TP', projets:'Projets', ressources:'Ressources'};
 
-    var order=['cours','corriges','tp','projets','ressources'];
+    var seg = (typeof window.OUINPO_SEGF_PHRASE === 'string' && window.OUINPO_SEGF_PHRASE)
 
-    var labels={cours:'Cours',corriges:'Corrigés',tp:'TP',projets:'Projets',ressources:'Ressources'};
+              ? ' <em>' + esc(window.OUINPO_SEGF_PHRASE) + '</em>' : '';
 
-
-
-    var seg = (typeof window.OUINPO_SEGF_PHRASE==='string' && window.OUINPO_SEGF_PHRASE)
-
-              ? ' <em>'+esc(window.OUINPO_SEGF_PHRASE)+'</em>' : '';
-
-    var html=['<div><strong>🐾 Nouvelles ressources</strong> ('+total+') :'+seg+'</div>'];
-
-
+    var html = ['<div><strong>🐾 Nouvelles ressources</strong> (' + total + ') :' + seg + '</div>'];
 
     order.forEach(function(k){
 
-      var arr = (data.sections[k]||[]);
+      var arr = (data.sections[k] || []);
 
       if (!arr.length) return;
 
-      html.push('<div class=\"ouinpo-res-notif-section-title\">'+labels[k]+'</div><ul class=\"ouinpo-res-notif-list\">');
+      html.push('<div class="ouinpo-res-notif-section-title">' + labels[k] + '</div><ul class="ouinpo-res-notif-list">');
 
-      arr.slice(0,5).forEach(function(it){
+      arr.slice(0, 5).forEach(function(it){
 
-    var href = (typeof it.url === 'string' && it.url) ? esc(it.url) : '#';
+        var href = safeHref(it.url);
 
-    html.push('<li><a href=\"'+href+'\">'+esc(it.title)+'</a> <span class=\"ouinpo-res-notif-date\">('+esc(it.date)+')</span></li>');
+        html.push('<li><a href="' + href + '">' + esc(it.title) + '</a> <span class="ouinpo-res-notif-date">(' + esc(it.date) + ')</span></li>');
 
       });
 
-      if (arr.length>5) html.push('<li>… et '+(arr.length-5)+' de plus</li>');
+      if (arr.length > 5) html.push('<li>… et ' + (arr.length - 5) + ' de plus</li>');
 
       html.push('</ul>');
 
     });
 
+    var tries = 0, markup = html.join('');
 
+    function markInjected(){
+      __OUINPO_LAST_INJECT_KEY = key;
+      if (__OUINPO_PENDING_INJECT_KEY === key) __OUINPO_PENDING_INJECT_KEY = null;
+    }
 
-    var tries=0, markup = html.join('');
+    function markAbandoned(){
+      if (__OUINPO_PENDING_INJECT_KEY === key) __OUINPO_PENDING_INJECT_KEY = null;
+    }
 
     (function push(){
 
-      if (window.SegFaultChat && typeof window.SegFaultChat.addBubble==='function'){
+      if (window.SegFaultChat && typeof window.SegFaultChat.addBubble === 'function'){
 
-        window.SegFaultChat.addBubble(markup,'assistant');
-
-      } else {
-
-        var box = document.getElementById('sf-chat-floating') || document.getElementById('sf-chat-inline');
-
-        var msgs = box && box.querySelector('.sf-messages');
-
-        if (msgs){
-
-          var d = document.createElement('div');
-
-          d.className = 'sf-bubble assistant';
-
-          d.innerHTML = markup;
-
-          msgs.appendChild(d);
-
-          msgs.scrollTop = msgs.scrollHeight;
-
+        try{
+          window.SegFaultChat.addBubble(markup, 'assistant');
+          markInjected();
           return;
-
-        }
-
-        if (tries++ < 30) { setTimeout(push, 150); return; }
+        }catch(_){}
 
       }
+
+      var box = document.getElementById('sf-chat-floating') || document.getElementById('sf-chat-inline');
+
+      var msgs = box && box.querySelector('.sf-messages');
+
+      if (msgs){
+
+        var d = document.createElement('div');
+
+        d.className = 'sf-bubble assistant';
+
+        d.innerHTML = markup;
+
+        msgs.appendChild(d);
+
+        msgs.scrollTop = msgs.scrollHeight;
+
+        markInjected();
+
+        return;
+
+      }
+
+      if (tries++ < 30) { setTimeout(push, 150); return; }
+
+      markAbandoned();
 
     })();
 
@@ -252,22 +290,26 @@
 
     var m = readMem();
 
-    if (m && m.count>0 && m.payload) injectMessage(m.payload);
+    if (m && m.count > 0 && m.payload) injectMessage(m.payload);
 
   }
 
-
-
   function getNew(mark){
 
-    if (!window.OuInPoRes || !OuInPoRes.endpoint) return Promise.resolve(null);
+    if (!window.OuInPoRes || !window.OuInPoRes.endpoint) return Promise.resolve(null);
 
-    var url = OuInPoRes.endpoint + (OuInPoRes.endpoint.indexOf('?')>-1?'&':'?') + 'limit=50' + (mark?'&mark=1':'');
+    var endpoint = window.OuInPoRes.endpoint;
 
-    return fetch(url, {headers:{'X-WP-Nonce':OuInPoRes.nonce,'Accept':'application/json'}, credentials:'same-origin'})
+    var url = endpoint + (endpoint.indexOf('?') > -1 ? '&' : '?') + 'limit=50' + (mark ? '&mark=1' : '');
 
+    return fetch(url, {
+        headers:{
+          'X-WP-Nonce': window.OuInPoRes.nonce || '',
+          'Accept': 'application/json'
+        },
+        credentials:'same-origin'
+      })
       .then(function(r){ return r.json(); })
-
       .catch(function(){ return null; });
 
   }
@@ -276,17 +318,17 @@
 
     if (!d) return;
 
-    if ((d.count||0) > 0){
+    if ((d.count || 0) > 0){
 
       writeMem(d);
 
-      setBadgeCount(d.count||0);
+      setBadgeCount(d.count || 0);
 
     } else {
 
       var m = readMem();
 
-      if (m && m.count>0){
+      if (m && m.count > 0){
 
         setBadgeCount(m.count);
 
@@ -300,61 +342,64 @@
 
   }
 
+  function whenOuInPoResReady(callback){
 
+    if (window.OuInPoRes && window.OuInPoRes.endpoint){
+      callback();
+      return;
+    }
+
+    var elapsed = 0, t = setInterval(function(){
+
+      elapsed += 200;
+
+      if (window.OuInPoRes && window.OuInPoRes.endpoint){
+
+        clearInterval(t);
+
+        callback();
+
+      }
+
+      if (elapsed >= 20000) clearInterval(t);
+
+    }, 200);
+
+  }
 
   function boot(){
 
     ensureBadge();
 
-
-
     if (document.getElementById('ouinpo-resources-view')) {
 
       clearMem();
+
+      whenOuInPoResReady(function(){
+        getNew(true).then(function(){
+          setBadgeCount(0);
+        });
+      });
 
       return;
 
     }
 
-
-
     var m = readMem();
 
-    setBadgeCount(m && m.count>0 ? m.count : 0);
+    setBadgeCount(m && m.count > 0 ? m.count : 0);
 
-
-
-    if (window.OuInPoRes && OuInPoRes.endpoint){
-
+    whenOuInPoResReady(function(){
       getNew(false).then(function(d){ persistAndMaybeUpdate(d); });
-
-    } else {
-
-      var elapsed=0, t=setInterval(function(){
-
-        elapsed+=200;
-
-        if (window.OuInPoRes && OuInPoRes.endpoint){
-
-          clearInterval(t);
-
-          getNew(false).then(function(d){ persistAndMaybeUpdate(d); });
-
-        }
-
-        if (elapsed>=20000) clearInterval(t);
-
-      },200);
-
-    }
+    });
 
   }
 
-
-
-  if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
-
-
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 
   document.addEventListener('click', function(e){
 
@@ -365,8 +410,6 @@
     setTimeout(maybeInjectNow, 80);
 
   });
-
-
 
   function chatIsVisible(){
 
@@ -388,7 +431,7 @@
 
     var box = document.getElementById('sf-chat-floating');
 
-    if (!box) return;
+    if (!box || typeof MutationObserver === 'undefined') return;
 
     var mo = new MutationObserver(function(){
 
@@ -401,8 +444,6 @@
   })();
 
   setTimeout(maybeInjectIfVisible, 150);
-
-
 
   window.__OUINPO_CLEAR_RES_UNREAD = function(){ clearMem(); setBadgeCount(0); };
 
