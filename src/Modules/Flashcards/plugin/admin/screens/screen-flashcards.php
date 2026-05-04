@@ -13,6 +13,8 @@ final class ScreenFlashcards
             wp_die('Accès refusé.');
         }
 
+        self::enqueue_script();
+
         $tab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : 'decks';
         $deck_id = isset($_GET['deck_id']) ? (int) $_GET['deck_id'] : 0;
         $card_id = isset($_GET['card_id']) ? (int) $_GET['card_id'] : 0;
@@ -60,6 +62,32 @@ final class ScreenFlashcards
         if (isset($_GET['imported'])) {
             printf('<div class="notice notice-success"><p>%d cartes importées.</p></div>', (int) $_GET['imported']);
         }
+    }
+
+    private static function enqueue_script(): void
+    {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash((string) $_GET['page'])) : '';
+
+        if ($page !== 'ouinpo-flashcards') {
+            return;
+        }
+
+        $rel = 'assets/js/admin/flashcards-admin.js';
+        $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
+
+        if ($base_url === '') {
+            return;
+        }
+
+        $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
+        $file = $base_dir !== '' ? $base_dir . $rel : '';
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+        if ($file !== '' && file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_script('ouinpo-flashcards-admin-js', $base_url . $rel, [], $version, true);
     }
 
     private static function stats(array $stats): void
@@ -165,7 +193,7 @@ private static function render_decks_tab(array $decks, ?array $editingDeck): voi
     echo '</form>';
 
     if (!empty($deck['id'])) {
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'Supprimer ce paquet et ses cartes ?\');">';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" data-confirm="Supprimer ce paquet et ses cartes ?">';
         wp_nonce_field('ouinpo_fc_admin_action');
         echo '<input type="hidden" name="action" value="ouinpo_fc_delete_deck">';
         echo '<input type="hidden" name="deck_id" value="' . (int) $deck['id'] . '">';
@@ -239,7 +267,7 @@ private static function render_decks_tab(array $decks, ?array $editingDeck): voi
         echo '</form>';
 
         if (!empty($card['id'])) {
-            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'Supprimer cette carte ?\');">';
+            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" data-confirm="Supprimer cette carte ?">';
             wp_nonce_field('ouinpo_fc_admin_action');
             echo '<input type="hidden" name="action" value="ouinpo_fc_delete_card">';
             echo '<input type="hidden" name="card_id" value="' . (int) $card['id'] . '">';
