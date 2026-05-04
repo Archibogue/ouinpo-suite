@@ -245,6 +245,26 @@ class OuInPo_Segfault_Notifier {
 
 
 
+  function addQuery(endpoint, params){
+
+    var url = String(endpoint || '');
+
+    var parts = [];
+
+    Object.keys(params || {}).forEach(function(key){
+
+      parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+
+    });
+
+    if(!parts.length) return url;
+
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + parts.join('&');
+
+  }
+
+
+
   // Affiche dans la chatbox si possible
 
   function pushBubble(data){
@@ -319,7 +339,7 @@ class OuInPo_Segfault_Notifier {
 
 
 
-      var url = window.OuInPoRes.endpoint + '?limit=50';
+      var url = addQuery(window.OuInPoRes.endpoint, {limit:50});
 
       var resp = await fetch(url, {
 
@@ -403,7 +423,7 @@ class OuInPo_Segfault_Notifier {
 
       // Marque les ressources vues (côté API)
 
-      fetch(window.OuInPoRes.endpoint + '?mark=1', {
+      fetch(addQuery(window.OuInPoRes.endpoint, {mark:1}), {
 
         credentials:'same-origin',
 
