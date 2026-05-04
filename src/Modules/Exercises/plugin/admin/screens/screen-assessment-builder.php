@@ -16,6 +16,7 @@ class Screen_Assessment_Builder {
         }
 
         self::load_dependencies();
+        self::enqueue_script();
         self::ensure_assessment_item_columns();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -344,80 +345,6 @@ class Screen_Assessment_Builder {
                 </form>
             </div>
         </div>
-
-        <script>
-        (function(){
-            const form = document.getElementById('ouinpo-builder-create-form');
-            if (!form) return;
-
-            const countEl = document.getElementById('ouinpo-builder-count');
-            const minutesEl = document.getElementById('ouinpo-builder-minutes');
-            const pointsEl = document.getElementById('ouinpo-builder-points');
-            const warningEl = document.getElementById('ouinpo-builder-warning');
-            const targetEl = document.getElementById('target-minutes');
-
-            function numberValue(input) {
-                const n = parseFloat(String(input.value || '').replace(',', '.'));
-                return Number.isFinite(n) ? n : 0;
-            }
-
-            function update() {
-                let count = 0;
-                let minutes = 0;
-                let points = 0;
-
-                form.querySelectorAll('.ouinpo-builder-exo').forEach(function(card){
-                    const check = card.querySelector('.ouinpo-builder-check');
-                    const pointInput = card.querySelector('.ouinpo-builder-points');
-                    const selected = check && check.checked;
-
-                    card.classList.toggle('is-selected', selected);
-
-                    if (selected) {
-                        count += 1;
-                        minutes += parseInt(card.dataset.minutes || '0', 10) || 0;
-                        points += pointInput ? numberValue(pointInput) : 0;
-                    }
-                });
-
-                countEl.textContent = String(count);
-                minutesEl.textContent = String(minutes);
-                pointsEl.textContent = String(Math.round(points * 100) / 100).replace('.', ',');
-
-                const target = parseInt(targetEl.value || '0', 10) || 0;
-
-                if (target > 0 && count > 0) {
-                    const diff = minutes - target;
-
-                    if (diff > 15) {
-                        warningEl.style.display = 'block';
-                        warningEl.textContent = 'Attention : la sélection dépasse la durée cible d’environ ' + diff + ' minutes.';
-                    } else if (diff < -20) {
-                        warningEl.style.display = 'block';
-                        warningEl.textContent = 'La sélection est nettement sous la durée cible.';
-                    } else {
-                        warningEl.style.display = 'none';
-                        warningEl.textContent = '';
-                    }
-                } else {
-                    warningEl.style.display = 'none';
-                    warningEl.textContent = '';
-                }
-            }
-
-            form.addEventListener('change', update);
-            form.addEventListener('input', update);
-
-            form.addEventListener('submit', function(e){
-                if (form.querySelectorAll('.ouinpo-builder-check:checked').length === 0) {
-                    e.preventDefault();
-                    alert('Sélectionne au moins un exercice.');
-                }
-            });
-
-            update();
-        })();
-        </script>
         <?php
     }
 
@@ -428,6 +355,42 @@ class Screen_Assessment_Builder {
                 require_once $file;
             }
         }
+    }
+
+    private static function enqueue_script(): void {
+        $page = isset($_GET['page'])
+            ? sanitize_key(wp_unslash((string) $_GET['page']))
+            : '';
+
+        if ($page !== self::PAGE_SLUG) {
+            return;
+        }
+
+        $relative_path = 'assets/js/admin/assessment-builder.js';
+        $fallback_dir = dirname(__DIR__, 6);
+
+        $base_url = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL
+            : plugin_dir_url($fallback_dir . '/ouinpo-suite.php');
+
+        $base_dir = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR
+            : $fallback_dir;
+
+        $file = trailingslashit($base_dir) . $relative_path;
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+        if (file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_script(
+            'ouinpo-assessment-builder-js',
+            trailingslashit($base_url) . $relative_path,
+            [],
+            $version,
+            true
+        );
     }
 
     private static function table(string $name): string {
