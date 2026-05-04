@@ -294,11 +294,18 @@ wp_enqueue_style(
         : $asset_version
 );
 
-$js_file = dirname(__DIR__, 2) . '/public/assets/js/admin-competencies.js';
+$js_rel = 'assets/js/admin/admin-competencies.js';
+$js_dir = defined('OUINPO_SUITE_DIR')
+    ? OUINPO_SUITE_DIR
+    : dirname(__DIR__, 6);
+$js_url = defined('OUINPO_SUITE_URL')
+    ? OUINPO_SUITE_URL
+    : plugin_dir_url($js_dir . '/ouinpo-suite.php');
+$js_file = $js_dir . $js_rel;
 
 wp_enqueue_script(
     'ouinpo-competencies',
-    $plugin_base_url . '/public/assets/js/admin-competencies.js',
+    $js_url . $js_rel,
     ['jquery'],
     file_exists($js_file)
         ? (string) filemtime($js_file)
