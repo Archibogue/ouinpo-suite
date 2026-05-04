@@ -15,6 +15,8 @@ class Screen_Assessments {
             wp_die('Accès refusé');
         }
 
+        self::enqueue_script();
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             self::handle_post();
         }
@@ -1787,6 +1789,42 @@ class Screen_Assessments {
     private static function render_assessment_admin_styles(): void {
     }
 
+    private static function enqueue_script(): void {
+        $page = isset($_GET['page'])
+            ? sanitize_key(wp_unslash((string) $_GET['page']))
+            : '';
+
+        if ($page !== self::PAGE_SLUG) {
+            return;
+        }
+
+        $relative_path = 'assets/js/admin/assessments.js';
+        $fallback_dir = dirname(__DIR__, 6);
+
+        $base_url = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL
+            : plugin_dir_url($fallback_dir . '/ouinpo-suite.php');
+
+        $base_dir = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR
+            : $fallback_dir;
+
+        $file = trailingslashit($base_dir) . $relative_path;
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+        if (file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_script(
+            'ouinpo-assessments-admin-js',
+            trailingslashit($base_url) . $relative_path,
+            [],
+            $version,
+            true
+        );
+    }
+
     private static function render_items(int $assessmentId): void {
         self::ensure_assessment_item_edit_columns();
     
@@ -1809,7 +1847,7 @@ class Screen_Assessments {
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=subject&id=' . $assessmentId)); ?>" class="page-title-action">Sujet</a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . $assessmentId)); ?>" class="page-title-action">Corrigé</a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=edit&id=' . $assessmentId)); ?>" class="page-title-action">Modifier le DS</a>
-        <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
+        <form method="post" class="ouinpo-assessment-inline-form" data-confirm="Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="create_version_b">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
@@ -2029,7 +2067,7 @@ class Screen_Assessments {
         <?php self::render_print_styles(); ?>
     
         <div class="ouinpo-print-toolbar">
-            <button type="button" class="button button-primary" onclick="window.print()">Imprimer le sujet</button>
+            <button type="button" class="button button-primary" data-action="print">Imprimer le sujet</button>
             <span class="description">Utilise aussi “Enregistrer au format PDF” dans la fenêtre d’impression du navigateur.</span>
         </div>
     
@@ -2176,7 +2214,7 @@ class Screen_Assessments {
         <?php self::render_print_styles(); ?>
     
         <div class="ouinpo-print-toolbar">
-            <button type="button" class="button button-primary" onclick="window.print()">Imprimer le corrigé</button>
+            <button type="button" class="button button-primary" data-action="print">Imprimer le corrigé</button>
             <span class="description">Ce document est destiné au professeur : il inclut solutions, indices et compétences BO.</span>
         </div>
     
@@ -2361,7 +2399,7 @@ class Screen_Assessments {
                                         <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . (int) $row->id)); ?>">Corrigé</a>
                                         <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=edit&id=' . (int) $row->id)); ?>">Modifier</a>
 
-                                    <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
+                                    <form method="post" class="ouinpo-assessment-inline-form" data-confirm="Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.">
                                         <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                         <input type="hidden" name="op" value="create_version_b">
                                         <input type="hidden" name="assessment_id" value="<?php echo (int) $row->id; ?>">
@@ -2375,7 +2413,7 @@ class Screen_Assessments {
                                         <button type="submit" class="button button-small">Dupliquer</button>
                                     </form>                                        
                                         
-                                    <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Supprimer ce DS ?');">
+                                    <form method="post" class="ouinpo-assessment-inline-form" data-confirm="Supprimer ce DS ?">
                                         <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                         <input type="hidden" name="op" value="delete_assessment">
                                         <input type="hidden" name="assessment_id" value="<?php echo (int) $row->id; ?>">
@@ -2420,7 +2458,8 @@ class Screen_Assessments {
                                     name="group_id"
                                     id="ds-group"
                                     required
-                                    onchange="window.location.href='<?php echo esc_js($reloadUrlBase); ?>&group_id=' + encodeURIComponent(this.value);"
+                                    data-reload-url-base="<?php echo esc_url($reloadUrlBase); ?>"
+                                    data-reload-param="group_id"
                                 >
                                     <option value="">— Choisir —</option>
                                     <?php foreach ($groups as $group): ?>
@@ -2507,7 +2546,7 @@ class Screen_Assessments {
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=correction&id=' . $assessmentId)); ?>" class="page-title-action">Corrigé professeur</a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG . '&action=edit&id=' . $assessmentId)); ?>" class="page-title-action">Modifier le DS</a>
 
-        <form method="post" class="ouinpo-assessment-inline-form" onsubmit="return confirm('Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.');">
+        <form method="post" class="ouinpo-assessment-inline-form" data-confirm="Créer une version B prudente de ce DS ? Les exercices déjà vus par la classe seront remplacés si un remplaçant non vu existe.">
             <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
             <input type="hidden" name="op" value="create_version_b">
             <input type="hidden" name="assessment_id" value="<?php echo (int) $assessmentId; ?>">
@@ -2626,23 +2665,6 @@ class Screen_Assessments {
                     </div>
                 </div>
             <?php endforeach; ?>
-
-            <script>
-            document.addEventListener('change', function (e) {
-                if (!e.target.classList.contains('js-absent-toggle')) return;
-
-                const box = e.target;
-                const target = document.getElementById(box.dataset.student || '');
-                if (!target) return;
-
-                const disabled = box.checked;
-                target.classList.toggle('is-absent', disabled);
-
-                target.querySelectorAll('select').forEach(function (el) {
-                    el.disabled = disabled;
-                });
-            });
-            </script>
 
             <?php submit_button('Enregistrer les résultats'); ?>
         </form>
