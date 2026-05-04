@@ -464,6 +464,33 @@ class Ouinpo_Submissions_Plugin {
 
     }
 
+    private function enqueue_resources_script(): void {
+
+        $js_rel = 'assets/js/front/submissions.js';
+        $fallback_root = dirname(__DIR__, 4);
+
+        $js_url = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL . $js_rel
+            : plugin_dir_url($fallback_root . '/ouinpo-suite.php') . $js_rel;
+
+        $js_path = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR . $js_rel
+            : trailingslashit($fallback_root) . $js_rel;
+
+        $js_version = file_exists($js_path)
+            ? (string) filemtime($js_path)
+            : self::VERSION;
+
+        wp_enqueue_script(
+            'ouinpo-submissions',
+            $js_url,
+            array('ouinpo-front-vars'),
+            $js_version,
+            true
+        );
+
+    }
+
 
 
     // Expose REST endpoint + nonce au front
@@ -1677,6 +1704,8 @@ class Ouinpo_Submissions_Plugin {
 
     
 
+        $this->enqueue_resources_script();
+
         $u        = wp_get_current_user();
 
         $is_staff = current_user_can('administrator') || in_array('prof', (array) $u->roles, true);
@@ -2284,94 +2313,6 @@ class Ouinpo_Submissions_Plugin {
     
 
         echo '<div id="ouinpo-resources-view" hidden></div>';
-
-        echo '<script>
-
-        (function(){
-
-          try{ if(window.__OUINPO_CLEAR_RES_UNREAD){ window.__OUINPO_CLEAR_RES_UNREAD(); } }catch(e){}
-
-          try{
-
-            if(window.OuInPoRes && OuInPoRes.endpoint){
-
-              var url = OuInPoRes.endpoint + (OuInPoRes.endpoint.indexOf("?")>-1?"&":"?") + "mark=1&limit=1";
-
-              fetch(url, {headers:{"X-WP-Nonce":OuInPoRes.nonce,"Accept":"application/json"}, credentials:"same-origin"})
-
-                .catch(function(){});
-
-            }
-
-          }catch(e){}
-
-        })();
-
-        </script>';
-
-    
-
-        echo "<script>
-
-        (function(){
-
-          function ready(fn){
-
-            if (document.readyState === 'loading') {
-
-              document.addEventListener('DOMContentLoaded', fn);
-
-            } else {
-
-              fn();
-
-            }
-
-          }
-
-          ready(function(){
-
-            var select = document.querySelector('.ouinpo-res-select');
-
-            var blocks = Array.prototype.slice.call(document.querySelectorAll('.ouinpo-chapter[data-domain]'));
-
-            if (!select || !blocks.length) return;
-
-    
-
-            function applyFilter(value){
-
-              blocks.forEach(function(block){
-
-                var d = block.getAttribute('data-domain');
-
-                if (value === 'all' || d === value){
-
-                  block.style.display = '';
-
-                } else {
-
-                  block.style.display = 'none';
-
-                }
-
-              });
-
-            }
-
-    
-
-            select.addEventListener('change', function(){
-
-              applyFilter(select.value || 'all');
-
-            });
-
-          });
-
-        })();
-
-        </script>";
 
     
 
