@@ -34,10 +34,10 @@ class Assets {
 
         $files = [
             'exo_js'        => 'assets/js/front/exercises.js',
-            'practical_js'  => 'src/Modules/Exercises/plugin/public/assets/js/practical.js',
-            'student_js'    => 'src/Modules/Exercises/plugin/public/assets/js/student-competencies.js',
-            'teacher_js'    => 'src/Modules/Exercises/plugin/public/assets/js/teacher-competencies.js',
-            'badges_js'     => 'src/Modules/Exercises/plugin/public/assets/js/student-badges.js',
+            'practical_js'  => 'assets/js/front/practical.js',
+            'student_js'    => 'assets/js/front/student-competencies.js',
+            'teacher_js'    => 'assets/js/front/teacher-competencies.js',
+            'badges_js'     => 'assets/js/front/student-badges.js',
 
             'core_css'      => 'assets/css/core/base.css',
             'exo_css'       => 'assets/css/front/exercises.css',

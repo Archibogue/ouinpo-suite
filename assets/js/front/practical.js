@@ -14,6 +14,21 @@
     return base.replace(/\/+$/, '') + '/ouinpo/v1';
   }
 
+  function restUrl(path) {
+    const base = restRoot();
+    const parts = String(path || '').split('?');
+    const routePath = parts[0] || '';
+    const query = parts.slice(1).join('?');
+
+    let url = base + routePath;
+
+    if (query) {
+      url += (url.indexOf('?') === -1 ? '?' : '&') + query;
+    }
+
+    return url;
+  }
+
 
 
   function commonHeaders() {
@@ -34,7 +49,7 @@
 
   async function apiGET(path) {
 
-    const res = await fetch(restRoot() + path, {
+    const res = await fetch(restUrl(path), {
 
       headers: commonHeaders(),
 
@@ -52,7 +67,7 @@
 
   async function apiPOST(path, body) {
 
-  const res = await fetch(restRoot() + path, {
+  const res = await fetch(restUrl(path), {
 
     method: 'POST',
 
