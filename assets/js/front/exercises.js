@@ -2914,10 +2914,38 @@ function enableTabInAnswerTextareas() {
 
 }
 
+  function bindExerciseLevelFilter() {
+    const sel = document.getElementById('ouinpo-exo-level');
+
+    if (!sel || sel.dataset.ouinpoLevelFilterBooted === '1') {
+      return false;
+    }
+
+    sel.dataset.ouinpoLevelFilterBooted = '1';
+
+    sel.addEventListener('change', function () {
+      const url = new URL(window.location.href);
+
+      if (this.value) {
+        url.searchParams.set('lvl', this.value);
+      } else {
+        url.searchParams.delete('lvl');
+      }
+
+      window.location.href = url.toString();
+    });
+
+    return true;
+  }
+
   function ouinpoExercisesBoot() {
     enableTabInAnswerTextareas();
 
     let didWork = false;
+
+    if (bindExerciseLevelFilter()) {
+      didWork = true;
+    }
 
     const rootA = document.getElementById('ouinpo-exercises');
     const rootB = document.getElementById('ouinpo-exo-list');

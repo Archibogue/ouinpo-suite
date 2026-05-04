@@ -33,7 +33,7 @@ class Assets {
             : '1.0.0';
 
         $files = [
-            'exo_js'        => 'src/Modules/Exercises/plugin/public/assets/js/exercises.js',
+            'exo_js'        => 'assets/js/front/exercises.js',
             'practical_js'  => 'src/Modules/Exercises/plugin/public/assets/js/practical.js',
             'student_js'    => 'src/Modules/Exercises/plugin/public/assets/js/student-competencies.js',
             'teacher_js'    => 'src/Modules/Exercises/plugin/public/assets/js/teacher-competencies.js',
