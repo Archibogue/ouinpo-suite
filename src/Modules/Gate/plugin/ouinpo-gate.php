@@ -44,6 +44,21 @@ function ouinpo_gate_enqueue_assets(): void {
   wp_enqueue_style('ouinpo-gate-css', $base_url . $rel, [], $version);
 }
 
+function ouinpo_gate_enqueue_signpad_script(): void {
+  $rel = 'assets/js/front/gate.js';
+  $root_file = dirname(__DIR__, 4) . '/ouinpo-suite.php';
+  $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : plugin_dir_url($root_file);
+  $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : dirname(__DIR__, 4) . '/';
+  $file = $base_dir . $rel;
+  $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+  if (file_exists($file)) {
+    $version = (string) filemtime($file);
+  }
+
+  wp_enqueue_script('ouinpo-gate-js', $base_url . $rel, [], $version, true);
+}
+
 /* ================= Corpus des 42 énigmes ================= */
 function ouinpo_enigmes(){
   return [
@@ -462,7 +477,8 @@ if($progress < $needed){
       Merci <strong><?php echo esc_html($already->nom);?></strong><?php echo $already->pseudo? ' (alias <em>'.esc_html($already->pseudo).'</em>)':''; ?>.</p>
       <p><a class="button" target="_blank" rel="noopener" href="<?php echo $certURL; ?>">📜 Télécharger mon certificat de réussite</a></p>
     <?php else: ?>
-      <form id="ouinpo-sign-form">
+      <?php ouinpo_gate_enqueue_signpad_script(); ?>
+      <form id="ouinpo-sign-form" class="ouinpo-sign-form" data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" data-certificate-url="<?php echo $certURL; ?>">
         <label>Nom (réel) : <input name="nom" required></label><br>
         <label>Pseudo : <input name="pseudo"></label><br>
         <label>Message : <textarea name="message" rows="3"></textarea></label><br>
@@ -496,51 +512,6 @@ if($progress < $needed){
     <?php endif; ?>
   </div>
 
-  <?php if(!$already): ?>
-  <script>
-  (function(){
-    document.addEventListener('submit', function(e){
-      if(e.target && e.target.id === 'ouinpo-sign-form'){
-        e.preventDefault();
-        const form = e.target;
-        const out  = document.getElementById('ouinpo-sign-result');
-        const btn  = form.querySelector('button[type="submit"]') || form.querySelector('button');
-        const fd   = new FormData(form);
-        fd.append('action','ouinpo_sign');
-
-        if(btn){ btn.disabled = true; btn.dataset._old = btn.textContent; btn.textContent = '…'; }
-        out.innerHTML = '<p class="lab-note">⏳ Envoi en cours…</p>';
-
-        fetch('<?php echo admin_url('admin-ajax.php'); ?>', { method:'POST', body: fd, credentials:'same-origin' })
-        .then(r => {
-          const ct = r.headers.get('content-type') || '';
-          if(ct.includes('application/json')) return r.json();
-          return r.text().then(t => { try { return JSON.parse(t); } catch(e){ return {ok:false, msg:'Réponse non JSON', raw:t}; } });
-        })
-        .then(j => {
-          if(j && j.ok){
-            form.remove();
-            out.innerHTML = `
-              <p class="lab-note">✍️ Signature enregistrée. Merci, <strong>${fd.get('nom')||''}</strong> !</p>
-              <p><a href="<?php echo $certURL; ?>" class="button" target="_blank" rel="noopener">
-                📜 Télécharger mon certificat de réussite
-              </a></p>`;
-          } else {
-            const msg = (j && (j.msg || j.raw)) ? (j.msg || j.raw) : 'Erreur inconnue';
-            out.innerHTML = '<p class="lab-note danger">Erreur : '+msg+'</p>';
-          }
-        })
-        .catch(err => {
-          out.innerHTML = '<p class="lab-note danger">Erreur réseau : '+(err && err.message ? err.message : '')+'</p>';
-        })
-        .finally(() => {
-          if(btn){ btn.disabled = false; btn.textContent = btn.dataset._old || 'Signer'; }
-        });
-      }
-    }, false);
-  })();
-  </script>
-  <?php endif; ?>
 
   <?php
   return ob_get_clean();
