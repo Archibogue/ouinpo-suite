@@ -15,6 +15,175 @@
         });
     }
 
+    function b64(value) {
+        return btoa(unescape(encodeURIComponent(value)));
+    }
+
+    function parseGateData(root) {
+        var raw = root.getAttribute('data-enigmes') || '[]';
+
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function initGateGame(root) {
+        var data;
+        var needed;
+        var page;
+        var reveal;
+        var plink;
+        var ajaxUrl;
+        var nonce;
+        var current;
+
+        if (!root || root.dataset.ouinpoGateReady === '1') {
+            return;
+        }
+
+        root.dataset.ouinpoGateReady = '1';
+
+        data = parseGateData(root);
+        needed = parseInt(root.dataset.needed, 10);
+        page = root.dataset.page;
+        reveal = root.dataset.reveal || 'embed';
+        plink = root.dataset.plink || '#';
+        ajaxUrl = root.dataset.ajaxUrl || '';
+        nonce = root.dataset.nonce || '';
+        current = parseInt(root.dataset.progress, 10) || 0;
+
+        function find(selector) {
+            return root.querySelector(selector);
+        }
+
+        function render(index) {
+            var slot = find('#ouinpo-question');
+            var item;
+            var submitButton;
+
+            if (!slot) {
+                return;
+            }
+
+            if (index >= data.length) {
+                slot.innerHTML = "<p><em>Aucune autre énigme pour l’instant.</em></p>";
+                return;
+            }
+
+            item = data[index];
+            slot.innerHTML = ''
+                + '<div class="eldritch">'
+                + '<h3>Énigme ' + (index + 1) + ' / ' + data.length + ' — <small>' + item.theme + '</small></h3>'
+                + '<p>' + item.prompt + '</p>'
+                + '<input id="ouinpo-answer" placeholder="Ta réponse">'
+                + '<button id="ouinpo-submit" type="button">Valider</button>'
+                + '<div id="ouinpo-msg" class="ouinpo-gate-msg"></div>'
+                + '</div>';
+
+            submitButton = find('#ouinpo-submit');
+            if (submitButton) {
+                submitButton.addEventListener('click', function() {
+                    var answer = find('#ouinpo-answer');
+                    submit(index, answer ? (answer.value || '') : '');
+                }, { passive: true });
+            }
+        }
+
+        function afterCompleted() {
+            var final = find('#ouinpo-final');
+            var container = find('#ouinpo-secret-content');
+            var formData;
+
+            if (final) {
+                final.style.display = 'block';
+            }
+
+            if (!container) {
+                return;
+            }
+
+            if (reveal === 'embed') {
+                formData = new FormData();
+                formData.append('action', 'ouinpo_secret');
+                formData.append('page', page);
+                formData.append('nonce', nonce);
+                fetch(ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
+                    .then(function(response) {
+                        return response.text();
+                    })
+                    .then(function(html) {
+                        container.innerHTML = html;
+                    });
+            } else if (reveal === 'link') {
+                container.innerHTML = '<p><a class="button" href="' + plink + '">🚪 Accéder à la page secrète</a></p>';
+            } else if (reveal === 'redirect') {
+                container.innerHTML = '<p>Redirection en cours… Si rien ne se passe, <a href="' + plink + '">clique ici</a>.</p>';
+                window.location.href = root.dataset.redirectUrl || plink;
+            }
+        }
+
+        function submit(index, answer) {
+            var formData = new FormData();
+
+            formData.append('action', 'ouinpo_check');
+            formData.append('index', index);
+            formData.append('payload', b64(answer));
+            formData.append('page', page);
+            formData.append('nonce', nonce);
+
+            fetch(ajaxUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(parseJSONSmart)
+                .then(function(json) {
+                    var msg = find('#ouinpo-msg');
+                    var count = find('#ouinpo-count');
+
+                    if (!msg) {
+                        return;
+                    }
+
+                    if (json.ok) {
+                        if (count) {
+                            count.textContent = json.progress;
+                        }
+
+                        msg.innerHTML = '<p class="lab-note">✔ Bravo, énigme résolue !</p>';
+                        current = index + 1;
+
+                        if (json.progress >= needed) {
+                            afterCompleted();
+                        } else {
+                            render(current);
+                        }
+                    } else {
+                        msg.innerHTML = '<p class="lab-note danger">✖ Mauvaise réponse.' + (json.msg ? (' ' + json.msg) : '') + '</p>';
+                    }
+                })
+                .catch(function(error) {
+                    var msg = find('#ouinpo-msg');
+
+                    if (msg) {
+                        msg.innerHTML = '<p class="lab-note danger">Erreur réseau.' + (error && error.message ? (' ' + error.message) : '') + '</p>';
+                    }
+                });
+        }
+
+        render(current);
+
+        if (parseInt((find('#ouinpo-count') || {}).textContent, 10) >= needed) {
+            if (reveal !== 'embed') {
+                afterCompleted();
+            }
+        }
+    }
+
+    function initGateGames() {
+        document.querySelectorAll('#ouinpo-game').forEach(function(root) {
+            initGateGame(root);
+        });
+    }
+
     function initSignForm() {
         var form = document.querySelector('.ouinpo-sign-form');
 
@@ -85,6 +254,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        initGateGames();
         initSignForm();
     });
 })();

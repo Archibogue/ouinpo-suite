@@ -155,6 +155,7 @@ function ouinpo_hashes(){
 */
 add_shortcode('ouinpo_gate', function($atts){
   ouinpo_gate_enqueue_assets();
+  ouinpo_gate_enqueue_signpad_script();
 
   if(!is_user_logged_in()){
     return '<p>🔒 Cette quête ouinpienne est réservée aux membres. <a href="'.esc_url(wp_login_url(get_permalink())).'">Connecte-toi</a> pour commencer.</a></p>';
@@ -179,7 +180,12 @@ add_shortcode('ouinpo_gate', function($atts){
 
   ob_start(); ?>
   <div id="ouinpo-game" data-page="<?php echo esc_attr($page);?>" data-needed="<?php echo $needed;?>"
-       data-reveal="<?php echo esc_attr($reveal);?>" data-plink="<?php echo esc_url($plink);?>">
+       data-reveal="<?php echo esc_attr($reveal);?>" data-plink="<?php echo esc_url($plink);?>"
+       data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php')); ?>"
+       data-nonce="<?php echo esc_attr($nonce); ?>"
+       data-progress="<?php echo (int)$progress; ?>"
+       data-enigmes="<?php echo esc_attr(wp_json_encode($public, JSON_UNESCAPED_UNICODE)); ?>"
+       data-redirect-url="<?php echo ($progress >= $needed && $reveal === 'redirect') ? esc_url($plink) : ''; ?>">
     <blockquote class="eldritch">« Quarante-deux verrous, un seul sourire : le tien. » — Prof. Archibald Bogue</blockquote>
 
     <div id="ouinpo-progress" class="ouinpo-gate-progress">
@@ -197,7 +203,6 @@ add_shortcode('ouinpo_gate', function($atts){
           <?php elseif($reveal === 'link'): ?>
             <p><a class="button" href="<?php echo esc_url($plink); ?>">🚪 Accéder à la page secrète</a></p>
           <?php else: /* redirect */ ?>
-            <script>location.href = <?php echo wp_json_encode($plink); ?>;</script>
             <p>Redirection en cours… Si rien ne se passe, <a href="<?php echo esc_url($plink); ?>">clique ici</a>.</p>
           <?php endif; ?>
         <?php else: ?>
@@ -207,100 +212,6 @@ add_shortcode('ouinpo_gate', function($atts){
     </div>
   </div>
 
-  <script>
-  (function(){
-    const data    = <?php echo wp_json_encode($public, JSON_UNESCAPED_UNICODE); ?>;
-    const root    = document.getElementById('ouinpo-game');
-    const needed  = parseInt(root.dataset.needed, 10);
-    const page    = root.dataset.page;
-    const reveal  = root.dataset.reveal || 'embed';
-    const plink   = root.dataset.plink || '#';
-    let current   = <?php echo (int)$progress; ?>;
-
-    function parseJSONSmart(r){
-      const ct = r.headers.get('content-type') || '';
-      if(ct.includes('application/json')) return r.json();
-      return r.text().then(t => { try { return JSON.parse(t); } catch(e){ return {ok:false, msg:'Réponse non JSON', raw:t}; } });
-    }
-    function b64(s){ return btoa(unescape(encodeURIComponent(s))); }
-
-    function render(i){
-      const slot = document.getElementById('ouinpo-question');
-      if(i >= data.length){ slot.innerHTML = "<p><em>Aucune autre énigme pour l’instant.</em></p>"; return; }
-      const e = data[i];
-      slot.innerHTML = `
-        <div class="eldritch">
-          <h3>Énigme ${i+1} / ${data.length} — <small>${e.theme}</small></h3>
-          <p>${e.prompt}</p>
-          <input id="ouinpo-answer" placeholder="Ta réponse">
-          <button id="ouinpo-submit" type="button">Valider</button>
-          <div id="ouinpo-msg" class="ouinpo-gate-msg"></div>
-        </div>`;
-      document.getElementById('ouinpo-submit').addEventListener('click', () => {
-        const ans = document.getElementById('ouinpo-answer').value || '';
-        submit(i, ans);
-      }, {passive:true});
-    }
-
-    function afterCompleted(){
-      const final = document.getElementById('ouinpo-final');
-      final.style.display = 'block';
-      const container = document.getElementById('ouinpo-secret-content');
-
-      if(reveal === 'embed'){
-        // on charge le contenu (comportement existant)
-        const fd2 = new FormData();
-        fd2.append('action','ouinpo_secret');
-        fd2.append('page', page);
-        fd2.append('nonce','<?php echo esc_js($nonce);?>');
-        fetch('<?php echo admin_url('admin-ajax.php');?>', {method:'POST', body:fd2, credentials:'same-origin'})
-          .then(r => r.text())
-          .then(html => { container.innerHTML = html; });
-      } else if(reveal === 'link'){
-        container.innerHTML = `<p><a class="button" href="${plink}">🚪 Accéder à la page secrète</a></p>`;
-      } else if(reveal === 'redirect'){
-        container.innerHTML = `<p>Redirection en cours… Si rien ne se passe, <a href="${plink}">clique ici</a>.</p>`;
-        location.href = plink;
-      }
-    }
-
-    function submit(index, answer){
-      const fd = new FormData();
-      fd.append('action','ouinpo_check');
-      fd.append('index', index);
-      fd.append('payload', b64(answer)); // anti-WAF
-      fd.append('page', page);
-      fd.append('nonce','<?php echo esc_js($nonce);?>');
-
-      fetch('<?php echo admin_url('admin-ajax.php');?>', {method:'POST', body:fd, credentials:'same-origin'})
-        .then(parseJSONSmart)
-        .then(j => {
-          const msg = document.getElementById('ouinpo-msg');
-          if(j.ok){
-            document.getElementById('ouinpo-count').textContent = j.progress;
-            msg.innerHTML = '<p class="lab-note">✔ Bravo, énigme résolue !</p>';
-            current = index + 1;
-            if(j.progress >= needed){
-              afterCompleted();
-            } else {
-              render(current);
-            }
-          } else {
-            msg.innerHTML = '<p class="lab-note danger">✖ Mauvaise réponse.'+(j.msg?(' '+j.msg):'')+'</p>';
-          }
-        })
-        .catch(err=>{
-          document.getElementById('ouinpo-msg').innerHTML = '<p class="lab-note danger">Erreur réseau.'+(err&&err.message?(' '+err.message):'')+'</p>';
-        });
-    }
-
-    render(current);
-    // Si l’utilisateur a déjà 42/42 au chargement
-    if(parseInt(document.getElementById('ouinpo-count').textContent,10) >= needed){
-      if(reveal !== 'embed'){ afterCompleted(); }
-    }
-  })();
-  </script>
   <?php
   return ob_get_clean();
 });
