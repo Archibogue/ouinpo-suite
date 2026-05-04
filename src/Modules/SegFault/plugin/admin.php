@@ -29,6 +29,16 @@ add_action('admin_enqueue_scripts', function (string $hook = ''): void {
   }
 
   wp_enqueue_style('ouinpo-segfault-admin', $base_url . $rel, [], $version);
+
+  $js_rel = 'assets/js/admin/segfault-admin.js';
+  $js_file = $base_dir !== '' ? $base_dir . $js_rel : '';
+  $js_version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+
+  if ($js_file !== '' && file_exists($js_file)) {
+    $js_version = (string) filemtime($js_file);
+  }
+
+  wp_enqueue_script('ouinpo-segfault-admin-js', $base_url . $js_rel, [], $js_version, true);
 });
 
 
@@ -6472,7 +6482,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
 
 
-          <form method="post" onsubmit="return confirm('Supprimer ce parcours ?');">
+          <form method="post" data-confirm="Supprimer ce parcours ?">
 
             <?php wp_nonce_field('ouinpo_sf_progress'); ?>
 
