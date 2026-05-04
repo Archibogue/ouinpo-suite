@@ -173,6 +173,38 @@
 
 
 
+  function setupPracticalLevelSelect() {
+
+    const sel = document.getElementById("ouinpo-practical-level");
+
+    if (!sel || sel.dataset.ouinpoPracticalLevelReady === '1') return false;
+
+    sel.dataset.ouinpoPracticalLevelReady = '1';
+
+    sel.addEventListener("change", function() {
+
+      const url = new URL(window.location.href);
+
+      if (this.value) {
+
+        url.searchParams.set("lvl", this.value);
+
+      } else {
+
+        url.searchParams.delete("lvl");
+
+      }
+
+      window.location.href = url.toString();
+
+    });
+
+    return true;
+
+  }
+
+
+
   function buildMetaChip(text) {
 
     return '<span class="ouinpo-chip">' + escapeHtml(text) + '</span>';
@@ -1685,7 +1717,7 @@ function enableTabInAnswerTextareas() {
   function ouinpoPracticalBoot() {
     enableTabInAnswerTextareas();
 
-    let didWork = false;
+    let didWork = setupPracticalLevelSelect();
 
     const listRoot = document.getElementById('ouinpo-practical-subjects');
 

@@ -37,7 +37,39 @@
     });
   }
 
-  let API_ROOT = null;
+  function setupPalmaresYearSelect() {
+
+    const sel = document.getElementById("ouinpo-palmares-year");
+
+    if (!sel || sel.dataset.ouinpoPalmaresYearReady === '1') return;
+
+    sel.dataset.ouinpoPalmaresYearReady = '1';
+
+    sel.addEventListener("change", function() {
+
+      const val = this.value;
+
+      const url = new URL(window.location.href);
+
+      if (val) {
+
+        url.searchParams.set("ouin_year", val);
+
+      } else {
+
+        url.searchParams.delete("ouin_year");
+
+      }
+
+      window.location.href = url.toString();
+
+    });
+
+  }
+
+
+
+  let API_ROOT = null;
   let CURRENT_TITLE_BADGE_ID = 0;
 
   // 🔗 Domaines connus (slug -> label lisible)
@@ -434,11 +466,15 @@ function applyMetaRanks() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
+
+  setupPalmaresYearSelect();
   const root = restRoot();
   API_ROOT = root;
   const container = document.getElementById('ouinpo-student-badges');
-  if (!container) return;
+  if (!container) return;
+
+  if (container.classList.contains('ouinpo-palmares')) return;
 
   container.innerHTML = '<p>Chargement de vos badges…</p>';
 

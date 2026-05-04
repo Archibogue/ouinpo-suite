@@ -1537,36 +1537,6 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
 
 
-        <script>
-
-        (function(){
-
-          var sel = document.getElementById("ouinpo-practical-level");
-
-          if(!sel) return;
-
-          sel.addEventListener("change", function(){
-
-            var url = new URL(window.location.href);
-
-            if (this.value) {
-
-              url.searchParams.set("lvl", this.value);
-
-            } else {
-
-              url.searchParams.delete("lvl");
-
-            }
-
-            window.location.href = url.toString();
-
-          });
-
-        })();
-
-        </script>
-
       <?php endif; ?>
 
 
@@ -3143,7 +3113,6 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
 
     wp_enqueue_style('ouinpo-exo-css');
-
     wp_enqueue_script('ouinpo-student-badges');
 
 
@@ -3163,6 +3132,7 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
 
     wp_enqueue_style('ouinpo-exo-css');
+    wp_enqueue_script('ouinpo-student-badges');
 
 
 
@@ -3289,36 +3259,6 @@ wp_enqueue_script('ouinpo-teacher-competencies');
       $out .= $body;
 
       $out .= '</div>';
-
-
-
-      $out .= '
-
-      <script>
-
-        (function(){
-
-          var sel = document.getElementById("ouinpo-palmares-year");
-
-          if(!sel) return;
-
-          sel.addEventListener("change", function(){
-
-            var val = this.value;
-
-            var url = new URL(window.location.href);
-
-            if(val){ url.searchParams.set("ouin_year", val); }
-
-            else{ url.searchParams.delete("ouin_year"); }
-
-            window.location.href = url.toString();
-
-          });
-
-        })();
-
-      </script>';
 
 
 
