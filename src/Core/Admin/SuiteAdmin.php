@@ -41,6 +41,11 @@ final class SuiteAdmin
             'ouinpo-suite-admin',
             'assets/css/admin/suite-admin.css'
         );
+
+        self::enqueueJs(
+            'ouinpo-suite-admin-js',
+            'assets/js/admin/suite-admin.js'
+        );
     }
 
     private static function enqueueCss(string $handle, string $relativePath): void
@@ -69,6 +74,36 @@ final class SuiteAdmin
             $baseUrl . $relativePath,
             [],
             $version
+        );
+    }
+
+    private static function enqueueJs(string $handle, string $relativePath): void
+    {
+        $baseUrl = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL
+            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_url(OUINPO_SUITE_FILE) : '');
+
+        if ($baseUrl === '') {
+            return;
+        }
+
+        $baseDir = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR
+            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_path(OUINPO_SUITE_FILE) : '');
+
+        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
+        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
+
+        if ($file !== '' && file_exists($file)) {
+            $version = (string) filemtime($file);
+        }
+
+        wp_enqueue_script(
+            $handle,
+            $baseUrl . $relativePath,
+            [],
+            $version,
+            true
         );
     }
 
@@ -1376,86 +1411,6 @@ final class SuiteAdmin
                     <?php endif; ?>
                 </form>
 
-                <script>
-                (function () {
-                    const domainChoice = document.getElementById('bo_domain_choice');
-                    const domainInput = document.getElementById('bo_domain');
-                    const domainSlugInput = document.getElementById('bo_domain_slug');
-                    const trackInput = document.getElementById('bo_track');
-                    const levelInput = document.getElementById('bo_level');
-                    const summary = document.getElementById('bo_domain_summary');
-
-                    const competencyInput = document.getElementById('bo_competency');
-                    const slugInput = document.getElementById('bo_slug');
-
-                    function slugify(value, separator) {
-                        return String(value || '')
-                            .normalize('NFD')
-                            .replace(/[\u0300-\u036f]/g, '')
-                            .toLowerCase()
-                            .replace(/[^a-z0-9]+/g, separator)
-                            .replace(new RegExp('^' + separator + '+|' + separator + '+$', 'g'), '');
-                    }
-
-                    function syncDomain() {
-                        if (!domainChoice) return;
-
-                        const option = domainChoice.options[domainChoice.selectedIndex];
-
-                        if (!option || !option.value) {
-                            if (summary) summary.textContent = '';
-                            return;
-                        }
-
-                        const domain = option.dataset.domain || '';
-                        const domainSlug = option.dataset.domainSlug || '';
-                        const track = option.dataset.track || '';
-                        const level = option.dataset.level || '';
-
-                        if (domainInput) domainInput.value = domain;
-                        if (domainSlugInput) domainSlugInput.value = domainSlug;
-                        if (trackInput) trackInput.value = track;
-                        if (levelInput) levelInput.value = level;
-
-                        if (summary) {
-                            summary.textContent = 'Domaine sélectionné : ' + domain + ' — ' + track + ' / ' + level;
-                        }
-
-                        syncCompetencySlug();
-                    }
-
-                    function syncCompetencySlug() {
-                        if (!slugInput || !competencyInput || !domainSlugInput) return;
-                        if (slugInput.dataset.manual === '1') return;
-
-                        const compPart = slugify(competencyInput.value, '-');
-                        const domainPart = slugify(domainSlugInput.value, '-');
-
-                        if (!compPart) return;
-
-                        slugInput.value = domainPart ? domainPart + '-' + compPart : compPart;
-                    }
-
-                    if (domainChoice) {
-                        domainChoice.addEventListener('change', syncDomain);
-                        syncDomain();
-                    }
-
-                    if (competencyInput) {
-                        competencyInput.addEventListener('input', syncCompetencySlug);
-                    }
-
-                    if (slugInput) {
-                        slugInput.addEventListener('input', function () {
-                            slugInput.dataset.manual = '1';
-                        });
-
-                        if (!slugInput.value) {
-                            slugInput.dataset.manual = '0';
-                        }
-                    }
-                })();
-                </script>
             </div>
         <?php endif; ?>
 
@@ -1534,7 +1489,7 @@ final class SuiteAdmin
                                             <?php submit_button(((int) $row->active === 1) ? 'Désactiver' : 'Réactiver', 'secondary small', '', false); ?>
                                         </form>
 
-                                        <form method="post" class="ouinpo-suite-inline-form" onsubmit="return confirm('Supprimer cette compétence ? Si elle est liée à des exercices, cours ou suivis, elle sera seulement désactivée.');">
+                                        <form method="post" class="ouinpo-suite-inline-form" data-confirm="Supprimer cette compétence ? Si elle est liée à des exercices, cours ou suivis, elle sera seulement désactivée.">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="delete_competency">
                                             <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
@@ -1654,36 +1609,6 @@ final class SuiteAdmin
                     <?php endif; ?>
                 </form>
 
-                <script>
-                (function () {
-                    const nameInput = document.getElementById('bo_domain_name');
-                    const slugInput = document.getElementById('bo_domain_slug');
-
-                    if (!nameInput || !slugInput) return;
-
-                    function slugifyDomain(value) {
-                        return String(value || '')
-                            .normalize('NFD')
-                            .replace(/[\u0300-\u036f]/g, '')
-                            .toLowerCase()
-                            .replace(/[^a-z0-9]+/g, '-')
-                            .replace(/^-+|-+$/g, '');
-                    }
-
-                    nameInput.addEventListener('input', function () {
-                        if (slugInput.dataset.manual === '1') return;
-                        slugInput.value = slugifyDomain(nameInput.value);
-                    });
-
-                    slugInput.addEventListener('input', function () {
-                        slugInput.dataset.manual = '1';
-                    });
-
-                    if (!slugInput.value) {
-                        slugInput.dataset.manual = '0';
-                    }
-                })();
-                </script>
             </div>
         <?php endif; ?>
 
@@ -1741,7 +1666,7 @@ final class SuiteAdmin
                                             <?php submit_button($isActive ? 'Masquer' : 'Réactiver', 'secondary small', '', false); ?>
                                         </form>
 
-                                        <form method="post" class="ouinpo-suite-inline-form" onsubmit="return confirm('Supprimer ce domaine du registre ? Les compétences déjà liées ne seront pas supprimées.');">
+                                        <form method="post" class="ouinpo-suite-inline-form" data-confirm="Supprimer ce domaine du registre ? Les compétences déjà liées ne seront pas supprimées.">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="delete_domain">
                                             <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
