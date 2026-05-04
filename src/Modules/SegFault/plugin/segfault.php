@@ -1598,7 +1598,13 @@ add_action('wp_enqueue_scripts', function () {
       wp_enqueue_style('ouinpo-theme-css');
   }
 
-  wp_enqueue_script('ouinpo-sf', OUINPO_SF_URL.'assets/segfault.js', [], '1.0.0', true);
+  $sf_js_rel = 'assets/js/front/segfault.js';
+  $sf_js_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : OUINPO_SF_DIR;
+  $sf_js_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : OUINPO_SF_URL;
+  $sf_js_file = $sf_js_dir . $sf_js_rel;
+  $sf_js_ver = file_exists($sf_js_file) ? (string) filemtime($sf_js_file) : '1.0.0';
+
+  wp_enqueue_script('ouinpo-sf', $sf_js_url . $sf_js_rel, [], $sf_js_ver, true);
 
   wp_localize_script('ouinpo-sf', 'OUINPO_SF', [
 
