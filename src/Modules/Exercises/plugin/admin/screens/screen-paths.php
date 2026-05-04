@@ -412,28 +412,6 @@ class Screen_Paths
 
             <?php self::render_assigned_table($assigned_paths); ?>
 
-            <script>
-            (function () {
-                const checkbox = document.getElementById('ouinpo-is-template');
-                const rows = document.querySelectorAll('.ouinpo-targets-row');
-                const templateRows = document.querySelectorAll('.ouinpo-template-meta-row');
-
-                function refreshTargetsVisibility() {
-                    if (!checkbox) return;
-                    rows.forEach(function (row) {
-                        row.style.display = checkbox.checked ? 'none' : '';
-                    });
-                    templateRows.forEach(function (row) {
-                        row.style.display = checkbox.checked ? '' : 'none';
-                    });
-                }
-
-                if (checkbox) {
-                    checkbox.addEventListener('change', refreshTargetsVisibility);
-                    refreshTargetsVisibility();
-                }
-            })();
-            </script>
         <?php endif; ?>
 
         <?php if ($show_models_list): ?>
@@ -497,7 +475,7 @@ class Screen_Paths
                                 <button type="submit" class="button button-small">Dupliquer</button>
                             </form>
 
-                                <form method="post" class="ouinpo-admin-inline-form-spaced" onsubmit="return confirm('Supprimer ce parcours ?');">
+                                <form method="post" class="ouinpo-admin-inline-form-spaced" data-confirm="Supprimer ce parcours ?">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="paths_action" value="delete">
                                 <input type="hidden" name="path_id" value="<?php echo (int) $path['id']; ?>">
@@ -571,7 +549,7 @@ class Screen_Paths
                                 <button type="submit" class="button button-small">Dupliquer</button>
                             </form>
 
-                                <form method="post" class="ouinpo-admin-inline-form-spaced" onsubmit="return confirm('Supprimer ce modèle ?');">
+                                <form method="post" class="ouinpo-admin-inline-form-spaced" data-confirm="Supprimer ce modèle ?">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="paths_action" value="delete">
                                 <input type="hidden" name="path_id" value="<?php echo (int) $path['id']; ?>">

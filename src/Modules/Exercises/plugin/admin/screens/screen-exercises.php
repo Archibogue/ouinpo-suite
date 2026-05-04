@@ -490,7 +490,7 @@ class Screen_Exercises {
           <thead>
             <tr>
               <td id="cb" class="manage-column column-cb check-column">
-                <input type="checkbox" id="ouin-exo-cb-all">
+                <input type="checkbox" id="ouin-exo-cb-all" data-check-all-target=".ouin-exo-cb">
               </td>
               <th scope="col">ID</th>
               <th scope="col">Titre</th>
@@ -530,7 +530,7 @@ class Screen_Exercises {
                     '_wpnonce'
                   );
                 ?>
-                <a href="<?php echo esc_url($del_url); ?>" class="button button-small button-link-delete" onclick="return confirm('Supprimer définitivement cet exercice ?');">Supprimer</a>
+                <a href="<?php echo esc_url($del_url); ?>" class="button button-small button-link-delete" data-confirm="Supprimer définitivement cet exercice ?">Supprimer</a>
               </td>
             </tr>
           <?php endforeach; else: ?>
@@ -540,18 +540,6 @@ class Screen_Exercises {
         </table>
       </form>
 
-      <script>
-      (function() {
-        var cbAll = document.getElementById('ouin-exo-cb-all');
-        if (!cbAll) return;
-        cbAll.addEventListener('change', function() {
-          var items = document.querySelectorAll('.ouin-exo-cb');
-          for (var i = 0; i < items.length; i++) {
-            items[i].checked = cbAll.checked;
-          }
-        });
-      })();
-      </script>
     </div>
     <?php
   }
@@ -833,33 +821,12 @@ class Screen_Exercises {
             ?>
           </tbody>
         </table>
-        <p><button type="button" class="button" id="ouin-add-solution">+ Ajouter un corrigé</button></p>
+        <p><button type="button" class="button" id="ouin-add-solution" data-solutions-target="#ouin-solutions-tbody" data-next-index="<?php echo (int) $index; ?>">+ Ajouter un corrigé</button></p>
 
         <?php submit_button($is_new ? 'Créer l’exercice' : 'Enregistrer'); ?>
       </form>
     </div>
 
-    <script>
-    (function(){
-      const tbody = document.getElementById('ouin-solutions-tbody');
-      const addBtn = document.getElementById('ouin-add-solution');
-      let idx = <?php echo (int)$index; ?>;
-
-      addBtn && addBtn.addEventListener('click', function(){
-        const tpl = `
-          <tr>
-            <td><input type="number" min="1" name="solutions[\${i}][solution_order]" value="\${i+1}" class="ouinpo-admin-input-order"></td>
-<td><input type="text" name="solutions[\${i}][title]" class="regular-text" value="Soluce"></td>
-<td class="ouinpo-admin-cell-centered"><input type="checkbox" name="solutions[\${i}][is_official]" value="1" checked></td>
-            <td>
-              <textarea name="solutions[\${i}][content]" rows="6" class="ouinpo-admin-full-width"></textarea>
-              <input type="hidden" name="solutions[\${i}][id]" value="0">
-            </td>
-          </tr>`;
-        tbody.insertAdjacentHTML('beforeend', tpl.replaceAll('\${i}', idx++));
-      });
-    })();
-    </script>
     <?php
   }
 

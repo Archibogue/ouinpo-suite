@@ -396,7 +396,7 @@ function ouinpo_render_courses_competencies_page() {
           <table class="widefat fixed striped">
             <thead>
               <tr>
-            <th class="ouinpo-admin-col-checkbox"><input type="checkbox" id="ouinpo-cc-checkall"></th>
+            <th class="ouinpo-admin-col-checkbox"><input type="checkbox" id="ouinpo-cc-checkall" data-check-all-target='input[name="post_ids[]"]'></th>
                 <th>Titre</th>
                 <th>Type</th>
                 <th>Menu(s)</th>
@@ -438,17 +438,6 @@ function ouinpo_render_courses_competencies_page() {
           </p>
         </form>
 
-        <script>
-        (function() {
-          const master = document.getElementById('ouinpo-cc-checkall');
-          if (!master) return;
-          master.addEventListener('change', function() {
-            document.querySelectorAll('input[name="post_ids[]"]').forEach(cb => {
-              cb.checked = master.checked;
-            });
-          });
-        })();
-        </script>
       <?php else: ?>
         <p><em>Sélectionne d’abord un domaine pour voir les compétences et les cours.</em></p>
       <?php endif; ?>

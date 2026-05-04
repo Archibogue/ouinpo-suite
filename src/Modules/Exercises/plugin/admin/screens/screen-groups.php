@@ -112,7 +112,7 @@ settings_errors('ouinpo_groups');
               <td><?php echo esc_html($g->created_at); ?></td>
               <td>
                 <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-groups&action=edit&id='.$g->id)); ?>">Modifier</a>
-                                <form method="post" class="ouinpo-admin-inline-form" onsubmit="return confirm('Supprimer cette classe ?');">
+                                <form method="post" class="ouinpo-admin-inline-form" data-confirm="Supprimer cette classe ?">
                   <?php wp_nonce_field('ouinpo_groups_form','ouinpo_groups_nonce'); ?>
                   <input type="hidden" name="label" value="">
                   <input type="hidden" name="year_id" value="">

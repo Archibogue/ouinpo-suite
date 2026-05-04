@@ -209,7 +209,7 @@ settings_errors('ouinpo_years');
                     </form>
                   <?php endif; ?>
 
-                                        <form method="post" class="ouinpo-admin-inline-form" onsubmit="return confirm('Supprimer cette année scolaire ?');">
+                                        <form method="post" class="ouinpo-admin-inline-form" data-confirm="Supprimer cette année scolaire ?">
                     <?php wp_nonce_field('ouinpo_years_form', 'ouinpo_years_nonce'); ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?php echo (int) $y->id; ?>">
