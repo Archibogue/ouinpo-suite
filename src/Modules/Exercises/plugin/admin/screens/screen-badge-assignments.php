@@ -11,6 +11,26 @@ $tbl_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';
 $tbl_groups      = $wpdb->prefix . 'ouin_exo_groups';
 $tbl_members     = $wpdb->prefix . 'ouin_exo_group_members';
 
+$badge_admin_js_rel = 'assets/js/admin/badges.js';
+$badge_admin_js_dir = defined('OUINPO_SUITE_DIR')
+    ? OUINPO_SUITE_DIR
+    : dirname(__DIR__, 6);
+$badge_admin_js_url = defined('OUINPO_SUITE_URL')
+    ? OUINPO_SUITE_URL
+    : plugin_dir_url($badge_admin_js_dir . '/ouinpo-suite.php');
+$badge_admin_js_file = $badge_admin_js_dir . $badge_admin_js_rel;
+$badge_admin_js_version = file_exists($badge_admin_js_file)
+    ? (string) filemtime($badge_admin_js_file)
+    : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0');
+
+wp_enqueue_script(
+    'ouinpo-badges-admin-js',
+    $badge_admin_js_url . $badge_admin_js_rel,
+    [],
+    $badge_admin_js_version,
+    true
+);
+
 $badge_id = isset($_REQUEST['badge_id']) ? intval($_REQUEST['badge_id']) : 0;
 $group_id = isset($_REQUEST['group_id']) ? intval($_REQUEST['group_id']) : 0;
 $search   = isset($_REQUEST['s']) ? sanitize_text_field(wp_unslash($_REQUEST['s'])) : '';
@@ -395,7 +415,8 @@ settings_errors('ouinpo_badge_assign');
             <select
                 name="badge_level"
                 id="badge_level"
-                onchange="document.getElementById('badge_id').value=''; this.form.submit()"
+                data-submit-on-change
+                data-reset-target="#badge_id"
             >
                 <?php foreach ($badge_level_options as $value => $label): ?>
                     <option value="<?php echo esc_attr($value); ?>" <?php selected($badge_level_filter, $value); ?>>
@@ -521,16 +542,3 @@ settings_errors('ouinpo_badge_assign');
         </table>
     </form>
 </div>
-
-<script>
-(function(){
-    const master = document.getElementById('ouin-check-all');
-    if (!master) return;
-
-    master.addEventListener('change', function(){
-        document.querySelectorAll('input[name="user_ids[]"]').forEach(function(cb){
-            cb.checked = master.checked;
-        });
-    });
-})();
-</script>

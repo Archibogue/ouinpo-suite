@@ -12,6 +12,7 @@ class Screen_Badges {
         $p = $wpdb->prefix . 'ouin_exo_';
 
         wp_enqueue_media();
+        self::enqueue_script();
 
         $base_url = admin_url('admin.php?page=ouinpo-badges');
         $notice = '';
@@ -358,7 +359,7 @@ class Screen_Badges {
                                         <a class="button button-small" href="<?php echo esc_url(add_query_arg(['page' => 'ouinpo-badges', 'edit' => (int) $b->id], admin_url('admin.php'))); ?>">Modifier</a>
 
                                         <?php if ((int) $b->awarded_count === 0): ?>
-                                            <form method="post" class="ouinpo-inline-form" onsubmit="return confirm('Supprimer ce badge ?');">
+                                            <form method="post" class="ouinpo-inline-form" data-confirm="Supprimer ce badge ?">
                                                 <?php wp_nonce_field('delete_badge', 'ouin_badge_delete_nonce'); ?>
                                                 <input type="hidden" name="badge_id" value="<?php echo (int) $b->id; ?>">
                                                 <button class="button button-small">Supprimer</button>
@@ -379,62 +380,28 @@ class Screen_Badges {
                 </table>
             </div>
         </div>
-
-        <script>
-        (function($){
-            const $input = $('#ouin-badge-image');
-            const $preview = $('#ouin-badge-preview');
-            let frame = null;
-
-            function escapeHtml(text) {
-                return $('<div>').text(text || '').html();
-            }
-
-            function refreshPreview() {
-                const url = ($input.val() || '').trim();
-                if (url) {
-                    $preview.html('<img src="' + escapeHtml(url) + '" alt="Aperçu du badge">');
-                } else {
-                    $preview.html('<em>Aucune image</em>');
-                }
-            }
-
-            $('#ouin-badge-media').on('click', function(e){
-                e.preventDefault();
-
-                if (frame) {
-                    frame.open();
-                    return;
-                }
-
-                frame = wp.media({
-                    title: 'Choisir une image de badge',
-                    button: { text: 'Utiliser cette image' },
-                    library: { type: 'image' },
-                    multiple: false
-                });
-
-                frame.on('select', function(){
-                    const attachment = frame.state().get('selection').first().toJSON();
-                    if (attachment && attachment.url) {
-                        $input.val(attachment.url);
-                        refreshPreview();
-                    }
-                });
-
-                frame.open();
-            });
-
-            $('#ouin-badge-image-clear').on('click', function(e){
-                e.preventDefault();
-                $input.val('');
-                refreshPreview();
-            });
-
-            $input.on('input change', refreshPreview);
-            refreshPreview();
-        })(jQuery);
-        </script>
         <?php
+    }
+
+    private static function enqueue_script(): void {
+        $relative_path = 'assets/js/admin/badges.js';
+        $base_dir = defined('OUINPO_SUITE_DIR')
+            ? OUINPO_SUITE_DIR
+            : dirname(__DIR__, 6);
+        $base_url = defined('OUINPO_SUITE_URL')
+            ? OUINPO_SUITE_URL
+            : plugin_dir_url($base_dir . '/ouinpo-suite.php');
+        $file = $base_dir . $relative_path;
+        $version = file_exists($file)
+            ? (string) filemtime($file)
+            : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0');
+
+        wp_enqueue_script(
+            'ouinpo-badges-admin-js',
+            $base_url . $relative_path,
+            [],
+            $version,
+            true
+        );
     }
 }
