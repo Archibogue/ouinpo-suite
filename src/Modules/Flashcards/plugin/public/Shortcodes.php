@@ -46,12 +46,10 @@ final class Shortcodes
             ],
         ];
 
+        wp_localize_script('ouinpo-flashcards', 'OUINPO_FLASHCARDS', $config);
+
         ob_start();
         ?>
-
-        <script>
-            window.OUINPO_FLASHCARDS = <?php echo wp_json_encode($config); ?>;
-        </script>
 
         <div class="ouinpo-fc-app ouinpo-fc-app-v2"
              data-default-deck="<?php echo esc_attr((string) $atts['deck']); ?>"

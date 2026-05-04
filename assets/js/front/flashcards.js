@@ -957,6 +957,8 @@
 
     const apps = qsa('.ouinpo-fc-app');
 
+    if (!apps.length) return;
+
     for (const app of apps) {
 
       bind(app);

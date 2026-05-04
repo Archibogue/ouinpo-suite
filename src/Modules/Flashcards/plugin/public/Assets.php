@@ -35,7 +35,7 @@ final class Assets
 
         $files = [
             'css' => 'assets/css/front/flashcards.css',
-            'js'  => 'src/Modules/Flashcards/plugin/public/assets/js/flashcards.js',
+            'js'  => 'assets/js/front/flashcards.js',
         ];
 
         $css_ver = file_exists($base_path . $files['css'])
