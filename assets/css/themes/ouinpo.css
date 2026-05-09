@@ -1,4 +1,4 @@
-/* ==========================================================
+﻿/* ==========================================================
    OuInPo Suite — Thème OuInPo
    Objectif : reproduire l’apparence publique de ouinpo.org en prod.
 
@@ -1835,19 +1835,24 @@
 
 .ouinpo-exo button,
 .ouin-exo-block button,
-.btn-copper{
+.btn-copper {
   appearance: none;
+
+  font-size: 0.95rem;
+  line-height: 1.15;
+  font-weight: 700;
+
+  padding: 0.55rem 0.9rem;
   border: 1px solid rgba(214,163,98,0.34);
   border-radius: 12px;
+
   background:
     linear-gradient(180deg,
       rgba(214,163,98,0.18),
       rgba(214,163,98,0.10));
+
   color: var(--ouin-text);
-  padding: 0.68rem 0.95rem;
-  font-weight: 700;
   cursor: pointer;
-  transition: transform .15s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
 }
 
 .ouinpo-exo button:hover,
@@ -8581,13 +8586,9 @@
   opacity: .75;
 }
 
-/* Boutons et formulaires : uniquement dans les composants OuInPo. */
+/* Boutons et formulaires : uniquement dans les composants non dÃ©jÃ  thÃ©mÃ©s. */
 .ouinpo-box button,
 .ouinpo-box input[type="submit"],
-.ouinpo-exo button,
-.ouinpo-exercises-page button,
-.ouinpo-practical-page button,
-.ouinpo-practical-subject button,
 .ouinpo-competences button,
 .ouinpo-rt button,
 .ouinpo-submissions button,
@@ -8606,10 +8607,6 @@
 
 .ouinpo-box button:hover,
 .ouinpo-box input[type="submit"]:hover,
-.ouinpo-exo button:hover,
-.ouinpo-exercises-page button:hover,
-.ouinpo-practical-page button:hover,
-.ouinpo-practical-subject button:hover,
 .ouinpo-competences button:hover,
 .ouinpo-rt button:hover,
 .ouinpo-submissions button:hover,
@@ -8624,20 +8621,6 @@
 .ouinpo-box input[type="file"],
 .ouinpo-box select,
 .ouinpo-box textarea,
-.ouinpo-exo input[type="text"],
-.ouinpo-exo input[type="email"],
-.ouinpo-exo input[type="search"],
-.ouinpo-exo select,
-.ouinpo-exo textarea,
-.ouinpo-exercises-page input[type="text"],
-.ouinpo-exercises-page input[type="search"],
-.ouinpo-exercises-page select,
-.ouinpo-exercises-page textarea,
-.ouinpo-practical-page input[type="text"],
-.ouinpo-practical-page input[type="search"],
-.ouinpo-practical-page select,
-.ouinpo-practical-page textarea,
-.ouinpo-practical-subject textarea,
 .ouinpo-competences input[type="text"],
 .ouinpo-competences select,
 .ouinpo-competences textarea,
@@ -8662,16 +8645,6 @@
 .ouinpo-box input:focus,
 .ouinpo-box select:focus,
 .ouinpo-box textarea:focus,
-.ouinpo-exo input:focus,
-.ouinpo-exo select:focus,
-.ouinpo-exo textarea:focus,
-.ouinpo-exercises-page input:focus,
-.ouinpo-exercises-page select:focus,
-.ouinpo-exercises-page textarea:focus,
-.ouinpo-practical-page input:focus,
-.ouinpo-practical-page select:focus,
-.ouinpo-practical-page textarea:focus,
-.ouinpo-practical-subject textarea:focus,
 .ouinpo-competences input:focus,
 .ouinpo-competences select:focus,
 .ouinpo-competences textarea:focus,

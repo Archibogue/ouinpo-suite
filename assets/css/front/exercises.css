@@ -137,11 +137,7 @@
   align-items: center;
   justify-content: center;
   gap: .5ch;
-  padding: 0.68rem 0.95rem;
-  border-radius: 12px;
-  font-weight: 700;
   cursor: pointer;
-  font: inherit;
 }
 
 .ouinpo-exo button:disabled,
