@@ -1,7 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
-use Ouinpo\Exercises\TeachingState;
+use Ouinpo\Exercises\CompetencyLevels;
+use Ouinpo\Exercises\TeachingState;
 
 defined('ABSPATH') || exit;
 
@@ -140,11 +141,10 @@ class CompetenciesRoutes {
             $where[] = "uc.group_id = %d";
             $args[]  = $group_id;
 
-            $levelLabel = self::find_group_level_label($group_id, $year_id);
-            if ($levelLabel) {
-                $where[] = "(c.level = %s OR c.level = %s)";
-                $args[]  = $levelLabel;
-                $args[]  = 'Transversal';
+            $school_level_id = CompetencyLevels::group_school_level_id($group_id, $year_id);
+            if ($school_level_id > 0) {
+                $where[] = CompetencyLevels::level_filter_sql('c');
+                $args[]  = $school_level_id;
             }
         }
 
@@ -354,16 +354,16 @@ public static function teachingStateIndex(\WP_REST_Request $req) {
 
     $tblComp = $wpdb->prefix . 'ouin_exo_competencies';
 
-    $levelLabel = self::find_group_level_label($group_id, $year_id);
-    if (!$levelLabel) {
+    $school_level_id = CompetencyLevels::group_school_level_id($group_id, $year_id);
+    if (!$school_level_id) {
         return new \WP_Error('bad_request', 'Niveau du groupe introuvable', ['status' => 400]);
     }
 
     $where = [
         "IFNULL(c.active,1)=1",
-        "(c.level = %s OR c.level = %s)",
+        CompetencyLevels::level_filter_sql('c'),
     ];
-    $args = [$levelLabel, 'Transversal'];
+    $args = [$school_level_id];
 
     if ($domain !== '') {
         $where[] = "c.domain_slug = %s";
@@ -462,11 +462,10 @@ public static function assessmentsProgress(\WP_REST_Request $req) {
         $where[] = 'a.group_id = %d';
         $args[]  = $group_id;
 
-        $levelLabel = self::find_group_level_label($group_id, $year_id);
-        if ($levelLabel) {
-            $where[] = '(c.level = %s OR c.level = %s)';
-            $args[]  = $levelLabel;
-            $args[]  = 'Transversal';
+        $school_level_id = CompetencyLevels::group_school_level_id($group_id, $year_id);
+        if ($school_level_id > 0) {
+            $where[] = CompetencyLevels::level_filter_sql('c');
+            $args[]  = $school_level_id;
         }
     }
 
@@ -976,8 +975,8 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         return rest_ensure_response($empty);
     }
 
-    $levelLabel = self::find_group_level_label($group_id, $year_id);
-    if (!$levelLabel) {
+    $school_level_id = CompetencyLevels::group_school_level_id($group_id, $year_id);
+    if (!$school_level_id) {
         return rest_ensure_response($empty);
     }
 
@@ -1015,7 +1014,7 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         't.year_id = %d',
         't.group_id = %d',
         "t.teaching_state = 'seen'",
-        '(c.level = %s OR c.level = %s)',
+        CompetencyLevels::level_filter_sql('c'),
         'IFNULL(c.active,1)=1',
         'IFNULL(e.is_active,1)=1',
     ];
@@ -1024,8 +1023,7 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         'student',
         $year_id,
         $group_id,
-        $levelLabel,
-        'Transversal',
+        $school_level_id,
     ];
 
     if ($domain !== '') {

@@ -66,23 +66,20 @@ class BadgesRoutes {
         $p = $wpdb->prefix . 'ouin_exo_';
 
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT COALESCE(gm.school_level_id_override, g.school_level_id) AS level_id
+            "SELECT sl.label
              FROM {$p}group_members gm
-             JOIN {$p}groups g ON g.id = gm.group_id
+             JOIN {$p}groups g ON g.id = gm.group_id
+
+             JOIN {$p}school_levels sl ON sl.id = COALESCE(gm.school_level_id_override, g.school_level_id)
              WHERE gm.user_id = %d AND gm.role = 'student'
              ORDER BY gm.group_id DESC
              LIMIT 1",
              $user_id
         ));
 
-        if (!$row || !$row->level_id) return '';
+        if (!$row || empty($row->label)) return '';
 
-        switch ((int) $row->level_id) {
-            case 1: return 'Seconde';
-            case 2: return 'Première';
-            case 3: return 'Terminale';
-            default: return '';
-        }
+        return (string) $row->label;
     }
 
     /* ============================================================
@@ -124,10 +121,14 @@ class BadgesRoutes {
 
         /* -------- 2) Domaines connus à partir des compétences -------- */
         $domains = $wpdb->get_results("
-            SELECT DISTINCT domain_slug, domain, level
-            FROM {$p}competencies
-            WHERE domain_slug IS NOT NULL
-              AND domain_slug <> ''
+            SELECT DISTINCT c.domain_slug, c.domain, sl.label AS level
+            FROM {$p}competencies c
+            INNER JOIN {$p}competency_school_level csl ON csl.competency_id = c.id
+
+            INNER JOIN {$p}school_levels sl ON sl.id = csl.school_level_id
+
+            WHERE c.domain_slug IS NOT NULL
+              AND c.domain_slug <> ''
         ");
 
         // slug minuscule -> ['slug' => original, 'domain' => label, 'levels' => [level => true]]
@@ -221,7 +222,7 @@ class BadgesRoutes {
             }
 
             // VISIBILITÉ SELON LE NIVEAU (même logique qu'avant)
-            if ($student_level && in_array($student_level, $cycleLevels, true)) {
+            if ($student_level) {
                 if (!$isMeta && !$isSpecial) {
                     if (!in_array('Transversal', $levels, true) &&
                         !in_array($student_level, $levels, true)) {
@@ -262,14 +263,20 @@ class BadgesRoutes {
         $preferred     = ['Seconde','Première','Terminale','Transversal'];
         $levels_order  = [];
 
-        if ($student_level && in_array($student_level, $cycleLevels, true)) {
+        if ($student_level) {
             $allowed = ['Transversal', $student_level];
             foreach ($preferred as $lbl) {
                 if (in_array($lbl, $allowed, true)) {
                     $levels_order[] = $lbl;
                 }
             }
-        } else {
+            if (!in_array($student_level, $levels_order, true)) {
+
+                $levels_order[] = $student_level;
+
+            }
+
+        } else {
             foreach ($preferred as $lbl) {
                 $levels_order[] = $lbl;
             }

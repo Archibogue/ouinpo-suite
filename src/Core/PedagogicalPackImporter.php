@@ -50,6 +50,7 @@ final class PedagogicalPackImporter
             'difficulties_updated' => 0,
             'competencies_inserted' => 0,
             'competencies_updated' => 0,
+            'competency_school_level_links' => 0,
             'exercises_inserted' => 0,
             'exercises_updated' => 0,
             'exercise_school_level_links' => 0,
@@ -246,7 +247,8 @@ final class PedagogicalPackImporter
                 $track = 'NSI';
             }
 
-            $level = sanitize_text_field((string)($row['level'] ?? 'Première'));
+            $rawLevel = sanitize_text_field((string)($row['level'] ?? 'Première'));
+            $level = $rawLevel;
             if (!in_array($level, ['Seconde', 'Première', 'Terminale', 'Transversal'], true)) {
                 $level = 'Première';
             }
@@ -306,8 +308,10 @@ final class PedagogicalPackImporter
                 $slug
             ));
 
+            $competencyId = 0;
+
             if ($existingId) {
-                $wpdb->update(
+                $updated = $wpdb->update(
                     $table,
                     $payload,
                     ['slug' => $slug],
@@ -315,15 +319,94 @@ final class PedagogicalPackImporter
                     ['%s']
                 );
 
-                $details['competencies_updated']++;
+                if ($updated === false) {
+                    $details['warnings'][] = 'Compétence ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
+                } else {
+                    $details['competencies_updated']++;
+                    $competencyId = (int) $existingId;
+                }
             } else {
-                $wpdb->insert(
+                $inserted = $wpdb->insert(
                     $table,
                     $payload,
                     $formats
                 );
 
-                $details['competencies_inserted']++;
+                if ($inserted === false) {
+                    $details['warnings'][] = 'Compétence ' . $slug . ' : création impossible — ' . $wpdb->last_error;
+                } else {
+                    $details['competencies_inserted']++;
+                    $competencyId = (int) $wpdb->insert_id;
+                }
+            }
+
+            if (!empty($competencyId)) {
+                self::syncCompetencySchoolLevelLinks($p, $competencyId, $row, $level, $details);
+            }
+        }
+    }
+
+    private static function syncCompetencySchoolLevelLinks(string $p, int $competencyId, array $row, string $rawLevel, array &$details): void
+    {
+        global $wpdb;
+
+        if ($competencyId <= 0) {
+            return;
+        }
+
+        $table = $p . 'competency_school_level';
+        $levelIds = [];
+
+        if (!empty($row['level_slugs']) && is_array($row['level_slugs'])) {
+            foreach ($row['level_slugs'] as $rawSlug) {
+                $levelId = self::getSchoolLevelIdBySlug($p, sanitize_key((string) $rawSlug));
+                if ($levelId !== null) {
+                    $levelIds[] = $levelId;
+                }
+            }
+        }
+
+        if (!empty($row['level_slug'])) {
+            $levelId = self::getSchoolLevelIdBySlug($p, sanitize_key((string) $row['level_slug']));
+            if ($levelId !== null) {
+                $levelIds[] = $levelId;
+            }
+        }
+
+        if (!$levelIds) {
+            if ($rawLevel === 'Transversal') {
+                $levelIds = array_map('intval', (array) $wpdb->get_col("SELECT id FROM {$p}school_levels ORDER BY id ASC"));
+            } else {
+                $levelId = self::getSchoolLevelIdByLegacyLabel($p, $rawLevel);
+                if ($levelId !== null) {
+                    $levelIds[] = $levelId;
+                }
+            }
+        }
+
+        $levelIds = array_values(array_unique(array_filter(array_map('intval', $levelIds))));
+
+        if (!$levelIds) {
+            $details['warnings'][] = "Compétence {$competencyId} : aucun niveau scolaire associé.";
+            return;
+        }
+
+        $wpdb->delete($table, ['competency_id' => $competencyId], ['%d']);
+
+        foreach ($levelIds as $levelId) {
+            $wpdb->insert(
+                $table,
+                [
+                    'competency_id'   => $competencyId,
+                    'school_level_id' => $levelId,
+                ],
+                ['%d', '%d']
+            );
+
+            if (empty($wpdb->last_error)) {
+                $details['competency_school_level_links']++;
+            } else {
+                $details['warnings'][] = "Compétence {$competencyId} : lien niveau impossible — " . $wpdb->last_error;
             }
         }
     }
@@ -457,6 +540,38 @@ private static function getSchoolLevelIdBySlug(string $p, string $slug): ?int
 
     $id = $wpdb->get_var($wpdb->prepare(
         "SELECT id FROM {$p}school_levels WHERE slug = %s",
+        $slug
+    ));
+
+    return $id ? (int)$id : null;
+}
+
+private static function getSchoolLevelIdByLegacyLabel(string $p, string $label): ?int
+{
+    global $wpdb;
+
+    $label = trim($label);
+    if ($label === '') {
+        return null;
+    }
+
+    $slug = sanitize_title($label);
+    $aliases = [
+        'Première' => 'premiere',
+        'Premiere' => 'premiere',
+    ];
+
+    if (isset($aliases[$label])) {
+        $slug = $aliases[$label];
+    }
+
+    $id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id
+           FROM {$p}school_levels
+          WHERE label = %s
+             OR slug = %s
+          LIMIT 1",
+        $label,
         $slug
     ));
 

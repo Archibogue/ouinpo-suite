@@ -9,23 +9,26 @@ if (!defined('ABSPATH')) exit;
 function ouinpo_cc_get_domains_for_select(): array {
     global $wpdb;
     $table = $wpdb->prefix . 'ouin_exo_competencies';
+    $rel_table = $wpdb->prefix . 'ouin_exo_competency_school_level';
+    $level_table = $wpdb->prefix . 'ouin_exo_school_levels';
 
     $rows = $wpdb->get_results("
-        SELECT DISTINCT domain, track, level
-        FROM {$table}
-        WHERE active = 1
+        SELECT DISTINCT c.domain, c.track, sl.id AS level_id, sl.label AS level_label, sl.slug AS level_slug
+        FROM {$table} c
+        INNER JOIN {$rel_table} csl ON csl.competency_id = c.id
+        INNER JOIN {$level_table} sl ON sl.id = csl.school_level_id
+        WHERE c.active = 1
     ", ARRAY_A);
 
     $orderTrack = ['SNT' => 0, 'NSI' => 1, 'Transversal' => 3];
-    $orderLevel = ['Seconde' => 0, 'Première' => 1, 'Terminale' => 2, 'Transversal' => 3];
 
-    usort($rows, function ($a, $b) use ($orderTrack, $orderLevel) {
+    usort($rows, function ($a, $b) use ($orderTrack) {
         $ta = $orderTrack[$a['track']] ?? 99;
         $tb = $orderTrack[$b['track']] ?? 99;
         if ($ta !== $tb) return $ta <=> $tb;
 
-        $la = $orderLevel[$a['level']] ?? 99;
-        $lb = $orderLevel[$b['level']] ?? 99;
+        $la = (int) ($a['level_id'] ?? 0);
+        $lb = (int) ($b['level_id'] ?? 0);
         if ($la !== $lb) return $la <=> $lb;
 
         return strcasecmp($a['domain'], $b['domain']);
@@ -33,22 +36,24 @@ function ouinpo_cc_get_domains_for_select(): array {
 
     $domains = [];
     foreach ($rows as $r) {
-        $key = md5($r['domain'] . '|' . $r['track'] . '|' . $r['level']);
+        $key = md5($r['domain'] . '|' . $r['track'] . '|' . (int) $r['level_id']);
         if (!isset($domains[$key])) {
             $label = $r['domain'];
             if ($r['track'] === 'SNT') {
-                $label .= ' — SNT';
+                $label .= ' — ' . $r['level_label'] . ' SNT';
             } elseif ($r['track'] === 'NSI') {
-                $label .= ' — ' . $r['level'] . ' NSI';
+                $label .= ' — ' . $r['level_label'] . ' NSI';
             } else {
-                $label .= ' — Transversal';
+                $label .= ' — ' . $r['level_label'];
             }
             $domains[$key] = [
-                'key'    => $key,
-                'label'  => $label,
-                'domain' => $r['domain'],
-                'track'  => $r['track'],
-                'level'  => $r['level'],
+                'key'        => $key,
+                'label'      => $label,
+                'domain'     => $r['domain'],
+                'track'      => $r['track'],
+                'level_id'   => (int) $r['level_id'],
+                'level'      => $r['level_label'],
+                'level_slug' => $r['level_slug'],
             ];
         }
     }
@@ -212,6 +217,7 @@ function ouinpo_render_courses_competencies_page() {
 
     $link_table = $wpdb->prefix . 'ouin_exo_post_competency';
     $comp_table = $wpdb->prefix . 'ouin_exo_competencies';
+    $comp_level_table = $wpdb->prefix . 'ouin_exo_competency_school_level';
 
     // --- Filtre "domaine", "menu" et "élément de menu" (GET ou POST) ---
     $domains = ouinpo_cc_get_domains_for_select();
@@ -279,14 +285,19 @@ function ouinpo_render_courses_competencies_page() {
     $competencies = [];
     if ($domain_filter) {
         $competencies = $wpdb->get_results($wpdb->prepare("
-            SELECT id, slug, competency
-            FROM {$comp_table}
-            WHERE active = 1
-              AND domain = %s
-              AND track  = %s
-              AND level  = %s
-            ORDER BY id
-        ", $domain_filter['domain'], $domain_filter['track'], $domain_filter['level']), ARRAY_A);
+            SELECT c.id, c.slug, c.competency
+            FROM {$comp_table} c
+            WHERE c.active = 1
+              AND c.domain = %s
+              AND c.track  = %s
+              AND EXISTS (
+                    SELECT 1
+                      FROM {$comp_level_table} csl
+                     WHERE csl.competency_id = c.id
+                       AND csl.school_level_id = %d
+                  )
+            ORDER BY c.id
+        ", $domain_filter['domain'], $domain_filter['track'], (int) $domain_filter['level_id']), ARRAY_A);
     }
 
     // --- Posts présents dans les menus (avec filtre de menu + filtre texte sur élément) ---
@@ -302,10 +313,17 @@ function ouinpo_render_courses_competencies_page() {
             $ids_str  = implode(',', array_map('intval', $post_ids));
 
             $where_domain = $wpdb->prepare(
-                " AND c.domain = %s AND c.track = %s AND c.level = %s ",
+                " AND c.domain = %s
+                  AND c.track = %s
+                  AND EXISTS (
+                        SELECT 1
+                          FROM {$comp_level_table} csl
+                         WHERE csl.competency_id = c.id
+                           AND csl.school_level_id = %d
+                      ) ",
                 $domain_filter['domain'],
                 $domain_filter['track'],
-                $domain_filter['level']
+                (int) $domain_filter['level_id']
             );
 
             $rows_comp = $wpdb->get_results("

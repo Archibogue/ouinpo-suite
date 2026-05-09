@@ -2,6 +2,7 @@
 
 namespace Ouinpo\Exercises\Rest;
 
+use Ouinpo\Exercises\CompetencyLevels;
 use Ouinpo\Exercises\TeachingState;
 
 use WP_REST_Request;
@@ -223,6 +224,39 @@ class MeRoutes {
 
     }
 
+    private static function find_user_level_id(int $user_id, int $year_id, ?int $explicit_group_id = null): int {
+        global $wpdb;
+        $p = $wpdb->prefix.'ouin_exo_';
+
+        if ($explicit_group_id) {
+            return (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(gm.school_level_id_override, g.school_level_id)
+                   FROM {$p}groups g
+                   LEFT JOIN {$p}group_members gm
+                     ON gm.group_id = g.id
+                    AND gm.user_id = %d
+                  WHERE g.id = %d
+                    AND g.year_id = %d
+                  LIMIT 1",
+                $user_id,
+                $explicit_group_id,
+                $year_id
+            ));
+        }
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(gm.school_level_id_override, g.school_level_id)
+               FROM {$p}group_members gm
+               JOIN {$p}groups g ON g.id = gm.group_id
+              WHERE gm.user_id = %d
+                AND g.year_id = %d
+              ORDER BY gm.group_id DESC
+              LIMIT 1",
+            $user_id,
+            $year_id
+        ));
+    }
+
 
 
     /** Renvoie (uid, year_id, group_id|null, levelLabel) */
@@ -248,7 +282,9 @@ class MeRoutes {
         $level_slug = self::find_user_level_slug($uid, $year_id, $group_id);
         $level_label = $level_slug ? self::levelSlugToLabel($level_slug) : null;
 
-        return [$uid, $year_id, $group_id, $level_label];
+        $school_level_id = self::find_user_level_id($uid, $year_id, $group_id);
+
+        return [$uid, $year_id, $group_id, $level_label, $school_level_id];
 
     }
 
@@ -266,11 +302,11 @@ class MeRoutes {
 
     
 
-        [$uid, $year_id, $group_id, $levelLabel] = $g;
+        [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
     
 
-        if (!$group_id || !$levelLabel) {
+        if (!$group_id || !$school_level_id) {
 
             return rest_ensure_response([
 
@@ -342,7 +378,7 @@ class MeRoutes {
 
              AND t.teaching_state = 'seen'
 
-             AND (c.level = %s OR c.level = %s)
+             AND " . CompetencyLevels::level_filter_sql('c') . "
 
            GROUP BY c.domain
 
@@ -392,9 +428,7 @@ class MeRoutes {
 
             $group_id,
 
-            $levelLabel,
-
-            'Transversal'
+            $school_level_id
 
         ));
 
@@ -472,7 +506,7 @@ class MeRoutes {
 
     
 
-        [$uid, $year_id, $group_id, $levelLabel] = $g;
+        [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
     
 
@@ -528,7 +562,7 @@ class MeRoutes {
 
              AND t.teaching_state = 'seen'
 
-             AND (c.level = %s OR c.level = %s)
+             AND " . CompetencyLevels::level_filter_sql('c') . "
 
            ORDER BY 
 
@@ -578,9 +612,7 @@ class MeRoutes {
 
             $group_id,
 
-            $levelLabel,
-
-            'Transversal'
+            $school_level_id
 
         ));
 
@@ -674,11 +706,7 @@ class MeRoutes {
 
     
 
-        return in_array($level, ['Seconde', 'Première', 'Terminale'], true)
-
-            ? $level
-
-            : '';
+        return $level;
 
     }
 
@@ -745,6 +773,9 @@ class MeRoutes {
     
 
         $levels_order = ['Spécial', 'Terminale', 'Première', 'Seconde', 'Transversal'];
+        if ($student_level !== '' && !in_array($student_level, $levels_order, true)) {
+            array_splice($levels_order, 1, 0, [$student_level]);
+        }
 
         $current_title_badge_id = (int) get_user_meta($uid, 'ouinpo_title_badge_id', true);
 
@@ -774,13 +805,17 @@ class MeRoutes {
 
         $domain_rows = $wpdb->get_results("
 
-            SELECT DISTINCT domain_slug, domain, level
+            SELECT DISTINCT c.domain_slug, c.domain, sl.label AS level
 
-            FROM {$p}competencies
+            FROM {$p}competencies c
 
-            WHERE domain_slug IS NOT NULL
+            INNER JOIN {$p}competency_school_level csl ON csl.competency_id = c.id
 
-              AND domain_slug <> ''
+            INNER JOIN {$p}school_levels sl ON sl.id = csl.school_level_id
+
+            WHERE c.domain_slug IS NOT NULL
+
+              AND c.domain_slug <> ''
 
         ", ARRAY_A);
 
@@ -998,7 +1033,7 @@ class MeRoutes {
 
             // Les badges spéciaux et méta restent gérés à part.
 
-            if ($student_level && in_array($student_level, $cycleLevels, true)) {
+            if ($student_level) {
 
                 if (!$is_meta && !$is_special && $domain_slug) {
 
@@ -1086,7 +1121,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
 
 
-    [$uid, $year_id, $group_id, $levelLabel] = $g;
+    [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
 
 
@@ -1110,7 +1145,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
 
 
-    if (!$group_id || !$levelLabel) {
+    if (!$group_id || !$school_level_id) {
         return rest_ensure_response($empty);
     }
 
@@ -1332,7 +1367,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
           AND t.teaching_state = 'seen'
 
-          AND (c.level = %s OR c.level = %s)
+          AND " . CompetencyLevels::level_filter_sql('c') . "
 
 
 
@@ -1394,9 +1429,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
         $group_id,
 
-        $levelLabel,
-
-        'Transversal'
+        $school_level_id
 
     ), ARRAY_A) ?: [];
 
@@ -1628,9 +1661,9 @@ public static function assessments_progress(\WP_REST_Request $req) {
 
 
 
-    [$uid, $year_id, $group_id, $levelLabel] = $g;
+    [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
-    if (!$group_id || !$levelLabel) {
+    if (!$group_id || !$school_level_id) {
         return rest_ensure_response([
             'summary' => [
                 'evaluated'      => 0,
@@ -1665,11 +1698,11 @@ public static function assessments_progress(\WP_REST_Request $req) {
 
         'g.year_id = %d',
 
-        '(c.level = %s OR c.level = %s)'
+        CompetencyLevels::level_filter_sql('c')
 
     ];
 
-    $args = [$uid, $year_id, $levelLabel, 'Transversal'];
+    $args = [$uid, $year_id, $school_level_id];
 
 
 

@@ -2632,6 +2632,8 @@ public static function render_teacher($atts = [], $content = '') {
 
   $tblComps   = $wpdb->prefix . 'ouin_exo_competencies';
 
+  $tblCompLevels = $wpdb->prefix . 'ouin_exo_competency_school_level';
+
   $tblUsers   = $wpdb->users;
 
 
@@ -2730,23 +2732,19 @@ public static function render_teacher($atts = [], $content = '') {
 
   // --- Domaines disponibles ---
 
-  $tblLevels  = $wpdb->prefix . 'ouin_exo_school_levels';
-
   $domains    = [];
 
-  $levelLabel = null;
+  $schoolLevelId = 0;
 
 
 
   if ($group_id > 0) {
 
-    $levelRow = $wpdb->get_row($wpdb->prepare(
+    $schoolLevelId = (int) $wpdb->get_var($wpdb->prepare(
 
-      "SELECT sl.label
+      "SELECT g.school_level_id
 
        FROM $tblGroups g
-
-       JOIN $tblLevels sl ON sl.id = g.school_level_id
 
        WHERE g.id = %d",
 
@@ -2754,47 +2752,30 @@ public static function render_teacher($atts = [], $content = '') {
 
     ));
 
-
-
-    if ($levelRow) {
-
-      $levelLabel = $levelRow->label;
-
-    }
-
   }
 
 
 
-  if ($levelLabel) {
+  if ($schoolLevelId > 0) {
 
     $domains = $wpdb->get_results($wpdb->prepare(
 
-      "SELECT DISTINCT domain_slug AS slug, domain AS label, level
+      "SELECT DISTINCT c.domain_slug AS slug, c.domain AS label
 
-       FROM $tblComps
+       FROM $tblComps c
 
-       WHERE active = 1
+       WHERE c.active = 1
 
-         AND level IN ('Transversal', %s)
+         AND EXISTS (
+           SELECT 1
+             FROM $tblCompLevels csl
+            WHERE csl.competency_id = c.id
+              AND csl.school_level_id = %d
+         )
 
-       ORDER BY
+       ORDER BY c.domain ASC",
 
-         CASE
-
-           WHEN level = %s THEN 0
-
-           WHEN level = 'Transversal' THEN 1
-
-           ELSE 2
-
-         END,
-
-         domain ASC",
-
-      $levelLabel,
-
-      $levelLabel
+      $schoolLevelId
 
     ));
 

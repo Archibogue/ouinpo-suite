@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.3';
+    const DB_VERSION = '2.6.4';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -374,6 +374,13 @@ class InstallV2 {
 
             KEY track (track)
 
+        ) $charset_innodb;";
+
+        $sql_competency_school_level = "CREATE TABLE {$p}competency_school_level (
+            competency_id BIGINT UNSIGNED NOT NULL,
+            school_level_id TINYINT UNSIGNED NOT NULL,
+            PRIMARY KEY  (competency_id, school_level_id),
+            KEY school_level_id (school_level_id)
         ) $charset_innodb;";
 
         $sql_competencies_import = "CREATE TABLE {$p}competencies_import (
@@ -782,6 +789,7 @@ class InstallV2 {
 
         dbDelta($sql_user_status);
         dbDelta($sql_competencies);
+        dbDelta($sql_competency_school_level);
         dbDelta($sql_competencies_import);
         dbDelta($sql_exo_comp);
 
@@ -856,6 +864,7 @@ class InstallV2 {
         
 
         self::seed_school_levels();
+        self::migrate_competency_school_levels();
 
         self::seed_year_if_missing();
 
@@ -882,6 +891,42 @@ class InstallV2 {
         (2,'premiere','Première'),
 
         (3,'terminale','Terminale')");
+
+    }
+
+    private static function migrate_competency_school_levels() {
+
+        global $wpdb;
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+        $tbl_comp = $p . 'competencies';
+        $tbl_levels = $p . 'school_levels';
+        $tbl_link = $p . 'competency_school_level';
+
+        $tables_ready = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tbl_link));
+        if (!$tables_ready) {
+            return;
+        }
+
+        $wpdb->query("
+            INSERT IGNORE INTO {$tbl_link} (competency_id, school_level_id)
+            SELECT c.id, sl.id
+              FROM {$tbl_comp} c
+              JOIN {$tbl_levels} sl
+                ON sl.label = c.level
+                OR (c.level = 'Seconde' AND sl.slug = 'seconde')
+                OR (c.level = 'Première' AND sl.slug = 'premiere')
+                OR (c.level = 'Terminale' AND sl.slug = 'terminale')
+             WHERE c.level <> 'Transversal'
+        ");
+
+        $wpdb->query("
+            INSERT IGNORE INTO {$tbl_link} (competency_id, school_level_id)
+            SELECT c.id, sl.id
+              FROM {$tbl_comp} c
+              CROSS JOIN {$tbl_levels} sl
+             WHERE c.level = 'Transversal'
+        ");
 
     }
 
@@ -1168,6 +1213,38 @@ class InstallV2 {
              ADD CONSTRAINT fk_exercise_school_level_exercise
 
              FOREIGN KEY (exercise_id) REFERENCES {$p}exercises(id)
+
+             ON DELETE CASCADE"
+
+        );
+
+        self::add_fk_if_missing(
+
+            $p . 'competency_school_level',
+
+            'fk_competency_school_level_competency',
+
+            "ALTER TABLE {$p}competency_school_level
+
+             ADD CONSTRAINT fk_competency_school_level_competency
+
+             FOREIGN KEY (competency_id) REFERENCES {$p}competencies(id)
+
+             ON DELETE CASCADE"
+
+        );
+
+        self::add_fk_if_missing(
+
+            $p . 'competency_school_level',
+
+            'fk_competency_school_level_level',
+
+            "ALTER TABLE {$p}competency_school_level
+
+             ADD CONSTRAINT fk_competency_school_level_level
+
+             FOREIGN KEY (school_level_id) REFERENCES {$p}school_levels(id)
 
              ON DELETE CASCADE"
 
