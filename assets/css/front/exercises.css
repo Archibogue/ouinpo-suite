@@ -624,6 +624,34 @@
   position: relative;
 }
 
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badges-grid{
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-item{
+  padding: 1.1rem 1.4rem;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-layout{
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: center;
+  padding-right: 0;
+  text-align: left;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-left{
+  justify-content: center;
+  align-items: center;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-right{
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
 .ouinpo-badge-title{
   font-size: 0.97rem;
   font-weight: 700;
@@ -675,10 +703,22 @@
   margin-top: 0.5rem;
 }
 
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-bigimg{
+  width: 140px;
+  height: 140px;
+  margin-top: 0;
+}
+
 .ouinpo-badge-earned{
   margin-top: 0.1rem;
   font-size: 0.7rem;
   text-align: right;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-earned{
+  margin-top: 0.4rem;
+  text-align: left;
+  font-size: 0.85rem;
 }
 
 .ouinpo-palmares-count{
@@ -692,6 +732,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
   gap: 0.25rem 1.2rem;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-list{
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .ouinpo-palmares-list li{
@@ -896,6 +940,11 @@
     text-align: center;
   }
 
+  #ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-layout{
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
   .ouinpo-badge-right,
   .ouinpo-palmares-left{
     justify-content: center;
@@ -903,6 +952,10 @@
 
   .ouinpo-badge-left,
   .ouinpo-palmares-right{
+    align-items: center;
+  }
+
+  #ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-right{
     align-items: center;
   }
 
@@ -914,6 +967,11 @@
   .ouinpo-badge-earned{
     text-align: left;
     width: 100%;
+  }
+
+  #ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-earned{
+    width: 100%;
+    text-align: left;
   }
 }
 

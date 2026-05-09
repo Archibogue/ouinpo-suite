@@ -3436,6 +3436,72 @@
   );
 }
 
+/* Palmarès : conserver la disposition prod en deux zones.
+   Ce correctif doit rester après le bloc badges complet pour gagner la cascade. */
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badges-grid{
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-item{
+  padding: 1.1rem 1.4rem;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-layout{
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 1.6rem;
+  align-items: center;
+  padding-right: 0;
+  text-align: left;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-left{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-right{
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-bigimg{
+  width: 140px;
+  height: 140px;
+  margin-top: 0;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-earned{
+  margin-top: 0.4rem;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-list{
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 800px){
+  #ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-layout{
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  #ouinpo-student-badges.ouinpo-palmares .ouinpo-palmares-right{
+    align-items: center;
+  }
+
+  #ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-earned{
+    width: 100%;
+    text-align: left;
+  }
+}
+
 /* =========================================================
    Vue globale élève — refonte douce
    Ne touche pas à l’onglet DS
