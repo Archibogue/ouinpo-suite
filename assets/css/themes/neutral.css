@@ -866,10 +866,9 @@ button[data-ouinpo-sf-open]:hover {
 }
 
 /* ==========================================================
-   Compléments neutral — modules encore historiquement habillés OuInPo
+   Compléments neutral — suivi professeur
    ========================================================== */
 
-/* Variables historiques du suivi professeur */
 .ouinpo-teacher {
   --teacher-bg: var(--ouin-neutral-bg);
   --teacher-bg-soft: var(--ouin-neutral-bg-soft);
@@ -883,14 +882,6 @@ button[data-ouinpo-sf-open]:hover {
   --teacher-warning: var(--ouin-neutral-warning);
   --teacher-danger: var(--ouin-neutral-danger);
   --teacher-button-text: #ffffff;
-  --cuivre: var(--ouin-neutral-primary);
-  --laiton: var(--ouin-neutral-primary);
-  --bord: var(--ouin-neutral-border);
-  --txt: var(--ouin-neutral-text);
-  --mut: var(--ouin-neutral-muted);
-  --panel: var(--ouin-neutral-bg);
-  --paper: var(--ouin-neutral-bg-soft);
-  --line: var(--ouin-neutral-border-soft);
   color: var(--ouin-neutral-text);
 }
 

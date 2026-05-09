@@ -339,15 +339,6 @@
   padding-bottom: 1.15rem;
 }
 
-.ouinpo-practical-subject__header::after {
-  content: "⚙︎ Dossier d’épreuve pratique";
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 /* -------- Sous-titres -------- */
 
 .ouinpo-practical-statement h3,
@@ -511,18 +502,12 @@
 .exo-badge.badge-solved {
 }
 
-/* -------- Petite touche OuInPo sur les filtres -------- */
-
-#ouinpo-practical-dynamic-filters .ouinpo-panel-title::before {
-  content: "⚙︎ ";
-}
-
 #ouinpo-practical-dynamic-filters {
   border-radius: 18px;
 }
 
 /* =========================================================
-   AJUSTEMENTS VISUELS — VERSION PLUS OUINPIENNE
+   AJUSTEMENTS VISUELS
    ========================================================= */
 
 /* -------- En-tête plus compact et plus structuré -------- */
@@ -835,18 +820,6 @@
   font-size: clamp(1.55rem, 2.3vw, 2.15rem);
   line-height: 1.12;
   letter-spacing: 0.02em;
-}
-
-.ouinpo-practical-subject__header::after {
-  content: "⚙︎ Dossier d’épreuve pratique";
-  display: inline-flex;
-  margin-top: 0.85rem;
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* -------- Métadonnées -------- */

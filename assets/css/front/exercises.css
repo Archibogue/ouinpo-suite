@@ -1,5 +1,4 @@
 ﻿/* Structure module extraite de ouinpo-suite-prod. */
-/* ==== OuInPo — Exos UI (propre & responsive) ==== */
 :root{
 }
 
@@ -124,44 +123,25 @@
 
 /* ===========================
    COMPÉTENCES + ONGLETS + DS
-   Version unifiée cuivre sombre
    =========================== */
 
 .ouinpo-competences {
 
   border-radius: 14px;
   padding: 24px 22px 30px;
-  font-family: "Garamond", "Georgia", serif;
   position: relative;
 }
 
-.ouinpo-competences::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 2px;
-}
-
 .ouinpo-competences h2 {
-  font-family: "Cinzel Decorative", "Garamond", serif;
   font-size: 1.4rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
   margin: 0 0 16px;
   padding-bottom: 6px;
-}
-
-.ouinpo-competences h2::before {
-  content: "⚙️";
-  margin-right: 8px;
 }
 
 .ouinpo-competences h3 {
   margin: 10px 0;
   font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* ===== KPI ===== */
@@ -179,23 +159,13 @@
   padding: 10px 8px 12px;
 }
 
-.ouinpo-competences .card::after {
-  content: "";
-  display: block;
-  height: 2px;
-  margin: 6px auto 0;
-  width: 60%;
-}
-
 .ouinpo-competences .kpi {
-  font-family: "Cinzel", "Georgia", serif;
   font-size: 1.8rem;
   font-weight: 700;
 }
 
 .ouinpo-competences .kpi-label {
   font-size: .75rem;
-  letter-spacing: .4px;
   margin-top: 4px;
 }
 

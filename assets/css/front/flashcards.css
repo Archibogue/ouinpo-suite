@@ -136,8 +136,7 @@
 }
 
 /* =========================================================
-   OuInPo — Flashcards
-   Habillage plus littéraire / pataphysique / doré sombre
+   Flashcards
    ========================================================= */
 
 .ouinpo-fc-app {
@@ -147,18 +146,6 @@
   padding: 1.2rem;
   margin: 1.2rem 0;
   overflow: hidden;
-}
-
-.ouinpo-fc-app::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.ouinpo-fc-app > * {
-  position: relative;
-  z-index: 1;
 }
 
 /* ---------- En-tête ---------- */
@@ -172,10 +159,6 @@
   margin: 0 0 0.35rem;
   font-size: 1.55rem;
   line-height: 1.2;
-}
-
-.ouinpo-fc-header h2::before {
-  content: "🜏 ";
 }
 
 .ouinpo-fc-subtitle {
@@ -288,14 +271,6 @@
   position: relative;
   border-radius: 18px;
   padding: 1.1rem;
-}
-
-.ouinpo-fc-card::before {
-  content: "✶";
-  position: absolute;
-  top: 0.75rem;
-  right: 0.95rem;
-  font-size: 0.9rem;
 }
 
 .ouinpo-fc-meta {
@@ -421,10 +396,6 @@
 .ouinpo-fc-login {
   padding: 1rem 1.1rem;
   border-radius: 16px;
-}
-
-.ouinpo-fc-login::before {
-  content: "🔐 ";
 }
 
 /* ---------- Responsive ---------- */
