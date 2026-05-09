@@ -26,6 +26,7 @@ config.php
 secrets.php
 auth.json
 ouinpo-suite-prod/
+CSS_additionnels/
 
 # Dossiers techniques locaux
 .git/
