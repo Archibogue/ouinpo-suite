@@ -16,7 +16,9 @@
   --bsio-bluegray: #536b78;
   --bsio-red: #b64235;
   --bsio-orange: #c78b3a;
+  --bsio-yellow: #e8c46a;
   --bsio-border: #b9aa8c;
+  --bsio-border-dark: #8f7d5b;
   --bsio-border-soft: rgba(185, 170, 140, 0.55);
   --bsio-shadow: 0 8px 22px rgba(38, 50, 56, 0.11);
   --bsio-stamp: rgba(47, 111, 78, 0.12);
@@ -1005,6 +1007,568 @@
 .ouinpo-res-notif-list a {
   color: var(--bsio-green) !important;
   text-shadow: none !important;
+}
+
+/* Contenus OuInPo generiques : blocs issus des pages/cours embarques. */
+.ouinpo-content {
+  color: var(--bsio-ink);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+}
+
+.ouinpo-content h1,
+.ouinpo-content h2,
+.ouinpo-content h3,
+.ouinpo-content h4 {
+  color: var(--bsio-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.25;
+  text-shadow: none;
+}
+
+.ouinpo-content h2 {
+  border-left: 8px solid var(--bsio-green);
+  background: linear-gradient(90deg, rgba(47, 111, 78, 0.14), transparent);
+  border-radius: 0 6px 6px 0;
+  padding: 0.45rem 0.8rem;
+}
+
+.ouinpo-content h3 {
+  color: var(--bsio-green);
+  border-bottom: 1px dashed var(--bsio-border);
+  padding-bottom: 0.25rem;
+}
+
+.ouinpo-content p,
+.ouinpo-content li,
+.ouinpo-content dd,
+.ouinpo-content dt,
+.ouinpo-content figcaption {
+  color: var(--bsio-ink);
+  text-shadow: none;
+}
+
+.ouinpo-content li::marker {
+  color: var(--bsio-red);
+}
+
+.ouinpo-content blockquote,
+.ouinpo-content .alert,
+.ouinpo-content .eldritch,
+.ouinpo-exo .alert,
+.ouinpo-exo .eldritch,
+.ouinpo-practical-subject .alert,
+.ouinpo-practical-subject .eldritch,
+#ouinpo-game .alert,
+#ouinpo-game .eldritch {
+  position: relative;
+  color: var(--bsio-ink);
+  background:
+    linear-gradient(90deg, rgba(199, 139, 58, 0.16), rgba(255, 248, 232, 0.94));
+  border: 1px solid var(--bsio-border);
+  border-left: 8px solid var(--bsio-orange);
+  border-radius: 8px;
+  box-shadow: 0 6px 14px rgba(38, 50, 56, 0.08);
+  text-shadow: none;
+}
+
+.ouinpo-content .alert,
+.ouinpo-exo .alert,
+.ouinpo-practical-subject .alert,
+#ouinpo-game .alert {
+  border-left-color: var(--bsio-bluegray);
+}
+
+.ouinpo-content blockquote::before,
+.ouinpo-content .alert::before,
+.ouinpo-content .eldritch::before,
+.ouinpo-exo .alert::before,
+.ouinpo-exo .eldritch::before,
+.ouinpo-practical-subject .alert::before,
+.ouinpo-practical-subject .eldritch::before,
+#ouinpo-game .alert::before,
+#ouinpo-game .eldritch::before {
+  content: "NOTE DE SERVICE";
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  color: var(--bsio-red);
+  border: 1px solid rgba(182, 66, 53, 0.45);
+  border-radius: 3px;
+  padding: 0.18rem 0.45rem;
+  font-family: "Courier New", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transform: rotate(-1deg);
+}
+
+.ouinpo-content .alert::before,
+.ouinpo-exo .alert::before,
+.ouinpo-practical-subject .alert::before,
+#ouinpo-game .alert::before {
+  content: "RAPPORT D'INCIDENT";
+  color: var(--bsio-bluegray);
+  border-color: rgba(83, 107, 120, 0.45);
+}
+
+.ouinpo-content .eldritch::after,
+.ouinpo-exo .eldritch::after,
+.ouinpo-practical-subject .eldritch::after,
+#ouinpo-game .eldritch::after,
+.bsio-card::after,
+.bsio-ticket::after,
+.bsio-note::after,
+.bsio-incident::after,
+.bsio-procedure::after {
+  content: "TICKET  SLA  KPI  LOG";
+  position: absolute;
+  top: 0.8rem;
+  right: 1rem;
+  color: rgba(47, 111, 78, 0.1);
+  font-family: "Courier New", Consolas, monospace;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  pointer-events: none;
+}
+
+.ouinpo-content :not(pre) > code {
+  color: var(--bsio-terminal);
+  background: rgba(31, 59, 45, 0.1);
+  border: 1px solid rgba(47, 111, 78, 0.25);
+  border-radius: 5px;
+  padding: 0.12rem 0.35rem;
+  font-family: "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+}
+
+.ouinpo-content pre,
+.ouinpo-content .wp-block-code,
+.ouinpo-content .wp-block-preformatted,
+.ouinpo-content .code-toolbar pre {
+  position: relative;
+  color: #f1e7d6;
+  background:
+    radial-gradient(circle at top right, rgba(214, 163, 98, 0.16), transparent 32%),
+    linear-gradient(135deg, #171b20 0%, #202832 48%, #111418 100%);
+  border: 1px solid rgba(214, 163, 98, 0.65);
+  border-left: 8px solid #d6a362;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 0 28px rgba(0, 0, 0, 0.35),
+    0 12px 26px rgba(38, 50, 56, 0.18);
+  overflow-x: auto;
+  padding: 2.35rem 1.35rem 1.25rem;
+}
+
+.ouinpo-content pre::before,
+.ouinpo-content .wp-block-code::before,
+.ouinpo-content .wp-block-preformatted::before,
+.ouinpo-content .code-toolbar pre::before {
+  content: "terminal-bsio.local";
+  position: absolute;
+  top: 0.55rem;
+  left: 1rem;
+  color: rgba(214, 163, 98, 0.92);
+  border: 0;
+  padding: 0;
+  font-family: "Courier New", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: none;
+}
+
+.ouinpo-content pre::after,
+.ouinpo-content .wp-block-code::after,
+.ouinpo-content .wp-block-preformatted::after,
+.ouinpo-content .code-toolbar pre::after {
+  content: "";
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  background: #5ac36a;
+  border-radius: 50%;
+  box-shadow:
+    -1rem 0 0 #f2b245,
+    -2rem 0 0 var(--bsio-red);
+}
+
+.ouinpo-content pre code,
+.ouinpo-content .wp-block-code code,
+.ouinpo-content .wp-block-preformatted code,
+.ouinpo-content .code-toolbar pre code,
+.ouinpo-content pre *,
+.ouinpo-content .wp-block-code *,
+.ouinpo-content .wp-block-preformatted *,
+.ouinpo-content .code-toolbar pre * {
+  color: #f1e7d6;
+  background: transparent;
+  border: 0;
+  text-shadow: none;
+}
+
+.ouinpo-content .token.keyword,
+.ouinpo-content .token.operator,
+.ouinpo-content .token.boolean {
+  color: #f2b245;
+}
+
+.ouinpo-content .token.string,
+.ouinpo-content .token.char {
+  color: #9be28f;
+}
+
+.ouinpo-content .token.function,
+.ouinpo-content .token.class-name {
+  color: #8fd3ff;
+}
+
+.ouinpo-content .token.comment {
+  color: #cbbba4;
+  font-style: italic;
+}
+
+.ouinpo-content .token.number {
+  color: #d6a362;
+}
+
+.ouinpo-content table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bsio-paper-soft);
+  border: 1px solid var(--bsio-border);
+  box-shadow: 0 6px 16px rgba(38, 50, 56, 0.08);
+}
+
+.ouinpo-content th {
+  color: var(--bsio-ink);
+  background: #eadfc8;
+  border: 1px solid #d5c7ab;
+  text-align: left;
+  text-shadow: none;
+}
+
+.ouinpo-content td {
+  color: var(--bsio-ink);
+  border: 1px solid #d5c7ab;
+  vertical-align: top;
+}
+
+.ouinpo-content tr:nth-child(even) td {
+  background: rgba(228, 213, 184, 0.38);
+}
+
+.ouinpo-content details {
+  color: var(--bsio-ink);
+  background: rgba(255, 248, 232, 0.72);
+  border: 1px dashed var(--bsio-border);
+  border-radius: 6px;
+}
+
+.ouinpo-content summary {
+  color: var(--bsio-green);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.ouinpo-content summary:hover {
+  color: var(--bsio-red);
+}
+
+.ouinpo-content button[class*="copy"],
+.ouinpo-content button[class*="copier"],
+.ouinpo-content .copy-button,
+.ouinpo-content .copy-code-button,
+.ouinpo-content .ouinpo-copy-button,
+.ouinpo-content .ouinpo-copy-btn,
+.ouinpo-content .ouinpo-code-copy,
+.ouinpo-content .code-toolbar .toolbar button,
+.ouinpo-content .code-toolbar .toolbar a,
+.ouinpo-content .code-toolbar .toolbar span,
+.ouinpo-exo button[class*="copy"],
+.ouinpo-exo button[class*="copier"],
+.ouinpo-practical-subject button[class*="copy"],
+.ouinpo-practical-subject button[class*="copier"] {
+  color: #fff8e8 !important;
+  background: var(--bsio-green) !important;
+  background-image: none !important;
+  border: 1px solid #8fb7a0 !important;
+  border-radius: 6px !important;
+  box-shadow:
+    0 3px 0 var(--bsio-terminal),
+    0 8px 14px rgba(0, 0, 0, 0.22) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: none !important;
+  text-transform: uppercase !important;
+}
+
+.ouinpo-content button[class*="copy"]:hover,
+.ouinpo-content button[class*="copier"]:hover,
+.ouinpo-content .copy-button:hover,
+.ouinpo-content .copy-code-button:hover,
+.ouinpo-content .ouinpo-copy-button:hover,
+.ouinpo-content .ouinpo-copy-btn:hover,
+.ouinpo-content .ouinpo-code-copy:hover,
+.ouinpo-content .code-toolbar .toolbar button:hover,
+.ouinpo-content .code-toolbar .toolbar a:hover,
+.ouinpo-content .code-toolbar .toolbar span:hover,
+.ouinpo-exo button[class*="copy"]:hover,
+.ouinpo-exo button[class*="copier"]:hover,
+.ouinpo-practical-subject button[class*="copy"]:hover,
+.ouinpo-practical-subject button[class*="copier"]:hover {
+  color: #fff8e8 !important;
+  background: var(--bsio-red) !important;
+  border-color: var(--bsio-yellow) !important;
+  transform: translateY(-1px);
+}
+
+.bsio-codebox {
+  position: relative;
+  color: #f1e7d6;
+  background:
+    radial-gradient(circle at top right, rgba(214, 163, 98, 0.16), transparent 32%),
+    linear-gradient(135deg, #171b20 0%, #202832 48%, #111418 100%);
+  border: 1px solid rgba(214, 163, 98, 0.65);
+  border-left: 8px solid #d6a362;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 0 28px rgba(0, 0, 0, 0.35),
+    0 12px 26px rgba(38, 50, 56, 0.18);
+  padding: 1.3rem 1.4rem;
+}
+
+.bsio-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.bsio-card h3,
+.bsio-ticket h3,
+.bsio-note h3,
+.bsio-incident h3,
+.bsio-procedure h3 {
+  margin-top: 0;
+}
+
+/* SegFault : chatbox B.S.I.O. */
+.ouinpo-sf-widget {
+  color: var(--bsio-ink);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(185, 170, 140, 0.11),
+      rgba(185, 170, 140, 0.11) 1px,
+      transparent 1px,
+      transparent 28px
+    ),
+    var(--bsio-paper-soft);
+  border: 1px solid var(--bsio-border);
+  box-shadow: var(--bsio-shadow);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.ouinpo-sf-widget .sf-header {
+  color: #fff8e8;
+  background:
+    linear-gradient(135deg, var(--bsio-terminal), var(--bsio-green));
+  border-bottom: 3px solid var(--bsio-orange);
+  text-shadow: none;
+  text-transform: uppercase;
+}
+
+.ouinpo-sf-widget .sf-header::after {
+  content: "HELPDESK";
+  margin-left: auto;
+  color: rgba(255, 248, 232, 0.68);
+  border: 1px solid rgba(255, 248, 232, 0.32);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+  font-family: "Courier New", Consolas, monospace;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  transform: rotate(-1deg);
+}
+
+.ouinpo-sf-widget .sf-header-buttons {
+  margin-left: 0.4rem;
+}
+
+.ouinpo-sf-widget .sf-btn {
+  color: #fff8e8;
+  background: rgba(255, 248, 232, 0.12);
+  border: 1px solid rgba(255, 248, 232, 0.35);
+  box-shadow: none;
+}
+
+.ouinpo-sf-widget .sf-btn:hover {
+  color: var(--bsio-terminal);
+  background: var(--bsio-yellow);
+  border-color: var(--bsio-yellow);
+}
+
+.ouinpo-sf-widget .sf-messages {
+  background:
+    linear-gradient(90deg, rgba(47, 111, 78, 0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(47, 111, 78, 0.05) 1px, transparent 1px),
+    rgba(255, 248, 232, 0.66);
+  background-size: 24px 24px;
+}
+
+.ouinpo-sf-widget .sf-bubble {
+  color: var(--bsio-ink);
+  border: 1px solid var(--bsio-border);
+  box-shadow: 0 4px 12px rgba(38, 50, 56, 0.08);
+  text-shadow: none;
+}
+
+.ouinpo-sf-widget .sf-bubble.user {
+  color: #fff8e8;
+  background: linear-gradient(180deg, var(--bsio-bluegray), #384d58);
+  border-color: #384d58;
+}
+
+.ouinpo-sf-widget .sf-bubble.assistant {
+  color: var(--bsio-ink);
+  background: #fffdf5;
+  border-left: 6px solid var(--bsio-green);
+}
+
+.ouinpo-sf-widget .sf-bubble.assistant.sf-thinking {
+  color: var(--bsio-muted);
+  background: rgba(255, 248, 232, 0.78);
+  border-left-color: var(--bsio-orange);
+}
+
+.ouinpo-sf-widget .sf-bubble a,
+.ouinpo-sf-widget .sf-sources a {
+  color: var(--bsio-green);
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.ouinpo-sf-widget .sf-bubble a:hover,
+.ouinpo-sf-widget .sf-sources a:hover {
+  color: var(--bsio-red);
+}
+
+.ouinpo-sf-widget .sf-sources {
+  color: var(--bsio-muted);
+  border-top: 1px dashed var(--bsio-border);
+}
+
+.ouinpo-sf-widget .sf-sources > strong {
+  color: var(--bsio-bluegray);
+}
+
+.ouinpo-sf-widget .sf-sources a {
+  background: rgba(255, 253, 245, 0.86);
+  border: 1px solid var(--bsio-border);
+}
+
+.ouinpo-sf-widget .sf-sources a strong,
+.ouinpo-sf-widget .sf-sources a small {
+  color: inherit;
+}
+
+.ouinpo-sf-widget .sf-sources a[data-type="post"]::after,
+.ouinpo-sf-widget .sf-sources a[data-type="exercise"]::after {
+  color: var(--bsio-terminal);
+  background: rgba(47, 111, 78, 0.12);
+  border: 1px solid rgba(47, 111, 78, 0.32);
+}
+
+.ouinpo-sf-widget .sf-input,
+.ouinpo-sf-widget .sf-footer {
+  background: rgba(243, 234, 216, 0.92);
+  border-top: 1px solid var(--bsio-border);
+}
+
+.ouinpo-sf-widget .sf-input textarea,
+.ouinpo-sf-widget .sf-input input {
+  color: var(--bsio-ink);
+  background: #fffdf5;
+  border: 1px solid var(--bsio-border);
+  box-shadow: inset 0 1px 3px rgba(38, 50, 56, 0.08);
+}
+
+.ouinpo-sf-widget .sf-input textarea::placeholder,
+.ouinpo-sf-widget .sf-input input::placeholder {
+  color: rgba(102, 112, 106, 0.82);
+}
+
+.ouinpo-sf-widget .sf-input textarea:focus,
+.ouinpo-sf-widget .sf-input input:focus {
+  border-color: var(--bsio-bluegray);
+  box-shadow: var(--bsio-focus);
+}
+
+.ouinpo-sf-widget .sf-input button,
+.ouinpo-sf-widget .sf-footer button {
+  color: #fff8e8 !important;
+  background: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal)) !important;
+  border: 1px solid var(--bsio-terminal) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 0 rgba(31, 59, 45, 0.8) !important;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.ouinpo-sf-widget .sf-input button:hover,
+.ouinpo-sf-widget .sf-footer button:hover {
+  background: linear-gradient(180deg, var(--bsio-red), #74251d) !important;
+  border-color: #74251d !important;
+  transform: translateY(-1px);
+}
+
+.ouinpo-sf-widget .sf-footer,
+.ouinpo-sf-widget .sf-footer * {
+  color: var(--bsio-muted);
+  text-shadow: none;
+}
+
+.ouinpo-sf-widget .sf-footer button,
+.ouinpo-sf-widget .sf-footer button * {
+  color: #fff8e8 !important;
+}
+
+.sf-toggle {
+  color: #fff8e8;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 248, 232, 0.22), transparent 38%),
+    linear-gradient(135deg, var(--bsio-green), var(--bsio-terminal));
+  border: 3px solid var(--bsio-orange);
+  box-shadow:
+    0 4px 0 rgba(31, 59, 45, 0.9),
+    0 12px 24px rgba(38, 50, 56, 0.28);
+  text-shadow: none;
+}
+
+.sf-toggle:hover {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 248, 232, 0.25), transparent 38%),
+    linear-gradient(135deg, var(--bsio-red), var(--bsio-orange));
+}
+
+#sf-chat-floating {
+  border: 1px solid var(--bsio-border);
+}
+
+#sf-chat-floating.sf-hidden {
+  box-shadow: none;
 }
 
 @media (max-width: 760px) {
