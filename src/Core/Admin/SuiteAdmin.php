@@ -785,6 +785,7 @@ final class SuiteAdmin
         self::tabs(self::mainTabs(), 'ouinpo-suite-classes');
 
         $classTabs = [
+            'niveaux'      => 'Niveaux',
             'groupes'      => 'Classes',
             'affectations' => 'Affectations',
         ];
@@ -800,7 +801,28 @@ final class SuiteAdmin
 
         self::subTabs('ouinpo-suite-classes', $classTabs, $tab);
 
-        if ($tab === 'groupes') {
+        if ($tab === 'niveaux') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (current_user_can('edit_users')) {
+                    self::quickAction(
+                        'Gerer les niveaux',
+                        'Creer, modifier ou supprimer les niveaux scolaires utilises par les classes et exercices.',
+                        admin_url('admin.php?page=ouinpo-levels')
+                    );
+                } else {
+                    ?>
+                    <div class="card ouinpo-suite-card">
+                        <h3 class="ouinpo-suite-card-title">Niveaux</h3>
+                        <p>La gestion des niveaux est reservee aux profils autorises.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'groupes') {
             ?>
             <div class="ouinpo-suite-grid">
                 <?php

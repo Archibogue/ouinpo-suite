@@ -141,11 +141,10 @@ class PracticalRoutes {
         return $wpdb->prefix . 'ouin_exo_' . $suffix;
     }
 
-    private static function sanitize_school_level($raw): string {
-        $raw = sanitize_key((string) $raw);
-        $allowed = ['seconde', 'premiere', 'terminale'];
-        return in_array($raw, $allowed, true) ? $raw : '';
-    }
+    private static function sanitize_school_level($raw): string {
+        $raw = sanitize_key((string) $raw);
+        return substr($raw, 0, 20);
+    }
 
     private static function sanitize_difficulty($raw): string {
         $raw = sanitize_key((string) $raw);
@@ -199,7 +198,9 @@ class PracticalRoutes {
             FROM {$tESL} esl
             INNER JOIN {$tLevel} sl ON sl.id = esl.school_level_id
             WHERE esl.exercise_id = %d
-            ORDER BY FIELD(sl.slug, 'seconde', 'premiere', 'terminale'), sl.label
+            ORDER BY FIELD(sl.slug, 'seconde', 'premiere', 'terminale') = 0,
+                     FIELD(sl.slug, 'seconde', 'premiere', 'terminale'),
+                     sl.label
         ", $exercise_id));
 
         $row['school_levels'] = array_values(array_unique(array_filter(array_map('strval', (array) $levels))));

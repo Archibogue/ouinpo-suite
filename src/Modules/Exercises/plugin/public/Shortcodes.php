@@ -1023,6 +1023,63 @@ if ($options['layout'] === 'table') {
 
 
 
+private static function school_level_options(): array {
+  global $wpdb;
+
+  $table = $wpdb->prefix . 'ouin_exo_school_levels';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+
+  if (!$exists) {
+    return [
+      'seconde'   => 'Seconde',
+      'premiere'  => 'Premiere',
+      'terminale' => 'Terminale',
+    ];
+  }
+
+  $rows = $wpdb->get_results("
+    SELECT slug, label
+    FROM {$table}
+    ORDER BY FIELD(slug, 'seconde', 'premiere', 'terminale') = 0,
+             FIELD(slug, 'seconde', 'premiere', 'terminale'),
+             id ASC
+  ");
+
+  $options = [];
+  foreach ((array) $rows as $row) {
+    $slug = sanitize_key((string) ($row->slug ?? ''));
+    $label = trim((string) ($row->label ?? ''));
+    if ($slug !== '' && $label !== '') {
+      $options[$slug] = $label;
+    }
+  }
+
+  return $options ?: [
+    'seconde'   => 'Seconde',
+    'premiere'  => 'Premiere',
+    'terminale' => 'Terminale',
+  ];
+}
+
+private static function school_level_slug_by_id(int $level_id): string {
+  if ($level_id <= 0) {
+    return '';
+  }
+
+  global $wpdb;
+
+  $table = $wpdb->prefix . 'ouin_exo_school_levels';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+  if (!$exists) {
+    return '';
+  }
+
+  return sanitize_key((string) $wpdb->get_var($wpdb->prepare(
+    "SELECT slug FROM {$table} WHERE id = %d LIMIT 1",
+    $level_id
+  )));
+}
+
 private static function current_student_school_level_id(): int {
 
   if (!is_user_logged_in()) {
@@ -1107,7 +1164,7 @@ private static function current_student_school_level_id(): int {
 
         AND g.year_id = %d
 
-        AND {$level_expr} IN (1,2,3)
+        AND {$level_expr} IS NOT NULL
 
       ORDER BY level_id DESC
 
@@ -1121,7 +1178,7 @@ private static function current_student_school_level_id(): int {
 
 
 
-  return in_array($level_id, [1, 2, 3], true) ? $level_id : 0;
+  return $level_id > 0 ? $level_id : 0;
 
 }
 
@@ -1129,51 +1186,25 @@ private static function current_student_school_level_id(): int {
 
 private static function exercise_level_options_for_current_user(): array {
 
-  $all = [
-
-    'seconde'   => 'Seconde',
-
-    'premiere'  => 'Première',
-
-    'terminale' => 'Terminale',
-
-  ];
-
-
-
+  $all = self::school_level_options();
   $level_id = self::current_student_school_level_id();
+  $student_slug = self::school_level_slug_by_id($level_id);
 
-
-
-  if ($level_id === 1) {
-
-    return ['seconde' => 'Seconde'];
-
+  if ($student_slug === 'seconde' && isset($all['seconde'])) {
+    return ['seconde' => $all['seconde']];
   }
 
-
-
-  if ($level_id === 2) {
-
-    return [
-
-      'seconde'  => 'Seconde',
-
-      'premiere' => 'Première',
-
-    ];
-
+  if ($student_slug === 'premiere' && isset($all['premiere'])) {
+    return array_intersect_key($all, array_flip(['seconde', 'premiere']));
   }
 
-
-
-  if ($level_id === 3) {
-
+  if ($student_slug === 'terminale' && isset($all['terminale'])) {
     return $all;
-
   }
 
-
+  if ($student_slug !== '' && isset($all[$student_slug])) {
+    return [$student_slug => $all[$student_slug]];
+  }
 
   return $all;
 
@@ -1184,18 +1215,11 @@ private static function exercise_level_options_for_current_user(): array {
 private static function default_exercise_level_for_current_user(): string {
 
   $level_id = self::current_student_school_level_id();
+  $student_slug = self::school_level_slug_by_id($level_id);
+
+  return $student_slug !== '' ? $student_slug : '';
 
 
-
-  if ($level_id === 1) return 'seconde';
-
-  if ($level_id === 2) return 'premiere';
-
-  if ($level_id === 3) return 'terminale';
-
-
-
-  return '';
 
 }
 
@@ -1598,7 +1622,8 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
 
 
-  $allowed = ['seconde', 'premiere', 'terminale'];
+  $level_options = self::school_level_options();
+  $allowed = array_keys($level_options);
 
 
 
@@ -1656,11 +1681,11 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
                 <option value="" <?php selected($lvl, ''); ?>>Tous</option>
 
-                <option value="seconde" <?php selected($lvl, 'seconde'); ?>>Seconde</option>
+                <?php foreach ($level_options as $slug => $label): ?>
 
-                <option value="premiere" <?php selected($lvl, 'premiere'); ?>>Première</option>
+                  <option value="<?php echo esc_attr($slug); ?>" <?php selected($lvl, $slug); ?>><?php echo esc_html($label); ?></option>
 
-                <option value="terminale" <?php selected($lvl, 'terminale'); ?>>Terminale</option>
+                <?php endforeach; ?>
 
               </select>
 

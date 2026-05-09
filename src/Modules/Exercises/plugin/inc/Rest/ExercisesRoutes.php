@@ -66,11 +66,10 @@ class ExercisesRoutes {
     // ------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------
-    private static function sanitize_school_level($raw) {
-        $raw = sanitize_key((string)$raw);
-        $allowed = array('seconde','premiere','terminale');
-        return in_array($raw, $allowed, true) ? $raw : '';
-    }
+    private static function sanitize_school_level($raw) {
+        $raw = sanitize_key((string)$raw);
+        return substr($raw, 0, 20);
+    }
 
     /** Liste des exercices — garde-fous (colonnes/tables optionnelles) */
     public static function index($r) {
@@ -464,7 +463,9 @@ class ExercisesRoutes {
                 FROM {$table_esl} esl
                 INNER JOIN {$table_lvl} sl ON sl.id = esl.school_level_id
                 WHERE esl.exercise_id = %d
-                ORDER BY FIELD(sl.slug, 'seconde', 'premiere', 'terminale'), sl.label
+                ORDER BY FIELD(sl.slug, 'seconde', 'premiere', 'terminale') = 0,
+                         FIELD(sl.slug, 'seconde', 'premiere', 'terminale'),
+                         sl.label
             ", $id));
         }
     

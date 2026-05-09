@@ -106,9 +106,9 @@ class Screen_Competencies {
 
     if ($group_id > 0 && $year_id > 0) {
 
-      $lvlSlug = $wpdb->get_var($wpdb->prepare(
+      $levelLabel = trim((string) $wpdb->get_var($wpdb->prepare(
 
-        "SELECT sl.slug
+        "SELECT sl.label
 
            FROM $tblGroups g
 
@@ -120,23 +120,10 @@ class Screen_Competencies {
 
         $group_id, $year_id
 
-      ));
+      )));
 
 
 
-      $levelLabel = null;
-
-      if ($lvlSlug) {
-
-        $s = strtolower($lvlSlug);
-
-        if ($s === 'seconde') $levelLabel = 'Seconde';
-
-        elseif ($s === 'premiere') $levelLabel = 'Première';
-
-        elseif ($s === 'terminale' || $s === 'term') $levelLabel = 'Terminale';
-
-      }
 
 
 

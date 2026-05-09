@@ -86,8 +86,7 @@ class CompetenciesRoutes {
 
     private static function sanitize_school_level($raw): string {
         $raw = sanitize_key((string)$raw);
-        $allowed = ['seconde','premiere','terminale'];
-        return in_array($raw, $allowed, true) ? $raw : '';
+        return substr($raw, 0, 20);
     }
 
     /**
@@ -98,21 +97,18 @@ class CompetenciesRoutes {
         global $wpdb;
         $p = $wpdb->prefix . 'ouin_exo_';
 
-        $slug = $wpdb->get_var($wpdb->prepare(
-            "SELECT sl.slug
+        $label = $wpdb->get_var($wpdb->prepare(
+            "SELECT sl.label
                FROM {$p}groups g
                JOIN {$p}school_levels sl ON sl.id = g.school_level_id
               WHERE g.id = %d AND g.year_id = %d
               LIMIT 1",
             $group_id, $year_id
         ));
-        if (!$slug) return null;
+        $label = trim((string) $label);
+
+        return $label !== '' ? $label : null;
 
-        $slug = strtolower($slug);
-        if ($slug === 'seconde')  return 'Seconde';
-        if ($slug === 'premiere') return 'Première';
-        if ($slug === 'terminale' || $slug === 'term') return 'Terminale';
-        return null;
     }
 
     public static function index(\WP_REST_Request $req) {
