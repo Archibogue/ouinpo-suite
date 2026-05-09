@@ -976,9 +976,19 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
   const resultsPanel = rootForList.closest('.ouinpo-panel--results');
 
+  const filtersSlot = document.getElementById('ouinpo-exo-dynamic-filters-slot');
 
 
-  if (shell && resultsPanel && resultsPanel.parentNode === shell) {
+
+  if (shell && filtersSlot && filtersSlot.parentNode === shell) {
+
+    while (filtersSlot.firstChild) {
+      filtersSlot.removeChild(filtersSlot.firstChild);
+    }
+
+    filtersSlot.appendChild(filtersWrap);
+
+  } else if (shell && resultsPanel && resultsPanel.parentNode === shell) {
 
     shell.insertBefore(filtersWrap, resultsPanel);
 

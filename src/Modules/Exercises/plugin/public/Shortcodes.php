@@ -1453,6 +1453,9 @@ public static function render_list($atts = array(), $content = '') {
       </script>
 
 
+      <div id="ouinpo-exo-dynamic-filters-slot"></div>
+
+
 
       <section class="ouinpo-panel ouinpo-panel--results">
 
