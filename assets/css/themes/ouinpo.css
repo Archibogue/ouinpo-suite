@@ -8584,10 +8584,6 @@
 /* Boutons et formulaires : uniquement dans les composants OuInPo. */
 .ouinpo-box button,
 .ouinpo-box input[type="submit"],
-.ouinpo-exo button,
-.ouinpo-exercises-page button,
-.ouinpo-practical-page button,
-.ouinpo-practical-subject button,
 .ouinpo-competences button,
 .ouinpo-rt button,
 .ouinpo-submissions button,
@@ -8606,10 +8602,6 @@
 
 .ouinpo-box button:hover,
 .ouinpo-box input[type="submit"]:hover,
-.ouinpo-exo button:hover,
-.ouinpo-exercises-page button:hover,
-.ouinpo-practical-page button:hover,
-.ouinpo-practical-subject button:hover,
 .ouinpo-competences button:hover,
 .ouinpo-rt button:hover,
 .ouinpo-submissions button:hover,
