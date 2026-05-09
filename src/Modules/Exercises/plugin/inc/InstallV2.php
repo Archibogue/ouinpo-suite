@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.4';
+    const DB_VERSION = '2.6.5';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -350,7 +350,7 @@ class InstallV2 {
 
             track ENUM('SNT','NSI') NOT NULL,
 
-            level ENUM('Seconde','Première','Terminale','Transversal') NOT NULL,
+            level VARCHAR(50) NOT NULL,
 
             reference_url VARCHAR(255) DEFAULT NULL,
 
@@ -864,6 +864,7 @@ class InstallV2 {
         
 
         self::seed_school_levels();
+        self::migrate_competency_level_column();
         self::migrate_competency_school_levels();
 
         self::seed_year_if_missing();
@@ -891,6 +892,33 @@ class InstallV2 {
         (2,'premiere','Première'),
 
         (3,'terminale','Terminale')");
+
+    }
+
+    private static function migrate_competency_level_column() {
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_competencies';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $column_type = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_TYPE
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'level'
+             LIMIT 1",
+            DB_NAME,
+            $table
+        ));
+
+        if ($column_type !== '' && stripos($column_type, 'enum(') === 0) {
+            $wpdb->query("ALTER TABLE {$table} MODIFY level VARCHAR(50) NOT NULL");
+        }
 
     }
 

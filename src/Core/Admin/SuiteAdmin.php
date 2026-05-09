@@ -941,14 +941,56 @@ final class SuiteAdmin
         ];
     }
 
+    private static function boSchoolLevels(): array
+    {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_school_levels';
+        $levels = [];
+        $hasTable = self::tableExists($table);
+
+        if ($hasTable) {
+            $rows = $wpdb->get_results(
+                "SELECT id, slug, label FROM {$table} ORDER BY id ASC",
+                ARRAY_A
+            ) ?: [];
+
+            foreach ($rows as $row) {
+                $id = (int) ($row['id'] ?? 0);
+                $label = trim((string) ($row['label'] ?? ''));
+
+                if ($id <= 0 || $label === '') {
+                    continue;
+                }
+
+                $levels[$id] = [
+                    'id'    => $id,
+                    'slug'  => sanitize_key((string) ($row['slug'] ?? '')),
+                    'label' => $label,
+                ];
+            }
+        }
+
+        if (!$levels && !$hasTable) {
+            $levels = [
+                1 => ['id' => 1, 'slug' => 'seconde', 'label' => 'Seconde'],
+                2 => ['id' => 2, 'slug' => 'premiere', 'label' => 'Première'],
+                3 => ['id' => 3, 'slug' => 'terminale', 'label' => 'Terminale'],
+            ];
+        }
+
+        return $levels;
+    }
+
     private static function boLevelOptions(): array
     {
-        return [
-            'Seconde'     => 'Seconde',
-            'Première'    => 'Première',
-            'Terminale'   => 'Terminale',
-            'Transversal' => 'Transversal',
-        ];
+        $options = ['transversal' => 'Transversal'];
+
+        foreach (self::boSchoolLevels() as $level) {
+            $options[(string) $level['id']] = (string) $level['label'];
+        }
+
+        return $options;
     }
 
     private static function normalizeBoTrack(string $track): string
@@ -959,25 +1001,7 @@ final class SuiteAdmin
 
     private static function normalizeBoLevel(string $level): string
     {
-        $level = trim($level);
-
-        $map = [
-            'seconde'     => 'Seconde',
-            'premiere'    => 'Première',
-            'première'    => 'Première',
-            'terminal'    => 'Terminale',
-            'terminale'   => 'Terminale',
-            'transversal' => 'Transversal',
-        ];
-
-        $key = strtolower(remove_accents($level));
-        $key = str_replace('è', 'e', $key);
-
-        if (isset($map[$key])) {
-            return $map[$key];
-        }
-
-        return array_key_exists($level, self::boLevelOptions()) ? $level : 'Première';
+        return (string) self::boLevelContext($level)['level'];
     }
 
     private static function normalizeBoDomainSlug(string $slug, string $domain = ''): string
@@ -987,19 +1011,107 @@ final class SuiteAdmin
         return $source !== '' ? $source : 'domaine';
     }
 
-    private static function boDomainKey(string $domainSlug, string $track, string $level): string
+    private static function boLevelContext($raw): array
     {
-        return self::normalizeBoDomainSlug($domainSlug) . '|' . self::normalizeBoTrack($track) . '|' . self::normalizeBoLevel($level);
+        $levels = self::boSchoolLevels();
+        $rawString = trim((string) $raw);
+        $normalized = strtolower(remove_accents($rawString));
+        $normalized = str_replace('è', 'e', $normalized);
+        $normalized = str_replace('Ã¨', 'e', $normalized);
+
+        if ($normalized === 'transversal' || $rawString === '0') {
+            return [
+                'key'            => 'transversal',
+                'level_id'       => 0,
+                'level_slug'     => 'transversal',
+                'level'          => 'Transversal',
+                'is_transversal' => true,
+            ];
+        }
+
+        if (!$levels) {
+            return [
+                'key'            => 'transversal',
+                'level_id'       => 0,
+                'level_slug'     => 'transversal',
+                'level'          => 'Transversal',
+                'is_transversal' => true,
+            ];
+        }
+
+        if (ctype_digit($rawString) && isset($levels[(int) $rawString])) {
+            $level = $levels[(int) $rawString];
+
+            return [
+                'key'            => (string) $level['id'],
+                'level_id'       => (int) $level['id'],
+                'level_slug'     => (string) $level['slug'],
+                'level'          => (string) $level['label'],
+                'is_transversal' => false,
+            ];
+        }
+
+        foreach ($levels as $level) {
+            $levelLabel = strtolower(remove_accents((string) $level['label']));
+            $levelSlug = sanitize_key((string) $level['slug']);
+
+            if ($normalized === $levelLabel || sanitize_key($rawString) === $levelSlug) {
+                return [
+                    'key'            => (string) $level['id'],
+                    'level_id'       => (int) $level['id'],
+                    'level_slug'     => (string) $level['slug'],
+                    'level'          => (string) $level['label'],
+                    'is_transversal' => false,
+                ];
+            }
+        }
+
+        if ($rawString === '' || $normalized === 'premiere') {
+            foreach ($levels as $level) {
+                $levelLabel = strtolower(remove_accents((string) $level['label']));
+
+                if ($level['slug'] === 'premiere' || $levelLabel === 'premiere') {
+                    return [
+                        'key'            => (string) $level['id'],
+                        'level_id'       => (int) $level['id'],
+                        'level_slug'     => (string) $level['slug'],
+                        'level'          => (string) $level['label'],
+                        'is_transversal' => false,
+                    ];
+                }
+            }
+        }
+
+        $first = reset($levels);
+
+        return [
+            'key'            => (string) $first['id'],
+            'level_id'       => (int) $first['id'],
+            'level_slug'     => (string) $first['slug'],
+            'level'          => (string) $first['label'],
+            'is_transversal' => false,
+        ];
+    }
+
+    private static function boDomainKey(string $domainSlug, string $track, $level): string
+    {
+        $levelContext = self::boLevelContext($level);
+
+        return self::normalizeBoDomainSlug($domainSlug) . '|' . self::normalizeBoTrack($track) . '|' . $levelContext['key'];
     }
 
     private static function parseBoDomainKey(string $domainKey): array
     {
         $parts = explode('|', $domainKey);
+        $levelContext = self::boLevelContext($parts[2] ?? '');
 
         return [
             'domain_slug' => isset($parts[0]) ? self::normalizeBoDomainSlug((string) $parts[0]) : '',
             'track'       => isset($parts[1]) ? self::normalizeBoTrack((string) $parts[1]) : 'NSI',
-            'level'       => isset($parts[2]) ? self::normalizeBoLevel((string) $parts[2]) : 'Première',
+            'level_id'    => $levelContext['level_id'],
+            'level_key'   => $levelContext['key'],
+            'level_slug'  => $levelContext['level_slug'],
+            'level'       => $levelContext['level'],
         ];
     }
 
@@ -1034,19 +1146,23 @@ final class SuiteAdmin
                 ? self::normalizeBoLevel((string) $item['level'])
                 : 'Première';
 
+            $levelContext = self::boLevelContext($item['level_id'] ?? ($item['level_key'] ?? $level));
             $active = isset($item['active']) ? (int) $item['active'] : 1;
 
             if ($domain === '' || $domainSlug === '') {
                 continue;
             }
 
-            $key = self::boDomainKey($domainSlug, $track, $level);
+            $key = self::boDomainKey($domainSlug, $track, $levelContext['key']);
 
             $domains[$key] = [
                 'domain'       => $domain,
                 'domain_slug'  => $domainSlug,
                 'track'        => $track,
-                'level'        => $level,
+                'level'        => $levelContext['level'],
+                'level_id'     => $levelContext['level_id'],
+                'level_key'    => $levelContext['key'],
+                'level_slug'   => $levelContext['level_slug'],
                 'active'       => $active === 1 ? 1 : 0,
                 'total'        => 0,
                 'active_total' => 0,
@@ -1066,46 +1182,57 @@ final class SuiteAdmin
         global $wpdb;
 
         $domains = self::storedBoDomains();
+        $tCompLevel = $wpdb->prefix . 'ouin_exo_competency_school_level';
+        $tLevels = $wpdb->prefix . 'ouin_exo_school_levels';
 
-        if (self::tableExists($tComp)) {
+        if (self::tableExists($tComp) && self::tableExists($tCompLevel) && self::tableExists($tLevels)) {
             $rows = $wpdb->get_results(
                 "SELECT
-                    domain,
-                    domain_slug,
-                    track,
-                    level,
-                    COUNT(*) AS total,
-                    SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) AS active_total
-                FROM {$tComp}
-                WHERE domain IS NOT NULL
-                  AND domain <> ''
-                  AND domain_slug IS NOT NULL
-                  AND domain_slug <> ''
-                GROUP BY domain, domain_slug, track, level
+                    c.domain,
+                    c.domain_slug,
+                    c.track,
+                    CASE WHEN c.level = 'Transversal' THEN 'transversal' ELSE CAST(sl.id AS CHAR) END AS level_key,
+                    CASE WHEN c.level = 'Transversal' THEN 0 ELSE sl.id END AS level_id,
+                    CASE WHEN c.level = 'Transversal' THEN 'Transversal' ELSE sl.label END AS level,
+                    CASE WHEN c.level = 'Transversal' THEN 'transversal' ELSE sl.slug END AS level_slug,
+                    COUNT(DISTINCT c.id) AS total,
+                    COUNT(DISTINCT CASE WHEN c.active = 1 THEN c.id END) AS active_total
+                FROM {$tComp} c
+                LEFT JOIN {$tCompLevel} csl ON csl.competency_id = c.id
+                LEFT JOIN {$tLevels} sl ON sl.id = csl.school_level_id
+                WHERE c.domain IS NOT NULL
+                  AND c.domain <> ''
+                  AND c.domain_slug IS NOT NULL
+                  AND c.domain_slug <> ''
+                  AND (c.level = 'Transversal' OR sl.id IS NOT NULL)
+                GROUP BY c.domain, c.domain_slug, c.track, level_key, level_id, level, level_slug
                 ORDER BY
-                    FIELD(track, 'SNT', 'NSI'),
+                    FIELD(c.track, 'SNT', 'NSI'),
                     FIELD(level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
-                    domain ASC"
+                    c.domain ASC"
             );
 
             foreach ($rows as $row) {
                 $domain = sanitize_text_field((string) $row->domain);
                 $domainSlug = self::normalizeBoDomainSlug((string) $row->domain_slug, $domain);
                 $track = self::normalizeBoTrack((string) $row->track);
-                $level = self::normalizeBoLevel((string) $row->level);
+                $levelContext = self::boLevelContext((string) $row->level_key);
 
                 if ($domain === '' || $domainSlug === '') {
                     continue;
                 }
 
-                $key = self::boDomainKey($domainSlug, $track, $level);
+                $key = self::boDomainKey($domainSlug, $track, $levelContext['key']);
 
                 if (!isset($domains[$key])) {
                     $domains[$key] = [
                         'domain'       => $domain,
                         'domain_slug'  => $domainSlug,
                         'track'        => $track,
-                        'level'        => $level,
+                        'level'        => (string) $row->level,
+                        'level_id'     => (int) $row->level_id,
+                        'level_key'    => $levelContext['key'],
+                        'level_slug'   => (string) $row->level_slug,
                         'active'       => ((int) $row->active_total > 0) ? 1 : 0,
                         'total'        => (int) $row->total,
                         'active_total' => (int) $row->active_total,
@@ -1114,7 +1241,10 @@ final class SuiteAdmin
                     $domains[$key]['domain'] = $domain;
                     $domains[$key]['domain_slug'] = $domainSlug;
                     $domains[$key]['track'] = $track;
-                    $domains[$key]['level'] = $level;
+                    $domains[$key]['level'] = (string) $row->level;
+                    $domains[$key]['level_id'] = (int) $row->level_id;
+                    $domains[$key]['level_key'] = $levelContext['key'];
+                    $domains[$key]['level_slug'] = (string) $row->level_slug;
                     $domains[$key]['total'] = (int) $row->total;
                     $domains[$key]['active_total'] = (int) $row->active_total;
                 }
@@ -1129,12 +1259,128 @@ final class SuiteAdmin
 
         uasort($domains, static function ($a, $b) {
             return strcasecmp(
-                ($a['track'] ?? '') . ' ' . ($a['level'] ?? '') . ' ' . ($a['domain'] ?? ''),
-                ($b['track'] ?? '') . ' ' . ($b['level'] ?? '') . ' ' . ($b['domain'] ?? '')
+                ($a['track'] ?? '') . ' ' . ($a['level_key'] ?? '') . ' ' . ($a['domain'] ?? ''),
+                ($b['track'] ?? '') . ' ' . ($b['level_key'] ?? '') . ' ' . ($b['domain'] ?? '')
             );
         });
 
         return $domains;
+    }
+
+    private static function referentielLevelIdsForKey($levelKey): array
+    {
+        $levelContext = self::boLevelContext($levelKey);
+
+        if (!empty($levelContext['is_transversal'])) {
+            return array_map('intval', array_keys(self::boSchoolLevels()));
+        }
+
+        return $levelContext['level_id'] > 0 ? [(int) $levelContext['level_id']] : [];
+    }
+
+    private static function syncReferentielCompetencyLevels(int $competencyId, $levelKey): void
+    {
+        if ($competencyId <= 0) {
+            return;
+        }
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_competency_school_level';
+        if (!self::tableExists($table)) {
+            return;
+        }
+
+        $wpdb->delete($table, ['competency_id' => $competencyId], ['%d']);
+
+        foreach (self::referentielLevelIdsForKey($levelKey) as $levelId) {
+            $wpdb->insert(
+                $table,
+                [
+                    'competency_id'   => $competencyId,
+                    'school_level_id' => $levelId,
+                ],
+                ['%d', '%d']
+            );
+        }
+    }
+
+    private static function referentielLevelKeyForCompetency(int $competencyId, string $legacyLevel = ''): string
+    {
+        if ($legacyLevel === 'Transversal') {
+            return 'transversal';
+        }
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_competency_school_level';
+        if (self::tableExists($table)) {
+            $levelId = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT school_level_id
+                   FROM {$table}
+                  WHERE competency_id = %d
+                  ORDER BY school_level_id ASC
+                  LIMIT 1",
+                $competencyId
+            ));
+
+            if ($levelId > 0) {
+                return (string) $levelId;
+            }
+        }
+
+        return (string) self::boLevelContext($legacyLevel)['key'];
+    }
+
+    private static function referentielCompetencyIdsForDomain(string $tComp, array $domain): array
+    {
+        global $wpdb;
+
+        $domainSlug = self::normalizeBoDomainSlug((string) ($domain['domain_slug'] ?? ''));
+        $track = self::normalizeBoTrack((string) ($domain['track'] ?? 'NSI'));
+        $levelContext = self::boLevelContext($domain['level_key'] ?? ($domain['level_id'] ?? ($domain['level'] ?? '')));
+
+        if ($domainSlug === '' || !self::tableExists($tComp)) {
+            return [];
+        }
+
+        if (!empty($levelContext['is_transversal'])) {
+            return array_map('intval', (array) $wpdb->get_col($wpdb->prepare(
+                "SELECT id
+                   FROM {$tComp}
+                  WHERE domain_slug = %s
+                    AND track = %s
+                    AND level = 'Transversal'",
+                $domainSlug,
+                $track
+            )));
+        }
+
+        $table = $wpdb->prefix . 'ouin_exo_competency_school_level';
+        if (self::tableExists($table)) {
+            return array_map('intval', (array) $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT c.id
+                   FROM {$tComp} c
+                   JOIN {$table} csl ON csl.competency_id = c.id
+                  WHERE c.domain_slug = %s
+                    AND c.track = %s
+                    AND csl.school_level_id = %d",
+                $domainSlug,
+                $track,
+                (int) $levelContext['level_id']
+            )));
+        }
+
+        return array_map('intval', (array) $wpdb->get_col($wpdb->prepare(
+            "SELECT id
+               FROM {$tComp}
+              WHERE domain_slug = %s
+                AND track = %s
+                AND level = %s",
+            $domainSlug,
+            $track,
+            (string) $levelContext['level']
+        )));
     }
 
     public static function renderReferentielHub(): void
@@ -1204,6 +1450,8 @@ final class SuiteAdmin
         $tComp = $wpdb->prefix . 'ouin_exo_competencies';
         $tPost = $wpdb->prefix . 'ouin_exo_post_competency';
         $tExo  = $wpdb->prefix . 'ouin_exo_exercise_competency';
+        $tCompLevel = $wpdb->prefix . 'ouin_exo_competency_school_level';
+        $tLevels = $wpdb->prefix . 'ouin_exo_school_levels';
 
         self::handleReferentielBoActions($tComp);
         settings_errors('ouinpo_ref_bo');
@@ -1218,11 +1466,13 @@ final class SuiteAdmin
             return;
         }
 
+        $hasDynamicLevelTables = self::tableExists($tCompLevel) && self::tableExists($tLevels);
+
         $trackRaw = isset($_GET['ref_track']) ? sanitize_text_field((string) $_GET['ref_track']) : '';
         $levelRaw = isset($_GET['ref_level']) ? sanitize_text_field((string) $_GET['ref_level']) : '';
 
         $track = $trackRaw !== '' ? self::normalizeBoTrack($trackRaw) : '';
-        $level = $levelRaw !== '' ? self::normalizeBoLevel($levelRaw) : '';
+        $level = $levelRaw !== '' ? (string) self::boLevelContext($levelRaw)['key'] : '';
         $search = isset($_GET['ref_s']) ? sanitize_text_field((string) $_GET['ref_s']) : '';
 
         if ($track !== '' && !isset(self::boTrackOptions()[$track])) {
@@ -1242,8 +1492,22 @@ final class SuiteAdmin
         }
 
         if ($level !== '') {
-            $where[] = 'c.level = %s';
-            $args[] = $level;
+            $levelContext = self::boLevelContext($level);
+
+            if (!empty($levelContext['is_transversal'])) {
+                $where[] = "c.level = 'Transversal'";
+            } elseif ($hasDynamicLevelTables) {
+                $where[] = "EXISTS (
+                    SELECT 1
+                      FROM {$tCompLevel} csl_filter
+                     WHERE csl_filter.competency_id = c.id
+                       AND csl_filter.school_level_id = %d
+                )";
+                $args[] = (int) $levelContext['level_id'];
+            } else {
+                $where[] = 'c.level = %s';
+                $args[] = (string) $levelContext['level'];
+            }
         }
 
         if ($search !== '') {
@@ -1254,6 +1518,18 @@ final class SuiteAdmin
             $args[] = $like;
         }
 
+        $levelLabelsSql = $hasDynamicLevelTables
+            ? "CASE
+                    WHEN c.level = 'Transversal' THEN 'Transversal'
+                    ELSE (
+                        SELECT GROUP_CONCAT(DISTINCT sl2.label ORDER BY sl2.id SEPARATOR ', ')
+                        FROM {$tCompLevel} csl2
+                        JOIN {$tLevels} sl2 ON sl2.id = csl2.school_level_id
+                        WHERE csl2.competency_id = c.id
+                    )
+                END AS level_labels"
+            : 'c.level AS level_labels';
+
         $sql = "
             SELECT
                 c.id,
@@ -1261,6 +1537,7 @@ final class SuiteAdmin
                 c.domain_slug,
                 c.track,
                 c.level,
+                {$levelLabelsSql},
                 c.competency,
                 c.slug,
                 c.active,
@@ -1306,7 +1583,7 @@ final class SuiteAdmin
             $selectedDomainKey = self::boDomainKey(
                 (string) $editRow->domain_slug,
                 (string) $editRow->track,
-                (string) $editRow->level
+                self::referentielLevelKeyForCompetency((int) $editRow->id, (string) $editRow->level)
             );
         }
         ?>
@@ -1342,6 +1619,7 @@ final class SuiteAdmin
                                                     data-domain-slug="<?php echo esc_attr($domainItem['domain_slug']); ?>"
                                                     data-track="<?php echo esc_attr($domainItem['track']); ?>"
                                                     data-level="<?php echo esc_attr($domainItem['level']); ?>"
+                                                    data-level-id="<?php echo esc_attr($domainItem['level_key'] ?? $domainItem['level_id'] ?? ''); ?>"
                                                     <?php selected($selectedDomainKey, $key); ?>
                                                 >
                                                     <?php echo esc_html($domainItem['domain'] . ' — ' . $domainItem['track'] . ' / ' . $domainItem['level']); ?>
@@ -1355,6 +1633,7 @@ final class SuiteAdmin
                                     <input id="bo_domain" type="hidden" name="domain" value="<?php echo esc_attr($editRow->domain ?? ''); ?>">
                                     <input id="bo_domain_slug" type="hidden" name="domain_slug" value="<?php echo esc_attr($editRow->domain_slug ?? ''); ?>">
                                     <input id="bo_track" type="hidden" name="track" value="<?php echo esc_attr($editRow->track ?? 'NSI'); ?>">
+                                    <input id="bo_level_id" type="hidden" name="level_id" value="<?php echo esc_attr($editRow ? self::referentielLevelKeyForCompetency((int) $editRow->id, (string) $editRow->level) : ''); ?>">
                                     <input id="bo_level" type="hidden" name="level" value="<?php echo esc_attr($editRow->level ?? 'Première'); ?>">
                                 </td>
                             </tr>
@@ -1456,7 +1735,7 @@ final class SuiteAdmin
                                     <span class="ouinpo-suite-muted"><?php echo esc_html((string) $row->slug); ?></span>
                                 </td>
                                 <td><?php echo esc_html($row->track); ?></td>
-                                <td><?php echo esc_html($row->level); ?></td>
+                                <td><?php echo esc_html($row->level_labels ?: $row->level); ?></td>
                                 <td><?php echo esc_html($row->competency); ?></td>
                                 <td><?php echo number_format_i18n((int) $row->course_count); ?></td>
                                 <td><?php echo number_format_i18n((int) $row->exercise_count); ?></td>
@@ -1518,7 +1797,6 @@ final class SuiteAdmin
         settings_errors('ouinpo_ref_bo');
 
         $domains = self::referentielBoDomains($tComp, false);
-        $levelOptions = self::boLevelOptions();
 
         $editDomainKey = isset($_GET['edit_domain_key'])
             ? sanitize_text_field((string) wp_unslash($_GET['edit_domain_key']))
@@ -1529,6 +1807,11 @@ final class SuiteAdmin
         if ($editDomainKey !== '' && current_user_can('manage_options') && isset($domains[$editDomainKey])) {
             $editDomain = $domains[$editDomainKey];
         }
+
+        $defaultDomainLevelKey = (string) self::boLevelContext('Première')['key'];
+        $editDomainLevelKey = $editDomain
+            ? (string) self::boLevelContext($editDomain['level_key'] ?? ($editDomain['level_id'] ?? ($editDomain['level'] ?? $defaultDomainLevelKey)))['key']
+            : $defaultDomainLevelKey;
         ?>
 
         <?php if (current_user_can('manage_options')): ?>
@@ -1578,9 +1861,9 @@ final class SuiteAdmin
                             <tr>
                                 <th><label for="bo_domain_level">Niveau</label></th>
                                 <td>
-                                    <select id="bo_domain_level" name="level">
+                                    <select id="bo_domain_level" name="level_id">
                                         <?php foreach (self::boLevelOptions() as $value => $label): ?>
-                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($editDomain['level'] ?? 'Première', $value); ?>>
+                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($editDomainLevelKey, $value); ?>>
                                                 <?php echo esc_html($label); ?>
                                             </option>
                                         <?php endforeach; ?>
@@ -1634,7 +1917,7 @@ final class SuiteAdmin
                                 <td><?php echo esc_html($row['domain']); ?></td>
                                 <td><code><?php echo esc_html($row['domain_slug']); ?></code></td>
                                 <td><?php echo esc_html($row['track']); ?></td>
-                                <td><?php echo esc_html($levelOptions[$row['level']] ?? $row['level']); ?></td>
+                                <td><?php echo esc_html($row['level']); ?></td>
                                 <td><?php echo number_format_i18n($total); ?></td>
                                 <td><?php echo number_format_i18n($activeTotal); ?></td>
                                 <td><?php echo $isActive ? 'Actif' : 'Masqué'; ?></td>
@@ -1721,6 +2004,9 @@ final class SuiteAdmin
                 ? self::normalizeBoLevel((string) wp_unslash($_POST['level']))
                 : 'Première';
 
+            $levelContext = self::boLevelContext($_POST['level_id'] ?? ($_POST['level'] ?? $level));
+            $level = (string) $levelContext['level'];
+
             $competency = isset($_POST['competency'])
                 ? wp_kses_post((string) wp_unslash($_POST['competency']))
                 : '';
@@ -1736,7 +2022,7 @@ final class SuiteAdmin
                 return;
             }
 
-            $domainKey = self::boDomainKey($domainSlug, $track, $level);
+            $domainKey = self::boDomainKey($domainSlug, $track, $levelContext['key']);
             $domains = self::referentielBoDomains($tComp, true);
 
             if (!isset($domains[$domainKey])) {
@@ -1776,10 +2062,20 @@ final class SuiteAdmin
             $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s'];
 
             if ($id > 0) {
-                $wpdb->update($tComp, $data, ['id' => $id], $formats, ['%d']);
+                $updated = $wpdb->update($tComp, $data, ['id' => $id], $formats, ['%d']);
+                if ($updated === false) {
+                    add_settings_error('ouinpo_ref_bo', 'bo_update_failed', 'Impossible de modifier cette competence BO.', 'error');
+                    return;
+                }
+                self::syncReferentielCompetencyLevels($id, $levelContext['key']);
                 add_settings_error('ouinpo_ref_bo', 'bo_updated', 'Compétence BO modifiée.', 'updated');
             } else {
-                $wpdb->insert($tComp, $data, $formats);
+                $inserted = $wpdb->insert($tComp, $data, $formats);
+                if ($inserted === false || (int) $wpdb->insert_id <= 0) {
+                    add_settings_error('ouinpo_ref_bo', 'bo_insert_failed', 'Impossible d ajouter cette competence BO.', 'error');
+                    return;
+                }
+                self::syncReferentielCompetencyLevels((int) $wpdb->insert_id, $levelContext['key']);
                 add_settings_error('ouinpo_ref_bo', 'bo_inserted', 'Compétence BO ajoutée.', 'updated');
             }
 
@@ -1854,9 +2150,8 @@ final class SuiteAdmin
                 ? self::normalizeBoTrack((string) wp_unslash($_POST['track']))
                 : 'NSI';
 
-            $level = isset($_POST['level'])
-                ? self::normalizeBoLevel((string) wp_unslash($_POST['level']))
-                : 'Première';
+            $levelContext = self::boLevelContext($_POST['level_id'] ?? ($_POST['level'] ?? 'Première'));
+            $level = (string) $levelContext['level'];
 
             if ($domain === '' || $domainSlug === '') {
                 add_settings_error('ouinpo_ref_bo', 'domain_missing', 'Nom de domaine obligatoire.', 'error');
@@ -1864,48 +2159,39 @@ final class SuiteAdmin
             }
 
             $domains = self::storedBoDomains();
-            $newKey = self::boDomainKey($domainSlug, $track, $level);
+            $newKey = self::boDomainKey($domainSlug, $track, $levelContext['key']);
+            $allDomains = self::referentielBoDomains($tComp, false);
+
+            if ($oldKey === '' && isset($allDomains[$newKey])) {
+                add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe déjà.', 'error');
+                return;
+            }
 
             if ($oldKey !== '' && $oldKey !== $newKey) {
-                $old = self::parseBoDomainKey($oldKey);
+                if (isset($allDomains[$newKey])) {
+                    add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe déjà.', 'error');
+                    return;
+                }
 
                 if (self::tableExists($tComp)) {
-                    $conflict = (int) $wpdb->get_var($wpdb->prepare(
-                        "SELECT COUNT(*)
-                         FROM {$tComp}
-                         WHERE domain_slug = %s
-                           AND track = %s
-                           AND level = %s
-                           AND NOT (domain_slug = %s AND track = %s AND level = %s)",
-                        $domainSlug,
-                        $track,
-                        $level,
-                        $old['domain_slug'],
-                        $old['track'],
-                        $old['level']
-                    ));
+                    $old = self::parseBoDomainKey($oldKey);
 
-                    if ($conflict > 0) {
-                        add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe déjà.', 'error');
-                        return;
+                    foreach (self::referentielCompetencyIdsForDomain($tComp, $old) as $competencyId) {
+                        $wpdb->update(
+                            $tComp,
+                            [
+                                'domain'      => $domain,
+                                'domain_slug' => $domainSlug,
+                                'track'       => $track,
+                                'level'       => $level,
+                            ],
+                            ['id' => $competencyId],
+                            ['%s', '%s', '%s', '%s'],
+                            ['%d']
+                        );
+
+                        self::syncReferentielCompetencyLevels((int) $competencyId, $levelContext['key']);
                     }
-
-                    $wpdb->update(
-                        $tComp,
-                        [
-                            'domain'      => $domain,
-                            'domain_slug' => $domainSlug,
-                            'track'       => $track,
-                            'level'       => $level,
-                        ],
-                        [
-                            'domain_slug' => $old['domain_slug'],
-                            'track'       => $old['track'],
-                            'level'       => $old['level'],
-                        ],
-                        ['%s', '%s', '%s', '%s'],
-                        ['%s', '%s', '%s']
-                    );
                 }
 
                 if (isset($domains[$oldKey])) {
@@ -1916,24 +2202,32 @@ final class SuiteAdmin
             if ($oldKey !== '' && $oldKey === $newKey && self::tableExists($tComp)) {
                 $old = self::parseBoDomainKey($oldKey);
 
-                $wpdb->update(
-                    $tComp,
-                    ['domain' => $domain],
-                    [
-                        'domain_slug' => $old['domain_slug'],
-                        'track'       => $old['track'],
-                        'level'       => $old['level'],
-                    ],
-                    ['%s'],
-                    ['%s', '%s', '%s']
-                );
+                foreach (self::referentielCompetencyIdsForDomain($tComp, $old) as $competencyId) {
+                    $wpdb->update(
+                        $tComp,
+                        [
+                            'domain'      => $domain,
+                            'domain_slug' => $domainSlug,
+                            'track'       => $track,
+                            'level'       => $level,
+                        ],
+                        ['id' => $competencyId],
+                        ['%s', '%s', '%s', '%s'],
+                        ['%d']
+                    );
+
+                    self::syncReferentielCompetencyLevels((int) $competencyId, $levelContext['key']);
+                }
             }
 
             $domains[$newKey] = [
                 'domain'       => $domain,
                 'domain_slug'  => $domainSlug,
                 'track'        => $track,
-                'level'        => $level,
+                'level'        => $levelContext['level'],
+                'level_id'     => $levelContext['level_id'],
+                'level_key'    => $levelContext['key'],
+                'level_slug'   => $levelContext['level_slug'],
                 'active'       => 1,
                 'total'        => 0,
                 'active_total' => 0,
@@ -1966,6 +2260,9 @@ final class SuiteAdmin
                     'domain_slug'  => (string) $allDomains[$domainKey]['domain_slug'],
                     'track'        => (string) $allDomains[$domainKey]['track'],
                     'level'        => (string) $allDomains[$domainKey]['level'],
+                    'level_id'     => (int) ($allDomains[$domainKey]['level_id'] ?? 0),
+                    'level_key'    => (string) ($allDomains[$domainKey]['level_key'] ?? ''),
+                    'level_slug'   => (string) ($allDomains[$domainKey]['level_slug'] ?? ''),
                     'active'       => $active,
                     'total'        => 0,
                     'active_total' => 0,
@@ -2007,6 +2304,9 @@ final class SuiteAdmin
                         'domain_slug'  => (string) $allDomains[$domainKey]['domain_slug'],
                         'track'        => (string) $allDomains[$domainKey]['track'],
                         'level'        => (string) $allDomains[$domainKey]['level'],
+                        'level_id'     => (int) ($allDomains[$domainKey]['level_id'] ?? 0),
+                        'level_key'    => (string) ($allDomains[$domainKey]['level_key'] ?? ''),
+                        'level_slug'   => (string) ($allDomains[$domainKey]['level_slug'] ?? ''),
                         'active'       => 0,
                         'total'        => 0,
                         'active_total' => 0,
