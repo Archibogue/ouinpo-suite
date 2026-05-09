@@ -1384,6 +1384,66 @@ public static function render_list($atts = array(), $content = '') {
     ? '<div class="ouinpo-loading">Chargement des exercices…</div>'
     : self::exercise_list_fallback_html($page, $lvl, $exam_only);
 
+  if (!$is_logged) {
+    wp_add_inline_script(
+      'ouinpo-exo-js',
+      <<<'JS'
+(function(){
+  var attempts = 0;
+  var maxAttempts = 80;
+  var observer = null;
+  var timer = null;
+
+  function moveExerciseFilters() {
+    var slot = document.getElementById('ouinpo-exo-dynamic-filters-slot');
+    var filters = document.getElementById('ouinpo-exo-dynamic-filters');
+    var shell = slot ? slot.closest('.ouinpo-exercises-shell') : null;
+
+    if (!slot || !filters || !shell || filters.parentNode === slot) {
+      return !!(slot && filters && filters.parentNode === slot);
+    }
+
+    if (filters.closest('.ouinpo-exercises-shell') === shell) {
+      slot.appendChild(filters);
+      return true;
+    }
+
+    return false;
+  }
+
+  function tick() {
+    attempts += 1;
+
+    if (moveExerciseFilters() || attempts >= maxAttempts) {
+      if (timer) {
+        window.clearInterval(timer);
+        timer = null;
+      }
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    }
+  }
+
+  if (window.MutationObserver) {
+    observer = new MutationObserver(tick);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  timer = window.setInterval(tick, 150);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tick);
+  } else {
+    tick();
+  }
+})();
+JS,
+      'after'
+    );
+  }
+
 
 
   ob_start();
