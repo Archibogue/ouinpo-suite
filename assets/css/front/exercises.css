@@ -1,407 +1,170 @@
-/* ==========================================================
-   OuInPo Suite — Exercices / progression / badges
-   CSS module fonctionnel
-   Ne contient pas l’identité graphique OuInPo.
-   ========================================================== */
-
-/* ===========================
-   EXERCICE — détail
-   =========================== */
-
-.ouinpo-exo {
-  padding: 1.25rem;
-  border-radius: 14px;
+﻿/* Structure module extraite de ouinpo-suite-prod. */
+/* ==== OuInPo — Exos UI (propre & responsive) ==== */
+:root{
 }
 
-.ouinpo-exo .exo-statement {
+/* ===========================
+   EXERCICES (single)
+   =========================== */
+
+.ouinpo-exo{
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+/* ---- Énoncé ---- */
+.ouinpo-exo .exo-statement{
   font-size: 1.1rem;
   line-height: 1.7;
   margin-bottom: 1rem;
 }
-
-.ouinpo-exo .exo-statement p {
-  margin: 0.5rem 0;
+.ouinpo-exo .exo-statement p{ margin: 0.5rem 0; }
+.ouinpo-exo .exo-statement code{
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-.ouinpo-exo .exo-meta {
-  margin: 0 0 1rem 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.ouinpo-exo .exo-meta .ouinpo-badge {
+/* ---- Boutons génériques ---- */
+.ouinpo-exo button{
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
-  white-space: normal;
-  line-height: 1.25;
-  text-align: left;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.ouinpo-exo .exo-answer-box,
-.ouinpo-exo .exo-solutions,
-.ouinpo-exo .exo-hints,
-.ouinpo-exo .exo-status-line,
-.ouinpo-exo .exo-actions,
-.ouin-exo-block {
-  margin: 1rem 0;
-  padding: 1rem;
-  border-radius: 14px;
-}
-
-.ouinpo-exo .exo-answer-box h4,
-.ouinpo-exo .exo-solutions h4,
-.ouin-exo-block h5 {
-  margin-top: 0;
-}
-
-.ouinpo-exo textarea.exo-answer-text {
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 220px;
-  resize: vertical;
-  border-radius: 12px;
-  padding: 0.9rem 1rem;
-  font: inherit;
-  line-height: 1.45;
-}
-
-.ouinpo-exo .exo-answer-actions,
-.ouinpo-exo .exo-actions,
-.exo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-}
-
-.ouinpo-exo .exo-answer-actions--submit {
-  margin-top: 0.75em;
-  gap: 0.5em;
-}
-
-.ouinpo-exo .exo-insert-code {
-  float: right;
-}
-
-.ouinpo-exo .exo-answer-help {
-  margin: 0.5em 0 0;
-}
-
-.ouinpo-exo .exo-ai-feedback,
-.ouinpo-exo .exo-reveal {
-  margin-top: 1em;
-}
-
-.ouinpo-exo .exo-hints {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.ouinpo-exo .solutions-list {
-  list-style: none;
-  margin: 0.75rem 0 0 0;
-  padding: 0;
-  display: grid;
-  gap: 0.6rem;
-}
-
-.ouinpo-exo .solutions-list li {
-  margin: 0;
-  padding: 0;
-}
-
-.ouinpo-exo .solutions-list button {
-  width: 100%;
-  text-align: left;
-}
-
-.ouin-exo-block-content p {
-  margin: 0.5rem 0;
-}
-
-/* ===========================
-   BOUTONS
-   =========================== */
-
-.ouinpo-exo button,
-.ouin-exo-block button,
-.btn-copper {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   gap: .5ch;
-  padding: .55rem .9rem;
   font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  padding: .55rem .9rem;
+  border-radius: 10px;
   cursor: pointer;
+  transition: transform .05s ease, filter .2s ease, box-shadow .2s ease;
+}
+.ouinpo-exo button:active{ transform: translateY(1px); }
+.ouinpo-exo button:disabled{
 }
 
-.ouinpo-exo button:disabled,
-.ouin-exo-block button:disabled,
-.btn-copper:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+/* ---- Indices ---- */
+.ouinpo-exo .exo-hints{ display:flex; flex-wrap:wrap; gap:.6rem; margin: .6rem 0 1.2rem; }
+
+/* ---- “Corrigés possibles” ---- */
+.ouinpo-exo .exo-solutions h4{
+  margin: .6rem 0 .4rem;
+  font-size: 1.15rem;
+  letter-spacing:.02em;
+}
+.ouinpo-exo .solutions-list{
+  list-style: none; padding: 0; margin: 0 0 1rem;
+  display: grid; gap: .5rem;
+}
+.ouinpo-exo .solutions-list li{ display:flex; align-items:center; gap:.6rem; }
+
+/* Badge “Officiel” en suffixe (si tu l’utilises côté HTML) */
+.ouinpo-exo .solutions-list button[data-official="1"]::after{
+  content: "★ Officiel";
+  margin-left: .6ch;
+  font-size: .85em; font-weight: 800;
+}
+
+/* ---- Blocks (indices / corrigés révélés) ---- */
+.ouin-exo-block{
+  margin: .9rem 0;
+  padding: .9rem;
+  border-radius: 12px;
+}
+.ouin-exo-block > h5{
+  margin: 0 0 .45rem;
+  font-size: 1.05rem; letter-spacing:.02em;
+}
+.ouin-exo-block .ouin-exo-block-content p{ margin: .5rem 0; }
+
+/* ---- Actions & statut ---- */
+.ouinpo-exo .exo-actions{
+  display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;
+  margin-top: .6rem;
+}
+.ouinpo-exo .exo-actions .mark-attempt{
+}
+.ouinpo-exo .exo-actions .mark-solved{
+}
+.ouinpo-exo .exo-badge{
+  font-weight: 800; letter-spacing:.02em;
+  margin-left: .25rem;
+  padding: .25rem .55rem;
+  border-radius: 999px;
+}
+.ouinpo-exo .exo-badge.badge-attempt{
+}
+.ouinpo-exo .exo-badge.badge-solved{
+}
+
+/* ---- Petits raffinements ---- */
+.ouinpo-exo a{ text-decoration: none; }
+.ouinpo-exo a:hover{ text-decoration: underline; }
+
+/* ---- Responsive ---- */
+@media (max-width: 680px){
+  .ouinpo-exo{ padding: .9rem; }
+  .ouinpo-exo button{ width: 100%; justify-content: center; }
+  .ouinpo-exo .exo-actions{ gap:.6rem; }
 }
 
 /* ===========================
-   LISTE DES EXERCICES
+   EXO LIST (legacy #ouinpo-exo-list)
    =========================== */
 
-.ouinpo-exercises-page {
-  width: 100%;
-}
-
-.ouinpo-exercises-shell {
-  display: grid;
-  gap: 1.4rem;
-  margin: 1.25rem 0 2rem;
-}
-
-.ouinpo-panel,
-.copper-panel,
-.ouinpo-exo-domain-block {
-  border-radius: 16px;
-}
-
-.ouinpo-panel {
-  padding: 1.2rem 1.25rem;
-}
-
-.ouinpo-panel-title,
-.ouinpo-exo-domain-title {
-  margin: 0 0 0.9rem 0;
-  font-size: 1.5rem;
-  line-height: 1.2;
-}
-
-.ouinpo-panel-intro {
-  margin: -0.2rem 0 0.8rem 0;
-}
-
-.ouinpo-exo-domain-block {
-  padding: 1rem 1.1rem;
-  margin: 0 0 1rem 0;
-}
-
-.ouinpo-exo-domain-block:last-child {
-  margin-bottom: 0;
-}
-
-.ouinpo-exo-domain-title {
-  font-size: 1.25rem;
-  margin-bottom: 0.8rem;
-}
-
-.ouinpo-exercises-list,
-.ouinpo-exo-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.7rem;
-}
-
-.ouinpo-exercise-item,
-.ouin-exo-li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.9rem;
-  align-items: center;
-  padding: 0.92rem 1rem;
-  border-radius: 14px;
-}
-
-.ouinpo-exercise-main,
-.ouin-exo-main {
-  min-width: 0;
-}
-
-.ouinpo-exercise-link,
-.ouin-exo-link {
-  display: inline-block;
-  font-weight: 700;
-  font-size: 1.08rem;
-  line-height: 1.3;
-  text-decoration: none;
-}
-
-.ouinpo-exercise-link:hover,
-.ouin-exo-link:hover {
-  text-decoration: underline;
-}
-
-.ouinpo-exercise-sub {
-  margin-top: 0.3rem;
-  font-size: 0.92rem;
-  line-height: 1.35;
-}
-
-.ouin-exo-level {
-  display: none;
-}
-
-/* Ancienne liste */
 #ouinpo-exo-list li {
   position: relative;
-  padding-right: 7.5rem;
+  padding-right: 7.5rem; /* place pour le badge */
 }
 
-#ouinpo-exo-list .exo-badge {
-  position: absolute;
-  right: .5rem;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* ===========================
-   FILTRES
-   =========================== */
-
-.ouinpo-exo-filters {
-  margin-bottom: 0;
-}
-
-.ouinpo-filters-grid,
-.ouinpo-exo-filters .ouinpo-filters-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 14px;
-  align-items: end;
-}
-
-.ouinpo-filters-grid--single {
-  grid-template-columns: 1fr;
-}
-
-.ouinpo-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.ouinpo-field label,
-.ouinpo-exo-filters .ouinpo-field label {
-  display: block;
-  margin: 0 0 0.35rem;
-  font-weight: 700;
-}
-
-.ouinpo-field select,
-.ouinpo-field input,
-.ouinpo-select,
-.ouinpo-exo-filters select,
-.ouinpo-exo-toolbar select {
-  width: 100%;
-  min-height: 42px;
-  box-sizing: border-box;
-  border-radius: 10px;
-  padding: 0.55rem 0.8rem;
-  font: inherit;
-}
-
-.ouinpo-exo-toolbar {
-  margin: 0 0 1rem 0;
+#ouinpo-exo-list .exo-badge{
+  position: absolute; right: .5rem; top: 50%; transform: translateY(-50%);
+  font-size: .72rem; font-weight: 800; letter-spacing: .02em;
+  padding: .18rem .45rem; border-radius: 999px;
 }
 
 /* ===========================
-   BADGES / CHIPS
-   =========================== */
-
-.ouinpo-exercises-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin: 0 0 1rem 0;
-}
-
-.ouinpo-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 34px;
-  padding: 0.28rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.88rem;
-  line-height: 1.2;
-}
-
-.ouinpo-badges,
-.ouin-exo-status {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.ouinpo-badge,
-.exo-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 0.44rem 0.78rem;
-  border-radius: 999px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.ouinpo-badge--competency {
-  white-space: normal;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-/* ===========================
-   CHARGEMENT / VIDE / IA
-   =========================== */
-
-.ouinpo-loading,
-.ouinpo-empty {
-  padding: 1rem 1.05rem;
-  border-radius: 12px;
-}
-
-.ouinpo-ia-notice {
-  margin: 1rem 0;
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  line-height: 1.45;
-  font-size: 0.95rem;
-}
-
-.ouinpo-ia-notice p {
-  margin: 0;
-}
-
-/* ===========================
-   COMPÉTENCES / PROGRESSION
+   COMPÉTENCES + ONGLETS + DS
+   Version unifiée cuivre sombre
    =========================== */
 
 .ouinpo-competences {
-  padding: 24px 22px 30px;
+
   border-radius: 14px;
+  padding: 24px 22px 30px;
+  font-family: "Garamond", "Georgia", serif;
   position: relative;
 }
 
+.ouinpo-competences::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+}
+
 .ouinpo-competences h2 {
+  font-family: "Cinzel Decorative", "Garamond", serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   margin: 0 0 16px;
   padding-bottom: 6px;
+}
+
+.ouinpo-competences h2::before {
+  content: "⚙️";
+  margin-right: 8px;
 }
 
 .ouinpo-competences h3 {
   margin: 10px 0;
   font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
+
+/* ===== KPI ===== */
 
 .ouinpo-competences .ouinpo-cards {
   display: grid;
@@ -411,20 +174,32 @@
 }
 
 .ouinpo-competences .card {
+  border-radius: 10px;
   text-align: center;
   padding: 10px 8px 12px;
-  border-radius: 10px;
+}
+
+.ouinpo-competences .card::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin: 6px auto 0;
+  width: 60%;
 }
 
 .ouinpo-competences .kpi {
+  font-family: "Cinzel", "Georgia", serif;
   font-size: 1.8rem;
   font-weight: 700;
 }
 
 .ouinpo-competences .kpi-label {
   font-size: .75rem;
+  letter-spacing: .4px;
   margin-top: 4px;
 }
+
+/* ===== BARRES PAR DOMAINE ===== */
 
 .ouinpo-competences .ouin-bar-row {
   display: grid;
@@ -456,10 +231,13 @@
   line-height: 1;
 }
 
+
 .ouinpo-competences .ouin-bar-legend {
   font-size: 0.8rem;
   white-space: nowrap;
 }
+
+/* ===== DÉTAIL DES COMPÉTENCES ===== */
 
 .ouinpo-competences .ouinpo-list {
   list-style: none;
@@ -504,7 +282,8 @@
   grid-column: 1 / -1;
 }
 
-/* Onglets */
+/* ===== ONGLETS ===== */
+
 .ouinpo-me-tabs {
   display: flex;
   gap: 10px;
@@ -519,6 +298,26 @@
   border-radius: 10px;
   cursor: pointer;
   font-weight: 700;
+  letter-spacing: .02em;
+  transition: all 0.18s ease;
+}
+
+.ouinpo-me-tab:hover {
+  transform: translateY(-1px);
+}
+
+.ouinpo-me-tab.is-active {
+  position: relative;
+}
+
+.ouinpo-me-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -9px;
+  height: 3px;
+  border-radius: 999px;
 }
 
 .ouinpo-me-panel {
@@ -529,7 +328,8 @@
   display: block;
 }
 
-/* DS */
+/* ===== BLOCS DS ===== */
+
 .ouinpo-ds-cards {
   margin-bottom: 1.25rem;
 }
@@ -586,10 +386,35 @@
   margin-bottom: .75rem;
 }
 
-/* Tableaux */
+.ouinpo-trend.up,
+.trend-up {
+  font-weight: 700;
+}
+
+.ouinpo-trend.down,
+.trend-down {
+  font-weight: 700;
+}
+
+.ouinpo-trend.stable,
+.trend-stable {
+  font-weight: 700;
+}
+
+.trend-confirmed {
+  font-weight: 700;
+}
+
+.trend-new {
+  font-weight: 700;
+}
+
+/* ===== TABLEAUX DANS LES BLOCS COMPÉTENCES ===== */
+
 .ouinpo-competences .ouinpo-table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -604,7 +429,596 @@
   font-weight: 700;
 }
 
-/* ID */
+.ouinpo-competences .ouinpo-table td {
+}
+
+/* ===========================
+   BADGES / HALL OF FAME
+   =========================== */
+
+#ouinpo-student-badges,
+.ouinpo-palmares{
+  margin: 2rem auto 3rem;
+  max-width: 1200px;
+  padding: 1.5rem;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+#ouinpo-student-badges::before,
+.ouinpo-palmares::before{
+  content: "";
+  position: absolute;
+  inset: -120px;
+  pointer-events: none;
+}
+
+#ouinpo-student-badges > *,
+.ouinpo-palmares > *{
+  position: relative;
+  z-index: 1;
+}
+
+.ouinpo-palmares-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.ouinpo-palmares-year-filter{
+  font-size: 0.9rem;
+}
+
+.ouinpo-palmares-year-filter label{
+}
+
+.ouinpo-palmares-year-filter select,
+.ouinpo-badges-filters select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-width: 150px;
+  padding: 0.45rem 2.2rem 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.ouinpo-palmares-year-filter select:focus,
+.ouinpo-palmares-year-filter select:hover,
+.ouinpo-badges-filters select:focus,
+.ouinpo-badges-filters select:hover{
+  transform: translateY(-1px);
+}
+
+.ouinpo-badges-filters{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+}
+
+.ouinpo-badges-section{
+  margin-bottom: 2.25rem;
+  padding: 1.25rem 1.4rem 1.6rem;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ouinpo-badges-section::before{
+  content: "";
+  position: absolute;
+  inset: -40px;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ouinpo-badges-section-title{
+  position: relative;
+  z-index: 1;
+  font-size: 1.3rem;
+  margin: 0 0 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ouinpo-badges-section-title::before{
+  content: "◆";
+  font-size: 0.9rem;
+}
+
+.ouinpo-badges-section:first-of-type{
+}
+
+.ouinpo-badges-section:first-of-type .ouinpo-badges-section-title::before{
+  content: "★";
+}
+
+.ouinpo-badges-level-block{
+  position: relative;
+  padding-top: 0.2rem;
+  margin-top: 0.8rem;
+}
+
+.ouinpo-badges-level-title{
+  font-size: 1.05rem;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ouinpo-badges-level-title::before{
+  content: "⟡";
+  font-size: 0.9rem;
+}
+
+.ouinpo-badges-domain-block{
+  margin-top: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+.ouinpo-badges-domain-title{
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-left: .65rem;
+}
+
+.ouinpo-badges-grid{
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 0.45rem;
+}
+
+.ouinpo-badge-item{
+  position: relative;
+  padding: 0.75rem 0.75rem 0.8rem;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: default;
+  overflow: hidden;
+  transition:
+    transform 0.14s ease-out,
+    box-shadow 0.14s ease-out,
+    border-color 0.14s ease-out,
+    background-position 0.18s ease-out;
+  width: 100%;
+}
+
+.ouinpo-badge-item::before{
+  content: "";
+  position: absolute;
+  inset: -40%;
+  transition: opacity 0.22s ease-out;
+  pointer-events: none;
+}
+
+.ouinpo-badge-item:hover{
+  transform: translateY(-3px) scale(1.01);
+}
+
+.ouinpo-badge-item:hover::before{
+}
+
+.ouinpo-badge-item::after{
+  content:"";
+  position:absolute;
+  inset:-60% -60%;
+  transform: translateX(-35%) translateY(-10%) rotate(12deg);
+  pointer-events:none;
+}
+
+.ouinpo-badge-item:hover::after{
+  animation: ouinpo-sheen 1.2s ease-out forwards;
+}
+
+.ouinpo-badge-split,
+.ouinpo-palmares-layout{
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 1.5rem;
+  align-items: start;
+  padding-right: 1.5rem;
+}
+
+.ouinpo-badge-left,
+.ouinpo-palmares-right{
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.ouinpo-badge-right,
+.ouinpo-palmares-left{
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  position: relative;
+}
+
+.ouinpo-badge-title{
+  font-size: 0.97rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+.ouinpo-badge-item:hover .ouinpo-badge-title{
+}
+
+.ouinpo-badge-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+
+.ouinpo-badge-level,
+.ouinpo-badge-domain{
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ouinpo-badge-domain{
+}
+
+.ouinpo-badge-item[data-level="Seconde"] .ouinpo-badge-level{
+}
+
+.ouinpo-badge-item[data-level="Première"] .ouinpo-badge-level{
+}
+
+.ouinpo-badge-item[data-level="Terminale"] .ouinpo-badge-level{
+}
+
+.ouinpo-badge-item[data-level="Transversal"] .ouinpo-badge-level{
+}
+
+.ouinpo-badge-bigimg{
+  display: block;
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  object-fit: cover;
+  margin-top: 0.5rem;
+}
+
+.ouinpo-badge-earned{
+  margin-top: 0.1rem;
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+.ouinpo-palmares-count{
+  font-weight: 700;
+}
+
+.ouinpo-palmares-list{
+  list-style: none;
+  margin: .35rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap: 0.25rem 1.2rem;
+}
+
+.ouinpo-palmares-list li{
+  margin: .18rem 0;
+  white-space: normal;
+}
+
+/* ---- Tiers ---- */
+
+.ouinpo-badge-tier-bronze{
+}
+
+.ouinpo-badge-tier-bronze .ouinpo-badge-bigimg{
+}
+
+.ouinpo-badge-tier-silver{
+}
+
+.ouinpo-badge-tier-silver .ouinpo-badge-bigimg{
+}
+
+.ouinpo-badge-tier-gold{
+}
+
+.ouinpo-badge-tier-gold .ouinpo-badge-bigimg{
+}
+
+.ouinpo-badge-tier-platinum{
+}
+
+.ouinpo-badge-tier-platinum .ouinpo-badge-bigimg{
+  animation: ouinpo-aurora 6s ease-in-out infinite alternate;
+}
+
+
+/* ---- Meta ---- */
+
+.ouinpo-badge-meta-rank-1 .ouinpo-badge-bigimg{
+  animation: ouinpo-meta-pulse-1 5s ease-in-out infinite;
+}
+
+.ouinpo-badge-meta-rank-2 .ouinpo-badge-bigimg{
+  animation: ouinpo-meta-pulse-2 4s ease-in-out infinite;
+}
+
+.ouinpo-badge-meta-rank-3 .ouinpo-badge-bigimg{
+  animation: ouinpo-meta-pulse-3 3.5s ease-in-out infinite;
+}
+
+.ouinpo-badge-item[data-meta="1"] .ouinpo-badge-right{
+  position: relative;
+}
+
+.ouinpo-badge-item[data-meta="1"] .ouinpo-badge-right::before{
+  content:"";
+  position:absolute;
+  width: 162px;
+  height: 162px;
+  right: 0;
+  top: 0.5rem;
+  border-radius: 999px;
+  pointer-events:none;
+  transform-origin: 50% 50%;
+  animation: ouinpo-orbit 6.5s linear infinite;
+}
+
+#ouinpo-student-badges .ouinpo-badge-item[data-meta="1"]::after,
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-item.ouinpo-badge-meta-rank-1::after,
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-item.ouinpo-badge-meta-rank-2::after,
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-item.ouinpo-badge-meta-rank-3::after{
+  content:"";
+  position:absolute;
+  inset:-10%;
+  pointer-events:none;
+  z-index: 0;
+  mix-blend-mode: screen;
+  transform: translate(0,0) rotate(-2deg);
+  animation: ouinpo-glyph-drift 16s ease-in-out infinite alternate;
+}
+
+#ouinpo-student-badges .ouinpo-badge-item > *,
+#ouinpo-student-badges.ouinpo-palmares .ouinpo-badge-item .ouinpo-palmares-layout{
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Titre courant ---- */
+
+.ouinpo-badge-current-title{
+  position: relative;
+}
+
+.ouinpo-badge-current-title::before{
+  content:"👑";
+  position:absolute;
+  top: .55rem;
+  right: .75rem;
+  left: auto;
+  font-size: 1.1rem;
+  pointer-events:none;
+}
+
+/* ---- Bonus FX ---- */
+
+.ouinpo-badge-tier-gold .ouinpo-badge-right::after{
+  content:"";
+  position:absolute;
+  width: 165px;
+  height: 165px;
+  right: -5px;
+  top: 0.35rem;
+  border-radius: 999px;
+  pointer-events:none;
+  animation: ouinpo-ember 3.8s ease-in-out infinite;
+}
+
+.ouinpo-badge-tier-platinum .ouinpo-badge-right::after{
+  content:"✦";
+  position:absolute;
+  right: 8px;
+  top: 12px;
+  font-size: 1.2rem;
+  animation: ouinpo-twinkle 2.6s ease-in-out infinite;
+  pointer-events:none;
+}
+
+.ouinpo-badge-item:hover .ouinpo-badge-description{
+}
+
+/* ---- Keyframes ---- */
+
+@keyframes ouinpo-sheen{
+  0%   { transform: translateX(-45%) translateY(-12%) rotate(12deg); }
+  100% { transform: translateX(45%) translateY(12%) rotate(12deg); }
+}
+
+@keyframes ouinpo-aurora{
+  0%{
+    transform: translateY(0px) scale(1);
+  }
+  50%{
+    transform: translateY(-2px) scale(1.03);
+  }
+  100%{
+    transform: translateY(1px) scale(0.99);
+  }
+}
+
+@keyframes ouinpo-meta-pulse-1{
+}
+
+@keyframes ouinpo-meta-pulse-2{
+}
+
+@keyframes ouinpo-meta-pulse-3{
+}
+
+@keyframes ouinpo-orbit{
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ouinpo-ember{
+  0%,100% { transform: translateY(0px) scale(1); }
+  50%     { transform: translateY(-2px) scale(1.02); }
+}
+
+@keyframes ouinpo-twinkle{
+  0%,100% { transform: scale(0.9) rotate(-8deg); }
+  50%     { transform: scale(1.15) rotate(10deg); }
+}
+
+@keyframes ouinpo-glyph-drift{
+  0%   { transform: translate(-8px,-6px) rotate(-2deg); }
+  100% { transform: translate(8px,6px) rotate(2deg); }
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 900px){
+  #ouinpo-student-badges,
+  .ouinpo-palmares{
+    padding: 1.2rem;
+    margin: 1.5rem auto 2.4rem;
+  }
+
+  .ouinpo-badges-section{
+    padding: 1.05rem 1rem 1.3rem;
+  }
+}
+
+@media (max-width: 800px){
+  .ouinpo-palmares-header{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ouinpo-badge-split,
+  .ouinpo-palmares-layout{
+    grid-template-columns: 1fr;
+    padding-right: 0;
+    text-align: center;
+  }
+
+  .ouinpo-badge-right,
+  .ouinpo-palmares-left{
+    justify-content: center;
+  }
+
+  .ouinpo-badge-left,
+  .ouinpo-palmares-right{
+    align-items: center;
+  }
+
+  .ouinpo-badge-bigimg{
+    width: 130px;
+    height: 130px;
+  }
+
+  .ouinpo-badge-earned{
+    text-align: left;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px){
+  .ouinpo-badges-filters{
+    border-radius: 14px;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .ouinpo-badges-filters select,
+  .ouinpo-palmares-year-filter select{
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ouinpo-badge-title{
+    font-size: 0.9rem;
+  }
+
+  .ouinpo-badge-item{
+    padding: 0.7rem 0.65rem 0.75rem;
+  }
+
+  .ouinpo-badge-item[data-meta="1"] .ouinpo-badge-right::before{
+    animation-duration: 10s;
+  }
+
+  .ouinpo-badge-tier-gold .ouinpo-badge-right::after{
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .ouinpo-badge-item,
+  .ouinpo-badge-bigimg{
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .ouinpo-badge-item::before,
+  .ouinpo-badge-item::after{
+    animation: none !important;
+  }
+}
+
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 820px){
+  .ouinpo-competences .ouinpo-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px){
+  .ouinpo-competences .ouin-bar-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-competences .ouin-li {
+    grid-template-columns: 26px 1fr;
+  }
+
+  .ouinpo-competences .ouin-li-status {
+    justify-self: start;
+    margin-top: 4px;
+  }
+
+  .ouinpo-me-tab {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* Colonne ID plus étroite dans le tableau de compétences */
 #ouinpo-competencies-table th:first-child,
 #ouinpo-competencies-table td:first-child {
   width: 60px;
@@ -612,9 +1026,513 @@
   white-space: nowrap;
 }
 
-/* ===========================
-   VUE GLOBALE ÉLÈVE
-   =========================== */
+/* =========================================================
+   OuinPo — Banque d'exercices / rendu front
+   À placer en fin de fichier pour surcharger l'ancien CSS
+   ========================================================= */
+
+:root{
+}
+
+/* ---------- Structure générale ---------- */
+
+.ouinpo-exercises-page{
+}
+
+.ouinpo-exercises-shell{
+  display: grid;
+  gap: 1.4rem;
+  margin: 1.25rem 0 2rem;
+}
+
+.ouinpo-panel,
+.copper-panel,
+.ouinpo-exo-domain-block{
+  border-radius: 16px;
+}
+
+.ouinpo-panel{
+  padding: 1.2rem 1.25rem;
+}
+
+.ouinpo-panel-title,
+.ouinpo-exo-domain-title{
+  margin: 0 0 0.9rem 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ouinpo-panel-intro{
+  margin: -0.2rem 0 0.8rem 0;
+}
+
+/* ---------- Filtres ---------- */
+
+.ouinpo-exo-filters{
+  margin-bottom: 0;
+}
+
+.ouinpo-filters-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ouinpo-filters-grid--single{
+  grid-template-columns: 1fr;
+}
+
+.ouinpo-field{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ouinpo-field label{
+  display: block;
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.ouinpo-field select,
+.ouinpo-field input,
+.ouinpo-select,
+.ouinpo-exo-filters select,
+.ouinpo-exo-toolbar select{
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  padding: 0.78rem 2.8rem 0.78rem 0.95rem;
+  box-sizing: border-box;
+  font-size: 1rem;
+  line-height: 1.2;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.ouinpo-field select:focus,
+.ouinpo-field input:focus,
+.ouinpo-select:focus,
+.ouinpo-exo-filters select:focus,
+.ouinpo-exo-toolbar select:focus{
+}
+
+.ouinpo-exo-toolbar{
+  margin: 0 0 1rem 0;
+}
+
+/* ---------- Barre d'infos ---------- */
+
+.ouinpo-exercises-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 0 1rem 0;
+}
+
+.ouinpo-chip{
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.92rem;
+}
+
+/* ---------- Domaines ---------- */
+
+.ouinpo-exo-domain-block{
+  padding: 1rem 1.1rem;
+  margin: 0 0 1rem 0;
+}
+
+.ouinpo-exo-domain-block:last-child{
+  margin-bottom: 0;
+}
+
+.ouinpo-exo-domain-title{
+  font-size: 1.25rem;
+  margin-bottom: 0.8rem;
+}
+
+/* ---------- Liste des exercices ---------- */
+
+.ouinpo-exercises-list,
+.ouinpo-exo-list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ouinpo-exercise-item,
+.ouin-exo-li{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.92rem 1rem;
+  border-radius: 14px;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.ouinpo-exercise-item:hover,
+.ouin-exo-li:hover{
+  transform: translateY(-1px);
+}
+
+.ouinpo-exercise-main,
+.ouin-exo-main{
+  min-width: 0;
+}
+
+.ouinpo-exercise-link,
+.ouin-exo-link{
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.08rem;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.ouinpo-exercise-link:hover,
+.ouin-exo-link:hover{
+  text-decoration: underline;
+}
+
+.ouinpo-exercise-sub{
+  margin-top: 0.3rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.ouin-exo-level{
+  display: none;
+}
+
+/* ---------- Badges ---------- */
+
+.ouinpo-badges,
+.ouin-exo-status{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.ouinpo-badge,
+.exo-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.44rem 0.78rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ouinpo-badge--difficulty{
+}
+
+.ouinpo-badge--attempted,
+.badge-attempt{
+}
+
+.ouinpo-badge--solved,
+.badge-solved{
+}
+
+.ouinpo-badge--none{
+}
+
+/* ---------- Chargement / vide ---------- */
+
+.ouinpo-loading,
+.ouinpo-empty{
+  padding: 1rem 1.05rem;
+  border-radius: 12px;
+}
+
+.ouinpo-loading{
+}
+
+/* ---------- Page détail exercice ---------- */
+
+.ouinpo-exo{
+}
+
+.ouinpo-exo .exo-title{
+  margin-bottom: 0.25rem;
+}
+
+/* ---------- Vue détail exercice : méta ---------- */
+
+.ouinpo-exo .exo-meta{
+  margin: 0 0 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.ouinpo-exo .exo-meta .ouinpo-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: left;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* Difficulté */
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty{
+}
+
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty-beginner{
+}
+
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty-intermediate{
+}
+
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty-expert{
+}
+
+/* Niveau */
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--level{
+}
+
+/* Compétences BO */
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--competency{
+  border-radius: 14px;
+  padding: 0.42rem 0.75rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ouinpo-exo .exo-answer-box,
+.ouinpo-exo .exo-solutions,
+.ouinpo-exo .exo-hints,
+.ouinpo-exo .exo-status-line,
+.ouinpo-exo .exo-actions,
+.ouin-exo-block{
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 14px;
+}
+
+.ouinpo-exo .exo-answer-box h4,
+.ouinpo-exo .exo-solutions h4,
+.ouin-exo-block h5{
+  margin-top: 0;
+}
+
+.ouinpo-exo textarea.exo-answer-text{
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 220px;
+  resize: vertical;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.ouinpo-exo textarea.exo-answer-text:focus{
+}
+
+.ouinpo-exo button,
+.ouin-exo-block button,
+.btn-copper{
+  appearance: none;
+  border-radius: 12px;
+  padding: 0.68rem 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
+}
+
+.ouinpo-exo button:hover,
+.ouin-exo-block button:hover,
+.btn-copper:hover{
+  transform: translateY(-1px);
+}
+
+.ouinpo-exo button:disabled,
+.ouin-exo-block button:disabled,
+.btn-copper:disabled{
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ouinpo-exo .exo-answer-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.ouinpo-exo .exo-hints{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.ouinpo-exo .solutions-list{
+  list-style: none;
+  margin: 0.75rem 0 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ouinpo-exo .solutions-list li{
+  margin: 0;
+  padding: 0;
+}
+
+.ouinpo-exo .solutions-list button{
+  width: 100%;
+  text-align: left;
+}
+
+.ouin-exo-block-content{
+}
+
+.ai-feedback-block{
+}
+
+.exo-status-line{
+  display: flex;
+  align-items: center;
+}
+
+.exo-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+/* ---------- Compat anciens conteneurs ---------- */
+
+.ouin-li{
+  list-style: none;
+}
+
+#ouinpo-exo-list[hidden],
+.ouinpo-exercises-legacy[hidden]{
+  display: none !important;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px){
+  .ouinpo-filters-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-exercise-item,
+  .ouin-exo-li{
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .ouinpo-badges,
+  .ouin-exo-status{
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px){
+  .ouinpo-panel,
+  .copper-panel,
+  .ouinpo-exo-domain-block,
+  .ouinpo-exo .exo-answer-box,
+  .ouinpo-exo .exo-solutions,
+  .ouinpo-exo .exo-hints,
+  .ouinpo-exo .exo-status-line,
+  .ouinpo-exo .exo-actions,
+  .ouin-exo-block{
+    padding: 0.9rem;
+    border-radius: 12px;
+  }
+
+  .ouinpo-panel-title,
+  .ouinpo-exo-domain-title{
+    font-size: 1.2rem;
+  }
+
+  .ouinpo-exercise-link,
+  .ouin-exo-link{
+    font-size: 1rem;
+  }
+}
+
+/* ===== Palmarès : description des badges ===== */
+
+.ouinpo-palmares .ouinpo-badge-desc{
+  margin-top: -0.1rem;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc summary{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc summary::-webkit-details-marker{
+  display: none;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc summary:hover{
+  transform: translateY(-1px);
+}
+
+.ouinpo-palmares .ouinpo-badge-desc[open] summary{
+}
+
+.ouinpo-palmares .ouinpo-badge-desc-box{
+  margin-top: 0.6rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.ouinpo-palmares .ouinpo-badge-desc-box::before{
+  content: "";
+  display: block;
+  width: 46px;
+  height: 1px;
+  margin-bottom: 0.55rem;
+}
+
+/* =========================================================
+   Vue globale élève — refonte douce
+   Ne touche pas à l’onglet DS
+   ========================================================= */
 
 .ouinpo-competences #ouinpo-tab-global {
   padding-top: 4px;
@@ -671,8 +1589,33 @@
   margin-top: 14px;
 }
 
+.ouinpo-competences .ouinpo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+}
+
+.ouinpo-competences .ouinpo-chip.chip-acq {
+}
+
+.ouinpo-competences .ouinpo-chip.chip-conso {
+}
+
+.ouinpo-competences .ouinpo-chip.chip-prog {
+}
+
+.ouinpo-competences .ouinpo-chip.chip-na {
+}
+
+.ouinpo-competences .ouinpo-global-hero-side {
+  display: grid;
+  place-items: center;
+}
+
 .ouinpo-competences .ouinpo-progress-ring {
-  --pct: 0%;
   width: 170px;
   height: 170px;
   border-radius: 50%;
@@ -720,6 +1663,19 @@
   font-size: 1.08rem;
 }
 
+.ouinpo-competences .ouinpo-focus-card.archibogue {
+}
+
+.ouinpo-competences .ouinpo-focus-card.archibogue p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.ouinpo-competences .ouinpo-focus-card.archibogue p {
+  line-height: 1.8;
+  max-width: 52ch;
+}
+
 .ouinpo-competences .ouinpo-focus-list {
   list-style: none;
   margin: 0;
@@ -728,10 +1684,22 @@
   gap: 10px;
 }
 
-.ouinpo-competences .ouinpo-focus-list li,
-.ouinpo-competences .ouinpo-focus-item {
+.ouinpo-competences .ouinpo-focus-list li {
   display: grid;
   grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.ouinpo-competences .ouinpo-focus-list li.is-empty {
+  display: block;
+}
+
+.ouinpo-competences .ouinpo-focus-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
   gap: 10px;
   align-items: start;
 }
@@ -773,6 +1741,12 @@
   white-space: nowrap;
 }
 
+.ouinpo-competences .ouinpo-focus-badge {
+}
+
+.ouinpo-competences .ouinpo-focus-difficulty {
+}
+
 .ouinpo-competences .ouinpo-global-domains {
   padding: 18px;
 }
@@ -797,6 +1771,9 @@
 
 .ouinpo-competences .ouinpo-domain-card {
   overflow: hidden;
+}
+
+.ouinpo-competences .ouinpo-domain-card[open] {
 }
 
 .ouinpo-competences .ouinpo-domain-summary {
@@ -836,6 +1813,16 @@
   letter-spacing: 0.04em;
 }
 
+.ouinpo-competences .ouinpo-domain-mood.solid,
+.ouinpo-competences .ouinpo-domain-mood.good {
+}
+
+.ouinpo-competences .ouinpo-domain-mood.mid {
+}
+
+.ouinpo-competences .ouinpo-domain-mood.warn {
+}
+
 .ouinpo-competences .ouinpo-domain-bar {
   display: flex;
   overflow: hidden;
@@ -846,6 +1833,18 @@
 
 .ouinpo-competences .ouinpo-domain-bar .seg {
   height: 100%;
+}
+
+.ouinpo-competences .ouinpo-domain-bar .seg-acq {
+}
+
+.ouinpo-competences .ouinpo-domain-bar .seg-conso {
+}
+
+.ouinpo-competences .ouinpo-domain-bar .seg-prog {
+}
+
+.ouinpo-competences .ouinpo-domain-bar .seg-na {
 }
 
 .ouinpo-competences .ouinpo-domain-text,
@@ -882,8 +1881,7 @@
   padding: 0 18px 18px;
 }
 
-.ouinpo-competences .ouinpo-skill-list,
-.ouinpo-competences .ouinpo-allskills-list {
+.ouinpo-competences .ouinpo-skill-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -912,7 +1910,69 @@
   line-height: 1.45;
 }
 
-/* Toutes les compétences */
+.ouinpo-competences .ouinpo-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+@media (max-width: 900px) {
+  .ouinpo-competences .ouinpo-global-hero,
+  .ouinpo-competences .ouinpo-global-focus {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-competences .ouinpo-global-hero-side {
+    justify-content: start;
+  }
+
+  .ouinpo-competences .ouinpo-progress-ring {
+    width: 140px;
+    height: 140px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ouinpo-competences .ouinpo-global-hero,
+  .ouinpo-competences .ouinpo-focus-card,
+  .ouinpo-competences .ouinpo-global-domains {
+    padding: 14px;
+  }
+
+  .ouinpo-competences .ouinpo-domain-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-competences .ouinpo-domain-summary-side {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .ouinpo-competences .ouinpo-skill-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ouinpo-competences .ouinpo-status-badge.badge-na {
+}
+
+.ouinpo-competences .ouinpo-chip.chip-na {
+}
+
+.ouinpo-competences .ouinpo-domain-bar .seg-na {
+}
+
+.ouinpo-competences .ouinpo-skill-row .badge-na {
+}
+
+.ouinpo-competences .ouinpo-allskills-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
 .ouinpo-competences .ouinpo-allskills-domain {
   border-radius: 14px;
   overflow: hidden;
@@ -958,212 +2018,24 @@
   line-height: 1;
 }
 
+.ouinpo-competences .ouinpo-mini-badge.acq {
+}
+
+.ouinpo-competences .ouinpo-mini-badge.conso {
+}
+
+.ouinpo-competences .ouinpo-mini-badge.prog {
+}
+
+.ouinpo-competences .ouinpo-mini-badge.na {
+}
+
 .ouinpo-competences .ouinpo-allskills-domain-body {
   padding: 0 14px 14px;
 }
 
 /* ===========================
-   BADGES / PALMARÈS
-   =========================== */
-
-#ouinpo-student-badges,
-.ouinpo-palmares {
-  margin: 2rem auto 3rem;
-  max-width: 1200px;
-  padding: 1.5rem;
-  border-radius: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-#ouinpo-student-badges > *,
-.ouinpo-palmares > * {
-  position: relative;
-  z-index: 1;
-}
-
-.ouinpo-palmares-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-}
-
-.ouinpo-badges-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 999px;
-}
-
-.ouinpo-badges-section {
-  margin-bottom: 2.25rem;
-  padding: 1.25rem 1.4rem 1.6rem;
-  border-radius: 18px;
-  position: relative;
-  overflow: hidden;
-}
-
-.ouinpo-badges-section-title {
-  position: relative;
-  z-index: 1;
-  font-size: 1.3rem;
-  margin: 0 0 1.1rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.ouinpo-badges-level-block {
-  position: relative;
-  padding-top: 0.2rem;
-  margin-top: 0.8rem;
-}
-
-.ouinpo-badges-level-title {
-  font-size: 1.05rem;
-  margin: 0 0 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.ouinpo-badges-domain-block {
-  margin-top: 0.6rem;
-  padding-top: 0.4rem;
-}
-
-.ouinpo-badges-domain-title {
-  font-size: 0.95rem;
-  margin: 0 0 0.25rem;
-  padding-left: .65rem;
-}
-
-.ouinpo-badges-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-top: 0.45rem;
-}
-
-.ouinpo-badge-item {
-  position: relative;
-  padding: 0.75rem 0.75rem 0.8rem;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  cursor: default;
-  overflow: hidden;
-  width: 100%;
-}
-
-.ouinpo-badge-split,
-.ouinpo-palmares-layout {
-  display: grid;
-  grid-template-columns: 1fr 180px;
-  gap: 1.5rem;
-  align-items: start;
-  padding-right: 1.5rem;
-}
-
-.ouinpo-badge-left,
-.ouinpo-palmares-right {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.ouinpo-badge-right,
-.ouinpo-palmares-left {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-start;
-  position: relative;
-}
-
-.ouinpo-badge-title {
-  font-size: 0.97rem;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.ouinpo-badge-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.15rem;
-}
-
-.ouinpo-badge-level,
-.ouinpo-badge-domain {
-  font-size: 0.72rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-}
-
-.ouinpo-badge-bigimg {
-  display: block;
-  width: 150px;
-  height: 150px;
-  border-radius: 999px;
-  object-fit: cover;
-  margin-top: 0.5rem;
-}
-
-.ouinpo-badge-earned {
-  margin-top: 0.1rem;
-  font-size: 0.7rem;
-  text-align: right;
-}
-
-.ouinpo-palmares-list {
-  list-style: none;
-  margin: .35rem 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
-  gap: 0.25rem 1.2rem;
-}
-
-.ouinpo-palmares-list li {
-  margin: .18rem 0;
-  white-space: normal;
-}
-
-/* Description palmarès */
-.ouinpo-palmares .ouinpo-badge-desc {
-  margin-top: -0.1rem;
-}
-
-.ouinpo-palmares .ouinpo-badge-desc summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: max-content;
-  cursor: pointer;
-  list-style: none;
-  padding: 0.28rem 0.7rem;
-  border-radius: 999px;
-}
-
-.ouinpo-palmares .ouinpo-badge-desc summary::-webkit-details-marker {
-  display: none;
-}
-
-.ouinpo-palmares .ouinpo-badge-desc-box {
-  margin-top: 0.6rem;
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  font-size: 0.84rem;
-  line-height: 1.55;
-}
-
-/* ===========================
-   BANDEAU DE RÉVISION
+   BANDEAU DE RÉVISION — RADICAL
    =========================== */
 
 .ouinpo-revision-band {
@@ -1172,6 +2044,13 @@
   padding: 0.78rem 0.95rem 0.82rem;
   border-radius: 16px;
   overflow: hidden;
+}
+
+.ouinpo-revision-band::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
 }
 
 .ouinpo-revision-band__top {
@@ -1192,6 +2071,15 @@
   margin: 0 0 0.45rem;
   font-size: 0.98rem;
   line-height: 1.2;
+}
+
+.ouinpo-revision-band__title-icon {
+  font-size: 0.95rem;
+}
+
+.ouinpo-revision-band__title-text {
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .ouinpo-revision-band__meta {
@@ -1219,13 +2107,16 @@
   line-height: 1.38;
 }
 
+.ouinpo-revision-band__retenir-label {
+  font-weight: 700;
+}
+
 .ouinpo-revision-band__side {
   min-width: 220px;
   max-width: 320px;
 }
 
-.ouinpo-revision-band__side-title,
-.ouinpo-revision-band__box-title {
+.ouinpo-revision-band__side-title {
   display: block;
   margin: 0.05rem 0 0.3rem;
   font-size: 0.76rem;
@@ -1234,15 +2125,22 @@
   letter-spacing: 0.05em;
 }
 
-.ouinpo-revision-band__links,
-.ouinpo-revision-band__list {
+.ouinpo-revision-band__links {
   margin: 0;
   padding-left: 1rem;
 }
 
-.ouinpo-revision-band__links li,
-.ouinpo-revision-band__list li {
+.ouinpo-revision-band__links li {
   margin: 0.14rem 0;
+}
+
+.ouinpo-revision-band__links a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.ouinpo-revision-band__links a:hover {
+  text-decoration-thickness: 2px;
 }
 
 .ouinpo-revision-band__more {
@@ -1265,232 +2163,33 @@
   gap: 0.75rem 1rem;
 }
 
+.ouinpo-revision-band__box {
+  min-width: 0;
+}
+
+.ouinpo-revision-band__box-title {
+  display: block;
+  margin: 0 0 0.28rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ouinpo-revision-band__list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.ouinpo-revision-band__list li {
+  margin: 0.14rem 0;
+}
+
 .ouinpo-revision-band__full {
   grid-column: 1 / -1;
 }
 
-.ouinpo-revision-band__path {
-  margin-top: 0.55rem;
-}
-
-.ouinpo-revision-band__path-link {
-  display: inline-block;
-  padding: 0.28rem 0.62rem;
-  border-radius: 999px;
-  text-decoration: none;
-  font-size: 0.83rem;
-  line-height: 1.2;
-}
-
-/* ===========================
-   CARTE DU SITE
-   =========================== */
-
-.ouinpo-site-map {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.ouinpo-site-map--embedded {
-  gap: 0;
-}
-
-.ouinpo-sitemap-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.25rem;
-  align-items: start;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list {
-  padding: 0;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li {
-  list-style: none;
-  margin: 0;
-  padding: 1rem 1rem 1.05rem;
-  border-radius: 18px;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a,
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > span {
-  display: block;
-  margin-bottom: .85rem;
-  padding-bottom: .7rem;
-  text-decoration: none;
-  font-size: 1.02rem;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: .55rem;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li {
-  list-style: none;
-  margin: 0;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > a,
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > span {
-  display: block;
-  padding: .55rem .7rem;
-  border-radius: 10px;
-  text-decoration: none;
-  line-height: 1.35;
-}
-
-.ouinpo-site-map--cards .ouinpo-sitemap-block--list ul ul ul {
-  margin-top: .45rem;
-  margin-left: .85rem;
-  padding-left: .75rem;
-  display: grid;
-  gap: .35rem;
-}
-
-/* ===========================
-   FILTRES DIVERS
-   =========================== */
-
-.ouinpo-me-ds-filter,
-.ouinpo-help-box {
-  margin: 1rem 0;
-  padding: 0.85rem 1rem;
-  border-radius: 12px;
-}
-
-.ouinpo-me-ds-filter label {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-}
-
-.ouinpo-me-ds-filter select,
-.ouinpo-ds-filter select {
-  min-width: 260px;
-  max-width: 100%;
-  padding: 0.55rem 0.75rem;
-  border-radius: 10px;
-  font: inherit;
-}
-
-.ouinpo-help-box h3 {
-  margin: 0 0 10px;
-  font-size: 1.05rem;
-  line-height: 1.3;
-  font-style: normal;
-  font-family: inherit;
-}
-
-.ouinpo-help-box p {
-  margin: 8px 0 0;
-  font-style: normal;
-  font-family: inherit;
-  line-height: 1.65;
-}
-
-.ouinpo-training-filters {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
-  gap: 14px;
-  margin: 18px 0 22px;
-}
-
-.ouinpo-filter label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.ouinpo-filter select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-}
-
-.ouinpo-ds-filter {
-  margin: 1rem 0 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: .4rem;
-}
-
-.ouinpo-ds-filter label {
-  font-weight: 600;
-}
-
-/* ===========================
-   COMPATIBILITÉ
-   =========================== */
-
-.ouin-li {
-  list-style: none;
-}
-
-#ouinpo-exo-list[hidden],
-.ouinpo-exercises-legacy[hidden],
-.is-hidden {
-  display: none;
-}
-
-/* ===========================
-   RESPONSIVE
-   =========================== */
-
-@media (max-width: 980px) {
-  .ouinpo-exo-filters .ouinpo-filters-grid {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .ouinpo-exercise-item,
-  .ouin-exo-li {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .ouinpo-badges,
-  .ouin-exo-status {
-    justify-content: flex-start;
-  }
-
-  .ouinpo-competences .ouinpo-global-hero,
-  .ouinpo-competences .ouinpo-global-focus {
-    grid-template-columns: 1fr;
-  }
-
-  .ouinpo-competences .ouinpo-global-hero-side {
-    justify-content: start;
-  }
-
-  .ouinpo-competences .ouinpo-progress-ring {
-    width: 140px;
-    height: 140px;
-  }
-}
-
 @media (max-width: 820px) {
-  .ouinpo-competences .ouinpo-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .ouinpo-revision-band__top {
     grid-template-columns: 1fr;
   }
@@ -1498,52 +2197,6 @@
   .ouinpo-revision-band__side {
     min-width: 0;
     max-width: none;
-  }
-}
-
-@media (max-width: 800px) {
-  .ouinpo-palmares-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .ouinpo-badge-split,
-  .ouinpo-palmares-layout {
-    grid-template-columns: 1fr;
-    padding-right: 0;
-    text-align: center;
-  }
-
-  .ouinpo-badge-right,
-  .ouinpo-palmares-left {
-    justify-content: center;
-  }
-
-  .ouinpo-badge-left,
-  .ouinpo-palmares-right {
-    align-items: center;
-  }
-
-  .ouinpo-badge-bigimg {
-    width: 130px;
-    height: 130px;
-  }
-
-  .ouinpo-badge-earned {
-    text-align: left;
-    width: 100%;
-  }
-}
-
-@media (max-width: 780px) {
-  .ouinpo-training-filters {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1561,146 +2214,394 @@
   }
 }
 
-@media (max-width: 680px) {
-  .ouinpo-exo {
-    padding: .9rem;
-  }
+.ouinpo-revision-band__path {
+  margin-top: 0.55rem;
+}
 
-  .ouinpo-exo button {
-    width: 100%;
-    justify-content: center;
-  }
+.ouinpo-revision-band__path-link {
+  display: inline-block;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.83rem;
+  line-height: 1.2;
+}
 
-  .ouinpo-exo .exo-actions {
-    gap: .6rem;
+.ouinpo-revision-band__path-link:hover {
+  text-decoration: none;
+}
+
+/* ===== Carte du site — cartes par thème (uniquement si cards="1") ===== */
+
+.ouinpo-site-map {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ouinpo-site-map--embedded {
+  gap: 0;
+}
+
+.ouinpo-sitemap-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* on neutralise le conteneur de section seulement en mode cards */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list {
+  padding: 0;
+}
+
+/* la liste principale devient une grille de cartes */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* chaque thème = une carte */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 1rem 1.05rem;
+  border-radius: 18px;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li:hover {
+  transform: translateY(-2px);
+}
+
+/* titre du thème */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > span {
+  display: block;
+  margin-bottom: .85rem;
+  padding-bottom: .7rem;
+  text-decoration: none;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a::after,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > span::after {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 2px;
+  margin-top: .55rem;
+  border-radius: 999px;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > a:hover {
+  text-decoration: none;
+}
+
+/* liste des cours */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .55rem;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li {
+  list-style: none;
+  margin: 0;
+}
+
+/* chaque cours */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > span {
+  display: block;
+  padding: .55rem .7rem;
+  border-radius: 10px;
+  text-decoration: none;
+  line-height: 1.35;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list > li > ul > li > a:hover {
+  transform: translateX(2px);
+  text-decoration: none;
+}
+
+/* sous-niveaux éventuels */
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list ul ul ul {
+  margin-top: .45rem;
+  margin-left: .85rem;
+  padding-left: .75rem;
+  display: grid;
+  gap: .35rem;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list ul ul ul a,
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list ul ul ul span {
+  display: block;
+  padding: .18rem 0;
+  border-radius: 0;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list ul ul ul a:hover {
+  text-decoration: underline;
+  transform: none;
+}
+
+@media (max-width: 720px) {
+  .ouinpo-site-map--cards .ouinpo-sitemap-block--list > .ouinpo-sitemap-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Filtre DS — vue élève ===== */
+.ouinpo-me-ds-filter {
+  margin: 0 0 1rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+}
+
+.ouinpo-me-ds-filter label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.ouinpo-me-ds-filter strong {
+}
+
+.ouinpo-me-ds-filter select {
+  min-width: 260px;
+  max-width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.ouinpo-me-ds-filter select:focus {
+}
+
+.ouinpo-ds-date {
+  font-size: 0.95em;
+}
+
+.ouinpo-help-box{
+  margin: 18px 0 22px;
+  padding: 18px 20px;
+  border-radius: 14px;
+}
+
+.ouinpo-help-box h3{
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  font-style: normal;
+  font-family: inherit;
+}
+
+.ouinpo-help-box p{
+  margin: 8px 0 0;
+  font-style: normal;
+  font-family: inherit;
+  line-height: 1.65;
+}
+
+.ouinpo-help-box strong{
+}
+
+.ouinpo-training-filters{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 18px 0 22px;
+}
+
+.ouinpo-filter label{
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.ouinpo-filter select{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.ouinpo-filter select:focus{
+}
+
+@media (max-width: 780px){
+  .ouinpo-training-filters{
+    grid-template-columns: 1fr;
+  }
+}
+
+.ouinpo-ds-filter{
+  margin: 1rem 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.ouinpo-ds-filter label{
+  font-weight: 600;
+}
+
+.ouinpo-ds-filter select{
+  max-width: 420px;
+}
+
+/* =========================================================
+   Prépa bac — filtre "Type" + badge Annale / Type bac
+   À ajouter dans le CSS des exercices
+   ========================================================= */
+
+/* Grille des filtres : 4 colonnes quand la place le permet */
+.ouinpo-exo-filters .ouinpo-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+@media (max-width: 980px) {
+  .ouinpo-exo-filters .ouinpo-filters-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .ouinpo-exo-filters .ouinpo-filters-grid,
-  .ouinpo-filters-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ouinpo-panel,
-  .copper-panel,
-  .ouinpo-exo-domain-block,
-  .ouinpo-exo .exo-answer-box,
-  .ouinpo-exo .exo-solutions,
-  .ouinpo-exo .exo-hints,
-  .ouinpo-exo .exo-status-line,
-  .ouinpo-exo .exo-actions,
-  .ouin-exo-block {
-    padding: 0.9rem;
-    border-radius: 12px;
-  }
-
-  .ouinpo-panel-title,
-  .ouinpo-exo-domain-title {
-    font-size: 1.2rem;
-  }
-
-  .ouinpo-exercise-link,
-  .ouin-exo-link {
-    font-size: 1rem;
-  }
-
-  .ouinpo-badges-filters {
-    border-radius: 14px;
-    padding: 0.65rem 0.75rem;
-  }
-
-  .ouinpo-badges-filters select,
-  .ouinpo-palmares-year-filter select {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .ouinpo-badge-title {
-    font-size: 0.9rem;
-  }
-
-  .ouinpo-badge-item {
-    padding: 0.7rem 0.65rem 0.75rem;
-  }
-
-  .ouinpo-competences .ouin-bar-row {
-    grid-template-columns: 1fr;
-  }
-
-  .ouinpo-competences .ouin-li {
-    grid-template-columns: 26px 1fr;
-  }
-
-  .ouinpo-competences .ouin-li-status {
-    justify-self: start;
-    margin-top: 4px;
-  }
-
-  .ouinpo-me-tab {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .ouinpo-competences .ouinpo-global-hero,
-  .ouinpo-competences .ouinpo-focus-card,
-  .ouinpo-competences .ouinpo-global-domains {
-    padding: 14px;
-  }
-
-  .ouinpo-competences .ouinpo-domain-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .ouinpo-competences .ouinpo-domain-summary-side {
-    justify-items: start;
-    text-align: left;
-  }
-
-  .ouinpo-competences .ouinpo-skill-row {
+  .ouinpo-exo-filters .ouinpo-filters-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* =========================================================
-      OuInPo — styles déplacés depuis Shortcodes.php
-========================================================= */
+/* Champ de filtre */
+.ouinpo-exo-filters .ouinpo-field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
 
-.ouinpo-palmares-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;}
+.ouinpo-exo-filters .ouinpo-select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+}
 
-.ouinpo-palmares-year-filter{font-size:0.9rem;}
+.ouinpo-exo-filters .ouinpo-select:focus {
+}
 
-.ouinpo-palmares-year-filter select{min-width:150px;padding:0.25rem 0.55rem;border-radius:8px;}
+/* Ligne méta au-dessus de la liste */
+.ouinpo-exercises-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1rem 0;
+}
 
-.ouinpo-palmares .ouinpo-badges-grid{display:flex;flex-direction:column;gap:1.4rem;}
+.ouinpo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
 
-.ouinpo-palmares .ouinpo-badge-item{padding:1.1rem 1.4rem;}
+/* Badges généraux */
+.ouinpo-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  align-items: center;
+}
 
-.ouinpo-palmares-layout{display:grid;grid-template-columns:170px minmax(0,1fr);gap:1.6rem;align-items:center;}
+.ouinpo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 
-.ouinpo-palmares-left{display:flex;justify-content:center;align-items:center;}
+/* Nouveau badge bac */
+.ouinpo-badge--exam {
+}
 
-.ouinpo-palmares-right{display:flex;flex-direction:column;gap:0.4rem;}
+/* Badge difficulté existant ou renforcé */
+.ouinpo-badge--difficulty {
+}
 
-.ouinpo-palmares .ouinpo-badge-bigimg{width:140px;height:140px;}
+/* Sous-ligne d’un exercice */
+.ouinpo-exercise-sub {
+  margin-top: 0.18rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
 
-.ouinpo-palmares .ouinpo-badge-earned{margin-top:0.4rem;text-align:left;font-size:0.85rem;}
+/* Items de liste un peu plus confortables */
+.ouinpo-exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.8rem 0;
+}
 
-.ouinpo-palmares-count{font-weight:600;margin-bottom:0.3rem;}
+.ouinpo-exercise-item:last-child {
+}
 
-.ouinpo-palmares-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.25rem 1.2rem;}
+.ouinpo-exercise-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
 
-.ouinpo-palmares-list li{white-space:normal;}
+.ouinpo-exercise-link {
+  font-weight: 600;
+  text-decoration: none;
+}
 
-@media (max-width:800px){
+.ouinpo-exercise-link:hover {
+  text-decoration: underline;
+}
 
-  .ouinpo-palmares-header{flex-direction:column;align-items:flex-start;}
+@media (max-width: 700px) {
+  .ouinpo-exercise-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-  .ouinpo-palmares-layout{grid-template-columns:1fr;text-align:center;}
+  .ouinpo-badges {
+    justify-content: flex-start;
+  }
+}
 
-  .ouinpo-palmares-right{align-items:center;}
+.ouinpo-ia-notice {
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
 
-  .ouinpo-palmares .ouinpo-badge-earned{text-align:left;width:100%;}
+.ouinpo-ia-notice p {
+  margin: 0;
+}
 
+.ouinpo-ia-notice a {
+  font-weight: 600;
 }

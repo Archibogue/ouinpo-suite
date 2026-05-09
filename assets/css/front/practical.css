@@ -1,10 +1,8 @@
-/* =========================================================
-   OuInPo Suite — Sujets pratiques
-   CSS fonctionnel neutre
-   Ne contient pas l’identité graphique OuInPo.
-   ========================================================= */
+﻿/* Structure module extraite de ouinpo-suite-prod. */
 
-/* ---------- Page liste ---------- */
+/* =========================================================
+   SUJETS D'ÉPREUVE PRATIQUE
+   ========================================================= */
 
 .ouinpo-practical-page .ouinpo-panel-intro {
   max-width: 80ch;
@@ -12,15 +10,9 @@
 
 .ouinpo-practical-subjects-root,
 .ouinpo-practical-subject {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
 }
 
-.ouinpo-practical-subjects-root *,
-.ouinpo-practical-subject * {
-  box-sizing: border-box;
-}
+/* -------- Liste des sujets -------- */
 
 .ouinpo-practical-subjects-root .ouinpo-exercises-list {
   margin-top: 1rem;
@@ -36,32 +28,22 @@
   line-height: 1.4;
 }
 
-/* ---------- Page sujet ---------- */
+/* -------- Page sujet -------- */
 
 .ouinpo-practical-subject {
   display: grid;
   gap: 1.25rem;
-  max-width: 1120px;
-  margin-inline: auto;
 }
 
-.ouinpo-practical-subject__header,
-.ouinpo-practical-statement,
-.ouinpo-practical-files,
-.ouinpo-practical-calls,
-.ouinpo-practical-progress {
+.ouinpo-practical-subject__header {
   padding: 1rem 1.1rem;
   border-radius: 16px;
 }
 
-.ouinpo-practical-progress.is-hidden {
-  display: none;
-}
-
 .ouinpo-practical-title {
   margin: 0;
-  font-size: clamp(1.45rem, 2.2vw, 2rem);
-  line-height: 1.15;
+  font-size: 1.6rem;
+  line-height: 1.2;
 }
 
 .ouinpo-practical-meta {
@@ -71,56 +53,42 @@
   margin-top: 0.85rem;
 }
 
-/* ---------- Blocs ---------- */
+/* -------- Blocs du sujet -------- */
+
+.ouinpo-practical-statement,
+.ouinpo-practical-files,
+.ouinpo-practical-calls,
+.ouinpo-practical-progress {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+}
 
 .ouinpo-practical-statement h3,
 .ouinpo-practical-files h3,
 .ouinpo-practical-calls h3,
 .ouinpo-practical-progress h3 {
-  margin: 0 0 0.85rem;
+  margin: 0 0 0.85rem 0;
   font-size: 1.1rem;
-  line-height: 1.3;
 }
 
-.ouinpo-practical-statement-content,
-.ouinpo-practical-call-prompt {
-  font-size: 1rem;
+.ouinpo-practical-statement-content {
   line-height: 1.65;
 }
 
-.ouinpo-practical-statement-content p:first-child,
-.ouinpo-practical-call-prompt p:first-child {
+.ouinpo-practical-statement-content p:first-child {
   margin-top: 0;
 }
 
-.ouinpo-practical-statement-content p:last-child,
-.ouinpo-practical-call-prompt p:last-child {
+.ouinpo-practical-statement-content p:last-child {
   margin-bottom: 0;
 }
 
 .ouinpo-practical-statement-content ul,
-.ouinpo-practical-statement-content ol,
-.ouinpo-practical-call-prompt ul,
-.ouinpo-practical-call-prompt ol {
-  margin-top: 0.7rem;
-  margin-bottom: 0.7rem;
-  padding-left: 1.35rem;
+.ouinpo-practical-statement-content ol {
+  margin-left: 1.2rem;
 }
 
-.ouinpo-practical-statement-content li,
-.ouinpo-practical-call-prompt li {
-  margin-bottom: 0.45rem;
-}
-
-.ouinpo-practical-statement-content code,
-.ouinpo-practical-call-prompt code {
-  padding: 0.08rem 0.32rem;
-  border-radius: 5px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.92em;
-}
-
-/* ---------- Fichiers ---------- */
+/* -------- Fichiers -------- */
 
 .ouinpo-practical-files-list {
   list-style: none;
@@ -148,7 +116,7 @@
   text-decoration: underline;
 }
 
-/* ---------- Progression ---------- */
+/* -------- Progression -------- */
 
 .ouinpo-practical-progress-list {
   list-style: none;
@@ -172,7 +140,10 @@
   margin-bottom: 0.15rem;
 }
 
-/* ---------- Appels ---------- */
+.ouinpo-practical-progress-item small {
+}
+
+/* -------- Cartes d'appels -------- */
 
 .ouinpo-practical-calls {
   display: grid;
@@ -182,6 +153,10 @@
 .ouinpo-practical-call {
   padding: 1rem;
   border-radius: 14px;
+}
+
+.ouinpo-practical-call + .ouinpo-practical-call {
+  margin-top: 0;
 }
 
 .ouinpo-practical-call-head {
@@ -202,12 +177,29 @@
   flex: 0 0 auto;
 }
 
+.ouinpo-practical-call-prompt {
+  line-height: 1.6;
+}
+
+.ouinpo-practical-call-prompt p:first-child {
+  margin-top: 0;
+}
+
+.ouinpo-practical-call-prompt p:last-child {
+  margin-bottom: 0;
+}
+
+.ouinpo-practical-call-prompt ul,
+.ouinpo-practical-call-prompt ol {
+  margin-left: 1.2rem;
+}
+
 .ouinpo-practical-call-points {
-  margin: 0.8rem 0 0;
+  margin: 0.8rem 0 0 0;
   font-size: 0.95rem;
 }
 
-/* ---------- Zone de réponse ---------- */
+/* -------- Zone de réponse -------- */
 
 .ouinpo-practical-answer-box,
 .ouinpo-practical-call .exo-answer-box {
@@ -216,7 +208,7 @@
 }
 
 .ouinpo-practical-call .exo-answer-box h5 {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.75rem 0;
   font-size: 1rem;
 }
 
@@ -226,20 +218,16 @@
 
 .ouinpo-practical-call .exo-answer-text {
   width: 100%;
-  min-height: 185px;
+  min-height: 200px;
   resize: vertical;
   box-sizing: border-box;
   padding: 0.85rem 0.95rem;
   border-radius: 12px;
   font: inherit;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  tab-size: 4;
+  line-height: 1.5;
 }
 
 .ouinpo-practical-call .exo-answer-text:focus {
-  outline-offset: 2px;
 }
 
 .ouinpo-practical-call .exo-answer-actions {
@@ -255,17 +243,21 @@
   border-radius: 10px;
   padding: 0.6rem 0.9rem;
   cursor: pointer;
-  font: inherit;
-  font-weight: 700;
+  transition: transform .12s ease, opacity .12s ease, border-color .12s ease;
+}
+
+.ouinpo-practical-call .exo-submit-answer:hover,
+.ouinpo-practical-call .exo-insert-code:hover {
+  transform: translateY(-1px);
 }
 
 .ouinpo-practical-call .exo-submit-answer:disabled,
 .ouinpo-practical-call .exo-insert-code:disabled {
-  opacity: 0.65;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* ---------- Feedback ---------- */
+/* -------- Feedback -------- */
 
 .ouinpo-practical-call .exo-ai-feedback {
   margin-top: 0.9rem;
@@ -275,25 +267,504 @@
   margin-top: 0;
 }
 
-/* ---------- Badges ---------- */
+/* -------- Badges de statut -------- */
 
-.ouinpo-practical-call-status .exo-badge,
-.ouinpo-practical-progress-item .exo-badge,
-.exo-badge.badge-none,
-.exo-badge.badge-attempt,
-.exo-badge.badge-solved {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: max-content;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1.2;
+.exo-badge.badge-none {
 }
 
-/* ---------- Notice IA ---------- */
+.exo-badge.badge-attempt {
+}
+
+.exo-badge.badge-solved {
+}
+
+/* -------- Responsive -------- */
+
+@media (max-width: 800px) {
+  .ouinpo-practical-call-head,
+  .ouinpo-practical-progress-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ouinpo-practical-title {
+    font-size: 1.35rem;
+  }
+
+  .ouinpo-practical-call .exo-answer-text {
+    min-height: 170px;
+  }
+}
+
+/* =========================================================
+   HABILLAGE OUINPIEN — SUJETS PRATIQUES
+   À placer en fin de practical.css
+   ========================================================= */
+
+.ouinpo-practical-page {
+}
+
+/* -------- Panneaux principaux -------- */
+
+.ouinpo-practical-subject__header,
+.ouinpo-practical-statement,
+.ouinpo-practical-files,
+.ouinpo-practical-calls,
+.ouinpo-practical-progress {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.ouinpo-practical-subject__header::before,
+.ouinpo-practical-statement::before,
+.ouinpo-practical-files::before,
+.ouinpo-practical-calls::before,
+.ouinpo-practical-progress::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  pointer-events: none;
+}
+
+/* -------- Titre du sujet -------- */
+
+.ouinpo-practical-title {
+  letter-spacing: 0.02em;
+}
+
+.ouinpo-practical-subject__header {
+  padding-top: 1.15rem;
+  padding-bottom: 1.15rem;
+}
+
+.ouinpo-practical-subject__header::after {
+  content: "⚙︎ Dossier d’épreuve pratique";
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* -------- Sous-titres -------- */
+
+.ouinpo-practical-statement h3,
+.ouinpo-practical-files h3,
+.ouinpo-practical-calls h3,
+.ouinpo-practical-progress h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1.08rem;
+  letter-spacing: 0.02em;
+}
+
+.ouinpo-practical-statement h3::before {
+  content: "📜";
+}
+.ouinpo-practical-files h3::before {
+  content: "🗂️";
+}
+.ouinpo-practical-calls h3::before {
+  content: "⚗️";
+}
+.ouinpo-practical-progress h3::before {
+  content: "🧭";
+}
+
+/* -------- Métadonnées / badges -------- */
+
+.ouinpo-practical-meta .ouinpo-badge {
+}
+
+.ouinpo-practical-meta .ouinpo-badge--exam {
+}
+
+.ouinpo-practical-meta .ouinpo-badge--difficulty {
+}
+
+.ouinpo-practical-meta .ouinpo-badge--competency {
+}
+
+/* -------- Énoncé -------- */
+
+.ouinpo-practical-statement-content {
+  font-size: 1.01rem;
+  line-height: 1.7;
+}
+
+.ouinpo-practical-statement-content code {
+  border-radius: 6px;
+  padding: 0.08rem 0.35rem;
+}
+
+.ouinpo-practical-statement-content h3,
+.ouinpo-practical-statement-content h4 {
+}
+
+/* -------- Fichiers -------- */
+
+.ouinpo-practical-files-list li {
+  border-radius: 14px;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.ouinpo-practical-files-list li:hover {
+  transform: translateY(-1px);
+}
+
+.ouinpo-practical-files-list a {
+}
+
+.ouinpo-practical-files-list a::before {
+  content: "⬇ ";
+}
+
+/* -------- Progression -------- */
+
+.ouinpo-practical-progress-item {
+  border-radius: 14px;
+}
+
+/* -------- Cartes d’appels -------- */
+
+.ouinpo-practical-call {
+  position: relative;
+  border-radius: 16px;
+}
+
+.ouinpo-practical-call::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 16px 0 0 16px;
+}
+
+.ouinpo-practical-call-head h4 {
+}
+
+.ouinpo-practical-call-prompt {
+}
+
+.ouinpo-practical-call-prompt code {
+  border-radius: 6px;
+  padding: 0.08rem 0.35rem;
+}
+
+.ouinpo-practical-call-points {
+  font-style: italic;
+}
+
+/* -------- Zone de réponse -------- */
+
+.ouinpo-practical-call .exo-answer-box {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+}
+
+.ouinpo-practical-call .exo-answer-box h5 {
+}
+
+.ouinpo-practical-call .exo-answer-text {
+  border-radius: 14px;
+}
+
+.ouinpo-practical-call .exo-answer-text::placeholder {
+}
+
+.ouinpo-practical-call .exo-answer-text:focus {
+}
+
+/* -------- Boutons -------- */
+
+.ouinpo-practical-call .exo-submit-answer,
+.ouinpo-practical-call .exo-insert-code {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: 12px;
+}
+
+.ouinpo-practical-call .exo-submit-answer:hover,
+.ouinpo-practical-call .exo-insert-code:hover {
+}
+
+/* -------- Feedback SegFault -------- */
+
+.ouinpo-practical-call .ai-feedback-block {
+  border-radius: 14px;
+}
+
+.ouinpo-practical-call .ai-feedback-block h5 {
+}
+
+/* -------- Statuts -------- */
+
+.exo-badge.badge-none {
+}
+
+.exo-badge.badge-attempt {
+}
+
+.exo-badge.badge-solved {
+}
+
+/* -------- Petite touche OuInPo sur les filtres -------- */
+
+#ouinpo-practical-dynamic-filters .ouinpo-panel-title::before {
+  content: "⚙︎ ";
+}
+
+#ouinpo-practical-dynamic-filters {
+  border-radius: 18px;
+}
+
+/* =========================================================
+   AJUSTEMENTS VISUELS — VERSION PLUS OUINPIENNE
+   ========================================================= */
+
+/* -------- En-tête plus compact et plus structuré -------- */
+
+.ouinpo-practical-subject__header {
+  padding: 1rem 1.1rem 0.9rem;
+}
+
+.ouinpo-practical-title {
+  margin-bottom: 0.65rem;
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+
+.ouinpo-practical-subject__header::after {
+  margin-top: 0.7rem;
+  padding-top: 0.55rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.11em;
+}
+
+/* -------- Métadonnées moins "web moderne", plus cartouches -------- */
+
+.ouinpo-practical-meta {
+  gap: 0.5rem 0.65rem;
+}
+
+.ouinpo-practical-meta .ouinpo-badge {
+  border-radius: 8px;
+  padding: 0.42rem 0.72rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.ouinpo-practical-meta .ouinpo-badge--exam {
+  font-weight: 700;
+}
+
+.ouinpo-practical-meta .ouinpo-badge--level {
+}
+
+/* -------- Le sujet doit ressembler à une pièce de dossier -------- */
+
+.ouinpo-practical-statement,
+.ouinpo-practical-files,
+.ouinpo-practical-calls,
+.ouinpo-practical-progress {
+  border-radius: 14px;
+}
+
+.ouinpo-practical-statement {
+}
+
+.ouinpo-practical-statement-content {
+  font-size: 1.04rem;
+  line-height: 1.75;
+}
+
+/* -------- Titres de sections plus "document classé" -------- */
+
+.ouinpo-practical-statement h3,
+.ouinpo-practical-files h3,
+.ouinpo-practical-calls h3,
+.ouinpo-practical-progress h3 {
+  margin-bottom: 1rem;
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+/* -------- Listes de l'énoncé plus propres -------- */
+
+.ouinpo-practical-statement-content ol {
+  padding-left: 1.4rem;
+}
+
+.ouinpo-practical-statement-content li {
+  margin-bottom: 0.55rem;
+}
+
+.ouinpo-practical-statement-content strong {
+}
+
+/* -------- Code inline un peu plus élégant -------- */
+
+.ouinpo-practical-statement-content code,
+.ouinpo-practical-call-prompt code {
+  padding: 0.1rem 0.42rem;
+  border-radius: 5px;
+}
+
+/* -------- Fichiers fournis : plus "pièces jointes de dossier" -------- */
+
+.ouinpo-practical-files-list li {
+  border-radius: 10px;
+  padding: 0.72rem 0.85rem;
+}
+
+.ouinpo-practical-files-list li::before {
+  content: "◈";
+  margin-right: 0.35rem;
+}
+
+/* -------- Cartes d'appels un peu plus sobres -------- */
+
+.ouinpo-practical-call {
+  border-radius: 12px;
+}
+
+.ouinpo-practical-call-head h4 {
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.ouinpo-practical-call::before {
+  width: 3px;
+}
+
+/* -------- Zone de réponse plus "cahier de laboratoire" -------- */
+
+.ouinpo-practical-call .exo-answer-text {
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+/* -------- Feedback un peu mieux intégré -------- */
+
+.ouinpo-practical-call .ai-feedback-block {
+  border-radius: 10px;
+}
+
+/* =========================================================
+   FINITIONS VISUELLES — SUJET PRATIQUE
+   ========================================================= */
+
+/* titre principal plus noble */
+.ouinpo-practical-title {
+  font-size: 2.1rem;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+}
+
+/* bandeau méta plus respirant */
+.ouinpo-practical-meta {
+  margin-top: 0.9rem;
+  gap: 0.55rem 0.7rem;
+}
+
+.ouinpo-practical-meta .ouinpo-badge {
+  font-size: 0.92rem;
+  padding: 0.38rem 0.68rem;
+}
+
+/* sections mieux hiérarchisées */
+.ouinpo-practical-statement h3,
+.ouinpo-practical-files h3,
+.ouinpo-practical-calls h3,
+.ouinpo-practical-progress h3 {
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+
+/* texte général un peu plus lisible */
+.ouinpo-practical-statement-content,
+.ouinpo-practical-call-prompt {
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+/* listes du sujet */
+.ouinpo-practical-statement-content ol,
+.ouinpo-practical-statement-content ul {
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.ouinpo-practical-statement-content li {
+  margin-bottom: 0.55rem;
+}
+
+/* cartes d'appels un peu plus aérées */
+.ouinpo-practical-call {
+  padding: 1.15rem 1.1rem 1rem;
+}
+
+.ouinpo-practical-call-head {
+  margin-bottom: 1rem;
+}
+
+.ouinpo-practical-call-head h4 {
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+/* badge statut plus visible */
+.ouinpo-practical-call-status .exo-badge {
+  font-size: 0.82rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+}
+
+/* zone de réponse plus lisible */
+.ouinpo-practical-call .exo-answer-text {
+  min-height: 180px;
+}
+
+/* placeholder */
+.ouinpo-practical-call .exo-answer-text::placeholder {
+}
+
+/* boutons plus présents */
+.ouinpo-practical-call .exo-submit-answer,
+.ouinpo-practical-call .exo-insert-code {
+  padding: 0.62rem 0.95rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ouinpo-practical-call .exo-submit-answer {
+}
+
+.ouinpo-practical-call .exo-submit-answer:hover,
+.ouinpo-practical-call .exo-insert-code:hover {
+}
+
+/* fichiers plus lisibles */
+.ouinpo-practical-files-list li {
+  padding: 0.8rem 0.9rem;
+}
+
+.ouinpo-practical-files-list a {
+  font-size: 0.98rem;
+}
+
+/* largeur de lecture */
+.ouinpo-practical-subject {
+  max-width: 1100px;
+}
 
 .ouinpo-ia-notice {
   margin: 1rem 0;
@@ -311,7 +782,534 @@
   font-weight: 600;
 }
 
-/* ---------- Responsive ---------- */
+/* =========================================================
+   OUINPO — SUJETS PRATIQUES
+   Surcouche visuelle finale
+   À placer tout à la fin de practical.css
+   ========================================================= */
+
+.ouinpo-practical-page,
+.ouinpo-practical-subject {
+}
+
+/* -------- Structure générale -------- */
+
+.ouinpo-practical-subject {
+  max-width: 1120px;
+  margin-inline: auto;
+  display: grid;
+  gap: 1.35rem;
+}
+
+.ouinpo-practical-subject__header,
+.ouinpo-practical-statement,
+.ouinpo-practical-files,
+.ouinpo-practical-calls,
+.ouinpo-practical-progress,
+#ouinpo-practical-dynamic-filters {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.ouinpo-practical-subject__header::before,
+.ouinpo-practical-statement::before,
+.ouinpo-practical-files::before,
+.ouinpo-practical-calls::before,
+.ouinpo-practical-progress::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  pointer-events: none;
+}
+
+/* -------- En-tête du sujet -------- */
+
+.ouinpo-practical-subject__header {
+  padding: 1.25rem 1.35rem;
+}
+
+.ouinpo-practical-title {
+  margin: 0;
+  font-size: clamp(1.55rem, 2.3vw, 2.15rem);
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+}
+
+.ouinpo-practical-subject__header::after {
+  content: "⚙︎ Dossier d’épreuve pratique";
+  display: inline-flex;
+  margin-top: 0.85rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* -------- Métadonnées -------- */
+
+.ouinpo-practical-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.65rem;
+  margin-top: 0.95rem;
+}
+
+.ouinpo-practical-meta .ouinpo-badge,
+.ouinpo-practical-page .ouinpo-badge,
+.ouinpo-practical-subject .ouinpo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.36rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ouinpo-practical-meta .ouinpo-badge--exam {
+}
+
+.ouinpo-practical-meta .ouinpo-badge--competency {
+}
+
+.ouinpo-practical-meta .ouinpo-badge--difficulty,
+.ouinpo-practical-meta .ouinpo-badge--level {
+}
+
+/* -------- Titres de blocs -------- */
+
+.ouinpo-practical-statement,
+.ouinpo-practical-files,
+.ouinpo-practical-calls,
+.ouinpo-practical-progress {
+  padding: 1.15rem 1.25rem;
+}
+
+.ouinpo-practical-statement h3,
+.ouinpo-practical-files h3,
+.ouinpo-practical-calls h3,
+.ouinpo-practical-progress h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding-bottom: 0.55rem;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ouinpo-practical-statement h3::before {
+  content: "📜";
+}
+
+.ouinpo-practical-files h3::before {
+  content: "🗂️";
+}
+
+.ouinpo-practical-calls h3::before {
+  content: "⚗️";
+}
+
+.ouinpo-practical-progress h3::before {
+  content: "🧭";
+}
+
+/* -------- Texte du sujet -------- */
+
+.ouinpo-practical-statement-content,
+.ouinpo-practical-call-prompt {
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+.ouinpo-practical-statement-content p:first-child,
+.ouinpo-practical-call-prompt p:first-child {
+  margin-top: 0;
+}
+
+.ouinpo-practical-statement-content p:last-child,
+.ouinpo-practical-call-prompt p:last-child {
+  margin-bottom: 0;
+}
+
+.ouinpo-practical-statement-content ul,
+.ouinpo-practical-statement-content ol,
+.ouinpo-practical-call-prompt ul,
+.ouinpo-practical-call-prompt ol {
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
+  padding-left: 1.35rem;
+}
+
+.ouinpo-practical-statement-content li,
+.ouinpo-practical-call-prompt li {
+  margin-bottom: 0.45rem;
+}
+
+.ouinpo-practical-statement-content strong,
+.ouinpo-practical-call-prompt strong {
+}
+
+.ouinpo-practical-statement-content code,
+.ouinpo-practical-call-prompt code {
+  padding: 0.1rem 0.42rem;
+  border-radius: 6px;
+}
+
+/* -------- Fichiers fournis -------- */
+
+.ouinpo-practical-files-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ouinpo-practical-files-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ouinpo-practical-files-list li::before {
+  content: "◈";
+}
+
+.ouinpo-practical-files-list li:hover {
+  transform: translateY(-1px);
+}
+
+.ouinpo-practical-files-list a {
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.ouinpo-practical-files-list a:hover {
+  text-decoration: underline;
+}
+
+/* -------- Cartes Question / Appel évalué -------- */
+
+.ouinpo-practical-calls {
+  display: grid;
+  gap: 1rem;
+}
+
+.ouinpo-practical-call {
+  position: relative;
+  padding: 1.1rem 1.15rem 1rem;
+  border-radius: 16px;
+}
+
+.ouinpo-practical-call::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 16px 0 0 16px;
+}
+
+.ouinpo-practical-call-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.95rem;
+}
+
+.ouinpo-practical-call-head h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.ouinpo-practical-call-status {
+  flex: 0 0 auto;
+}
+
+/* -------- Badges de statut -------- */
+
+.ouinpo-practical-call-status .exo-badge,
+.ouinpo-practical-progress-item .exo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max-content;
+  padding: 0.34rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.exo-badge.badge-none {
+}
+
+.exo-badge.badge-attempt {
+}
+
+.exo-badge.badge-solved {
+}
+
+/* -------- Zone de réponse -------- */
+
+.ouinpo-practical-call .exo-answer-box {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+}
+
+.ouinpo-practical-call .exo-answer-box h5 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.ouinpo-practical-call .exo-answer-text {
+  width: 100%;
+  min-height: 185px;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  font: inherit;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.ouinpo-practical-call .exo-answer-text::placeholder {
+}
+
+.ouinpo-practical-call .exo-answer-text:focus {
+}
+
+.ouinpo-practical-call .exo-answer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+/* -------- Boutons -------- */
+
+.ouinpo-practical-call .exo-submit-answer,
+.ouinpo-practical-call .exo-insert-code {
+  appearance: none;
+  border-radius: 12px;
+  padding: 0.66rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ouinpo-practical-call .exo-submit-answer {
+}
+
+.ouinpo-practical-call .exo-insert-code {
+}
+
+.ouinpo-practical-call .exo-submit-answer:hover,
+.ouinpo-practical-call .exo-insert-code:hover {
+  transform: translateY(-1px);
+}
+
+.ouinpo-practical-call .exo-submit-answer:disabled,
+.ouinpo-practical-call .exo-insert-code:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* -------- Feedback SegFault -------- */
+
+.ouinpo-practical-call .exo-ai-feedback {
+  margin-top: 1rem;
+}
+
+.ouinpo-practical-call .ai-feedback-block {
+  position: relative;
+  overflow: hidden;
+  margin-top: 0;
+  padding: 0;
+  border-radius: 16px;
+}
+
+.ouinpo-practical-call .ai-feedback-block::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+}
+
+.ouinpo-practical-call .ai-feedback-block h5 {
+  margin: 0;
+  padding: 1rem 1.05rem 0.45rem 1.15rem;
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.ouinpo-practical-call .ai-feedback-block .ouin-exo-block-content {
+  padding: 0.4rem 1.15rem 1.1rem;
+  line-height: 1.65;
+}
+
+.ouinpo-practical-call .ai-feedback-block .ouin-exo-block-content p {
+  margin: 0.55rem 0;
+}
+
+.ouinpo-practical-call .ai-feedback-block h6 {
+  margin: 1rem 0 0.55rem;
+  padding-top: 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.ouinpo-practical-call .ai-feedback-block h6::before {
+  content: "☞ ";
+}
+
+.ouinpo-practical-call .ai-feedback-block ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ouinpo-practical-call .ai-feedback-block li {
+  position: relative;
+  padding: 0.55rem 0.7rem 0.55rem 2rem;
+  border-radius: 10px;
+}
+
+.ouinpo-practical-call .ai-feedback-block li::before {
+  content: "✓";
+  position: absolute;
+  left: 0.72rem;
+  top: 0.55rem;
+  font-weight: 900;
+}
+
+/* ligne "Confiance : 90 %" */
+.ouinpo-practical-call .ai-feedback-block .ouin-exo-block-content p:has(strong) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  padding: 0.42rem 0.72rem;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.ouinpo-practical-call .ai-feedback-block .ouin-exo-block-content p:has(strong)::before {
+  content: "◉";
+}
+
+/* -------- Progression -------- */
+
+.ouinpo-practical-progress-list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ouinpo-practical-progress-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.78rem 0.9rem;
+  border-radius: 12px;
+}
+
+.ouinpo-practical-progress-item strong {
+}
+
+.ouinpo-practical-progress-item small {
+}
+
+/* -------- Liste des sujets pratiques -------- */
+
+.ouinpo-practical-subjects-root .ouinpo-exercise-item {
+  border-radius: 16px;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ouinpo-practical-subjects-root .ouinpo-exercise-item:hover {
+  transform: translateY(-1px);
+}
+
+.ouinpo-practical-subjects-root .ouinpo-exercise-link {
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.ouinpo-practical-subjects-root .ouinpo-exercise-link:hover {
+}
+
+.ouinpo-practical-subjects-root .ouinpo-exercise-sub {
+  margin-top: 0.35rem;
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+/* -------- Notice IA éventuelle -------- */
+
+.ouinpo-ia-notice {
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.ouinpo-ia-notice p {
+  margin: 0;
+}
+
+.ouinpo-ia-notice a {
+  font-weight: 700;
+}
+
+/* -------- Responsive -------- */
 
 @media (max-width: 800px) {
   .ouinpo-practical-subject {

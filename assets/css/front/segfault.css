@@ -1,602 +1,838 @@
-/* ==========================================================
-   OuInPo Suite — SegFault
-   CSS module fonctionnel
-   Ne contient pas l’identité graphique OuInPo.
-   ========================================================== */
+﻿/* Structure module extraite de ouinpo-suite-prod. */
+/* =========================================================
+   SEGFAULT CHATBOX - Thème OuInPo pataphysicien
+   version corrigée
+   ========================================================= */
 
-.ouinpo-sf,
-.ouinpo-segfault,
-.ouinpo-sf-chat,
-.ouinpo-sf-box {
-  box-sizing: border-box;
-}
-
-.ouinpo-sf,
-.ouinpo-segfault {
-  width: 100%;
-  max-width: 100%;
-}
-
-.ouinpo-sf-panel,
-.ouinpo-sf-box,
-.ouinpo-sf-chat {
+/* --- Base du widget --- */
+.ouinpo-sf-widget {
+  max-width: 680px;
+  margin: 1rem auto;
   border-radius: 14px;
-  padding: 1rem;
-}
-
-.ouinpo-sf-title,
-.ouinpo-sf h2,
-.ouinpo-sf h3 {
-  margin-top: 0;
-  line-height: 1.25;
-}
-
-.ouinpo-sf-intro,
-.ouinpo-sf-help {
-  margin: 0 0 1rem;
-  line-height: 1.55;
-}
-
-.ouinpo-sf-messages,
-.ouinpo-sf-history {
-  display: grid;
-  gap: 0.75rem;
-  margin: 1rem 0;
-}
-
-.ouinpo-sf-message {
-  padding: 0.8rem 0.9rem;
-  border-radius: 12px;
-  line-height: 1.55;
-}
-
-.ouinpo-sf-message p {
-  margin: 0.4rem 0;
-}
-
-.ouinpo-sf-message p:first-child {
-  margin-top: 0;
-}
-
-.ouinpo-sf-message p:last-child {
-  margin-bottom: 0;
-}
-
-.ouinpo-sf-message-user {
-  margin-left: auto;
-  max-width: 85%;
-}
-
-.ouinpo-sf-message-assistant {
-  margin-right: auto;
-  max-width: 92%;
-}
-
-.ouinpo-sf-form {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.ouinpo-sf-form-row {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-end;
-}
-
-.ouinpo-sf textarea,
-.ouinpo-sf input[type="text"] {
-  width: 100%;
-  min-height: 90px;
+  overflow: hidden;
+  font-family: "Georgia", "Times New Roman", serif;
   box-sizing: border-box;
-  resize: vertical;
-  border-radius: 12px;
-  padding: 0.8rem 0.9rem;
-  font: inherit;
-  line-height: 1.45;
 }
 
-.ouinpo-sf button,
-.ouinpo-sf .button {
+.ouinpo-sf-widget,
+.ouinpo-sf-widget * {
+  box-sizing: border-box;
+}
+
+/* --- En-tête --- */
+.sf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5rem;
+  padding: .7rem 1rem;
+  font-weight: 700;
+  letter-spacing: .4px;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sf-header .emoji,
+.sf-header .sf-icon {
+  flex: 0 0 auto;
+}
+
+.sf-header .sf-icon {
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  vertical-align: -4px;
+}
+
+.sf-icon-svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.sf-header-buttons {
+  display: flex;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.sf-btn {
+  padding: 2px 8px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition: 0.15s ease-in-out;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  border-radius: 10px;
-  padding: 0.65rem 0.95rem;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
+  flex: 0 0 auto;
 }
 
-.ouinpo-sf button:disabled {
-  opacity: 0.55;
+.sf-btn:hover {
+  transform: scale(1.1);
+}
+
+.sf-close {
+  font-weight: bold;
+}
+
+.sf-fullscreen {
+}
+
+.sf-fullscreen-active .sf-fullscreen::after {
+  content: "↙";
+  font-size: 1.1rem;
+  position: relative;
+  top: 1px;
+}
+
+/* --- Zone messages --- */
+.sf-messages {
+  padding: 1rem;
+  height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  min-width: 0;
+}
+
+.sf-messages a {
+  text-decoration: underline;
+}
+.sf-messages a:hover {
+  text-decoration: none;
+}
+
+/* --- Bulles de conversation --- */
+.sf-bubble {
+  display: inline-block;
+  padding: .7rem .9rem;
+  margin: .35rem 0;
+  border-radius: 12px;
+  max-width: 92%;
+  line-height: 1.5;
+  font-size: 15.5px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sf-bubble.user {
+}
+
+.sf-bubble.assistant {
+}
+
+/* --- Sources --- */
+.sf-sources {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.sf-sources > strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+
+.sf-sources a {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  margin: 0.2rem 0;
+  border-radius: 6px;
+  text-decoration: none !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sf-sources a:hover {
+  transform: translateX(2px);
+}
+
+.sf-sources a strong {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.sf-sources a small {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.2rem;
+}
+
+.sf-sources a[data-type="post"] {
+  position: relative;
+}
+
+.sf-sources a[data-type="post"]::after {
+  content: "Cours";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.65rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+}
+
+.sf-sources a[data-type="exercise"] {
+  position: relative;
+}
+
+.sf-sources a[data-type="exercise"]::after {
+  content: attr(data-badge);
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.65rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* --- Zone de saisie --- */
+.sf-input {
+  display: flex;
+  align-items: flex-end;
+  gap: .6rem;
+  padding: .85rem;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sf-input input,
+.sf-input textarea {
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+}
+
+.sf-input input {
+  flex: 1 1 auto;
+  padding: .7rem .9rem;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.sf-input input::placeholder,
+.sf-input textarea::placeholder {
+}
+
+.sf-input input:focus,
+.sf-input textarea:focus {
+}
+
+.sf-input textarea {
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 2.6rem;
+  max-height: 10rem;
+  resize: vertical;
+  padding: 0.6rem 0.75rem;
+  line-height: 1.35;
+  overflow-x: hidden;
+  border-radius: 10px;
+}
+
+.sf-input button {
+  flex: 0 0 auto;
+  padding: .75rem 1.15rem;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  cursor: pointer;
+  transition: transform .06s ease, filter .15s ease;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.sf-input button:hover {
+}
+.sf-input button:active {
+  transform: translateY(1px);
+}
+.sf-input button:disabled {
   cursor: not-allowed;
 }
 
-.ouinpo-sf-status,
-.ouinpo-sf-notice,
-.ouinpo-sf-error {
-  padding: 0.75rem 0.9rem;
+
+/* --- Pied du widget --- */
+.sf-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .6rem;
+  padding: .65rem .9rem;
+  font-size: .92em;
+}
+
+.sf-footer button {
+  padding: .6rem .9rem;
   border-radius: 10px;
-  line-height: 1.45;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter .15s ease, transform .1s ease;
 }
 
-.ouinpo-sf-sources {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+.sf-footer button:hover {
+  transform: scale(1.05);
 }
 
-.ouinpo-sf-sources ul {
-  margin: 0.4rem 0 0;
-  padding-left: 1.2rem;
-}
-
-.ouinpo-sf-sources li {
-  margin: 0.25rem 0;
-}
-
-.ouinpo-sf pre {
-  overflow-x: auto;
-  padding: 1rem;
-  border-radius: 10px;
-}
-
-.ouinpo-sf code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-
-.sf-parcours-filter {
-  display:flex;
-  gap:0.75rem;
-  align-items:center;
-  flex-wrap:wrap;
-  margin:1rem 0;
-}
-
-.sf-parcours-status {
-  opacity:0.85;
-}
-
-.sf-progressbar {
-  display:inline-block;
-  width:8rem;
-  max-width:100%;
-  height:0.65rem;
-  overflow:hidden;
-  border-radius:999px;
-  vertical-align:middle;
-}
-
-.sf-progressbar span {
-  display:block;
-  width:var(--progress, 0%);
-  height:100%;
-}
-
-.ouinpo-sf-template-table {
-  table-layout:fixed;
-  width:100%;
-  border-collapse:collapse;
-}
-
-.ouinpo-sf-col-template-title {
-  width:34%;
-}
-
-.ouinpo-sf-col-template-domain {
-  width:25%;
-}
-
-.ouinpo-sf-col-template-goal {
-  width:16%;
-}
-
-.ouinpo-sf-col-template-mode {
-  width:10%;
-}
-
-.ouinpo-sf-col-template-action {
-  width:15%;
-}
-
-.ouinpo-sf-cell-wrap {
-  white-space:normal;
-  line-height:1.35;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-}
-
-.is-hidden {
-  display:none;
-}
-
-@media (max-width: 720px) {
-  .ouinpo-sf-form-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .ouinpo-sf button,
-  .ouinpo-sf .button {
-    width: 100%;
-  }
-
-  .ouinpo-sf-message-user,
-  .ouinpo-sf-message-assistant {
-    max-width: 100%;
-  }
-}
-
-/* ==========================================================
-   SegFault — bouton flottant et fenêtre de chat
-   CSS fonctionnel
-   ========================================================== */
-
-/* Bouton flottant réel généré par segfault.php */
-#sf-toggle,
+/* --- Bouton flottant --- */
 .sf-toggle {
   position: fixed;
-  right: 1.25rem;
-  bottom: 1.25rem;
-  z-index: 99999;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 3.4rem;
-  height: 3.4rem;
-
-  border-radius: 999px;
+  right: 20px;
+  bottom: 20px;
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  border-radius: 50%;
+  font-size: 28px;
+  text-align: center;
   cursor: pointer;
-  font-size: 1.55rem;
-  line-height: 1;
-  user-select: none;
+  z-index: 1000000;
+  transition: transform .22s ease, box-shadow .22s ease;
 }
 
-/* Fenêtre flottante réelle */
-#sf-chat-floating,
-.ouinpo-sf-floating {
+.sf-toggle:hover {
+  transform: scale(1.12);
+}
+
+/* --- Fenêtre flottante + animation --- */
+#sf-chat-floating {
   position: fixed;
-  right: 1.25rem;
-  bottom: 5.25rem;
-  z-index: 99998;
-
-  width: min(440px, calc(100vw - 2rem));
-  max-height: min(720px, calc(100vh - 7rem));
-
+  right: 20px;
+  left: auto;
+  bottom: 90px;
+  width: min(92vw, 450px);
+  max-width: min(92vw, 450px);
+  height: min(70vh, 720px);
+  max-height: 70vh;
+  min-height: 0;
+  border-radius: 14px;
+  z-index: 999999;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 
-  border-radius: 16px;
+  transform: translateY(40px) scale(.98);
+  pointer-events: none;
+  transition:
+    opacity .35s cubic-bezier(.2,.6,.2,1),
+    transform .35s cubic-bezier(.2,.6,.2,1);
 }
 
-/* État fermé utilisé par le JS */
-#sf-chat-floating.sf-hidden,
-.ouinpo-sf-floating.sf-hidden,
-.sf-hidden {
-  display: none !important;
-}
-
-/* En-tête */
-#sf-chat-floating .sf-header,
-#sf-chat-inline .sf-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  font-weight: 700;
-}
-
-/* Boutons fermer / plein écran */
-#sf-chat-floating .sf-header-buttons {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-#sf-chat-floating .sf-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-#sf-chat-floating .sf-icon-svg {
-  width: 1.15rem;
-  height: 1.15rem;
-}
-
-/* Notice IA */
-#sf-chat-floating .sf-ai-notice,
-#sf-chat-inline .sf-ai-notice {
-  margin: 0.75rem;
-}
-
-/* Messages */
-#sf-chat-floating .sf-messages,
-#sf-chat-inline .sf-messages {
+/* La zone messages prend l’espace restant */
+#sf-chat-floating .sf-messages {
   flex: 1 1 auto;
-  overflow-y: auto;
-  min-height: 180px;
-  max-height: 420px;
-  padding: 0.85rem;
-
-  display: grid;
-  gap: 0.75rem;
+  height: auto;
+  min-height: 0;
 }
 
-/* Bulles de messages éventuellement créées par le JS */
-#sf-chat-floating .sf-message,
-#sf-chat-inline .sf-message {
-  padding: 0.75rem 0.85rem;
-  border-radius: 12px;
-  line-height: 1.5;
-}
-
-/* Zone de saisie */
+/* Le haut, la saisie et le footer ne doivent pas s’écraser */
+#sf-chat-floating .sf-header,
 #sf-chat-floating .sf-input,
-#sf-chat-inline .sf-input {
-  display: grid;
-  gap: 0.65rem;
-  padding: 0.85rem;
+#sf-chat-floating .sf-footer {
+  flex: 0 0 auto;
 }
 
-#sf-chat-floating .sf-input textarea,
-#sf-chat-inline .sf-input textarea {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  min-height: 90px;
-  border-radius: 12px;
-  padding: 0.75rem 0.85rem;
-  font: inherit;
-  line-height: 1.45;
+/* Un peu d’air sous les sources */
+#sf-chat-floating .sf-sources {
+  margin-bottom: 0.5rem;
 }
 
-#sf-chat-floating .sf-input button,
-#sf-chat-inline .sf-input button {
-  justify-self: end;
-  padding: 0.65rem 1rem;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
+#sf-chat-floating:not(.sf-hidden) {
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
-/* Pied */
-#sf-chat-floating .sf-footer,
-#sf-chat-inline .sf-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 0.6rem;
-  padding: 0.75rem 0.85rem;
-  font-size: 0.85rem;
+#sf-chat-floating.sf-hidden {
+  transform: translateY(40px) scale(.98);
+  pointer-events: none;
 }
 
-#sf-chat-floating .sf-footer button,
-#sf-chat-inline .sf-footer button {
-  padding: 0.45rem 0.7rem;
-  border-radius: 8px;
-  cursor: pointer;
+/* --- Accessibilité focus --- */
+.sf-toggle:focus,
+.sf-input button:focus,
+.sf-input textarea:focus,
+.sf-footer button:focus,
+.sf-btn:focus {
 }
 
-/* Mode plein écran éventuel */
-#sf-chat-floating.sf-fullscreen-mode {
-  inset: 2rem;
-  width: auto;
-  max-height: none;
-}
-
-/* Mobile */
-@media (max-width: 640px) {
-  #sf-toggle,
-  .sf-toggle {
-    right: 0.9rem;
-    bottom: 0.9rem;
+/* --- Mobile --- */
+@media (max-width: 600px) {
+  #sf-chat-floating {
+    left: 8px;
+    right: 8px;
+    bottom: 80px;
+    width: auto;
+    max-width: none;
+    height: 75vh;
+    max-height: 75vh;
   }
 
-  #sf-chat-floating,
-  .ouinpo-sf-floating {
-    right: 0.75rem;
-    bottom: 4.8rem;
-    width: calc(100vw - 1.5rem);
-    max-height: calc(100vh - 6rem);
-  }
-
-  #sf-chat-floating.sf-fullscreen-mode {
-    inset: 0.75rem;
-  }
-
-  #sf-chat-floating .sf-footer,
-  #sf-chat-inline .sf-footer {
-    align-items: stretch;
+  #sf-chat-floating .sf-input {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  #sf-chat-floating .sf-input button,
-  #sf-chat-inline .sf-input button,
-  #sf-chat-floating .sf-footer button,
-  #sf-chat-inline .sf-footer button {
-    width: 100%;
+  #sf-chat-floating .sf-input button {
+    align-self: flex-end;
   }
 }
 
-/* ==========================================================
-   SegFault — correctifs fonctionnels communs
-   Plein écran + zone de saisie plus compacte
-   ========================================================== */
+  .sf-messages {
+    height: 45vh;
+  }
 
-/* Le plein écran est fonctionnel : il doit marcher dans tous les thèmes */
-#sf-chat-floating.sf-fullscreen-active,
-#sf-chat-floating.sf-fullscreen-mode,
-.ouinpo-sf-floating.sf-fullscreen-active,
-.ouinpo-sf-floating.sf-fullscreen-mode {
+  .sf-toggle {
+    right: 10px;
+    bottom: 10px;
+    width: 52px;
+    height: 52px;
+    line-height: 52px;
+    font-size: 24px;
+  }
+
+  .sf-input {
+    align-items: stretch;
+  }
+
+  .sf-input button {
+    align-self: flex-end;
+  }
+
+/* =========================================================
+   Effets d attente et bulles humoristiques de SegFault
+   ========================================================= */
+.sf-bubble.assistant.sf-thinking {
+  position: relative;
+  font-style: italic;
+  animation: sf-fadein 0.6s ease forwards;
+}
+
+.sf-bubble.assistant.sf-thinking::after {
+  content: "\1F4AD";
+  margin-left: 6px;
+  animation: sf-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes sf-pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes sf-fadein {
+  from { transform: translateY(6px); }
+  to   { transform: translateY(0); }
+}
+
+.sf-bubble.assistant.sf-thinking.sf-done {
+  animation: sf-fadeout 0.4s ease forwards;
+}
+
+@keyframes sf-fadeout {
+  from { transform: scale(1); }
+  to   { transform: scale(0.95); }
+}
+
+/* ============================
+   Blocs de code + bouton "Copier"
+   ============================ */
+.ouinpo-code-block {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.ouinpo-code-block pre {
+  margin: 0;
+}
+
+.ouinpo-copy-code {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ouinpo-copy-code:hover {
+}
+
+/* ============= MODE PLEIN ÉCRAN ============= */
+.sf-fullscreen-active {
   position: fixed !important;
-  inset: 0 !important;
-
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
   max-width: none !important;
   max-height: none !important;
-
-  margin: 0 !important;
   border-radius: 0 !important;
+  margin: 0 !important;
   z-index: 999999 !important;
-
   display: flex !important;
   flex-direction: column !important;
+}
 
-  opacity: 1 !important;
-  transform: none !important;
+.sf-fullscreen-active .sf-messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sf-fullscreen-active .sf-input,
+.sf-fullscreen-active .sf-footer {
+  flex: 0 0 auto;
+  height: auto !important;
+  max-height: none !important;
+}
+
+.sf-toggle.sf-toggle-hidden {
+  display: none;
+}
+
+.sf-fullscreen::after {
+}
+.sf-fullscreen-active .sf-fullscreen::after {
+}
+
+/* ============================================================
+   MODE PLEIN ÉCRAN — 2 colonnes (dialogue / sources)
+   ============================================================ */
+.sf-fullscreen-active .sf-messages {
+  display: grid;
+  grid-template-columns: 4fr 1fr;
+  column-gap: 1.4rem;
+  padding-right: 1rem;
+  position: relative;
+}
+
+.sf-fullscreen-active .sf-bubble {
+  grid-column: 1 / 2;
+}
+
+.sf-fullscreen-active .sf-sources {
+  grid-column: 2 / 3;
+  align-self: start;
+  margin: 0.4rem 0;
+  padding-left: 0.8rem;
+}
+
+/* ============================
+   Parcours élève
+   ============================ */
+.sf-parcours-ul { padding-left: 1.2rem; }
+.sf-parcours-li { margin: 0.75rem 0; }
+.sf-parcours-li a { font-weight: 700; text-decoration: none; }
+.sf-parcours-li a:hover { text-decoration: underline; }
+.sf-parcours-excerpt { line-height: 1.35; }
+
+.ouinpo-sf-card{
+  border-radius: 14px;
+  padding: 16px 16px 12px;
+  margin: 14px 0;
+}
+
+.ouinpo-sf-card h2,
+.ouinpo-sf-card h3{
+  margin: 0 0 10px 0;
+}
+
+.ouinpo-sf-muted{
+  font-size: 0.95rem;
+}
+
+.ouinpo-sf-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.ouinpo-sf-table thead th{
+  text-align: left;
+  font-weight: 600;
+  padding: 10px 10px;
+}
+
+.ouinpo-sf-table td{
+  padding: 10px 10px;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.ouinpo-sf-table tbody tr:hover{
+}
+
+.ouinpo-sf-btn{
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ouinpo-sf-btn:hover{
+}
+
+.sf-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.sf-pill.ok{
+}
+
+.sf-pill.warn{
+}
+
+.sf-pill.none{
+}
+
+.sf-progressbar{
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  width: 220px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.sf-progressbar > span{
+  display: block;
+  height: 100%;
+}
+
+.sf-back {
+  margin: 12px 0;
+}
+
+.ouinpo-sf-gen{
+  display: grid;
+  grid-template-columns: 2.2fr 3fr 0.7fr 1.2fr;
+  gap: 12px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.ouinpo-sf-field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ouinpo-sf-field label{
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+
+.ouinpo-sf-field-small{
+  max-width: 120px;
+}
+
+.ouinpo-sf-field-action{
+  align-items: flex-end;
+  justify-self: start;
+}
+
+.ouinpo-sf-select,
+.ouinpo-sf-input{
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 12px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.ouinpo-sf-select:focus,
+.ouinpo-sf-input:focus{
+}
+
+.ouinpo-sf-select:disabled,
+.ouinpo-sf-input:disabled{
+  cursor: not-allowed;
+}
+
+.ouinpo-sf-field-action .ouinpo-sf-btn{
+  width: 100%;
+  text-align: center;
+  padding: 10px 12px;
+}
+
+.ouinpo-sf-gen-msg{
+  margin-top: 10px;
+  padding-top: 10px;
+  min-height: 1.2em;
+}
+
+.ouinpo-sf-col-narrow{ width: 80px; }
+.ouinpo-sf-col-status{ width: 150px; }
+.ouinpo-sf-col-action{ width: 140px; }
+.ouinpo-sf-col-id{ width: 70px; }
+.ouinpo-sf-col-prog{ width: 260px; }
+
+.ouinpo-sf-select optgroup{
+}
+.ouinpo-sf-select option{
+}
+
+/* Responsive parcours */
+@media (max-width: 900px){
+  .ouinpo-sf-gen{
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .ouinpo-sf-field-action{
+    align-items: stretch;
+  }
+  .sf-progressbar{
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  .ouinpo-sf-col-prog,
+  .ouinpo-sf-col-action,
+  .ouinpo-sf-col-status,
+  .ouinpo-sf-col-narrow,
+  .ouinpo-sf-col-id{
+    width: auto;
+  }
+}
+
+/* =========================================================
+   FIX code inline / blocs code
+   ========================================================= */
+.ouinpo-sf-widget .sf-bubble :not(pre) > code,
+.ouinpo-sf-widget .sf-bubble code:not(pre code) {
+  display: inline;
+  padding: 0.08em 0.35em;
+  margin: 0;
+  border-radius: 6px;
+  font-size: 0.92em;
+  line-height: 1;
+  vertical-align: baseline;
+  white-space: normal;
+}
+
+.ouinpo-sf-widget .sf-bubble pre code {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  line-height: inherit;
+  white-space: pre;
+}
+
+.ouinpo-sf-widget .sf-bubble.sf-msg-text,
+.ouinpo-sf-widget .sf-bubble.user.sf-msg-text {
+  white-space: pre-wrap;
+  tab-size: 2;
+}
+
+/* =========================================================
+   FIX ULTIME : chatbox fermée = retirée du monde des clics
+   ========================================================= */
+
+#sf-chat-floating.sf-hidden {
+  transform: translateY(40px) scale(.98) !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  display: none !important;
+}
+
+#sf-chat-floating.sf-hidden * {
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* État visible */
+#sf-chat-floating:not(.sf-hidden) {
+  display: flex !important;
+  transform: translateY(0) scale(1) !important;
   pointer-events: auto !important;
   visibility: visible !important;
 }
 
-/* En plein écran, les messages prennent l’espace disponible */
-#sf-chat-floating.sf-fullscreen-active .sf-messages,
-#sf-chat-floating.sf-fullscreen-mode .sf-messages,
-.ouinpo-sf-floating.sf-fullscreen-active .sf-messages,
-.ouinpo-sf-floating.sf-fullscreen-mode .sf-messages {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-  height: auto;
-  overflow-y: auto;
+#sf-chat-floating:not(.sf-hidden) * {
+  visibility: visible !important;
 }
 
-/* En plein écran, l’en-tête, la saisie et le footer restent visibles */
-#sf-chat-floating.sf-fullscreen-active .sf-header,
-#sf-chat-floating.sf-fullscreen-active .sf-input,
-#sf-chat-floating.sf-fullscreen-active .sf-footer,
-#sf-chat-floating.sf-fullscreen-mode .sf-header,
-#sf-chat-floating.sf-fullscreen-mode .sf-input,
-#sf-chat-floating.sf-fullscreen-mode .sf-footer {
-  flex: 0 0 auto;
+.sf-ai-notice--compact {
+  margin: 0.5rem 0.75rem 0;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  line-height: 1.3;
+  font-size: 0.82rem;
 }
 
-/* Zone de saisie plus compacte dans les deux thèmes */
-#sf-chat-floating .sf-input,
-#sf-chat-inline .sf-input {
-  flex: 0 0 auto;
-  gap: 0.5rem;
-  padding: 0.6rem 0.75rem;
+.sf-ai-notice--compact p {
+  margin: 0;
 }
 
-/* Le textarea ne doit pas manger la hauteur du widget */
-#sf-chat-floating .sf-input textarea,
-#sf-chat-inline .sf-input textarea {
-  min-height: 4.8rem !important;
-  height: 4.8rem !important;
-  max-height: 8rem !important;
-  line-height: 1.35;
-  resize: vertical;
+.sf-ai-notice--compact strong {
+  font-weight: 700;
 }
 
-/* Le footer doit rester visible, notamment “Effacer la mémoire” */
-#sf-chat-floating .sf-footer,
-#sf-chat-inline .sf-footer {
-  flex: 0 0 auto;
+.sf-ai-notice--compact a {
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* Dans la fenêtre flottante normale, on réserve mieux l’espace */
-#sf-chat-floating {
-  height: min(72vh, 720px);
+.sf-inline-suggestions {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
 }
 
-/* En mode normal, la zone de messages s’adapte au reste */
-#sf-chat-floating .sf-messages {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-  height: auto;
-  overflow-y: auto;
+.sf-inline-suggestions p {
+  margin: 0 0 0.4rem;
 }
 
-/* Bouton d’agrandissement : comportement visuel commun */
-#sf-chat-floating .sf-fullscreen {
-  cursor: pointer;
+.sf-inline-suggestions ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.2rem;
 }
 
-/* Mobile : on garde une saisie courte pour ne pas cacher le footer */
-@media (max-width: 640px) {
-  #sf-chat-floating .sf-input textarea,
-  #sf-chat-inline .sf-input textarea {
-    min-height: 4.2rem !important;
-    height: 4.2rem !important;
-    max-height: 7rem !important;
-  }
+.sf-inline-suggestions li {
+  margin: 0.25rem 0;
 }
 
-/* ==========================================================
-   SegFault — icônes structurelles des boutons fenêtre
-   ========================================================== */
-
-#sf-chat-floating .sf-header-buttons {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+.sf-inline-suggestions a {
+  font-weight: 700;
+  text-decoration: none;
 }
 
-#sf-chat-floating .sf-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.15rem;
-  height: 2.15rem;
-  min-width: 2.15rem;
-  min-height: 2.15rem;
-  padding: 0;
-  line-height: 1;
+.sf-inline-suggestions a:hover {
+  text-decoration: underline;
 }
 
-/* On garde les SVG s’ils s’affichent correctement */
-#sf-chat-floating .sf-btn .sf-icon-svg {
-  display: block;
-  width: 1.15rem;
-  height: 1.15rem;
-  opacity: 1;
-  pointer-events: none;
-}
-
-/* Mais on force un fallback lisible si le SVG est invisible */
-#sf-chat-floating .sf-btn::before {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  line-height: 1;
-  pointer-events: none;
-}
-
-#sf-chat-floating .sf-fullscreen::before {
-  content: "⛶";
-  font-size: 1.05rem;
-}
-
-#sf-chat-floating .sf-close::before {
-  content: "×";
-  font-size: 1.45rem;
-  transform: translateY(-0.05rem);
-}
-
-/* Si le SVG est là mais trop discret, on le masque pour éviter la superposition */
-#sf-chat-floating .sf-fullscreen .sf-icon-svg,
-#sf-chat-floating .sf-close .sf-icon-svg {
-  opacity: 0;
+.sf-sources:empty,
+.sf-source-list:empty,
+.sf-message-sources:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
 }

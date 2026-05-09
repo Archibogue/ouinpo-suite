@@ -1,23 +1,171 @@
-/* =========================================================
-   OuInPo Suite — Flashcards
-   CSS fonctionnel, sans identité graphique OuInPo
-   ========================================================= */
-
+﻿/* Structure module extraite de ouinpo-suite-prod. */
 .ouinpo-fc-app {
   border-radius: 16px;
   padding: 1rem;
   margin: 1rem 0;
-  box-sizing: border-box;
 }
 
-.ouinpo-fc-app,
-.ouinpo-fc-app * {
-  box-sizing: border-box;
+.ouinpo-fc-header h2 {
+  margin: 0 0 0.35rem;
 }
+
+.ouinpo-fc-subtitle {
+  margin: 0 0 1rem;
+}
+
+.ouinpo-fc-toolbar {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.ouinpo-fc-toolbar label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ouinpo-fc-toolbar select {
+  min-width: 280px;
+}
+
+.ouinpo-fc-counts {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ouinpo-fc-pill {
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+}
+
+.ouinpo-fc-decks {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 1rem;
+}
+
+.ouinpo-fc-deck-card {
+  border-radius: 14px;
+  padding: 0.75rem;
+}
+
+.ouinpo-fc-deck-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.ouinpo-fc-deck-card p {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.ouinpo-fc-deck-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.ouinpo-fc-card {
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.ouinpo-fc-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.ouinpo-fc-meta span {
+  font-size: 0.85rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.ouinpo-fc-front,
+.ouinpo-fc-back {
+  line-height: 1.55;
+}
+
+.ouinpo-fc-back {
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.ouinpo-fc-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ouinpo-fc-grade-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ouinpo-fc-feedback {
+  margin-top: 0.9rem;
+  min-height: 1.5rem;
+}
+
+.ouinpo-fc-feedback.is-ok {
+}
+
+.ouinpo-fc-feedback.is-error {
+}
+
+.ouinpo-fc-login {
+  padding: 1rem;
+  border-radius: 16px;
+}
+
+@media (max-width: 640px) {
+  .ouinpo-fc-toolbar select {
+    min-width: 100%;
+  }
+}
+
+/* =========================================================
+   OuInPo — Flashcards
+   Habillage plus littéraire / pataphysique / doré sombre
+   ========================================================= */
+
+.ouinpo-fc-app {
+
+  position: relative;
+  border-radius: 18px;
+  padding: 1.2rem;
+  margin: 1.2rem 0;
+  overflow: hidden;
+}
+
+.ouinpo-fc-app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ouinpo-fc-app > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- En-tête ---------- */
 
 .ouinpo-fc-header {
   margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.8rem;
 }
 
 .ouinpo-fc-header h2 {
@@ -26,9 +174,16 @@
   line-height: 1.2;
 }
 
+.ouinpo-fc-header h2::before {
+  content: "🜏 ";
+}
+
 .ouinpo-fc-subtitle {
   margin: 0;
+  font-style: italic;
 }
+
+/* ---------- Barre d’outils ---------- */
 
 .ouinpo-fc-toolbar {
   display: flex;
@@ -47,16 +202,23 @@
   font-weight: 600;
 }
 
+.ouinpo-fc-toolbar label span {
+  letter-spacing: 0.02em;
+}
+
 .ouinpo-fc-toolbar select {
   min-width: 280px;
   max-width: 100%;
-  padding: 0.65rem 0.8rem;
   border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+}
+
+.ouinpo-fc-toolbar select:focus {
 }
 
 .ouinpo-fc-counts {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.55rem;
   flex-wrap: wrap;
 }
 
@@ -65,8 +227,13 @@
   align-items: center;
   gap: 0.35rem;
   border-radius: 999px;
-  padding: 0.35rem 0.75rem;
+  padding: 0.42rem 0.85rem;
 }
+
+.ouinpo-fc-pill strong {
+}
+
+/* ---------- Cartes des paquets ---------- */
 
 .ouinpo-fc-decks {
   display: grid;
@@ -79,6 +246,11 @@
   position: relative;
   border-radius: 15px;
   padding: 0.95rem;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.ouinpo-fc-deck-card:hover {
+  transform: translateY(-2px);
 }
 
 .ouinpo-fc-deck-card h3 {
@@ -106,19 +278,24 @@
   border-radius: 999px;
 }
 
-.ouinpo-fc-session {
-  margin-top: 1.1rem;
-  padding-top: 1rem;
-}
+/* ---------- Session / carte principale ---------- */
 
-.ouinpo-fc-session[hidden] {
-  display: none !important;
+.ouinpo-fc-session {
+  margin-top: 0.35rem;
 }
 
 .ouinpo-fc-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 1.1rem;
+}
+
+.ouinpo-fc-card::before {
+  content: "✶";
+  position: absolute;
+  top: 0.75rem;
+  right: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .ouinpo-fc-meta {
@@ -136,7 +313,7 @@
 
 .ouinpo-fc-front,
 .ouinpo-fc-back {
-  line-height: 1.65;
+  line-height: 1.68;
   font-size: 1.03rem;
 }
 
@@ -145,37 +322,86 @@
   margin-bottom: 0;
 }
 
+.ouinpo-fc-front strong,
+.ouinpo-fc-back strong {
+}
+
+.ouinpo-fc-front code,
+.ouinpo-fc-back code {
+  border-radius: 6px;
+  padding: 0.08rem 0.34rem;
+}
+
 .ouinpo-fc-back {
   margin-top: 1rem;
   padding-top: 1rem;
 }
 
-.ouinpo-fc-actions,
-.ouinpo-fc-grade-actions,
-.ouinpo-fc-prep-actions,
-.ouinpo-fc-deck-tool-buttons {
+.ouinpo-fc-card.is-empty .ouinpo-fc-front {
+  font-style: italic;
+}
+
+/* ---------- Actions ---------- */
+
+.ouinpo-fc-actions {
+  margin-top: 1rem;
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
 }
 
-.ouinpo-fc-actions {
-  margin-top: 1rem;
-}
-
-.ouinpo-fc-grade-actions[hidden] {
-  display: none !important;
+.ouinpo-fc-grade-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .ouinpo-fc-app .button,
 .ouinpo-fc-app button.button,
 .ouinpo-fc-app input[type="button"],
 .ouinpo-fc-app input[type="submit"] {
-  border-radius: 10px;
+  appearance: none;
+  border-radius: 999px;
   padding: 0.62rem 1rem;
   min-height: 42px;
   font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
+
+.ouinpo-fc-app .button:hover,
+.ouinpo-fc-app button.button:hover {
+  transform: translateY(-1px);
+}
+
+.ouinpo-fc-app .button:active,
+.ouinpo-fc-app button.button:active {
+  transform: translateY(0);
+}
+
+.ouinpo-fc-app .button.button-secondary,
+.ouinpo-fc-app .ouinpo-fc-reveal {
+}
+
+.ouinpo-fc-app .button.button-secondary:hover,
+.ouinpo-fc-app .ouinpo-fc-reveal:hover {
+}
+
+.ouinpo-fc-app .ouinpo-fc-grade[data-grade="again"] {
+}
+
+.ouinpo-fc-app .ouinpo-fc-grade[data-grade="hard"] {
+}
+
+.ouinpo-fc-app .button.button-primary,
+.ouinpo-fc-app .ouinpo-fc-grade[data-grade="good"] {
+}
+
+.ouinpo-fc-app .button.button-primary:hover,
+.ouinpo-fc-app .ouinpo-fc-grade[data-grade="good"]:hover {
+}
+
+/* ---------- Feedback ---------- */
 
 .ouinpo-fc-feedback {
   margin-top: 0.95rem;
@@ -184,12 +410,54 @@
   font-size: 0.95rem;
 }
 
+.ouinpo-fc-feedback.is-ok {
+}
+
+.ouinpo-fc-feedback.is-error {
+}
+
+/* ---------- Message de connexion ---------- */
+
 .ouinpo-fc-login {
   padding: 1rem 1.1rem;
   border-radius: 16px;
 }
 
-/* Multi-paquets */
+.ouinpo-fc-login::before {
+  content: "🔐 ";
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .ouinpo-fc-app {
+    padding: 1rem;
+  }
+
+  .ouinpo-fc-toolbar {
+    padding: 0.85rem;
+  }
+
+  .ouinpo-fc-toolbar select {
+    min-width: 100%;
+  }
+
+  .ouinpo-fc-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .ouinpo-fc-front,
+  .ouinpo-fc-back {
+    font-size: 1rem;
+  }
+}
+/* =========================================================
+   OuInPo — Flashcards multi-paquets / domaines
+   ========================================================= */
+
+.ouinpo-fc-session {
+  margin-bottom: 1.1rem;
+}
 
 .ouinpo-fc-deck-tools {
   display: flex;
@@ -202,9 +470,21 @@
   border-radius: 14px;
 }
 
+.ouinpo-fc-deck-tools strong {
+}
+
 .ouinpo-fc-deck-tools p {
   margin: 0.25rem 0 0;
   font-size: 0.92rem;
+}
+
+.ouinpo-fc-deck-tool-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ouinpo-fc-deck-card.is-selected {
 }
 
 .ouinpo-fc-deck-choice {
@@ -237,7 +517,23 @@
   border-radius: 14px;
 }
 
-/* UX V2 / V3 */
+@media (max-width: 640px) {
+  .ouinpo-fc-deck-tools,
+  .ouinpo-fc-deck-tool-buttons {
+    align-items: stretch;
+  }
+
+  .ouinpo-fc-deck-tool-buttons,
+  .ouinpo-fc-deck-tool-buttons .button {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   OuInPo — Flashcards UX V2
+   Parcours élève : préparer → lancer → répondre
+   ========================================================= */
 
 .ouinpo-fc-app-v2 .ouinpo-fc-prep {
   margin-top: 1rem;
@@ -266,6 +562,26 @@
 .ouinpo-fc-context-summary {
   margin: 0;
   line-height: 1.45;
+}
+
+.ouinpo-fc-prep-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-toolbar {
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-toolbar label {
+  min-width: min(100%, 320px);
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-toolbar select {
+  width: 100%;
 }
 
 .ouinpo-fc-context-summary {
@@ -311,6 +627,9 @@
   font-weight: 700;
 }
 
+.ouinpo-fc-chooser[open] summary {
+}
+
 .ouinpo-fc-chooser .ouinpo-fc-deck-tools,
 .ouinpo-fc-chooser .ouinpo-fc-decks {
   margin-left: 1rem;
@@ -319,6 +638,111 @@
 
 .ouinpo-fc-chooser .ouinpo-fc-decks {
   margin-bottom: 1rem;
+}
+
+.ouinpo-fc-session[hidden] {
+  display: none !important;
+}
+
+.ouinpo-fc-session {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+}
+
+.ouinpo-fc-session-head {
+  align-items: center;
+}
+
+.ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep-head {
+}
+
+.ouinpo-fc-app-v2.is-session-running .ouinpo-fc-card {
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-card {
+  margin-top: 0.75rem;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-front {
+  font-size: 1.08rem;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-back {
+  font-size: 1.03rem;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-decks {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-deck-card p {
+  max-height: 4.4em;
+  overflow: hidden;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-deck-card.is-selected::after {
+  content: "sélectionné";
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  font-size: 0.72rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  font-weight: 800;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-feedback {
+  margin-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .ouinpo-fc-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ouinpo-fc-prep-head,
+  .ouinpo-fc-session-head {
+    padding: 0.9rem;
+  }
+
+  .ouinpo-fc-prep-actions,
+  .ouinpo-fc-prep-actions .button,
+  .ouinpo-fc-session-head .button {
+    width: 100%;
+  }
+
+  .ouinpo-fc-context-summary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .ouinpo-fc-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .ouinpo-fc-chooser .ouinpo-fc-deck-tools,
+  .ouinpo-fc-chooser .ouinpo-fc-decks {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+}
+
+/* =========================================================
+   OuInPo — Flashcards UX V3
+   Carte active prioritaire + KPI mémoire + boutons verdict
+   ========================================================= */
+
+.ouinpo-fc-app-v2 .ouinpo-fc-session {
+  margin-top: 0.6rem;
+  padding-top: 0;
+}
+
+.ouinpo-fc-app-v2 .ouinpo-fc-prep {
+  margin-top: 1rem;
+}
+
+.ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep {
 }
 
 .ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep-head {
@@ -370,6 +794,10 @@
   width: 100%;
 }
 
+.ouinpo-fc-app-v2 .ouinpo-fc-grade-actions[hidden] {
+  display: none !important;
+}
+
 .ouinpo-fc-app-v2 .ouinpo-fc-grade-actions .button {
   width: 100%;
   min-height: 52px;
@@ -381,56 +809,12 @@
   padding: 0.72rem 0.85rem;
 }
 
-@media (max-width: 760px) {
-  .ouinpo-fc-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ouinpo-fc-prep-head,
-  .ouinpo-fc-session-head {
-    padding: 0.9rem;
-  }
-
-  .ouinpo-fc-prep-actions,
-  .ouinpo-fc-prep-actions .button,
-  .ouinpo-fc-session-head .button {
-    width: 100%;
-  }
-
-  .ouinpo-fc-context-summary {
-    width: 100%;
-  }
+.ouinpo-fc-app-v2 .ouinpo-fc-session-head {
+  margin-bottom: 0.85rem;
 }
 
 @media (max-width: 640px) {
-  .ouinpo-fc-toolbar select {
-    min-width: 100%;
-  }
-
-  .ouinpo-fc-grade-actions,
   .ouinpo-fc-app-v2 .ouinpo-fc-grade-actions {
     grid-template-columns: 1fr;
-  }
-
-  .ouinpo-fc-deck-tools,
-  .ouinpo-fc-deck-tool-buttons {
-    align-items: stretch;
-  }
-
-  .ouinpo-fc-deck-tool-buttons,
-  .ouinpo-fc-deck-tool-buttons .button {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .ouinpo-fc-kpis {
-    grid-template-columns: 1fr;
-  }
-
-  .ouinpo-fc-chooser .ouinpo-fc-deck-tools,
-  .ouinpo-fc-chooser .ouinpo-fc-decks {
-    margin-left: 0.75rem;
-    margin-right: 0.75rem;
   }
 }
