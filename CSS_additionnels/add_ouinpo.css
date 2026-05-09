@@ -1,0 +1,1677 @@
+/* =========================
+   OuInPo — Thème sombre cuivré patiné (Hemingway)
+   feuille unifiée & nettoyée — 2025-10-28
+   Prof. Archibogue approved.
+========================= */
+
+/* =========================
+   Import typographies
+========================= */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Serif+4:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap');
+
+/* =========================
+   Palette (variables globales)
+========================= */
+:root{
+  --ink: #eae6f7;               /* texte principal clair */
+  --copper: #b98c5a;            /* cuivre sombre */
+  --copper-light: #d4aa72;      /* cuivre clair / reflet */
+  --copper-soft: #c9a56a;       /* cuivre patiné doux (titres) */
+  --eldritch: #d4c8e4;          /* violet froid runique */
+  --phosphor: #9be15d;          /* vert lueur labo */
+  --rust: #7a3e1c;              /* cuivre oxydé/bruni */
+  --shadow: rgba(0,0,0,.6);
+
+  --abyss: #101b10;             /* fond terminal/code principal */
+  --vine:  #243224;             /* bordure terminal */
+  --frame: #34293c;             /* encadrés eldritch */
+  --paper: #151114;             /* fallback body bg */
+
+  color-scheme: dark;
+}
+
+/* =========================
+   Base page (fond grimoire + typo)
+========================= */
+html { font-size: 18px; }
+
+body{
+  color: var(--ink);
+  font-family: 'Source Serif 4', serif;
+  line-height: 1.7;
+
+  /* chiffres droits & tabulaires partout */
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+
+  background:
+    url("https://www.ouinpo.org/wp-content/uploads/2025/10/Free_dark_vintage_paper_page_texture_for_layers_2982207584-scaled.jpg");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--paper);
+}
+
+/* Bruit subtil pelure parchemin */
+body::after{
+  content:"";
+  position: fixed; inset:0;
+  pointer-events:none;
+  background: repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.02) 0 2px,
+      transparent 2px 4px
+  );
+  mix-blend-mode: overlay;
+}
+
+/* =========================
+   Titres (cuivre patiné)
+========================= */
+h1,h2,h3,h4,h5{
+  font-family: 'Cormorant Garamond', serif;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--copper-soft); /* cuivre patiné doux */
+  text-shadow: 0 2px 6px var(--shadow);
+  margin-top: 1.2em;
+  transition: color .3s ease, text-shadow .3s ease;
+}
+h1{
+  border-bottom: 2px dotted var(--copper);
+  margin-bottom: .6em; padding-bottom: .3em;
+}
+h2{
+  border-bottom: 1px dotted var(--rust);
+  margin-bottom: .5em; padding-bottom: .25em;
+}
+
+/* léger reflet au survol pour ambiance "lampe à huile" */
+h1:hover, h2:hover, h3:hover, h4:hover, h5:hover {
+  color: var(--copper-light);
+  text-shadow: 0 0 8px rgba(220,180,100,.5);
+}
+
+/* =========================
+   Liens
+========================= */
+a{
+  color: var(--copper);
+  text-decoration: none;
+}
+a:hover{
+  color: var(--copper-light);
+  text-shadow: 0 0 6px rgba(185,140,90,.45);
+}
+
+/* =========================
+   Citations (blockquote)
+========================= */
+blockquote{
+  font-style: italic;
+  color: var(--copper-soft); /* cuivre patiné */
+  background: rgba(255,255,255,.05);
+  border-left: 4px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  padding: 1em 1.2em;
+  margin: 1.5em 0;
+  box-shadow: inset 0 0 8px rgba(255,255,255,.04);
+  transition: box-shadow .3s ease;
+}
+blockquote:hover{
+  box-shadow: 0 0 10px rgba(200,150,90,.3);
+}
+
+/* Hemingway ajoute souvent des tirets ou guillemets décoratifs via pseudo-éléments.
+   On les supprime pour éviter le « — — » en double. */
+blockquote:before,
+blockquote:after {
+  content: none !important;
+}
+
+/* C'est souvent le cite qui reçoit le "—" automatique. On l'annule. */
+blockquote cite:before {
+  content: none !important;
+}
+
+/* Auteur de la citation */
+blockquote cite{
+  display:block;
+  margin-top:.6em;
+  font-style: normal;
+  font-size: .9em;
+  color: rgba(185,140,90,.8);
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(0,0,0,.7);
+}
+
+/* =========================
+   Encadrés génériques labo
+========================= */
+.lab-note{
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(30,30,30,.7);
+  padding: 1rem;
+  margin: 1.2rem 0;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  color: var(--ink);
+}
+.lab-note.danger{
+  border-color:#6b0f1a;
+  background: linear-gradient(
+    0deg,
+    rgba(107,15,26,.15),
+    rgba(30,0,0,.6)
+  );
+}
+
+/* =========================
+   Encadrés eldritch (exemples, "Ce qu'il faut retenir")
+========================= */
+.eldritch{
+  background: linear-gradient(180deg, #1c131f, #221a26 60%, #1c131f);
+  color: var(--ink);
+  border:1px solid var(--frame);
+  border-radius:10px;
+  padding: 1.1rem;
+  margin:1.4rem 0;
+  position:relative;
+  overflow:hidden;
+  box-shadow: 0 0 10px rgba(200,150,90,.2);
+}
+.eldritch h3,
+.eldritch a{
+  color:#b7a7ff;
+}
+.eldritch a:hover{
+  color:#d7ceff;
+  text-shadow: 0 0 6px rgba(183,167,255,.45);
+}
+/* runes décoratives */
+.eldritch::before{
+  content:"⟟ ⌰ Ϟ ᚱ ᚨ ᚾ";
+  position:absolute;
+  top:-10px; right:10px;
+  font-size:2.2rem;
+  opacity:.08;
+  letter-spacing:.3em;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.eldritch::after{
+  content:"";
+  position:absolute;
+  left:-60px; bottom:-40px;
+  width:220px; height:220px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(155,225,93,.06), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(155,225,93,.04), transparent 60%);
+  filter: blur(8px);
+  animation: sway 18s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes sway{
+  0%,100%{ transform: rotate(2deg) translateY(0); }
+  50%{ transform: rotate(-3deg) translateY(-6px); }
+}
+
+/* Variante "alerte pédagogique / Vérifie ta compréhension" */
+.alert{
+  position: relative;
+  border: 1px dashed var(--copper);
+  background-color: rgba(0,0,0,.25);
+  color: var(--ink);
+  padding: 1.5em;
+  margin-bottom: 2em;
+  border-radius: 8px;
+  font-style: italic;
+  box-shadow: 0 0 10px var(--shadow);
+}
+.alert::before{
+  content:"";
+  position:absolute; top:6px; right:6px;
+  width:58px; height:58px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg stroke='currentColor' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 32 Q32 10 56 32 Q32 54 8 32 Z'/%3E%3Ccircle cx='32' cy='32' r='8'/%3E%3Cpath d='M32 24 L32 40'/%3E%3Cpath d='M32 6 L32 10'/%3E%3Cpath d='M32 54 L32 58'/%3E%3Cpath d='M6 32 L10 32'/%3E%3Cpath d='M54 32 L58 32'/%3E%3Cpath d='M14 14 L18 18'/%3E%3Cpath d='M46 46 L50 50'/%3E%3Cpath d='M14 50 L18 46'/%3E%3Cpath d='M46 18 L50 14'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-size:contain;
+  background-position:center;
+  color:#0a8f5a;
+  pointer-events:none;
+  animation: eldritchPulseStrong 2.8s ease-in-out infinite;
+  transform-origin:center;
+  filter:
+    drop-shadow(0 0 6px rgba(10,143,90,.65))
+    drop-shadow(0 0 2px rgba(10,143,90,.4));
+}
+.alert::after{
+  content:"";
+  position:absolute; top:6px; right:6px;
+  width:58px; height:58px;
+  background: radial-gradient(
+    ellipse 80% 55% at 50% 50%,
+    rgba(0,0,0,0.28) 0 100%
+  );
+  border-radius:50%;
+  transform-origin:center;
+  animation: blinkIrregular 11s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes eldritchPulseStrong{
+  0%,100%{
+    transform:scale(1);
+    filter:
+      drop-shadow(0 0 6px rgba(0,255,128,.55))
+      drop-shadow(0 0 2px rgba(10,143,90,.45));
+    opacity:1;
+  }
+  50%{
+    transform:scale(1.18);
+    filter:
+      drop-shadow(0 0 24px rgba(0,255,128,.95))
+      drop-shadow(0 0 10px rgba(0,255,128,.75));
+    opacity:.95;
+  }
+}
+@keyframes blinkIrregular{
+  0%,6%,8%,34%,36%,72%,74%,100% { transform: scaleY(0); } /* ouvert */
+  7%,35%,73% { transform: scaleY(1); }                    /* fermé court */
+}
+
+/* accessibilité : réduire les animations si demandé */
+@media (prefers-reduced-motion: reduce){
+  .alert::before, .alert::after{
+    animation: none !important;
+  }
+  .eldritch::after{
+    animation: none !important;
+  }
+}
+
+/* =========================
+   Code / terminal
+========================= */
+pre, code{
+  font-family: 'Source Code Pro', monospace !important;
+  background: var(--abyss);
+  color: var(--phosphor);
+  border:1px solid var(--vine);
+  padding: .6rem;
+  box-shadow: inset 0 0 20px rgba(155,225,93,.06);
+}
+pre{
+  background: var(--abyss) !important;
+  color: var(--phosphor) !important;
+  margin:1em 0;
+  overflow-x:auto;
+}
+pre::before{ content:none !important; }
+
+/* Code allégé dans .eldritch : pas de fond supplémentaire */
+.eldritch pre,
+.eldritch code{
+  background: transparent !important;
+  color: var(--phosphor) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-family: 'Source Code Pro', monospace !important;
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+.eldritch pre::before,
+.eldritch code::before{
+  content:none !important;
+}
+
+/* =========================
+   kbd style machine à écrire
+========================= */
+kbd{
+  display:inline-block;
+  font-family:'Source Code Pro', monospace;
+  font-size:.9em;
+  color:var(--ink);
+  background:#1b181a;
+  border:1px solid #4b4340;
+  border-radius:4px;
+  padding:.25em .45em;
+  margin:0 .15em;
+  vertical-align:middle;
+  letter-spacing:.03em;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.8);
+
+  background-image: linear-gradient(180deg,#222 0%,#111 100%);
+  box-shadow:
+    inset 0 0 3px rgba(0,0,0,0.7),
+    0 2px 0 #111,
+    0 3px 2px rgba(0,0,0,0.6);
+
+  transition: transform .1s ease-in-out, box-shadow .1s ease-in-out;
+}
+kbd:hover{
+  background-image: linear-gradient(180deg,#2a2728 0%,#181616 100%);
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,0.05),
+    0 2px 0 #000,
+    0 3px 3px rgba(0,0,0,0.6);
+}
+kbd:active{
+  transform: translateY(2px);
+  background-image: linear-gradient(180deg,#151313 0%,#0e0e0e 100%);
+  box-shadow:
+    inset 0 0 5px rgba(0,0,0,0.9),
+    0 1px 0 #000;
+}
+kbd + kbd{ margin-left:.25em; }
+kbd.special{
+  color: var(--copper-light);
+  border-color: var(--copper);
+  box-shadow:
+    inset 0 0 4px rgba(185,140,90,0.3),
+    0 2px 0 #332212,
+    0 3px 3px rgba(0,0,0,0.6);
+}
+
+/* =========================
+   Boutons cuivre (tous contextes)
+========================= */
+.button,
+button,
+input[type=submit],
+.wp-block-button__link,
+.um .um-button,
+.um input[type="submit"],
+.um a.um-button,
+.ouinpo-box .button,
+.ouinpo-box button,
+.ouinpo-box input[type="submit"],
+.um-account .um-button,
+.um-account a.um-button,
+.um-account input[type="submit"]{
+  background: linear-gradient(180deg, var(--copper), var(--rust)) !important;
+  color:#fff !important;
+  border:none !important;
+  border-radius:6px !important;
+  padding:.6rem 1.1rem !important;
+  text-transform: uppercase;
+  letter-spacing:.05em;
+  box-shadow: 0 6px 14px rgba(138,90,43,.35);
+  transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+  font-family: 'Cormorant Garamond', serif;
+}
+.button:hover,
+button:hover,
+input[type=submit]:hover,
+.wp-block-button__link:hover,
+.um .um-button:hover,
+.um a.um-button:hover,
+.ouinpo-box .button:hover,
+.ouinpo-box button:hover,
+.ouinpo-box input[type="submit"]:hover,
+.um-account .um-button:hover,
+.um-account a.um-button:hover,
+.um-account input[type="submit"]:hover{
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(185,140,90,.45);
+}
+button:active,
+input[type="submit"]:active,
+.um .um-button:active{
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(138,90,43,.25);
+}
+
+/* Boutons secondaires / neutres */
+.um a.um-button-alt,
+.um .um-button.um-alt,
+.wpforms-page-button,
+.gform_wrapper .gform_next_button,
+.gform_wrapper .gform_previous_button{
+  background: rgba(255,255,255,.08) !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 6px !important;
+  box-shadow: inset 0 0 8px rgba(0,0,0,.25);
+}
+.um a.um-button-alt:hover,
+.um .um-button.um-alt:hover,
+.wpforms-page-button:hover,
+.gform_wrapper .gform_next_button:hover,
+.gform_wrapper .gform_previous_button:hover{
+  background: rgba(255,255,255,.15) !important;
+  color: var(--eldritch) !important;
+}
+
+/* =========================
+   Mise en page articles (plein écran, sans sidebar)
+========================= */
+.single .sidebar { display: none !important; }
+
+.single .content,
+.single .content-area,
+.single .site-main{
+  display:block;
+  width:100%;
+  max-width:900px;
+  margin:0 auto;
+  float:none;
+}
+
+.single .post{
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+  float:none;
+}
+
+.single .post-header,
+.single .post-content{
+  padding: 2rem 3rem;
+}
+
+.single .post-content p{
+  line-height:1.7;
+  font-size:1.1rem;
+  text-align: justify;
+  hyphens:auto;
+}
+
+.single .post-content img,
+.single .post-content iframe{
+  display:block;
+  margin:1.5rem auto;
+  max-width:100%;
+  height:auto;
+}
+
+.single .content-area { margin-right:0 !important; }
+.single .footer,
+.single .site-footer { margin-top:3rem; }
+
+/* =========================
+   Métadonnées & badges (post-meta)
+========================= */
+.post-meta,
+.entry-meta,
+.post-header .post-meta,
+.single .post-meta,
+.single .entry-meta,
+.entry-footer,
+.entry-footer .edit-link,
+.entry-footer .cat-links,
+.entry-footer .tags-links{
+  color: rgba(234,230,247,.92) !important;
+  text-shadow: 0 1px 2px var(--shadow);
+  font-size:.95rem;
+  letter-spacing:.01em;
+  opacity:1 !important;
+}
+.post-meta a,
+.entry-meta a,
+.entry-footer a{
+  color: var(--copper-light) !important;
+  border-bottom:1px dotted rgba(185,140,90,.55);
+  text-decoration:none;
+}
+.post-meta a:hover,
+.entry-meta a:hover,
+.entry-footer a:hover{
+  color: var(--copper) !important;
+  border-bottom-color: rgba(185,140,90,.85);
+  text-shadow:0 0 6px rgba(185,140,90,.35);
+}
+.post-meta .sep,
+.entry-meta .sep,
+.entry-footer .sep{
+  color: rgba(234,230,247,.55) !important;
+  margin:0 .35em;
+}
+
+/* suffixe (E.P.) après les liens de métadonnées */
+.entry-meta a::after{
+  content: " (E.P.)";
+  opacity: .7;
+}
+
+/* =========================
+   Tableaux (style cuivré lisible)
+========================= */
+table, .wp-block-table{
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+}
+
+table thead th,
+.wp-block-table thead th{
+  color: var(--copper-light) !important;
+  background: rgba(185,140,90,0.12) !important;
+  border-bottom: 1px solid rgba(185,140,90,0.45) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  font-weight: 600;
+}
+
+table td, table th,
+.wp-block-table td, .wp-block-table th{
+  border-color: rgba(185,140,90,0.25) !important;
+  vertical-align: top;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+table tr:nth-child(even) td,
+.wp-block-table tr:nth-child(even) td{
+  background: rgba(255,255,255,0.03);
+}
+
+/* Code dans les cellules de tableaux */
+table code,
+.wp-block-table code{
+  display: inline-block;
+  white-space: normal;
+  line-height: 1.4;
+  padding: .15rem .35rem;
+  border-radius: 4px;
+  background: var(--abyss);
+  color: var(--phosphor);
+  border: 1px solid var(--vine);
+  box-shadow: inset 0 0 20px rgba(155,225,93,.06);
+  vertical-align: baseline;
+}
+table code + code{ margin-left:.2rem; }
+
+table pre,
+.wp-block-table pre{
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: .25rem 0;
+}
+
+/* =========================
+   Blocs OuInPo / formulaires / inputs
+========================= */
+.ouinpo-box{
+  background: rgba(0,0,0,.28) !important;
+  border: 1px dashed var(--copper) !important;
+  color: var(--ink) !important;
+  border-radius: 10px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 0 10px var(--shadow);
+}
+.ouinpo-box h3{
+  margin: 0 0 .6rem;
+  color: var(--eldritch);
+  text-shadow: 0 2px 6px var(--shadow);
+  text-transform: uppercase;
+  letter-spacing:.03em;
+  border:0;
+}
+.ouinpo-list{ margin:0; padding-left:1.15rem; }
+.ouinpo-list li{ margin:.35rem 0; }
+
+.ouinpo-badge{
+  background: rgba(255,255,255,.06) !important;
+  color: var(--ink) !important;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:6px;
+}
+
+.ouinpo-box a{
+  color: var(--copper);
+  text-decoration:none;
+}
+.ouinpo-box a:hover{
+  color: var(--copper-light);
+  text-shadow: 0 0 6px rgba(185,140,90,.45);
+}
+
+/* Champs de formulaires (site + UM + Gravity/WPForms/CF7/etc.) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+select,
+textarea,
+.um .um-form input[type="text"],
+.um .um-form input[type="email"],
+.um .um-form input[type="password"],
+.um .um-form input[type="url"],
+.um .um-form input[type="number"],
+.um .um-form input[type="search"],
+.um .um-form select,
+.um .um-form textarea,
+.wpcf7-form input:not([type="submit"]),
+.wpcf7-form textarea,
+.wpcf7-form select,
+.wpforms-form input[type="text"],
+.wpforms-form input[type="email"],
+.wpforms-form input[type="password"],
+.wpforms-form input[type="url"],
+.wpforms-form input[type="number"],
+.wpforms-form input[type="search"],
+.wpforms-form input[type="tel"],
+.wpforms-form input[type="date"],
+.wpforms-form input[type="time"],
+.wpforms-form select,
+.wpforms-form textarea,
+.gform_wrapper input:not([type="submit"]),
+.gform_wrapper select,
+.gform_wrapper textarea,
+.search-form .search-field,
+.ouinpo-box input[type="text"],
+.ouinpo-box input[type="email"],
+.ouinpo-box input[type="file"],
+.ouinpo-box select,
+.ouinpo-box textarea{
+  background: rgba(0,0,0,.28) !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  line-height: 1.45 !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.25);
+  transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  width: 100%;
+}
+::placeholder,
+.wpcf7-form ::placeholder,
+.wpforms-form ::placeholder,
+.gform_wrapper ::placeholder{
+  color: rgba(234,230,247,.78) !important;
+  opacity:1 !important;
+}
+input:focus,
+select:focus,
+textarea:focus,
+.um .um-form input:focus,
+.um .um-form select:focus,
+.um .um-form textarea:focus,
+.wpcf7-form input:focus,
+.wpcf7-form textarea:focus,
+.wpcf7-form select:focus,
+.wpforms-form input:focus,
+.wpforms-form textarea:focus,
+.wpforms-form select:focus,
+.gform_wrapper input:focus,
+.gform_wrapper textarea:focus,
+.gform_wrapper select:focus{
+  outline:none !important;
+  border-color: var(--copper) !important;
+  box-shadow:
+    0 0 0 2px rgba(185,140,90,.25),
+    0 0 12px rgba(185,140,90,.35) !important;
+  background: rgba(0,0,0,.34) !important;
+}
+select option{
+  color:#111;
+  background:#f5f1ea;
+}
+input[type="file"]{
+  background: rgba(0,0,0,.18) !important;
+  color: var(--ink) !important;
+  padding:.45rem !important;
+}
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill{
+  -webkit-text-fill-color: var(--ink) !important;
+  box-shadow: 0 0 0 1000px rgba(0,0,0,.28) inset !important;
+  caret-color: var(--ink) !important;
+}
+input[disabled],
+select[disabled],
+textarea[disabled],
+input[readonly],
+select[readonly],
+textarea[readonly]{
+  opacity:.7;
+  cursor:not-allowed;
+}
+input[type="checkbox"],
+input[type="radio"]{
+  accent-color: var(--copper);
+  transform: translateY(1px);
+}
+
+/* Helpers formulaires */
+.comment-form input,
+.comment-form textarea{ width:100%; }
+.search-form .search-field{ max-width:420px; }
+.search-form .search-submit{ margin-left:.4rem; }
+
+/* Tables dans les formulaires */
+.gform_wrapper table thead th,
+.um table thead th,
+.wpforms-form table thead th{ /* héritent du style table global */ }
+
+.gform_wrapper table td,
+.gform_wrapper table th,
+.um table td,
+.um table th,
+.wpforms-form table td,
+.wpforms-form table th{
+  border-color: rgba(185,140,90,0.25) !important;
+}
+.gform_wrapper table tr:nth-child(even) td,
+.um table tr:nth-child(even) td,
+.wpforms-form table tr:nth-child(even) td{
+  background: rgba(255,255,255,0.03);
+}
+
+/* =========================
+   Ultimate Member — lisibilité & navigation
+========================= */
+.um,
+.um-form,
+.um-profile,
+.um-account,
+.um-directory{
+  color: var(--ink) !important;
+}
+
+/* Noms / titres / liens importants */
+.um-profile-meta .um-name,
+.um-member-name,
+.um-member-name a,
+.um .um-page-title{
+  color: var(--copper-light) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  font-weight:600;
+}
+
+/* Tagline / rôle */
+.um-profile-meta .um-member-tagline,
+.um-profile-meta .um-member-role,
+.um-member-meta,
+.um-account-meta{
+  color: rgba(185,140,90,0.85) !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.7);
+}
+
+/* Avatar */
+.um-profile-photo img,
+.um-member-card .um-member-photo img{
+  border: 2px solid rgba(185,140,90,0.45) !important;
+  box-shadow: 0 0 10px rgba(185,140,90,0.25) !important;
+  border-radius:50% !important;
+}
+
+/* Cards du directory */
+.um-members .um-member-card,
+.um-directory .um-members .um-member-card{
+  background: rgba(0,0,0,.22) !important;
+  border:1px solid rgba(185,140,90,0.25) !important;
+  border-radius:10px !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+.um-directory .um-member-card .um-member-name a{
+  color: var(--copper-light) !important;
+  font-weight:600;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+.um-directory .um-member-card:hover{
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  border-color: rgba(185,140,90,0.45) !important;
+}
+
+/* Liens dans UM */
+.um a{
+  color: var(--copper-light) !important;
+}
+.um a:hover{
+  color: var(--copper) !important;
+  text-shadow: 0 0 6px rgba(185,140,90,.35);
+}
+
+/* Notices UM */
+.um .um-notice.success{
+  background: rgba(46,160,67,.15) !important;
+  border:1px solid rgba(46,160,67,.45) !important;
+  color:#b7f3c4 !important;
+  border-radius:8px !important;
+}
+.um .um-notice.err,
+.um .um-error-block{
+  background: rgba(176,32,32,.15) !important;
+  border:1px solid rgba(176,32,32,.45) !important;
+  color:#ffb3b3 !important;
+  border-radius:8px !important;
+}
+
+/* Navigation de profil / compte */
+.um-profile-nav,
+.um-account-nav{
+  border-bottom:1px solid rgba(185,140,90,0.35) !important;
+  background:transparent !important;
+}
+.um-profile-nav-item a,
+.um-account-nav a{
+  color: var(--ink) !important;
+  padding:.6rem .9rem !important;
+  border-radius:8px 8px 0 0 !important;
+  text-decoration:none !important;
+  box-shadow:none !important;
+}
+.um-account-nav a i,
+.um-account-nav a .um-account-icon,
+.um-account-nav a .um-icon{
+  color: var(--copper-light) !important;
+  fill: var(--copper-light) !important;
+}
+.um-profile-nav-item.active a,
+.um-account-nav .current a,
+.um-account-nav a:hover{
+  color: var(--copper-light) !important;
+  background: rgba(185,140,90,0.12) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+.um-account-nav .current a{
+  border-bottom:2px solid var(--copper) !important;
+}
+
+/* Variante navigation verticale */
+.um-account-side,
+.um-account-side .um-account-meta,
+.um-account-side .um-account-nav{
+  background:transparent !important;
+  border:1px solid rgba(185,140,90,0.25) !important;
+  border-radius:10px !important;
+}
+.um-account-side .um-account-nav a{
+  display:block;
+  background:transparent !important;
+  color:var(--ink) !important;
+  border-radius:8px !important;
+  margin:2px 4px !important;
+  padding:.55rem .8rem !important;
+}
+.um-account-side .um-account-nav a:hover{
+  background: rgba(185,140,90,0.08) !important;
+  color: var(--copper-light) !important;
+}
+.um-account-side .um-account-nav .current a{
+  background: rgba(185,140,90,0.12) !important;
+  color: var(--copper-light) !important;
+  border:1px solid rgba(185,140,90,0.45) !important;
+}
+
+/* Conteneur global “Mon compte” */
+.um-account{
+  background: rgba(0,0,0,.25);
+  border:1px solid rgba(185,140,90,0.25);
+  border-radius:10px;
+  padding:1.5rem;
+  color:var(--ink);
+  box-shadow: 0 6px 18px rgba(0,0,0,.3);
+}
+.um-account .um-account-title,
+.um .um-page-title,
+.um .um-page-title h3{
+  color: var(--copper-light) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  font-weight:700;
+}
+
+/* Forcer le contraste des textes gris Ultimate Member */
+.um :where(p, span, li, small, em, strong, div, dd, dt){
+  color: var(--ink) !important;
+}
+.um .um-meta,
+.um .um-account-meta,
+.um .um-member-meta,
+.um .um-member-activity,
+.um .um-member-role,
+.um .um-member-tagline,
+.um .um-profile-meta .um-meta,
+.um .um-directory .um-members-meta,
+.um .um-members-pagi span,
+.um .um-tip,
+.um .um-field-area .um-field-description,
+.um .um-form .um-desc,
+.um .um-notice p,
+.um .um-dropdown li a,
+.um .um-dropdown li a span{
+  color: var(--ink) !important;
+  opacity:.95;
+}
+.um [disabled],
+.um .um-disabled{
+  color: rgba(234,230,247,.7) !important;
+}
+.um a:not(.um-button):not(.um-button-alt){
+  color: var(--copper-light) !important;
+}
+.um a:not(.um-button):not(.um-button-alt):hover{
+  color: var(--copper) !important;
+  text-shadow:0 0 6px rgba(185,140,90,.35);
+}
+
+/* =========================
+   Widgets / sidebar / séparateurs
+========================= */
+
+/* hr global + Gutenberg .wp-block-separator en cuivre */
+hr,
+.wp-block-separator{
+  border: 0 !important;
+  height: 0 !important;
+  border-top: 1px solid rgba(185,140,90,0.45) !important;
+  background: none !important;
+  color: var(--copper-light) !important;
+  opacity: 1 !important;
+  margin: 1rem 0 !important;
+}
+.wp-block-separator.is-style-wide{
+  border-top-width: 2px !important;
+}
+.wp-block-separator.is-style-dots::before{
+  color: var(--copper-light) !important;
+  opacity: 1 !important;
+}
+
+/* Sidebar widgets : filet cuivré en haut de chaque bloc */
+.sidebar .widget,
+.widget_block{
+  border-top: 1px solid rgba(185,140,90,0.45) !important;
+}
+.sidebar .widget:first-child,
+.widget_block:first-child{
+  border-top: none !important;
+}
+.sidebar .widget::before,
+.sidebar .widget::after,
+.widget_block::before,
+.widget_block::after{
+  background-color: rgba(185,140,90,0.45) !important;
+  border-color: rgba(185,140,90,0.45) !important;
+}
+
+/* Ajuste l'espacement interne */
+.sidebar .widget{
+  padding-top: 0rem;
+  margin-top: 1.2rem;
+}
+
+/* Cas particulier : #block-36 */
+#block-36.widget.widget_block{
+  border-top: 1px solid rgba(185,140,90,0.45) !important;
+}
+#block-36::before,
+#block-36::after{
+  background-color: rgba(185,140,90,0.45) !important;
+  border-color: rgba(185,140,90,0.45) !important;
+}
+#block-36{
+  border-color: rgba(185,140,90,0.45) !important;
+}
+
+/* =========================
+   Navigation "article précédent / suivant" - masquée
+========================= */
+.single-post .post-nav,
+.single .post-nav,
+.navigation.post-nav,
+.nav-links{
+  display:none !important;
+}
+
+/* =========================
+   Bloc final OuInPo en bas d'article
+========================= */
+.ouinpo-endquote {
+  border-top: 1px solid rgba(185,140,90,0.45);
+  margin-top: 2.5rem;
+  padding-top: 1.2rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--copper-light);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  position: relative;
+}
+.ouinpo-endquote::before {
+  content: "❧";
+  color: var(--copper);
+  font-size: 1.4rem;
+  position: absolute;
+  top: -1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 .4rem;
+}
+.ouinpo-endquote cite {
+  display: block;
+  font-size: .95rem;
+  margin-top: .4rem;
+  color: rgba(185,140,90,0.75);
+  font-style: normal;
+}
+
+/* =========================
+   Helpers pataphysiques
+========================= */
+.pata-imag{
+  font-style: italic;
+  text-decoration: underline dotted;
+}
+.pata-imag::after{
+  content:" — Jour imaginaire";
+  opacity: .75;
+}
+
+/* =========================
+   Z-index sécurité OuInPo
+========================= */
+#ouinpo-signpad,
+#ouinpo-game,
+#ouinpo-sign-result{
+  position: relative;
+  z-index:1;
+}
+#ouinpo-sign-result .button,
+#ouinpo-sign-result a.button{
+  position: relative;
+  z-index:3;
+  display:inline-block;
+  pointer-events:auto;
+}
+
+/* =========================
+   Responsive
+========================= */
+@media (max-width:768px){
+  html { font-size: 17px; }
+  body{ background-attachment: scroll; }
+  h1{ font-size: 1.8rem; }
+  h2{ font-size: 1.4rem; }
+  .single .post-header,
+  .single .post-content{
+    padding: 1.5rem 1.5rem;
+  }
+}
+@media (max-width:480px){
+  html { font-size: 16px; }
+  h1{ font-size: 1.5rem; }
+  .single .post-header,
+  .single .post-content{
+    padding: 1.25rem 1.25rem;
+  }
+}
+
+/* === Correctif anti-double-barre dans .ouinpo-endquote (zone auteur) === */
+
+/* 1. On supprime toute bordure/bande supérieure que le thème ajoute au cite */
+.ouinpo-endquote cite {
+  border-top: 0 !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  position: relative;
+  padding-top: 0 !important;
+  margin-top: .4rem !important;   /* garde juste l'espace qu'on veut */
+}
+
+/* 2. Certains thèmes ajoutent un filet décoratif via ::before ou ::after autour du cite,
+      genre une ligne horizontale avant le nom de l'auteur. On les neutralise. */
+.ouinpo-endquote cite::before,
+.ouinpo-endquote cite::after {
+  content: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  display: none !important;
+}
+
+
+/* ====== Correctif tableaux — OuInPo ====== */
+.ouinpo-content table {
+  table-layout: auto;
+  width: 100%;
+}
+.ouinpo-content th:first-child {
+  white-space: nowrap;
+}
+
+/* === OuInPo — tableaux : première colonne non coupée === */
+.entry-content table.ouinpo-table,
+.post-content table.ouinpo-table,
+.page-content table.ouinpo-table {
+  table-layout: auto !important;
+  width: 100% !important;
+}
+
+/* Première colonne : empêcher la césure et l’ellipsage */
+.entry-content table.ouinpo-table th:first-child,
+.entry-content table.ouinpo-table td:first-child,
+.post-content table.ouinpo-table th:first-child,
+.post-content table.ouinpo-table td:first-child,
+.page-content table.ouinpo-table th:first-child,
+.page-content table.ouinpo-table td:first-child {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: manual !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+  max-width: none !important;
+}
+
+/* En cas de mobiles très étroits, autoriser le retour à la ligne pour éviter le débordement */
+@media (max-width: 480px) {
+  .entry-content table.ouinpo-table th:first-child,
+  .entry-content table.ouinpo-table td:first-child {
+    white-space: normal !important;   /* redevient multi-ligne si l’écran est trop petit */
+    word-break: keep-all !important;
+    hyphens: manual !important;
+  }
+}
+
+.ouinpo-content .code-toolbar .toolbar {
+  position: relative !important;
+  top: -0.5rem !important;
+  right: 0;
+  text-align: right;
+  padding-bottom: .2rem;
+}
+
+/* ======= OuInPo — Correctifs 2025-10-31 ======= */
+
+/* 1) BOUTON "COPIER" (Prism Toolbar) — éviter qu'il recouvre le code */
+.code-toolbar { position: relative; }
+.code-toolbar > .toolbar {
+  position: absolute !important;
+  top: .5rem !important;
+  right: .5rem !important;
+  z-index: 5 !important;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 6px;
+  padding: .2rem .35rem;
+  box-shadow: 0 6px 14px rgba(0,0,0,.35);
+}
+.code-toolbar > .toolbar a,
+.code-toolbar > .toolbar button {
+  color: var(--ink) !important;
+  text-shadow: none !important;
+}
+.code-toolbar > .toolbar .toolbar-item { margin-left: .25rem; }
+.code-toolbar > .toolbar .toolbar-item:first-child { margin-left: 0; }
+
+/* Réserve un "cartouche" en haut des blocs de code pour la toolbar */
+pre[class*="language-"],
+pre code,
+pre {
+  padding-top: 2.4rem !important;   /* espace pour la barre */
+  /* réserve un peu à droite si besoin */
+  padding-right: 2.2rem;
+}
+
+/* Si jamais un ancien réglage poussait la toolbar dans le flux, on neutralise */
+.ouinpo-content .code-toolbar .toolbar {
+  position: absolute !important;
+  top: .5rem !important;
+  right: .5rem !important;
+}
+
+/* 2) TABLEAUX — empêcher la coupure de mots dans la 1ère colonne */
+table,
+.wp-block-table { table-layout: auto; width: 100%; }
+
+/* La règle globale actuelle force des coupures agressives.
+   On la neutralise uniquement pour la 1ère colonne. */
+table th:first-child,
+table td:first-child,
+.wp-block-table th:first-child,
+.wp-block-table td:first-child {
+  white-space: nowrap !important;    /* pas de retour forcé à l'intérieur du mot */
+  word-break: normal !important;     /* ne casse pas les mots */
+  overflow-wrap: normal !important;  /* n'insère pas de césure automatique */
+  hyphens: none !important;          /* pas de césure typographique */
+  text-overflow: clip !important;    /* pas d'ellipse intempestive */
+  max-width: none !important;
+}
+
+/* Sur petits écrans, on autorise le retour à la ligne (mais toujours sans couper les mots) */
+@media (max-width: 480px){
+  table th:first-child,
+  table td:first-child,
+  .wp-block-table th:first-child,
+  .wp-block-table td:first-child {
+    white-space: normal !important;  /* peut passer à la ligne */
+    word-break: normal !important;   /* mais sans briser les mots */
+    overflow-wrap: anywhere !important; /* permet de casser SEULEMENT s'il n'y a vraiment aucun espace */
+  }
+}
+
+/* 3) NETTOYAGE .ouinpo-endquote — élimine toute “double barre” résiduelle */
+.ouinpo-endquote {
+  border-top: 1px solid rgba(185,140,90,0.45) !important;
+  position: relative;
+}
+.ouinpo-endquote::before{
+  content: "❧";
+  position: absolute;
+  top: -1.2rem; left: 50%;
+  transform: translateX(-50%);
+  color: var(--copper);
+  font-size: 1.4rem;
+  background: var(--paper);
+  padding: 0 .4rem;
+}
+.ouinpo-endquote cite{
+  display:block;
+  margin-top:.4rem !important;
+  border-top: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  position: static !important;
+}
+.ouinpo-endquote cite::before,
+.ouinpo-endquote cite::after{ content:none !important; }
+
+/* 4) MICRO-FIXES d’hygiène */
+/* évite les "anywhere" trop agressifs dans TOUTES les 1ères colonnes, même hors tables Gutenberg */
+tr > :first-child { overflow-wrap: normal !important; word-break: normal !important; hyphens: none !important; }
+
+/* s’assure que les images/iframes dans les articles ne se superposent pas à la toolbar */
+.single .post-content img,
+.single .post-content iframe { position: relative; z-index: 1; }
+
+/* --- Badge flottant SegFault : forçage de visibilité --- */
+.ouinpo-notif-float {
+  position: fixed !important;
+  right: 68px !important;
+  bottom: 48px !important;
+  background: #e11d48 !important; /* rouge vif */
+  color: #fff !important;
+  border-radius: 999px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  cursor: pointer;
+  z-index: 999999 !important; /* au-dessus de tout */
+  display: block !important;
+}
+
+/* Désactive tout badge intégré au bouton du chat */
+#sf-toggle::after,
+#sf-toggle .sf-badge {
+  display: none !important;
+  content: none !important;
+}
+
+/* --- Ultimate Member Directory : thème sombre steampunk/cuivré --- */
+
+/* Conteneur des cartes */
+.um-members-wrapper .um-member {
+    background: #181310 !important;                /* brun très sombre, base "atelier" */
+    border: 1px solid #7b4a26 !important;          /* cuivre un peu terni */
+    border-radius: 10px !important;
+    padding: 20px !important;
+    color: #f3e6d0 !important;                     /* ivoire chaud */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Liseré cuivré en haut de la carte */
+.um-members-wrapper .um-member::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -20%;
+    width: 140%;
+    height: 4px;
+    background: linear-gradient(90deg, #f2c27a, #b87634, #f2c27a);
+    opacity: 0.9;
+}
+
+/* Légère texture/cuivrée par dégradé interne */
+.um-members-wrapper .um-member::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(248,196,120,0.18), transparent 55%),
+                radial-gradient(circle at bottom right, rgba(98,60,35,0.35), transparent 55%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+/* Avatar avec cadre de cuivre */
+.um-members-wrapper .um-member-photo img {
+    border-radius: 8px !important;
+    border: 3px solid #b6763a !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+}
+
+/* Nom du membre : couleur laiton / police un peu plus marquée */
+.um-members-wrapper .um-member-name a {
+    color: #f7e1b0 !important;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+}
+
+/* Survol du nom */
+.um-members-wrapper .um-member-name a:hover {
+    color: #ffd88a !important;
+}
+
+/* Métadonnées (rôle, classe, etc.) */
+.um-members-wrapper .um-member-meta,
+.um-members-wrapper .um-member-meta span,
+.um-members-wrapper .um-member-meta i {
+    color: #d3b48b !important;
+}
+
+/* Icônes (en cuivre clair) */
+.um-members-wrapper i {
+    color: #e6b36a !important;
+}
+
+/* Boutons dans les cartes (ex: Voir le profil) */
+.um-members-wrapper .um-member .um-member-more a,
+.um-members-wrapper .um-member .um-button {
+    background: linear-gradient(135deg, #b7763a, #f0c070) !important;
+    border: 1px solid #5d3417 !important;
+    color: #3a2312 !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 20px;
+    padding: 6px 14px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+}
+
+/* Survol du bouton */
+.um-members-wrapper .um-member .um-member-more a:hover,
+.um-members-wrapper .um-member .um-button:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+}
+
+/* Effet hover général sur la carte */
+.um-members-wrapper .um-member:hover {
+    background: #201712 !important;
+    border-color: #c58642 !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.85);
+    transform: translateY(-2px);
+    transition: all 0.2s ease-out;
+}
+
+/* Pagination du répertoire : style cuivré */
+.um-members-wrapper .um-members-pagi span,
+.um-members-wrapper .um-members-pagi a {
+    background: #1b1410 !important;
+    border: 1px solid #7b4a26 !important;
+    color: #f0d9b2 !important;
+}
+
+.um-members-wrapper .um-members-pagi span.current,
+.um-members-wrapper .um-members-pagi a:hover {
+    background: linear-gradient(135deg, #b7763a, #f0c070) !important;
+    color: #2d1a0d !important;
+}
+
+/* Correctif OuInPo : éviter que l'œil chevauche le texte dans les encadrés .alert */
+.ouinpo-content .alert {
+  padding-right: 5.2rem; /* laisse un “couloir” pour l’icône (≈ 58px + marge) */
+}
+
+/* Sur petits écrans, on réduit un peu la taille de l'œil pour ne pas manger trop de place */
+@media (max-width: 600px) {
+  .ouinpo-content .alert {
+    padding-right: 4rem;
+  }
+  .ouinpo-content .alert::before,
+  .ouinpo-content .alert::after {
+    width: 44px;
+    height: 44px;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+/* ==========================
+   OuInPo x H5P (Hemingway)
+   Correctifs d'apparence
+   ========================== */
+
+/* 1) Évite les "coins blancs" : on clippe le wrapper H5P */
+.h5p-container,
+.h5p-iframe-wrapper {
+  background: transparent !important;
+  border-radius: 14px;
+  overflow: hidden; /* IMPORTANT : masque ce qui dépasse (coins visibles) */
+}
+
+/* Si H5P est rendu en iframe */
+.h5p-iframe-wrapper iframe,
+iframe.h5p-iframe {
+  background: #111217 !important;
+  border: 0 !important;
+  border-radius: 14px;
+}
+
+/* 2) Fond général (utile si H5P n'est pas en iframe selon contenus) */
+.h5p-content,
+.h5p-container .h5p-content {
+  background: #111217 !important;
+  color: #e7e7ea !important;
+}
+
+/* 3) Panneau de résultats (le fond blanc qui jure) */
+.h5p-question-set-results,
+.h5p-question-set-results .h5p-question-set-results-container,
+.h5p-question-set-results .h5p-joubelui-results,
+.h5p-question-set-results .h5p-joubelui-score-box,
+.h5p-question-set-results .h5p-joubelui-score-numeric {
+  background: rgba(17, 18, 23, 0.92) !important;
+  color: #e7e7ea !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.45) !important;
+}
+
+/* Barre de score (si elle garde un fond clair) */
+.h5p-question-set-results .h5p-joubelui-score-bar,
+.h5p-question-set-results .h5p-joubelui-score-bar > div {
+  background: rgba(255,255,255,0.10) !important;
+  border-radius: 999px !important;
+}
+
+/* 4) Boutons (au cas où certains passent en clair) */
+.h5p-joubelui-button,
+.h5p-question-set .h5p-joubelui-button {
+  background: #1b1c24 !important;
+  color: #f0f0f2 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.45) !important;
+}
+.h5p-joubelui-button:hover {
+  background: #232433 !important;
+}
+
+/* 5) Points de progression (les "onglets/questions" bleus)
+   Les classes varient selon version, donc on couvre large. */
+.h5p-question-set .h5p-progressbar,
+.h5p-question-set .h5p-progressbar-part,
+.h5p-question-set .h5p-progressbar-part div,
+.h5p-question-set .h5p-question-set-progressbar,
+.h5p-question-set .h5p-question-set-progressbar-part,
+.h5p-question-set .h5p-question-set-progressbar-part div {
+  background: rgba(255,255,255,0.12) !important;
+}
+
+/* Les "dots" */
+.h5p-question-set .h5p-question-set-progress-dots button,
+.h5p-question-set .h5p-question-set-progress-dots .h5p-question-set-progress-dot,
+.h5p-question-set .h5p-question-set-progress-dots .h5p-question-set-progress-dot button {
+  background: rgba(255,255,255,0.22) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+}
+
+/* Dot actif / courant */
+.h5p-question-set .h5p-question-set-progress-dots .current,
+.h5p-question-set .h5p-question-set-progress-dots .active,
+.h5p-question-set .h5p-question-set-progress-dots button[aria-current="true"] {
+  background: #d6b25e !important; /* doré OuInPo-ish */
+  border-color: rgba(214,178,94,0.85) !important;
+}
+
+/* Dot "réussi" (si H5P marque le statut) */
+.h5p-question-set .h5p-question-set-progress-dots .answered,
+.h5p-question-set .h5p-question-set-progress-dots .finished {
+  background: rgba(110, 201, 140, 0.60) !important;
+  border-color: rgba(110, 201, 140, 0.75) !important;
+}
+
+/* 6) Petit bonus : radios/labels parfois trop clairs */
+.h5p-question-set label,
+.h5p-content label {
+  color: #e7e7ea !important;
+}
+
+/* ==========================
+   OuInPo x H5P — Patch “palette cuivre patiné”
+   À placer tout en bas du CSS (après tes règles H5P)
+   ========================== */
+
+/* A) “Coins blancs” : clip + fond cohérent */
+.h5p-container,
+.h5p-iframe-wrapper{
+  background: transparent !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+/* iframe H5P : fond & coins */
+.h5p-iframe-wrapper iframe,
+iframe.h5p-iframe{
+  background: var(--paper) !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+}
+
+/* B) Fond + texte H5P global (évite les panneaux blancs) */
+.h5p-content,
+.h5p-container .h5p-content{
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+
+/* C) Écran "Vos résultats" (le bloc blanc) */
+.h5p-question-set-results,
+.h5p-question-set-results .h5p-question-set-results-container,
+.h5p-question-set-results .h5p-joubelui-results,
+.h5p-question-set-results .h5p-joubelui-score-box{
+  background: rgba(0,0,0,.28) !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(185,140,90,0.25) !important; /* cuivre */
+  border-radius: 14px !important;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.45) !important;
+}
+
+/* Titres / labels dans le résultat */
+.h5p-question-set-results h2,
+.h5p-question-set-results h3,
+.h5p-question-set-results .h5p-joubelui-score-numeric{
+  color: var(--copper-light) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6) !important;
+}
+
+/* Barre de score : fond + remplissage cuivré */
+.h5p-question-set-results .h5p-joubelui-score-bar{
+  background: rgba(255,255,255,.10) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+}
+.h5p-question-set-results .h5p-joubelui-score-bar > div{
+  background: linear-gradient(180deg, var(--copper), var(--rust)) !important;
+}
+
+/* D) Boutons H5P : on les aligne sur tes boutons cuivre */
+.h5p-joubelui-button,
+.h5p-question-set .h5p-joubelui-button{
+  background: linear-gradient(180deg, var(--copper), var(--rust)) !important;
+  color:#fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: 0 6px 14px rgba(138,90,43,.35) !important;
+  text-transform: uppercase !important;
+  letter-spacing:.05em !important;
+  font-family: 'Cormorant Garamond', serif !important;
+}
+.h5p-joubelui-button:hover{
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(185,140,90,.45) !important;
+}
+
+/* E) Points en bas (dots / onglets/questions) : fin du bleu */
+.h5p-question-set .h5p-question-set-progress-dots,
+.h5p-question-set .h5p-progressbar{
+  background: transparent !important;
+}
+
+/* Dot “neutre” */
+.h5p-question-set .h5p-question-set-progress-dots button,
+.h5p-question-set .h5p-question-set-progress-dot{
+  background: rgba(255,255,255,.18) !important;
+  border: 1px solid rgba(185,140,90,0.25) !important;
+  box-shadow: inset 0 0 6px rgba(0,0,0,.35) !important;
+}
+
+/* Dot “actif” */
+.h5p-question-set .h5p-question-set-progress-dots .current,
+.h5p-question-set .h5p-question-set-progress-dots .active,
+.h5p-question-set .h5p-question-set-progress-dots button[aria-current="true"]{
+  background: var(--copper) !important;
+  border-color: rgba(185,140,90,.75) !important;
+}
+
+/* Dot “répondu / ok” (selon versions H5P) */
+.h5p-question-set .h5p-question-set-progress-dots .answered,
+.h5p-question-set .h5p-question-set-progress-dots .finished{
+  background: rgba(155,225,93,.55) !important; /* phosphor soft */
+  border-color: rgba(155,225,93,.75) !important;
+}
+
+/* F) Petits éléments parfois bleus (focus / outlines / liens internes H5P) */
+.h5p-content a{
+  color: var(--copper-light) !important;
+}
+.h5p-content a:hover{
+  color: var(--copper) !important;
+  text-shadow: 0 0 6px rgba(185,140,90,.35) !important;
+}
+.h5p-content :focus{
+  outline: 2px solid rgba(185,140,90,.55) !important;
+  outline-offset: 2px !important;
+}
+
+/* Multichoice / réponses : rendre le feedback lisible */
+.h5p-container .h5p-answer .h5p-feedback-dialog .h5p-feedback-inner,
+.h5p-container .h5p-answer .h5p-feedback-dialog .h5p-feedback-inner::before {
+  background: #fff !important;
+  border-color: rgba(0,0,0,0.25) !important;
+}
+
+.h5p-container .h5p-answer .h5p-feedback-dialog .h5p-feedback-text,
+.h5p-container .h5p-answer .h5p-feedback-dialog .h5p-feedback-text * {
+  color: #111 !important;
+  text-shadow: none !important;
+}
