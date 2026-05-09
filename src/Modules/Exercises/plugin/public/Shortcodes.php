@@ -1199,6 +1199,75 @@ private static function default_exercise_level_for_current_user(): string {
 
 }
 
+private static function exercise_list_fallback_html(string $page, string $lvl, string $exam_only): string {
+  if (!class_exists('\Ouinpo\Exercises\Rest\ExercisesRoutes') || !class_exists('\WP_REST_Request')) {
+    return '<div class="ouinpo-loading">Chargement des exercices…</div>';
+  }
+
+  $request = new \WP_REST_Request('GET', '/ouinpo/v1/exercises');
+
+  if ($lvl !== '') {
+    $request->set_param('school_level', $lvl);
+  }
+
+  if ($exam_only === '1') {
+    $request->set_param('exam_only', '1');
+  }
+
+  $response = \Ouinpo\Exercises\Rest\ExercisesRoutes::index($request);
+
+  if (is_wp_error($response)) {
+    return '<div class="ouinpo-loading">Chargement des exercices…</div>';
+  }
+
+  $items = $response instanceof \WP_REST_Response
+    ? $response->get_data()
+    : $response;
+
+  if (!is_array($items)) {
+    return '<div class="ouinpo-loading">Chargement des exercices…</div>';
+  }
+
+  if (empty($items)) {
+    return '<div class="ouinpo-empty">Aucun exercice ne correspond aux filtres.</div>';
+  }
+
+  $items = array_slice($items, 0, 200);
+
+  ob_start();
+  ?>
+  <div class="ouinpo-exercises-meta"></div>
+  <section class="ouinpo-exo-domain-block">
+    <h3 class="ouinpo-exo-domain-title">Tous les exercices</h3>
+    <ul class="ouinpo-exercises-list ouinpo-exo-list">
+      <?php foreach ($items as $item): ?>
+        <?php
+        $item = is_object($item) ? $item : (object) $item;
+        $id = isset($item->id) ? (int) $item->id : 0;
+        if ($id <= 0) {
+          continue;
+        }
+
+        $title = isset($item->title) && $item->title !== ''
+          ? (string) $item->title
+          : 'Exercice #' . $id;
+
+        $url = add_query_arg('exo', $id, $page);
+        ?>
+        <li class="ouinpo-exercise-item ouin-exo-li">
+          <div class="ouinpo-exercise-main ouin-exo-main">
+            <a class="ouinpo-exercise-link ouin-exo-link" href="<?php echo esc_url($url); ?>">
+              <?php echo esc_html($title); ?>
+            </a>
+          </div>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </section>
+  <?php
+  return trim((string) ob_get_clean());
+}
+
 
 
   /** Liste des exercices (le JS remplira #ouinpo-exercises depuis l’API REST) */
@@ -1311,6 +1380,10 @@ public static function render_list($atts = array(), $content = '') {
 
     : '0';
 
+  $initial_list_html = $is_logged
+    ? '<div class="ouinpo-loading">Chargement des exercices…</div>'
+    : self::exercise_list_fallback_html($page, $lvl, $exam_only);
+
 
 
   ob_start();
@@ -1363,6 +1436,22 @@ public static function render_list($atts = array(), $content = '') {
 
       </section>
 
+      <script>
+      (function(){
+        var sel = document.getElementById("ouinpo-exo-level");
+        if(!sel) return;
+        sel.addEventListener("change", function(){
+          var url = new URL(window.location.href);
+          if (this.value) {
+            url.searchParams.set("lvl", this.value);
+          } else {
+            url.searchParams.delete("lvl");
+          }
+          window.location.href = url.toString();
+        });
+      })();
+      </script>
+
 
 
       <section class="ouinpo-panel ouinpo-panel--results">
@@ -1401,7 +1490,7 @@ public static function render_list($atts = array(), $content = '') {
 
         >
 
-          <div class="ouinpo-loading">Chargement des exercices…</div>
+          <?php echo $initial_list_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
         </div>
 
