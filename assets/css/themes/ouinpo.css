@@ -9286,3 +9286,28 @@ a.demo:active {text-decoration:none; font-weight:bold; color:#0000FF}
   text-decoration: none;
   text-shadow: 0 0 8px rgba(214, 163, 98, 0.35);
 }
+
+/* Parcours : conserver les boutons discrets de la prod. */
+.ouinpo-sf-btn {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 10px !important;
+  border: 1px solid rgba(184, 115, 51, 0.55) !important;
+  background: rgba(184, 115, 51, 0.18) !important;
+  color: rgba(233, 230, 223, 0.96) !important;
+  box-shadow: none !important;
+  font-family: 'Source Serif 4', Georgia, serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-decoration: none;
+  text-transform: none !important;
+}
+
+.ouinpo-sf-btn:hover {
+  background: rgba(184, 115, 51, 0.26) !important;
+  border-color: rgba(232, 170, 70, 0.9) !important;
+  color: rgba(255, 245, 235, 0.98) !important;
+  filter: none;
+  transform: none;
+  text-shadow: none;
+}
