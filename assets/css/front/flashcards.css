@@ -4,10 +4,6 @@
    ========================================================= */
 
 .ouinpo-fc-app {
-  color: inherit;
-  background: transparent;
-  border: 1px solid currentColor;
-  border-color: rgba(0, 0, 0, 0.14);
   border-radius: 16px;
   padding: 1rem;
   margin: 1rem 0;
@@ -22,7 +18,6 @@
 .ouinpo-fc-header {
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .ouinpo-fc-header h2 {
@@ -33,7 +28,6 @@
 
 .ouinpo-fc-subtitle {
   margin: 0;
-  opacity: 0.75;
 }
 
 .ouinpo-fc-toolbar {
@@ -44,9 +38,7 @@
   flex-wrap: wrap;
   margin-bottom: 1rem;
   padding: 0.95rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-toolbar label {
@@ -60,9 +52,6 @@
   max-width: 100%;
   padding: 0.65rem 0.8rem;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: #fff;
-  color: inherit;
 }
 
 .ouinpo-fc-counts {
@@ -75,8 +64,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  background: rgba(0, 0, 0, 0.03);
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
 }
@@ -90,10 +77,8 @@
 
 .ouinpo-fc-deck-card {
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 15px;
   padding: 0.95rem;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-deck-card h3 {
@@ -104,7 +89,6 @@
 
 .ouinpo-fc-deck-card p {
   margin: 0 0 0.75rem;
-  opacity: 0.78;
   font-size: 0.95rem;
 }
 
@@ -113,7 +97,6 @@
   gap: 0.45rem;
   flex-wrap: wrap;
   font-size: 0.88rem;
-  opacity: 0.8;
 }
 
 .ouinpo-fc-deck-meta span {
@@ -121,14 +104,11 @@
   align-items: center;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-session {
   margin-top: 1.1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .ouinpo-fc-session[hidden] {
@@ -137,10 +117,8 @@
 
 .ouinpo-fc-card {
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 16px;
   padding: 1.1rem;
-  background: rgba(0, 0, 0, 0.025);
 }
 
 .ouinpo-fc-meta {
@@ -152,11 +130,8 @@
 
 .ouinpo-fc-meta span {
   font-size: 0.83rem;
-  opacity: 0.78;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 999px;
   padding: 0.18rem 0.55rem;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-front,
@@ -171,7 +146,6 @@
 }
 
 .ouinpo-fc-back {
-  border-top: 1px dashed rgba(0, 0, 0, 0.18);
   margin-top: 1rem;
   padding-top: 1rem;
 }
@@ -210,19 +184,9 @@
   font-size: 0.95rem;
 }
 
-.ouinpo-fc-feedback.is-ok {
-  color: #15803d;
-}
-
-.ouinpo-fc-feedback.is-error {
-  color: #b91c1c;
-}
-
 .ouinpo-fc-login {
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(0, 0, 0, 0.14);
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.025);
 }
 
 /* Multi-paquets */
@@ -235,19 +199,12 @@
   flex-wrap: wrap;
   margin: 1rem 0 0.85rem;
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-deck-tools p {
   margin: 0.25rem 0 0;
-  opacity: 0.75;
   font-size: 0.92rem;
-}
-
-.ouinpo-fc-deck-card.is-selected {
-  border-color: currentColor;
 }
 
 .ouinpo-fc-deck-choice {
@@ -271,17 +228,13 @@
 .ouinpo-fc-deck-choice small {
   display: block;
   margin-top: 0.18rem;
-  opacity: 0.75;
 }
 
 .ouinpo-fc-empty-list {
   grid-column: 1 / -1;
   margin: 0;
   padding: 1rem;
-  border: 1px dashed rgba(0, 0, 0, 0.18);
   border-radius: 14px;
-  opacity: 0.75;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 /* UX V2 / V3 */
@@ -299,9 +252,7 @@
   flex-wrap: wrap;
   margin: 0 0 1rem;
   padding: 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-prep-head h3,
@@ -314,15 +265,12 @@
 .ouinpo-fc-session-summary,
 .ouinpo-fc-context-summary {
   margin: 0;
-  opacity: 0.78;
   line-height: 1.45;
 }
 
 .ouinpo-fc-context-summary {
   max-width: 620px;
   padding: 0.45rem 0.7rem;
-  border-left: 3px solid rgba(0, 0, 0, 0.18);
-  background: rgba(0, 0, 0, 0.03);
   border-radius: 10px;
 }
 
@@ -335,9 +283,7 @@
 
 .ouinpo-fc-kpi {
   padding: 0.85rem 0.95rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 15px;
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .ouinpo-fc-kpi-value {
@@ -350,15 +296,12 @@
 .ouinpo-fc-kpi-label {
   display: block;
   margin-top: 0.35rem;
-  opacity: 0.72;
   font-size: 0.9rem;
 }
 
 .ouinpo-fc-chooser {
   margin-top: 0.75rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.015);
   overflow: hidden;
 }
 
@@ -366,11 +309,6 @@
   cursor: pointer;
   padding: 0.85rem 1rem;
   font-weight: 700;
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.ouinpo-fc-chooser[open] summary {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .ouinpo-fc-chooser .ouinpo-fc-deck-tools,

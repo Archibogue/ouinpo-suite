@@ -11,17 +11,6 @@
 }
 
 .ouinpo-teacher {
-  --teacher-bg: var(--ouin-neutral-bg, #ffffff);
-  --teacher-bg-soft: var(--ouin-neutral-bg-soft, #f8fafc);
-  --teacher-border: var(--ouin-neutral-border, #d1d5db);
-  --teacher-border-soft: var(--ouin-neutral-border-soft, #e5e7eb);
-  --teacher-text: var(--ouin-neutral-text, #111827);
-  --teacher-muted: var(--ouin-neutral-muted, #6b7280);
-  --teacher-primary: var(--ouin-neutral-primary, #2563eb);
-  --teacher-primary-dark: var(--ouin-neutral-primary-dark, #1d4ed8);
-  --teacher-success: var(--ouin-neutral-success, #15803d);
-  --teacher-warning: var(--ouin-neutral-warning, #b45309);
-  --teacher-danger: var(--ouin-neutral-danger, #b91c1c);
   --teacher-radius: 12px;
 
   color: var(--teacher-text);
@@ -94,7 +83,7 @@
   border: 1px solid var(--teacher-primary);
   border-radius: 8px;
   background: var(--teacher-primary);
-  color: #ffffff;
+  color: var(--teacher-button-text);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -108,7 +97,7 @@
 .ouinpo-teacher #t-refresh:hover {
   background: var(--teacher-primary-dark);
   border-color: var(--teacher-primary-dark);
-  color: #ffffff;
+  color: var(--teacher-button-text);
 }
 
 .ouinpo-teacher button:disabled,

@@ -1852,7 +1852,8 @@
 
 .ouinpo-exo button:hover,
 .ouin-exo-block button:hover,
-.btn-copper:hover{
+.btn-copper:hover {
+  filter: brightness(1.05);
   transform: translateY(-1px);
   border-color: rgba(214,163,98,0.56);
   background:
@@ -4281,7 +4282,7 @@
 .ouinpo-practical-subject {
   --op-gold: #d6a362;
   --op-gold-2: #f1c77f;
-  --op-text: #f4ead8;
+  --op-text: #f1e7d6;
   --op-muted: #cbbba4;
   --op-dark: rgba(22, 18, 15, 0.94);
   --op-dark-2: rgba(35, 29, 24, 0.92);
@@ -4986,6 +4987,18 @@
    ========================= */
 
 .ouinpo-teacher {
+  --teacher-bg: #26211c;
+  --teacher-bg-soft: #1c1a18;
+  --teacher-border: #4a3c2a;
+  --teacher-border-soft: #5e4b33;
+  --teacher-text: #f2e7c9;
+  --teacher-muted: #b6a27c;
+  --teacher-primary: #c59b52;
+  --teacher-primary-dark: #8a5a2b;
+  --teacher-success: #3ca86b;
+  --teacher-warning: #e5a93c;
+  --teacher-danger: #c94c4c;
+  --teacher-button-text: #ffffff;
   --cuivre: #c59b52;
   --laiton: #d4b06c;
   --bord: #4a3c2a;
@@ -8740,6 +8753,22 @@
   cursor: pointer;
   z-index: 999999 !important;
   display: block !important;
+}
+
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sf-badge {
+  background: #d00;
+  color: #fff;
+}
+
+#sf-chat-floating .sf-btn::before {
+  color: #fff4d6;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.75);
 }
 
 #sf-toggle::after,

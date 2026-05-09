@@ -25,6 +25,7 @@ wp-config.php
 config.php
 secrets.php
 auth.json
+ouinpo-suite-prod/
 
 # Dossiers techniques locaux
 .git/

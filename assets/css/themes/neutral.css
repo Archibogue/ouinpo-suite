@@ -389,6 +389,12 @@
   box-shadow: none;
 }
 
+.ouinpo-palmares-year-filter select {
+  background: #ffffff;
+  color: var(--ouin-neutral-text);
+  border: 1px solid var(--ouin-neutral-border);
+}
+
 .ouinpo-badge-item:hover {
   transform: none;
   border-color: #bfdbfe;
@@ -832,12 +838,51 @@ button[data-ouinpo-sf-open]:hover {
   background: #eff6ff;
 }
 
+.ouinpo-fc-feedback.is-ok {
+  color: var(--ouin-neutral-success);
+}
+
+.ouinpo-fc-feedback.is-error {
+  color: var(--ouin-neutral-danger);
+}
+
+.ouinpo-fc-empty-list {
+  background: var(--ouin-neutral-bg-soft);
+  border: 1px dashed var(--ouin-neutral-border);
+  color: var(--ouin-neutral-muted);
+}
+
+.ouinpo-fc-context-summary {
+  background: var(--ouin-neutral-bg-soft);
+  border-left: 3px solid var(--ouin-neutral-border);
+}
+
+.ouinpo-fc-chooser summary {
+  background: var(--ouin-neutral-bg-soft);
+}
+
+.ouinpo-fc-chooser[open] summary {
+  border-bottom: 1px solid var(--ouin-neutral-border-soft);
+}
+
 /* ==========================================================
    Compléments neutral — modules encore historiquement habillés OuInPo
    ========================================================== */
 
 /* Variables historiques du suivi professeur */
 .ouinpo-teacher {
+  --teacher-bg: var(--ouin-neutral-bg);
+  --teacher-bg-soft: var(--ouin-neutral-bg-soft);
+  --teacher-border: var(--ouin-neutral-border);
+  --teacher-border-soft: var(--ouin-neutral-border-soft);
+  --teacher-text: var(--ouin-neutral-text);
+  --teacher-muted: var(--ouin-neutral-muted);
+  --teacher-primary: var(--ouin-neutral-primary);
+  --teacher-primary-dark: var(--ouin-neutral-primary-dark);
+  --teacher-success: var(--ouin-neutral-success);
+  --teacher-warning: var(--ouin-neutral-warning);
+  --teacher-danger: var(--ouin-neutral-danger);
+  --teacher-button-text: #ffffff;
   --cuivre: var(--ouin-neutral-primary);
   --laiton: var(--ouin-neutral-primary);
   --bord: var(--ouin-neutral-border);
@@ -1030,6 +1075,12 @@ button[data-ouinpo-sf-open]:hover {
   box-shadow: none;
 }
 
+.ouinpo-site-map--cards .ouinpo-sitemap-block--list {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 /* Dépôts / ressources */
 .ouinpo-box,
 .ouinpo-chapter {
@@ -1039,9 +1090,32 @@ button[data-ouinpo-sf-open]:hover {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
+.ouinpo-box {
+  border: 1px solid var(--ouin-neutral-border);
+}
+
+.ouinpo-chapter {
+  border: 1px dashed var(--ouin-neutral-border);
+}
+
 .ouinpo-badge {
   background: #eef2ff;
   color: #3730a3;
+}
+
+.ouinpo-notif-float,
+.sf-badge {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.ouinpo-notif-float {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+}
+
+#sf-chat-floating .sf-btn::before {
+  color: #ffffff;
+  text-shadow: none;
 }
 
 .ouinpo-res-desc,

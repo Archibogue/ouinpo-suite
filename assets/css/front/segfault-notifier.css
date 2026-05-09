@@ -3,7 +3,7 @@
    CSS extrait depuis ouinpo-segfault-notifier.php
    ========================================================== */
 
-.sf-badge{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#d00;color:#fff;font:700 11px/18px system-ui,Arial,sans-serif;text-align:center}
+.sf-badge{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;font:700 11px/18px system-ui,Arial,sans-serif;text-align:center}
 
 .sf-launcher, #segfault-launcher{position:relative}
 

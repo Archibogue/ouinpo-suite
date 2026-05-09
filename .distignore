@@ -17,6 +17,7 @@ wp-config.php
 config.php
 secrets.php
 auth.json
+ouinpo-suite-prod/
 
 # Exports WordPress / RAG / contenus locaux
 site-segfault-clean.xml
