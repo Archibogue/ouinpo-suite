@@ -55,7 +55,7 @@ final class SettingsPage
     {
         $value = is_string($value) ? $value : 'neutral';
 
-        return in_array($value, ['ouinpo', 'neutral'], true)
+        return in_array($value, ['ouinpo', 'neutral', 'bsio'], true)
             ? $value
             : 'neutral';
     }
@@ -68,7 +68,7 @@ final class SettingsPage
 
         $current = get_option(self::OPTION_STYLE_MODE, 'neutral');
 
-        if (!in_array($current, ['ouinpo', 'neutral'], true)) {
+        if (!in_array($current, ['ouinpo', 'neutral', 'bsio'], true)) {
             $current = 'neutral';
         }
 
@@ -99,6 +99,19 @@ final class SettingsPage
                                     <strong>OuInPo</strong>
                                     <span class="ouinpo-suite-settings-muted">
                                         — style actuel, littéraire et pataphysique.
+                                    </span>
+                                </label>
+
+                                <label class="ouinpo-suite-settings-choice">
+                                    <input
+                                        type="radio"
+                                        name="<?php echo esc_attr(self::OPTION_STYLE_MODE); ?>"
+                                        value="bsio"
+                                        <?php checked($current, 'bsio'); ?>
+                                    >
+                                    <strong>B.S.I.O. &mdash; Bureau des Services Informatiques Ouinpiens</strong>
+                                    <span class="ouinpo-suite-settings-muted">
+                                        &mdash; intranet clair, tickets, notes de service et incidents raisonnablement optimistes.
                                     </span>
                                 </label>
 

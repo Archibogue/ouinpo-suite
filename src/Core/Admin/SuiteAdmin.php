@@ -2476,7 +2476,7 @@ final class SuiteAdmin
 
         $current = get_option($option_name, 'ouinpo');
 
-        if (!in_array($current, ['ouinpo', 'neutral'], true)) {
+        if (!in_array($current, ['ouinpo', 'neutral', 'bsio'], true)) {
             $current = 'ouinpo';
         }
 
@@ -2508,6 +2508,19 @@ final class SuiteAdmin
                                         <strong>OuInPo</strong>
                                         <span class="ouinpo-suite-muted">
                                             — style actuel, plus marqué et pataphysique.
+                                        </span>
+                                    </label>
+
+                                    <label class="ouinpo-suite-settings-choice">
+                                        <input
+                                            type="radio"
+                                            name="<?php echo esc_attr($option_name); ?>"
+                                            value="bsio"
+                                            <?php checked($current, 'bsio'); ?>
+                                        >
+                                        <strong>B.S.I.O. &mdash; Bureau des Services Informatiques Ouinpiens</strong>
+                                        <span class="ouinpo-suite-muted">
+                                            &mdash; intranet clair, tickets, procedures et rapports d'incident.
                                         </span>
                                     </label>
 

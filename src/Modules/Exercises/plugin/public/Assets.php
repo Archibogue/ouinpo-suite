@@ -46,6 +46,7 @@ class Assets {
 
             'theme_neutral' => 'assets/css/themes/neutral.css',
             'theme_ouinpo'  => 'assets/css/themes/ouinpo.css',
+            'theme_bsio'    => 'assets/css/themes/bsio.css',
         ];
 
         $ver = [];
@@ -65,13 +66,17 @@ class Assets {
         */
         $style_mode = get_option('ouinpo_suite_style_mode', 'neutral');
 
-        if (!in_array($style_mode, ['neutral', 'ouinpo'], true)) {
+        if (!in_array($style_mode, ['neutral', 'ouinpo', 'bsio'], true)) {
             $style_mode = 'neutral';
         }
 
-        $theme_file = $style_mode === 'neutral'
-            ? $files['theme_neutral']
-            : $files['theme_ouinpo'];
+        $theme_files = [
+            'neutral' => $files['theme_neutral'],
+            'ouinpo'  => $files['theme_ouinpo'],
+            'bsio'    => $files['theme_bsio'],
+        ];
+
+        $theme_file = $theme_files[$style_mode] ?? $files['theme_neutral'];
 
         /*
          * CSS commun.

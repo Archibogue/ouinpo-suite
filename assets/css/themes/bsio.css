@@ -1,0 +1,1034 @@
+/* ==========================================================
+   OuInPo Suite - Theme B.S.I.O.
+   Bureau des Services Informatiques Ouinpiens.
+
+   Couche publique de theme uniquement : les CSS modules gardent la
+   structure, ce fichier apporte le ton intranet/tickets/procedures.
+   ========================================================== */
+
+:root {
+  --bsio-paper: #f3ead8;
+  --bsio-paper-soft: #fff8e8;
+  --bsio-ink: #263238;
+  --bsio-muted: #66706a;
+  --bsio-green: #2f6f4e;
+  --bsio-terminal: #1f3b2d;
+  --bsio-bluegray: #536b78;
+  --bsio-red: #b64235;
+  --bsio-orange: #c78b3a;
+  --bsio-border: #b9aa8c;
+  --bsio-border-soft: rgba(185, 170, 140, 0.55);
+  --bsio-shadow: 0 8px 22px rgba(38, 50, 56, 0.11);
+  --bsio-stamp: rgba(47, 111, 78, 0.12);
+  --bsio-focus: 0 0 0 3px rgba(83, 107, 120, 0.28);
+
+  --ouin-text: var(--bsio-ink);
+  --ouin-muted: var(--bsio-muted);
+  --ouin-accent: var(--bsio-green);
+  --ouin-accent-dark: var(--bsio-terminal);
+  --ouin-border: var(--bsio-border);
+
+  --teacher-bg: var(--bsio-paper-soft);
+  --teacher-bg-soft: #f8f0de;
+  --teacher-border: var(--bsio-border);
+  --teacher-border-soft: var(--bsio-border-soft);
+  --teacher-text: var(--bsio-ink);
+  --teacher-muted: var(--bsio-muted);
+  --teacher-primary: var(--bsio-green);
+  --teacher-primary-dark: var(--bsio-terminal);
+  --teacher-success: var(--bsio-green);
+  --teacher-warning: var(--bsio-orange);
+  --teacher-danger: var(--bsio-red);
+}
+
+/* Base bornee aux zones publiques du plugin. */
+.ouinpo-exo,
+.ouinpo-exercises-page,
+.ouinpo-practical-page,
+.ouinpo-practical-subject,
+.ouinpo-competences,
+#ouinpo-student-badges,
+.ouinpo-palmares,
+.ouinpo-site-map,
+.ouinpo-revision-band,
+.ouinpo-box,
+.ouinpo-rt,
+.ouinpo-fc-app,
+.ouinpo-sf-card,
+.ouinpo-title-selector,
+#ouinpo-game,
+#ouinpo-signpad {
+  color: var(--bsio-ink);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.ouinpo-exo,
+.ouinpo-competences,
+#ouinpo-student-badges,
+.ouinpo-palmares,
+.ouinpo-panel,
+.copper-panel,
+.ouinpo-exo-domain-block,
+.ouinpo-ds-card,
+.ouinpo-badges-section,
+.ouinpo-badge-item,
+.ouinpo-revision-band,
+.ouinpo-help-box,
+.ouinpo-me-ds-filter,
+.ouinpo-practical-page,
+.ouinpo-practical-subject,
+.ouinpo-box,
+.ouinpo-rt,
+.ouinpo-fc-app,
+.ouinpo-sf-card,
+.ouinpo-title-selector,
+#ouinpo-game,
+#ouinpo-signpad {
+  background:
+    linear-gradient(180deg, rgba(255, 248, 232, 0.96), rgba(243, 234, 216, 0.96));
+  border: 1px solid var(--bsio-border);
+  box-shadow: var(--bsio-shadow);
+}
+
+.ouinpo-exo,
+.ouinpo-competences,
+#ouinpo-student-badges,
+.ouinpo-palmares,
+.ouinpo-practical-page,
+.ouinpo-practical-subject,
+.ouinpo-fc-app,
+.ouinpo-sf-card,
+.ouinpo-box,
+.ouinpo-rt {
+  position: relative;
+}
+
+.ouinpo-exo::before,
+.ouinpo-competences::before,
+#ouinpo-student-badges::before,
+.ouinpo-palmares::before,
+.ouinpo-practical-page::before,
+.ouinpo-fc-app::before,
+.ouinpo-box::before,
+.ouinpo-rt::before {
+  content: "DOSSIER INTERNE";
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  color: rgba(47, 111, 78, 0.46);
+  border: 2px solid rgba(47, 111, 78, 0.32);
+  border-radius: 3px;
+  padding: 0.1rem 0.38rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  transform: rotate(1.5deg);
+  pointer-events: none;
+}
+
+.ouinpo-fc-app > *,
+.ouinpo-rt > *,
+.ouinpo-box > *,
+.ouinpo-exo > *,
+.ouinpo-competences > *,
+#ouinpo-student-badges > *,
+.ouinpo-palmares > * {
+  position: relative;
+}
+
+/* Titres : note de service, pas faire-part mystique. */
+.ouinpo-exo h1,
+.ouinpo-exo h2,
+.ouinpo-exo h3,
+.ouinpo-exercises-page h1,
+.ouinpo-exercises-page h2,
+.ouinpo-practical-page h1,
+.ouinpo-practical-page h2,
+.ouinpo-practical-subject h1,
+.ouinpo-practical-subject h2,
+.ouinpo-competences h2,
+.ouinpo-competences h3,
+.ouinpo-panel-title,
+.ouinpo-exo-domain-title,
+.ouinpo-badges-section-title,
+.ouinpo-badges-level-title,
+.ouinpo-badges-domain-title,
+.ouinpo-fc-header h2,
+.ouinpo-fc-prep-head h3,
+.ouinpo-fc-session-head h3,
+.ouinpo-rt__title,
+.ouinpo-box h3,
+.ouinpo-chapter-title,
+.ouinpo-title-selector h2,
+#ouinpo-game h2,
+#ouinpo-signpad h3,
+.ouinpo-sf-card h2,
+.ouinpo-sf-card h3 {
+  color: var(--bsio-terminal);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+.ouinpo-panel-title,
+.ouinpo-exo-domain-title,
+.ouinpo-competences h2,
+.ouinpo-fc-header,
+.ouinpo-rt__header {
+  border-bottom: 2px solid var(--bsio-border);
+  padding-bottom: 0.45rem;
+}
+
+.ouinpo-exo p,
+.ouinpo-practical-subject p,
+.ouinpo-fc-subtitle,
+.ouinpo-fc-deck-card p,
+.ouinpo-fc-deck-meta,
+.ouinpo-fc-prep-text,
+.ouinpo-fc-session-summary,
+.ouinpo-fc-context-summary,
+.ouinpo-fc-kpi-label,
+.ouinpo-rt__subtitle,
+.ouinpo-res-desc,
+.ouinpo-files-label,
+.ouinpo-submissions-limit-note,
+.ouinpo-sf-muted,
+.sf-parcours-excerpt {
+  color: var(--bsio-muted);
+}
+
+/* Liens et focus clavier. */
+.ouinpo-exo a,
+.ouinpo-exercises-page a,
+.ouinpo-practical-page a,
+.ouinpo-practical-subject a,
+.ouinpo-competences a,
+.ouinpo-site-map a,
+.ouinpo-box a,
+.ouinpo-rt a,
+.ouinpo-fc-app a,
+.ouinpo-sf-card a,
+.ouinpo-files-list a,
+.ouinpo-list a,
+.sf-parcours-li a,
+.ouinpo-res-notif-list a {
+  color: var(--bsio-green);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+
+.ouinpo-exo a:hover,
+.ouinpo-exercises-page a:hover,
+.ouinpo-practical-page a:hover,
+.ouinpo-practical-subject a:hover,
+.ouinpo-competences a:hover,
+.ouinpo-site-map a:hover,
+.ouinpo-box a:hover,
+.ouinpo-rt a:hover,
+.ouinpo-fc-app a:hover,
+.ouinpo-sf-card a:hover {
+  color: var(--bsio-terminal);
+}
+
+.ouinpo-exo a:focus-visible,
+.ouinpo-exo button:focus-visible,
+.ouinpo-exo input:focus-visible,
+.ouinpo-exo select:focus-visible,
+.ouinpo-exo textarea:focus-visible,
+.ouinpo-practical-page a:focus-visible,
+.ouinpo-practical-page button:focus-visible,
+.ouinpo-practical-page input:focus-visible,
+.ouinpo-practical-page select:focus-visible,
+.ouinpo-practical-page textarea:focus-visible,
+.ouinpo-competences a:focus-visible,
+.ouinpo-competences button:focus-visible,
+.ouinpo-competences input:focus-visible,
+.ouinpo-competences select:focus-visible,
+.ouinpo-fc-app a:focus-visible,
+.ouinpo-fc-app button:focus-visible,
+.ouinpo-fc-app select:focus-visible,
+.ouinpo-rt button:focus-visible,
+.ouinpo-rt input:focus-visible,
+.ouinpo-rt select:focus-visible,
+.ouinpo-box button:focus-visible,
+.ouinpo-box input:focus-visible,
+.ouinpo-box select:focus-visible,
+.ouinpo-box textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--bsio-focus);
+}
+
+/* Boutons : intranet sobre, tampon officiel juste ce qu'il faut. */
+.ouinpo-exo button,
+.ouin-exo-block button,
+.btn-copper,
+.ouinpo-me-tab,
+.ouinpo-fc-app .button,
+.ouinpo-fc-app button.button,
+.ouinpo-rt button,
+.ouinpo-box button,
+.ouinpo-box input[type="submit"],
+#ouinpo-game .button,
+#ouinpo-signpad .button,
+.ouinpo-sf-btn {
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal));
+  border: 1px solid var(--bsio-terminal);
+  border-radius: 6px;
+  box-shadow:
+    0 2px 0 rgba(38, 50, 56, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  font-weight: 800;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+}
+
+.ouinpo-exo button:hover,
+.ouin-exo-block button:hover,
+.btn-copper:hover,
+.ouinpo-me-tab:hover,
+.ouinpo-fc-app .button:hover,
+.ouinpo-fc-app button.button:hover,
+.ouinpo-rt button:hover,
+.ouinpo-box button:hover,
+.ouinpo-box input[type="submit"]:hover,
+#ouinpo-game .button:hover,
+#ouinpo-signpad .button:hover,
+.ouinpo-sf-btn:hover {
+  color: #ffffff;
+  background: linear-gradient(180deg, #3b805c, var(--bsio-terminal));
+  border-color: var(--bsio-terminal);
+  transform: translateY(-1px);
+}
+
+.ouinpo-me-tab.is-active,
+.ouinpo-fc-deck-card.is-selected {
+  color: var(--bsio-terminal);
+  background: var(--bsio-stamp);
+  border-color: var(--bsio-green);
+  box-shadow: inset 0 0 0 1px rgba(47, 111, 78, 0.16);
+}
+
+/* Formulaires et filtres. */
+.ouinpo-field select,
+.ouinpo-field input,
+.ouinpo-select,
+.ouinpo-exo-filters select,
+.ouinpo-exo-toolbar select,
+.ouinpo-exo textarea.exo-answer-text,
+.ouinpo-me-ds-filter select,
+.ouinpo-filter select,
+.ouinpo-ds-filter select,
+.ouinpo-practical-page input,
+.ouinpo-practical-page select,
+.ouinpo-practical-page textarea,
+.ouinpo-fc-toolbar select,
+.ouinpo-rt__input,
+.ouinpo-rt select,
+.ouinpo-box input[type="text"],
+.ouinpo-box input[type="email"],
+.ouinpo-box input[type="file"],
+.ouinpo-box select,
+.ouinpo-box textarea,
+.ouinpo-res-select,
+.ouinpo-sf-select,
+.ouinpo-sf-input {
+  color: var(--bsio-ink);
+  background: #fffdf5;
+  border: 1px solid var(--bsio-border);
+  box-shadow: inset 0 1px 2px rgba(38, 50, 56, 0.08);
+}
+
+.ouinpo-field select:focus,
+.ouinpo-field input:focus,
+.ouinpo-select:focus,
+.ouinpo-exo-filters select:focus,
+.ouinpo-exo-toolbar select:focus,
+.ouinpo-exo textarea.exo-answer-text:focus,
+.ouinpo-me-ds-filter select:focus,
+.ouinpo-filter select:focus,
+.ouinpo-practical-page input:focus,
+.ouinpo-practical-page select:focus,
+.ouinpo-practical-page textarea:focus,
+.ouinpo-fc-toolbar select:focus,
+.ouinpo-rt__input:focus,
+.ouinpo-box input:focus,
+.ouinpo-box select:focus,
+.ouinpo-box textarea:focus,
+.ouinpo-sf-select:focus,
+.ouinpo-sf-input:focus {
+  border-color: var(--bsio-bluegray);
+  box-shadow: var(--bsio-focus);
+}
+
+.ouinpo-exo-filters,
+.ouinpo-exo-toolbar,
+.ouinpo-me-ds-filter,
+.ouinpo-ds-filter,
+.ouinpo-practical-filters,
+#ouinpo-practical-dynamic-filters,
+.ouinpo-fc-toolbar,
+.ouinpo-res-filters,
+.ouinpo-sf-gen {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(185, 170, 140, 0.12),
+      rgba(185, 170, 140, 0.12) 1px,
+      transparent 1px,
+      transparent 26px
+    ),
+    var(--bsio-paper-soft);
+  border: 1px solid var(--bsio-border);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.44);
+}
+
+/* Cartes, tickets et blocs de contenu. */
+.ouinpo-exo .exo-answer-box,
+.ouinpo-exo .exo-solutions,
+.ouinpo-exo .exo-hints,
+.ouinpo-exo .exo-status-line,
+.ouinpo-exo .exo-actions,
+.ouin-exo-block,
+.ouinpo-exercise-card,
+.ouinpo-focus-card,
+.ouinpo-ds-card,
+.ouinpo-fc-deck-card,
+.ouinpo-fc-card,
+.ouinpo-fc-login,
+.ouinpo-fc-kpi,
+.ouinpo-fc-chooser,
+.ouinpo-fc-deck-tools,
+.ouinpo-fc-prep-head,
+.ouinpo-fc-session-head,
+.ouinpo-rt__status,
+.ouinpo-rt__stats,
+.ouinpo-rt__explain,
+.ouinpo-rt__table-wrap,
+.ouinpo-rt__panel,
+.ouinpo-chapter,
+.ouinpo-sf-table,
+.ouinpo-sf-gen-msg,
+.bsio-card,
+.bsio-ticket,
+.bsio-note,
+.bsio-procedure,
+.bsio-incident,
+.bsio-dashboard {
+  color: var(--bsio-ink);
+  background: var(--bsio-paper-soft);
+  border: 1px solid var(--bsio-border);
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.08);
+}
+
+.bsio-ticket,
+.bsio-incident,
+.bsio-procedure,
+.bsio-note {
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.bsio-ticket::before,
+.bsio-incident::before,
+.bsio-procedure::before,
+.bsio-note::before {
+  display: inline-block;
+  margin: 0 0 0.55rem;
+  color: var(--bsio-bluegray);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bsio-ticket::before { content: "Ticket d'intervention"; }
+.bsio-incident::before { content: "Rapport d'incident"; color: var(--bsio-red); }
+.bsio-procedure::before { content: "Procedure interne"; color: var(--bsio-green); }
+.bsio-note::before { content: "Note de service"; }
+
+.bsio-tampon {
+  display: inline-block;
+  color: var(--bsio-green);
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-1deg);
+}
+
+.bsio-terminal,
+.ouinpo-exo pre,
+.ouinpo-exo code,
+.ouinpo-practical-subject pre,
+.ouinpo-practical-subject code,
+.ouinpo-rt__cell {
+  font-family: "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+}
+
+.bsio-terminal,
+.ouinpo-exo pre,
+.ouinpo-practical-subject pre {
+  color: #e9fff0;
+  background: var(--bsio-terminal);
+  border: 1px solid #143020;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.24);
+}
+
+.ouinpo-exo code,
+.ouinpo-practical-subject code {
+  color: var(--bsio-terminal);
+  background: rgba(31, 59, 45, 0.1);
+  border: 1px solid rgba(31, 59, 45, 0.16);
+}
+
+.ouinpo-exo pre code,
+.ouinpo-practical-subject pre code {
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+
+/* Tableaux et suivis. */
+.ouinpo-table,
+.ouinpo-competences table,
+.ouinpo-sf-table,
+.ouinpo-rt__bc-table {
+  color: var(--bsio-ink);
+  background: var(--bsio-paper-soft);
+  border: 1px solid var(--bsio-border);
+  box-shadow: none;
+}
+
+.ouinpo-table th,
+.ouinpo-competences table th,
+.ouinpo-sf-table thead th,
+.ouinpo-rt__bc-table th {
+  color: #ffffff;
+  background: var(--bsio-bluegray);
+  border-color: rgba(255, 255, 255, 0.25);
+  font-weight: 800;
+}
+
+.ouinpo-table td,
+.ouinpo-competences table td,
+.ouinpo-sf-table td,
+.ouinpo-rt__bc-table td {
+  color: var(--bsio-ink);
+  border-color: var(--bsio-border-soft);
+}
+
+.ouinpo-table tbody tr:hover,
+.ouinpo-sf-table tbody tr:hover {
+  background: rgba(47, 111, 78, 0.08);
+}
+
+/* Badges, statuts, difficultes. */
+.ouinpo-badge,
+.ouinpo-fc-pill,
+.ouinpo-fc-meta span,
+.ouinpo-fc-deck-meta span,
+.ouinpo-exo .exo-badge,
+.ouinpo-badge-tier,
+.sf-pill,
+.bsio-warning,
+.bsio-success,
+.bsio-critical {
+  border: 1px solid var(--bsio-border);
+  background: rgba(255, 248, 232, 0.8);
+  color: var(--bsio-terminal);
+  font-weight: 800;
+}
+
+.bsio-warning,
+.sf-pill.warn,
+.ouinpo-exo .exo-difficulty-medium {
+  color: #5b3a04;
+  background: rgba(199, 139, 58, 0.18);
+  border-color: rgba(199, 139, 58, 0.55);
+}
+
+.bsio-success,
+.sf-pill.ok,
+.ouinpo-exo .exo-difficulty-easy {
+  color: var(--bsio-terminal);
+  background: rgba(47, 111, 78, 0.14);
+  border-color: rgba(47, 111, 78, 0.48);
+}
+
+.bsio-critical,
+.sf-pill.none,
+.ouinpo-exo .exo-difficulty-hard {
+  color: var(--bsio-red);
+  background: rgba(182, 66, 53, 0.12);
+  border-color: rgba(182, 66, 53, 0.5);
+}
+
+.sf-progressbar {
+  background: rgba(38, 50, 56, 0.12);
+  border: 1px solid var(--bsio-border);
+}
+
+.sf-progressbar > span {
+  background: linear-gradient(90deg, var(--bsio-green), var(--bsio-orange));
+}
+
+/* Recherche textuelle : variables consommees par le module. */
+.ouinpo-rt {
+  --rt-bg: var(--bsio-paper);
+  --rt-bg-soft: var(--bsio-paper-soft);
+  --rt-panel-bg: var(--bsio-paper-soft);
+  --rt-border: var(--bsio-border);
+  --rt-border-soft: var(--bsio-border-soft);
+  --rt-text: var(--bsio-ink);
+  --rt-muted: var(--bsio-muted);
+  --rt-accent: var(--bsio-green);
+  --rt-accent-strong: var(--bsio-terminal);
+  --rt-input-bg: #fffdf5;
+  --rt-input-border: var(--bsio-border);
+  --rt-button-bg: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal));
+  --rt-button-bg-hover: linear-gradient(180deg, #3b805c, var(--bsio-terminal));
+  --rt-button-border: var(--bsio-terminal);
+  --rt-button-border-hover: var(--bsio-terminal);
+  --rt-button-text: #ffffff;
+  --rt-button-shadow: 0 2px 0 rgba(38, 50, 56, 0.25);
+  --rt-cell-bg: #fffdf5;
+  --rt-badge-bg: rgba(47, 111, 78, 0.1);
+  --rt-table-header-bg: var(--bsio-bluegray);
+  --rt-good-bg: rgba(47, 111, 78, 0.14);
+  --rt-good-border: var(--bsio-green);
+  --rt-danger-bg: rgba(182, 66, 53, 0.12);
+  --rt-danger-border: var(--bsio-red);
+  --rt-found-bg: rgba(83, 107, 120, 0.14);
+  --rt-found-border: var(--bsio-bluegray);
+  --rt-shadow: var(--bsio-shadow);
+  --rt-inner-shadow: none;
+  --rt-active-shadow: var(--bsio-focus);
+}
+
+/* Garde de lisibilite : les modules peuvent encore fournir du texte clair. */
+.ouinpo-exo :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-exercises-page :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-practical-page :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-practical-subject :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-competences :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+#ouinpo-student-badges :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-palmares :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-fc-app :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-rt :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-box :where(p, li, td, dd, dt, label, small, strong, em, span, div),
+.ouinpo-sf-card :where(p, li, td, dd, dt, label, small, strong, em, span, div) {
+  color: var(--bsio-ink);
+}
+
+.ouinpo-exo :where(.muted, .ouinpo-muted, .exo-muted, .exo-meta, .ouinpo-card-meta),
+.ouinpo-exercises-page :where(.muted, .ouinpo-muted, .exo-muted, .exo-meta, .ouinpo-card-meta),
+.ouinpo-practical-page :where(.muted, .ouinpo-muted, .ouinpo-practical-muted),
+.ouinpo-competences :where(.muted, .ouinpo-muted),
+.ouinpo-fc-app :where(.ouinpo-fc-subtitle, .ouinpo-fc-deck-meta, .ouinpo-fc-kpi-label),
+.ouinpo-sf-card :where(.ouinpo-sf-muted, .sf-parcours-excerpt) {
+  color: var(--bsio-muted);
+}
+
+.ouinpo-exo :where(button, .button, input[type="button"], input[type="submit"]),
+.ouin-exo-block :where(button, .button),
+.ouinpo-practical-page :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-practical-subject :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-competences :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-fc-app :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-rt button,
+.ouinpo-box :where(button, .button, input[type="button"], input[type="submit"]),
+#ouinpo-game .button,
+#ouinpo-signpad .button,
+.ouinpo-sf-btn,
+.ouinpo-exo :where(button, .button, input[type="button"], input[type="submit"]) *,
+.ouinpo-practical-page :where(button, .button, input[type="button"], input[type="submit"]) *,
+.ouinpo-competences :where(button, .button, input[type="button"], input[type="submit"]) *,
+.ouinpo-fc-app :where(button, .button, input[type="button"], input[type="submit"]) *,
+.ouinpo-rt button *,
+.ouinpo-box :where(button, .button, input[type="button"], input[type="submit"]) *,
+.ouinpo-sf-btn * {
+  color: #ffffff !important;
+}
+
+.ouinpo-exo :where(button, .button, input[type="button"], input[type="submit"]),
+.ouin-exo-block :where(button, .button),
+.ouinpo-practical-page :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-practical-subject :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-competences :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-fc-app :where(button, .button, input[type="button"], input[type="submit"]),
+.ouinpo-rt button,
+.ouinpo-box :where(button, .button, input[type="button"], input[type="submit"]),
+#ouinpo-game .button,
+#ouinpo-signpad .button,
+.ouinpo-sf-btn {
+  background: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal)) !important;
+  border-color: var(--bsio-terminal) !important;
+}
+
+.ouinpo-me-tab.is-active,
+.ouinpo-me-tab.is-active *,
+.ouinpo-fc-deck-card.is-selected,
+.ouinpo-fc-deck-card.is-selected *,
+.ouinpo-badge,
+.ouinpo-badge *,
+.ouinpo-fc-pill,
+.ouinpo-fc-pill *,
+.ouinpo-fc-meta span,
+.ouinpo-fc-deck-meta span,
+.sf-pill,
+.sf-pill * {
+  color: var(--bsio-terminal) !important;
+}
+
+.ouinpo-exo :where(pre, pre *, pre code),
+.ouinpo-practical-subject :where(pre, pre *, pre code),
+.bsio-terminal,
+.bsio-terminal * {
+  color: #e9fff0 !important;
+}
+
+.ouinpo-table th,
+.ouinpo-table th *,
+.ouinpo-competences table th,
+.ouinpo-competences table th *,
+.ouinpo-sf-table thead th,
+.ouinpo-sf-table thead th *,
+.ouinpo-rt__bc-table th,
+.ouinpo-rt__bc-table th * {
+  color: #ffffff !important;
+}
+
+/* Onglets du suivi eleves : ne pas les traiter comme des boutons generiques. */
+.ouinpo-competences .ouinpo-me-tabs {
+  position: relative;
+  z-index: 3;
+}
+
+.ouinpo-competences .ouinpo-me-tab {
+  position: relative;
+  color: var(--bsio-terminal) !important;
+  background: #fffdf5 !important;
+  border: 1px solid var(--bsio-border) !important;
+  box-shadow:
+    0 2px 0 rgba(38, 50, 56, 0.12),
+    inset 0 -3px 0 rgba(185, 170, 140, 0.2) !important;
+  cursor: pointer;
+  pointer-events: auto;
+  text-transform: uppercase;
+}
+
+.ouinpo-competences .ouinpo-me-tab:hover {
+  color: #ffffff !important;
+  background: var(--bsio-bluegray) !important;
+  border-color: var(--bsio-bluegray) !important;
+}
+
+.ouinpo-competences .ouinpo-me-tab.is-active,
+.ouinpo-competences .ouinpo-me-tab.is-active:hover {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal)) !important;
+  border-color: var(--bsio-terminal) !important;
+}
+
+.ouinpo-competences .ouinpo-me-tab.is-active::after {
+  background: var(--bsio-orange);
+}
+
+.ouinpo-competences .ouinpo-me-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/* Correctifs de contraste finaux : badges, tableaux et controles recalcitrants. */
+.ouinpo-exo :where(.ouinpo-badge, .exo-badge, .ouinpo-badge--exam, .ouinpo-badge--difficulty, .ouinpo-badge--level, .ouinpo-badge--competency),
+.ouinpo-exercises-page :where(.ouinpo-badge, .exo-badge, .ouinpo-badge--exam, .ouinpo-badge--difficulty, .ouinpo-badge--level, .ouinpo-badge--competency),
+.ouinpo-practical-page :where(.ouinpo-badge, .exo-badge, .ouinpo-badge--exam, .ouinpo-badge--difficulty, .ouinpo-badge--level, .ouinpo-badge--competency),
+.ouinpo-practical-subject :where(.ouinpo-badge, .exo-badge, .ouinpo-badge--exam, .ouinpo-badge--difficulty, .ouinpo-badge--level, .ouinpo-badge--competency),
+.ouinpo-competences :where(.ouinpo-ds-badge, .ouinpo-status-badge, .ouinpo-mini-badge, .ouinpo-focus-badge, .ouinpo-focus-difficulty, .ouinpo-ex-state),
+#ouinpo-student-badges :where(.ouinpo-badge-level, .ouinpo-badge-domain, .ouinpo-badge-earned, .ouinpo-badge-tier),
+.ouinpo-palmares :where(.ouinpo-badge-level, .ouinpo-badge-domain, .ouinpo-badge-earned, .ouinpo-badge-tier),
+.ouinpo-fc-app :where(.ouinpo-fc-pill, .ouinpo-fc-meta span, .ouinpo-fc-deck-meta span),
+.ouinpo-rt__badge,
+.sf-pill {
+  color: var(--bsio-terminal) !important;
+  background: rgba(255, 248, 232, 0.92) !important;
+  border: 1px solid var(--bsio-border) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-competences :where(.ouinpo-ds-badge.is-na, .ouinpo-ds-badge.is-not_acquired, .ouinpo-status-badge.badge-na, .ouinpo-mini-badge.na, .ouinpo-ex-state.is-not_acquired),
+.ouinpo-exo :where(.ouinpo-badge--difficulty-expert, .exo-difficulty-hard, .badge-none),
+.ouinpo-practical-page :where(.badge-none),
+.ouinpo-practical-subject :where(.badge-none),
+.bsio-critical {
+  color: var(--bsio-red) !important;
+  background: rgba(182, 66, 53, 0.12) !important;
+  border-color: rgba(182, 66, 53, 0.52) !important;
+}
+
+.ouinpo-competences :where(.ouinpo-ds-badge.is-prog, .ouinpo-ds-badge.is-in_progress, .ouinpo-mini-badge.prog, .ouinpo-ex-state.is-in_progress),
+.ouinpo-exo :where(.ouinpo-badge--difficulty-intermediate, .exo-difficulty-medium, .badge-attempt),
+.ouinpo-practical-page :where(.badge-attempt),
+.ouinpo-practical-subject :where(.badge-attempt),
+.bsio-warning {
+  color: #5b3a04 !important;
+  background: rgba(199, 139, 58, 0.18) !important;
+  border-color: rgba(199, 139, 58, 0.55) !important;
+}
+
+.ouinpo-competences :where(.ouinpo-ds-badge.is-acquired, .ouinpo-ds-badge.is-present, .ouinpo-mini-badge.acq, .ouinpo-ex-state.is-acquired),
+.ouinpo-exo :where(.ouinpo-badge--difficulty-beginner, .exo-difficulty-easy, .badge-solved),
+.ouinpo-practical-page :where(.badge-solved),
+.ouinpo-practical-subject :where(.badge-solved),
+.bsio-success {
+  color: var(--bsio-terminal) !important;
+  background: rgba(47, 111, 78, 0.14) !important;
+  border-color: rgba(47, 111, 78, 0.48) !important;
+}
+
+.ouinpo-table thead th,
+.ouinpo-table thead th *,
+.ouinpo-competences table thead th,
+.ouinpo-competences table thead th *,
+.ouinpo-sf-table thead th,
+.ouinpo-sf-table thead th *,
+.ouinpo-rt__bc-table th,
+.ouinpo-rt__bc-table th * {
+  color: var(--bsio-ink) !important;
+  background: #efe2c8 !important;
+  border-color: var(--bsio-border) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-field select,
+.ouinpo-field input,
+.ouinpo-select,
+.ouinpo-exo-filters select,
+.ouinpo-exo-toolbar select,
+.ouinpo-me-ds-filter select,
+.ouinpo-filter select,
+.ouinpo-ds-filter select,
+.ouinpo-practical-page select,
+.ouinpo-fc-toolbar select,
+.ouinpo-fc-app-v2 .ouinpo-fc-toolbar select,
+.ouinpo-rt select,
+.ouinpo-box select,
+.ouinpo-res-select,
+.ouinpo-sf-select {
+  color: var(--bsio-ink) !important;
+  background-color: #fffdf5 !important;
+  border-color: var(--bsio-border) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-fc-app .button,
+.ouinpo-fc-app button.button,
+.ouinpo-fc-app input[type="button"],
+.ouinpo-fc-app input[type="submit"],
+.ouinpo-fc-app .button.button-primary,
+.ouinpo-fc-app .button.button-secondary,
+.ouinpo-fc-app .ouinpo-fc-reveal,
+.ouinpo-fc-app .ouinpo-fc-grade,
+.ouinpo-fc-prep-actions .button,
+.ouinpo-fc-session-head .button,
+.ouinpo-fc-grade-actions .button {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal)) !important;
+  border: 1px solid var(--bsio-terminal) !important;
+  border-radius: 6px !important;
+  box-shadow:
+    0 2px 0 rgba(38, 50, 56, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.025em !important;
+  text-shadow: none !important;
+  text-transform: uppercase !important;
+}
+
+.ouinpo-fc-app .button:hover,
+.ouinpo-fc-app button.button:hover,
+.ouinpo-fc-app .button.button-primary:hover,
+.ouinpo-fc-app .button.button-secondary:hover,
+.ouinpo-fc-app .ouinpo-fc-reveal:hover,
+.ouinpo-fc-app .ouinpo-fc-grade:hover,
+.ouinpo-fc-prep-actions .button:hover,
+.ouinpo-fc-session-head .button:hover,
+.ouinpo-fc-grade-actions .button:hover {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #3b805c, var(--bsio-terminal)) !important;
+  border-color: var(--bsio-terminal) !important;
+}
+
+/* Reprises tres specifiques contre les anciens styles OuInPo plus forts. */
+.ouinpo-exo .ouinpo-badge,
+.ouinpo-exo .exo-badge,
+.ouinpo-exo .exo-meta .ouinpo-badge,
+.ouinpo-exo .exo-meta span.ouinpo-badge,
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty,
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty-beginner,
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty-intermediate,
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--difficulty-expert,
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--level,
+.ouinpo-exo .exo-meta span.ouinpo-badge.ouinpo-badge--competency,
+.ouinpo-exercises-page .ouinpo-badge,
+.ouinpo-exercises-page .exo-badge,
+.ouinpo-badges .ouinpo-badge,
+.ouinpo-badge--exam,
+.ouinpo-badge--difficulty,
+.ouinpo-badge--level,
+.ouinpo-badge--competency,
+.ouinpo-practical-meta .ouinpo-badge,
+.ouinpo-practical-page .ouinpo-badge,
+.ouinpo-practical-subject .ouinpo-badge,
+.ouinpo-practical-call-status .exo-badge,
+.ouinpo-practical-progress-item .exo-badge,
+.ouinpo-ds-badge,
+.ouinpo-status-badge,
+.ouinpo-mini-badge,
+.ouinpo-focus-badge,
+.ouinpo-focus-difficulty,
+.ouinpo-ex-state {
+  color: var(--bsio-terminal) !important;
+  background: rgba(255, 248, 232, 0.94) !important;
+  border: 1px solid var(--bsio-border) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-exo .ouinpo-badge *,
+.ouinpo-exo .exo-badge *,
+.ouinpo-exercises-page .ouinpo-badge *,
+.ouinpo-exercises-page .exo-badge *,
+.ouinpo-badges .ouinpo-badge *,
+.ouinpo-practical-meta .ouinpo-badge *,
+.ouinpo-practical-page .ouinpo-badge *,
+.ouinpo-practical-subject .ouinpo-badge *,
+.ouinpo-ds-badge *,
+.ouinpo-status-badge *,
+.ouinpo-mini-badge *,
+.ouinpo-focus-badge *,
+.ouinpo-focus-difficulty *,
+.ouinpo-ex-state * {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-table thead th,
+.ouinpo-table thead th span,
+.ouinpo-table thead th strong,
+.ouinpo-competences .ouinpo-table thead th,
+.ouinpo-competences .ouinpo-table thead th span,
+.ouinpo-competences .ouinpo-table thead th strong,
+#ouinpo-teacher-tab-ex .ouinpo-table th,
+#ouinpo-teacher-tab-ex .ouinpo-table th span,
+#ouinpo-teacher-tab-ex .ouinpo-table th strong,
+.ouinpo-ds-table th,
+.ouinpo-ds-table th span,
+.ouinpo-ds-table th strong {
+  color: var(--bsio-ink) !important;
+  background: #efe2c8 !important;
+  border-color: var(--bsio-border) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-exo .exo-actions .mark-attempt,
+.ouinpo-exo .exo-actions .mark-solved,
+.ouinpo-exo button.mark-attempt,
+.ouinpo-exo button.mark-solved {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, var(--bsio-green), var(--bsio-terminal)) !important;
+  border-color: var(--bsio-terminal) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-exo .exo-actions .mark-attempt *,
+.ouinpo-exo .exo-actions .mark-solved *,
+.ouinpo-exo button.mark-attempt *,
+.ouinpo-exo button.mark-solved * {
+  color: #ffffff !important;
+}
+
+.ouinpo-fc-toolbar select,
+.ouinpo-fc-app-v2 .ouinpo-fc-toolbar select,
+.ouinpo-teacher .ouinpo-toolbar select,
+.ouinpo-competences .ouinpo-toolbar select {
+  color: var(--bsio-ink) !important;
+  background: #fffdf5 !important;
+  border-color: var(--bsio-border) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-box::before {
+  opacity: 0.45;
+  top: 0.7rem;
+  right: 0.9rem;
+}
+
+.ouinpo-box h1,
+.ouinpo-box h2,
+.ouinpo-box h3 {
+  padding-right: 9.5rem;
+}
+
+.ouinpo-box .ouinpo-badge,
+.ouinpo-box .ouinpo-badge *,
+.ouinpo-box .ouinpo-list span,
+.ouinpo-box .ouinpo-list strong,
+.ouinpo-box .ouinpo-list em,
+.ouinpo-box .ouinpo-list li,
+.ouinpo-box .ouinpo-section span,
+.ouinpo-box .ouinpo-section strong,
+.ouinpo-box .ouinpo-section em,
+.ouinpo-box .ouinpo-section li {
+  color: var(--bsio-ink) !important;
+  text-shadow: none !important;
+}
+
+.ouinpo-box .ouinpo-list a,
+.ouinpo-box .ouinpo-section a,
+.ouinpo-files-list a,
+.ouinpo-res-notif-list a {
+  color: var(--bsio-green) !important;
+  text-shadow: none !important;
+}
+
+@media (max-width: 760px) {
+  .ouinpo-exo::before,
+  .ouinpo-competences::before,
+  #ouinpo-student-badges::before,
+  .ouinpo-palmares::before,
+  .ouinpo-practical-page::before,
+  .ouinpo-fc-app::before,
+  .ouinpo-box::before,
+  .ouinpo-rt::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ouinpo-exo button,
+  .ouin-exo-block button,
+  .btn-copper,
+  .ouinpo-me-tab,
+  .ouinpo-fc-app .button,
+  .ouinpo-rt button,
+  .ouinpo-box button,
+  .ouinpo-sf-btn {
+    transition: none;
+  }
+}
