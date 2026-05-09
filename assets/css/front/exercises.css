@@ -1,4 +1,4 @@
-﻿/* ==========================================================
+/* ==========================================================
    OuInPo Suite — Exercices / progression / badges
    CSS module fonctionnel
    Ne contient pas l’identité graphique OuInPo.
@@ -133,6 +133,10 @@
 .ouinpo-exo button,
 .ouin-exo-block button,
 .btn-copper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5ch;
   cursor: pointer;
 }
 
