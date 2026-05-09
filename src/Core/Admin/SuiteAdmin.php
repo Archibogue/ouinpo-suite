@@ -23,12 +23,16 @@ final class SuiteAdmin
 
         add_action('admin_menu', [self::class, 'registerRootMenu'], 5);
         add_action('admin_enqueue_scripts', [self::class, 'enqueueAdminStyles']);
-        add_action('admin_head', [self::class, 'hideLegacySubmenusCss']);
         add_action('admin_head', [self::class, 'adminStyles']);
     }
 
     public static function enqueueAdminStyles(string $hook = ''): void
     {
+        self::enqueueCss(
+            'ouinpo-suite-admin',
+            'assets/css/admin/suite-admin.css'
+        );
+
         $page = isset($_GET['page'])
             ? sanitize_key(wp_unslash((string) $_GET['page']))
             : '';
@@ -36,11 +40,6 @@ final class SuiteAdmin
         if ($page !== self::ROOT_SLUG && strpos($page, self::ROOT_SLUG . '-') !== 0) {
             return;
         }
-
-        self::enqueueCss(
-            'ouinpo-suite-admin',
-            'assets/css/admin/suite-admin.css'
-        );
 
         self::enqueueJs(
             'ouinpo-suite-admin-js',
@@ -203,37 +202,6 @@ final class SuiteAdmin
             'ouinpo-suite-settings',
             [self::class, 'renderSettingsHub']
         );
-    }
-
-    public static function hideLegacySubmenusCss(): void
-    {
-        ?>
-        <style>
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-exercices"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-badges"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assessments"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-import-exercises"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-competencies"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-groups"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assignments"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-courses-competencies"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="edit.php?post_type=ouinpo_submission"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="edit.php?post_type=ouinpo_resource"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-segfault"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-segfault-progress"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-meta-social"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-years"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-badge-assignments"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-paths"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assessment-builder"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-practical-subjects"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-flashcards"],
-            #toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-exercises-settings"] {
-                display: none !important;
-            }
-        </style>
-        <?php
     }
 
     public static function adminStyles(): void

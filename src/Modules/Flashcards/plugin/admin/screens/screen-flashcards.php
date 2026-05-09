@@ -33,7 +33,7 @@ final class ScreenFlashcards
         self::stats($stats);
         self::tabs($tab, $deck_id, $card_id);
 
-        echo '<div class="card" style="max-width:none;padding:1rem;">';
+        echo '<div class="card ouinpo-flashcards-admin-card">';
         match ($tab) {
             'cards' => self::render_cards_tab($decks, $deck_id, $cards, $editingCard),
             'import' => self::render_import_tab($decks, $deck_id),
@@ -92,14 +92,14 @@ final class ScreenFlashcards
 
     private static function stats(array $stats): void
     {
-        echo '<div class="ouinpo-suite-grid ouinpo-suite-grid-compact" style="margin:1rem 0;">';
+        echo '<div class="ouinpo-suite-grid ouinpo-suite-grid-compact ouinpo-flashcards-stats-grid">';
         foreach ([
             'Paquets' => (int) ($stats['decks'] ?? 0),
             'Cartes' => (int) ($stats['cards'] ?? 0),
             'Révisions' => (int) ($stats['reviews'] ?? 0),
             'Cartes dues' => (int) ($stats['due_today'] ?? 0),
         ] as $label => $value) {
-            echo '<div class="card"><h3 style="margin-top:0;">' . esc_html($label) . '</h3><p style="font-size:1.6rem;margin:0;">' . esc_html((string) $value) . '</p></div>';
+            echo '<div class="card"><h3 class="ouinpo-flashcards-stat-title">' . esc_html($label) . '</h3><p class="ouinpo-flashcards-stat-value">' . esc_html((string) $value) . '</p></div>';
         }
         echo '</div>';
     }
@@ -184,8 +184,8 @@ private static function render_decks_tab(array $decks, ?array $editingDeck): voi
     $sourceControl =
         '<input type="text" class="regular-text" name="source_post_slug" value="' . esc_attr((string) ($deck['source_post_slug'] ?? '')) . '" placeholder="ex. modularite-modules-et-bibliotheques">'
         . (!empty($deck['source_post_id'])
-            ? '<p class="description" style="margin:.35rem 0 0;">ID actuel : ' . (int) $deck['source_post_id'] . '</p>'
-            : '<p class="description" style="margin:.35rem 0 0;">Saisis le <strong>slug</strong> du cours WordPress source.</p>');
+            ? '<p class="description ouinpo-flashcards-source-help">ID actuel : ' . (int) $deck['source_post_id'] . '</p>'
+            : '<p class="description ouinpo-flashcards-source-help">Saisis le <strong>slug</strong> du cours WordPress source.</p>');
     self::field('Post source', $sourceControl);
 
     self::field('Actif', '<label><input type="checkbox" name="is_active" value="1" ' . checked(!empty($deck['is_active']), true, false) . '> Oui</label>');
@@ -208,7 +208,7 @@ private static function render_decks_tab(array $decks, ?array $editingDeck): voi
         echo '<h2>Cartes</h2>';
         echo '<p>Choisis un paquet puis ajoute ou modifie ses cartes.</p>';
 
-        echo '<form method="get" style="margin-bottom:1rem;display:flex;gap:.5rem;align-items:center;">';
+        echo '<form method="get" class="ouinpo-flashcards-filter-form">';
         echo '<input type="hidden" name="page" value="ouinpo-flashcards">';
         echo '<input type="hidden" name="tab" value="cards">';
         echo self::select('deck_id', array_reduce($decks, function($carry, $deck) { $carry[$deck['id']] = $deck['title']; return $carry; }, []), (string) $deck_id);
@@ -305,7 +305,7 @@ private static function render_decks_tab(array $decks, ?array $editingDeck): voi
             echo '</tr>';
         }
         echo '</tbody></table>';
-        echo '<p style="margin-top:1rem;">Shortcode élève : <code>[ouinpo_flashcards]</code></p>';
+        echo '<p class="ouinpo-flashcards-shortcode">Shortcode élève : <code>[ouinpo_flashcards]</code></p>';
     }
 
     private static function field(string $label, string $control): void

@@ -126,7 +126,7 @@ final class Ouinpo_Meta_Social {
 
         echo '<p>Texte destiné à l’extrait affiché par les moteurs de recherche et aux aperçus de partage.</p>';
 
-        echo '<textarea name="ouinpo_meta_description" style="width:100%;min-height:100px;" maxlength="160">'
+        echo '<textarea name="ouinpo_meta_description" class="large-text" rows="5" maxlength="160">'
 
             . esc_textarea($value)
 

@@ -1496,23 +1496,6 @@ JS,
 
       </section>
 
-      <script>
-      (function(){
-        var sel = document.getElementById("ouinpo-exo-level");
-        if(!sel) return;
-        sel.addEventListener("change", function(){
-          var url = new URL(window.location.href);
-          if (this.value) {
-            url.searchParams.set("lvl", this.value);
-          } else {
-            url.searchParams.delete("lvl");
-          }
-          window.location.href = url.toString();
-        });
-      })();
-      </script>
-
-
       <div id="ouinpo-exo-dynamic-filters-slot"></div>
 
 

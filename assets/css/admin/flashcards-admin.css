@@ -1,0 +1,36 @@
+/* ==========================================================
+   OuInPo Flashcards - Admin
+   ========================================================== */
+
+.ouinpo-flashcards-admin-card {
+    max-width: none;
+    padding: 1rem;
+}
+
+.ouinpo-flashcards-stats-grid {
+    margin: 1rem 0;
+}
+
+.ouinpo-flashcards-stat-title {
+    margin-top: 0;
+}
+
+.ouinpo-flashcards-stat-value {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.ouinpo-flashcards-source-help {
+    margin: .35rem 0 0;
+}
+
+.ouinpo-flashcards-filter-form {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.ouinpo-flashcards-shortcode {
+    margin-top: 1rem;
+}
