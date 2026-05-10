@@ -3249,6 +3249,7 @@ final class SuiteAdmin
         $settingsTabs = [
             'modules' => 'Modules',
             'appearance' => 'Apparence',
+            'pages' => 'Pages & shortcodes',
         ];
 
         if (ModuleSettings::isEnabled('meta')) {
@@ -3270,6 +3271,10 @@ final class SuiteAdmin
 
         } elseif ($tab === 'appearance') {
             self::renderAppearanceSettings();
+
+        } elseif ($tab === 'pages') {
+            settings_errors('ouinpo_suite_pages');
+            PagesSetup::render();
 
         } elseif ($tab === 'meta' && ModuleSettings::isEnabled('meta')) {
             ?>

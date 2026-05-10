@@ -230,8 +230,10 @@ class AdminMenu {
             [self::class, 'renderGroups']
         );
 
+        $levels_parent = defined('OUINPO_SUITE_ADMIN_SLUG') ? null : $parent;
+
         add_submenu_page(
-            $parent,
+            $levels_parent,
             'Niveaux scolaires',
             'Niveaux',
             'edit_users',
