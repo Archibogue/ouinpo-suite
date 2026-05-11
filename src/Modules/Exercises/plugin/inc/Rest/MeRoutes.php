@@ -146,22 +146,33 @@ class MeRoutes {
 
 
     /* ------------ Helpers ------------- */
-
-
-
-    /** Convertit un slug ('seconde'|'premiere'|'terminale') en valeur de c.level ('Seconde'|'Première'|'Terminale') */
+    /** Convertit un slug de niveau scolaire en libelle courant. */
 
     private static function levelSlugToLabel(string $slug): string {
 
-        $slug = strtolower($slug);
+        global $wpdb;
 
-        if ($slug === 'seconde')   return 'Seconde';
+        $slug = sanitize_key($slug);
 
-        if ($slug === 'premiere')  return 'Première';
+        if ($slug === '') {
 
-        if ($slug === 'terminale' || $slug === 'term') return 'Terminale';
+            return '';
 
-        return $slug; // fallback
+        }
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+
+        $label = $wpdb->get_var($wpdb->prepare(
+
+            "SELECT label FROM {$p}school_levels WHERE slug = %s LIMIT 1",
+
+            $slug
+
+        ));
+
+        $label = trim((string) $label);
+
+        return $label !== '' ? $label : $slug;
 
     }
 
@@ -394,20 +405,6 @@ class MeRoutes {
 
              END,
 
-             CASE
-
-               WHEN c.level = 'Terminale' THEN 1
-
-               WHEN c.level = 'Première' THEN 2
-
-               WHEN c.level = 'Seconde' THEN 3
-
-               WHEN c.level = 'Transversal' THEN 4
-
-               ELSE 5
-
-             END,
-
              c.domain
 
         ";
@@ -576,20 +573,6 @@ class MeRoutes {
 
              END,
 
-             CASE
-
-               WHEN c.level = 'Terminale' THEN 1
-
-               WHEN c.level = 'Première' THEN 2
-
-               WHEN c.level = 'Seconde' THEN 3
-
-               WHEN c.level = 'Transversal' THEN 4
-
-               ELSE 5
-
-             END,
-
              c.domain,
 
              c.slug
@@ -730,13 +713,16 @@ class MeRoutes {
 
         $student_level = self::current_student_level_label($uid);
 
-        $cycleLevels = ['Seconde', 'Première', 'Terminale'];
-
     
 
         global $wpdb;
 
         $p = $wpdb->prefix . 'ouin_exo_';
+        $cycleLevels = array_map('strval', (array) $wpdb->get_col("
+            SELECT label
+            FROM {$p}school_levels
+            ORDER BY sort_order ASC, id ASC
+        "));
 
     
 
@@ -769,10 +755,13 @@ class MeRoutes {
             ORDER BY ub.awarded_at DESC, b.title ASC
 
         ", $uid), ARRAY_A);
-
-    
-
-        $levels_order = ['Spécial', 'Terminale', 'Première', 'Seconde', 'Transversal'];
+        $levels_order = ['Spécial'];
+        $school_level_labels = (array) $wpdb->get_col("
+            SELECT label
+            FROM {$p}school_levels
+            ORDER BY sort_order DESC, id DESC
+        ");
+        $levels_order = array_merge($levels_order, array_map('strval', $school_level_labels));
         if ($student_level !== '' && !in_array($student_level, $levels_order, true)) {
             array_splice($levels_order, 1, 0, [$student_level]);
         }
@@ -863,53 +852,17 @@ class MeRoutes {
 
             $theme = strtolower((string)($badge['theme'] ?? ''));
 
-    
-
             if ($theme === 'special' || strpos($slug, 'special-') === 0) {
 
-                return 'Spécial';
+                return 'SpÃ©cial';
 
             }
 
-    
-
-            if (strpos($slug, 'seconde') !== false || strpos($theme, 'seconde') !== false) {
-
-                return 'Seconde';
-
-            }
-
-    
-
-            if (
-
-                strpos($slug, 'premiere') !== false || strpos($slug, 'première') !== false ||
-
-                strpos($theme, 'premiere') !== false || strpos($theme, 'première') !== false
-
-            ) {
-
-                return 'Première';
-
-            }
-
-    
-
-            if (strpos($slug, 'terminale') !== false || strpos($theme, 'terminale') !== false) {
-
-                return 'Terminale';
-
-            }
-
-    
-
-            return 'Transversal';
+            return '';
 
         };
 
-    
-
-        $pick_domain_level = static function(array $levels, string $student_level = ''): string {
+        $pick_domain_level = static function(array $levels, string $student_level = '') use ($cycleLevels): string {
 
             if ($student_level !== '' && !empty($levels[$student_level])) {
 
@@ -917,17 +870,7 @@ class MeRoutes {
 
             }
 
-        
-
-            if (!empty($levels['Transversal'])) {
-
-                return 'Transversal';
-
-            }
-
-        
-
-            foreach (['Terminale', 'Première', 'Seconde'] as $candidate) {
+            foreach ($cycleLevels as $candidate) {
 
                 if (!empty($levels[$candidate])) {
 
@@ -937,9 +880,9 @@ class MeRoutes {
 
             }
 
-        
+            $labels = array_keys(array_filter($levels));
 
-            return 'Transversal';
+            return $labels ? (string) reset($labels) : '';
 
         };
 
@@ -998,28 +941,11 @@ class MeRoutes {
     
 
             $level = $infer_level($row);
-
-    
-
-            $is_transversal_domain = (
-
-                !empty($domain_label) &&
-
-                stripos((string)$domain_label, '(transversal)') !== false
-
-            );
-
-    
-
             if ($is_special) {
 
-                $level = 'Spécial';
+                $level = 'SpÃ©cial';
 
-            } elseif ($is_transversal_domain) {
-
-                $level = 'Transversal';
-
-            } elseif ($level === 'Transversal' && $domain_slug) {
+            } elseif ($domain_slug) {
 
                 $level = $pick_domain_level($domain_levels, $student_level);
 
@@ -1037,11 +963,7 @@ class MeRoutes {
 
                 if (!$is_meta && !$is_special && $domain_slug) {
 
-                    $allowed_for_student =
-
-                        $level === 'Transversal' ||
-
-                        $level === $student_level;
+                    $allowed_for_student = ($level === $student_level);
 
             
 
@@ -1079,7 +1001,7 @@ class MeRoutes {
 
                 'domain'      => $domain_label,
 
-                'level'       => $level ?: 'Transversal',
+                'level'       => $level ?: 'SpÃ©cial',
 
             ];
 
@@ -1386,20 +1308,6 @@ public static function competencies_kpi(\WP_REST_Request $req) {
               WHEN c.track = 'SNT' THEN 2
 
               ELSE 3
-
-            END,
-
-            CASE
-
-              WHEN c.level = 'Terminale' THEN 1
-
-              WHEN c.level = 'Première' THEN 2
-
-              WHEN c.level = 'Seconde' THEN 3
-
-              WHEN c.level = 'Transversal' THEN 4
-
-              ELSE 5
 
             END,
 

@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "ouinpo-pack-demo-niveaux-dynamiques",
+    "title": "Pack démo niveaux dynamiques",
+    "description": "Pack de démonstration pour vérifier des niveaux scolaires personnalisés et des compétences transversales déduites des liens multi-niveaux.",
+    "author": "OuInPo",
+    "license": "Contenu de démonstration",
+    "created_at": "2026-05-11"
+  },
+  "school_levels": [
+    {
+      "slug": "bts-sio-1",
+      "label": "BTS SIO 1",
+      "sort_order": 10
+    },
+    {
+      "slug": "bts-sio-2",
+      "label": "BTS SIO 2",
+      "sort_order": 20
+    }
+  ],
+  "difficulties": [
+    {
+      "slug": "debutant",
+      "label": "Débutant"
+    },
+    {
+      "slug": "confirme",
+      "label": "Confirmé"
+    }
+  ],
+  "competencies": [
+    {
+      "slug": "bts-sio-1-reseaux-adressage-001",
+      "track": "NSI",
+      "level_slug": "bts-sio-1",
+      "domain": "Réseaux",
+      "domain_slug": "reseaux",
+      "competency": "Lire une configuration IPv4 simple et identifier le réseau associé.",
+      "capacity": "Déterminer réseau, masque et passerelle dans un contexte d'administration système.",
+      "example": "Adresse 192.168.10.42/24 dans un petit réseau de salle.",
+      "active": 1
+    },
+    {
+      "slug": "bts-sio-transversal-documentation-001",
+      "track": "NSI",
+      "level_slugs": ["bts-sio-1", "bts-sio-2"],
+      "domain": "Méthodes professionnelles",
+      "domain_slug": "methodes-professionnelles",
+      "competency": "Documenter une procédure technique de manière reproductible.",
+      "capacity": "Rédiger des étapes vérifiables, des prérequis et des points de contrôle.",
+      "example": "Procédure d'installation d'un service réseau.",
+      "active": 1
+    }
+  ],
+  "exercises": [
+    {
+      "title": "Identifier le réseau d'un poste BTS",
+      "slug": "identifier-reseau-poste-bts",
+      "statement": "<p>Un poste possède l'adresse <code>192.168.10.42/24</code>. Indiquer l'adresse réseau, l'adresse de diffusion et une passerelle plausible.</p>",
+      "difficulty_slug": "debutant",
+      "level_slug": "bts-sio-1",
+      "competency_slugs": "bts-sio-1-reseaux-adressage-001|bts-sio-transversal-documentation-001",
+      "is_active": 1,
+      "hint_1": "<p>Le préfixe /24 correspond au masque 255.255.255.0.</p>",
+      "solution_1_title": "Correction",
+      "solution_1_html": "<p>Le réseau est <code>192.168.10.0/24</code>, la diffusion <code>192.168.10.255</code>. Une passerelle courante serait <code>192.168.10.1</code>.</p>",
+      "solution_1_official": 1
+    }
+  ],
+  "flashcards": [
+    {
+      "deck": {
+        "slug": "bts-sio-reseaux-demo",
+        "title": "BTS SIO - Réseaux démo",
+        "description": "Flashcards de démonstration pour niveaux dynamiques.",
+        "track": "NSI",
+        "level": "BTS SIO 1",
+        "is_active": 1
+      },
+      "cards": [
+        {
+          "type": "basic",
+          "front_html": "<p>Que signifie le préfixe /24 en IPv4 ?</p>",
+          "back_html": "<p>Il indique que les 24 premiers bits identifient le réseau.</p>",
+          "sort_order": 1,
+          "competency_slugs": ["bts-sio-1-reseaux-adressage-001"]
+        }
+      ]
+    }
+  ],
+  "badges": []
+}

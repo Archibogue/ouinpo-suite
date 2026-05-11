@@ -484,9 +484,7 @@ class ExercisesRoutes {
                 FROM {$table_esl} esl
                 INNER JOIN {$table_lvl} sl ON sl.id = esl.school_level_id
                 WHERE esl.exercise_id = %d
-                ORDER BY FIELD(sl.slug, 'seconde', 'premiere', 'terminale') = 0,
-                         FIELD(sl.slug, 'seconde', 'premiere', 'terminale'),
-                         sl.label
+                ORDER BY sl.sort_order ASC, sl.label ASC
             ", $id));
         }
     

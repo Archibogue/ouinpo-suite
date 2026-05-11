@@ -536,7 +536,7 @@ class Screen_Assessment_Builder {
     private static function get_levels(): array {
         global $wpdb;
         return $wpdb->get_results(
-            "SELECT id, label, slug FROM " . self::table('school_levels') . " ORDER BY id ASC"
+            "SELECT id, label, slug FROM " . self::table('school_levels') . " ORDER BY sort_order ASC, id ASC"
         ) ?: [];
     }
 

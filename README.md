@@ -27,6 +27,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 - Un thème WordPress compatible avec les shortcodes
 
 Le plugin a été développé pour un usage pédagogique en lycée, principalement en NSI et SNT.
+Les niveaux `Seconde`, `Première` et `Terminale` ne sont que des valeurs installées par défaut. Ils sont gérés comme des niveaux ordinaires : un administrateur peut les renommer, les réordonner, les remplacer par d'autres niveaux, ou les supprimer lorsqu'ils ne sont liés à aucune donnée.
 
 ## Installation
 
@@ -53,6 +54,14 @@ Après activation, vérifier les points suivants :
 
 Les compétences BO complètes ne sont pas créées automatiquement par l’installeur. Elles doivent être importées via un pack pédagogique ou créées depuis l’administration du plugin.
 
+### Niveaux scolaires
+
+La source de vérité des niveaux est la table `ouin_exo_school_levels`. Les contenus ne doivent pas supposer que les slugs `seconde`, `premiere` ou `terminale` existent : ce sont seulement les exemples créés sur une installation neuve.
+
+Une compétence n'est pas rattachée à un niveau par son ancien champ `level`, mais par les liens de la table `ouin_exo_competency_school_level`. Le champ `level` reste un champ hérité d'affichage et de compatibilité.
+
+`Transversal` n'est pas un niveau scolaire. Une compétence est considérée comme transversale lorsqu'elle est liée à plusieurs niveaux scolaires. Les anciens packs qui contiennent `level = "Transversal"` restent acceptés : à l'import, la compétence est alors liée aux niveaux existants.
+
 Les pages publiques ne sont pas créées automatiquement. Il faut les créer dans WordPress, puis y placer les shortcodes nécessaires.
 
 ## Packs pédagogiques
@@ -67,11 +76,18 @@ Les packs pédagogiques permettent d’importer des contenus dans une installati
 - flashcards.
 
 Le dossier `packs/` contient le schéma et les exemples fournis avec le plugin.
+Un pack peut déclarer ses propres niveaux dans `school_levels`, avec un `slug`, un `label` et optionnellement `sort_order`. Les exercices et compétences peuvent ensuite utiliser `level_slug` pour un niveau ou `level_slugs` pour plusieurs niveaux. Si un niveau référencé n'existe pas et n'est pas déclaré dans le pack, l'import signale un avertissement au lieu de créer silencieusement une donnée imprévue.
 
 Pour une installation de démonstration, importer par exemple :
 
 ```text
 packs/ouinpo-pack-demo.json
+```
+
+Pour tester les niveaux personnalisés, importer :
+
+```text
+packs/ouinpo-pack-demo-niveaux-dynamiques.json
 ```
 
 Après import, vérifier dans l’administration que les exercices, sujets pratiques et flashcards apparaissent bien.
@@ -93,6 +109,8 @@ Les shortcodes doivent être placés dans des pages WordPress créées manuellem
 | Mes badges | `mes-badges` | `[ouinpo_student_badges]` |
 | Palmarès des badges | `palmares-badges` | `[ouinpo_badges_palmares]` |
 | Carte du site | `carte-du-site` | `[ouinpo_site_map]` |
+
+La carte du site dynamique est optionnelle et reflète surtout l'organisation du site OuInPo d'origine. Elle peut être ignorée sur une installation plus simple.
 
 ### Pages utiles selon les modules activés
 

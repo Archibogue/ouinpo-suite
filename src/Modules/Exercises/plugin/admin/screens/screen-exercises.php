@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) exit;
  * Tables utilisées (préfixe $wpdb->prefix.'ouin_exo_'):
  *   - exercises (id, title, slug, statement, is_active)
  *   - exercise_school_level (exercise_id, school_level_id)
- *   - school_levels (id, slug, label)  // pré-rempli: seconde/premiere/terminale
+ *   - school_levels (id, slug, label, sort_order)
  *   - hints (exercise_id, hint_order, content)     // 1..3
  *   - solutions (id, exercise_id, title, content, solution_order, is_official)
  */
@@ -55,7 +55,7 @@ class Screen_Exercises {
   private static function get_levels() {
     global $wpdb;
     $t = self::table('school_levels');
-    return $wpdb->get_results("SELECT id, slug, label FROM {$t} ORDER BY id ASC");
+    return $wpdb->get_results("SELECT id, slug, label FROM {$t} ORDER BY sort_order ASC, id ASC");
   }
 
   private static function get_exercise($id) {

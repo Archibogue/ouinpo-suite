@@ -61,9 +61,7 @@ final class ScreenPractical
         $levels = $wpdb->get_results("
             SELECT id, slug, label
             FROM {$tLevel}
-            ORDER BY FIELD(slug, 'seconde', 'premiere', 'terminale') = 0,
-                     FIELD(slug, 'seconde', 'premiere', 'terminale'),
-                     id
+            ORDER BY sort_order ASC, id ASC
         ", ARRAY_A);
 
         $selected_levels = [];

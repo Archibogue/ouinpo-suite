@@ -114,13 +114,16 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
         }
 
         if (empty($errors)) {
-            $data = [
-                'slug'  => $slug,
-                'label' => $label,
-            ];
+        $sort_order = isset($_POST['sort_order']) ? max(0, (int) $_POST['sort_order']) : 0;
+
+        $data = [
+            'slug'       => $slug,
+            'label'      => $label,
+            'sort_order' => $sort_order,
+        ];
 
             if ($post_id > 0) {
-                $updated = $wpdb->update($tbl_levels, $data, ['id' => $post_id], ['%s', '%s'], ['%d']);
+                $updated = $wpdb->update($tbl_levels, $data, ['id' => $post_id], ['%s', '%s', '%d'], ['%d']);
                 if ($updated === false) {
                     add_settings_error('ouinpo_levels', 'db_update_failed', 'Impossible de mettre a jour ce niveau.', 'error');
                     $action = 'edit';
@@ -135,7 +138,7 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
                     $level_id = 0;
                 }
             } else {
-                $inserted = $wpdb->insert($tbl_levels, $data, ['%s', '%s']);
+                $inserted = $wpdb->insert($tbl_levels, $data, ['%s', '%s', '%d']);
                 $new_level_id = (int) $wpdb->insert_id;
                 if ($inserted === false || $new_level_id <= 0) {
                     add_settings_error('ouinpo_levels', 'db_insert_failed', 'Impossible de creer ce niveau.', 'error');
@@ -164,21 +167,31 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
         $usage = $usage_for_level($post_id);
         $total_usage = (int) $usage['groups']
             + (int) $usage['members']
+            + (int) $usage['exercises_legacy']
             + (int) $usage['exercises_links']
             + (int) $usage['competencies_links'];
 
         if ($total_usage > 0) {
+            $reasons = [];
+            if ((int) $usage['groups'] > 0) {
+                $reasons[] = (int) $usage['groups'] . ' classe(s)';
+            }
+            if ((int) $usage['members'] > 0) {
+                $reasons[] = (int) $usage['members'] . ' eleve(s)';
+            }
+            if ((int) $usage['exercises_legacy'] + (int) $usage['exercises_links'] > 0) {
+                $reasons[] = ((int) $usage['exercises_legacy'] + (int) $usage['exercises_links']) . ' exercice(s)';
+            }
+            if ((int) $usage['competencies_links'] > 0) {
+                $reasons[] = (int) $usage['competencies_links'] . ' competence(s)';
+            }
             add_settings_error(
                 'ouinpo_levels',
                 'delete_used',
-                'Impossible de supprimer ce niveau : il est encore utilise par des classes, eleves, exercices ou competences.',
+                'Impossible de supprimer ce niveau : utilise par ' . implode(', ', $reasons) . '.',
                 'error'
             );
         } else {
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$tbl_exercises} SET level_id = NULL WHERE level_id = %d",
-                $post_id
-            ));
             $wpdb->delete($tbl_levels, ['id' => $post_id], ['%d']);
             add_settings_error('ouinpo_levels', 'deleted', 'Niveau supprime.', 'updated');
         }
@@ -203,22 +216,20 @@ $levels = $wpdb->get_results("
     LEFT JOIN {$tbl_exo_levels} esl ON esl.school_level_id = l.id
     LEFT JOIN {$tbl_comp_levels} csl ON csl.school_level_id = l.id
     GROUP BY l.id
-    ORDER BY FIELD(l.slug, 'seconde', 'premiere', 'terminale', 'transversal') = 0,
-             FIELD(l.slug, 'seconde', 'premiere', 'terminale', 'transversal'),
-             l.id ASC
+    ORDER BY l.sort_order ASC, l.id ASC
 ");
 
 $current = (object) [
     'id'    => 0,
     'slug'  => '',
     'label' => '',
+    'sort_order' => 0,
 ];
 $competencies = $wpdb->get_results("
     SELECT id, domain, competency, track, level
     FROM {$wpdb->prefix}ouin_exo_competencies
     WHERE IFNULL(active, 1) = 1
     ORDER BY
-      FIELD(level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
       track,
       domain,
       competency
@@ -226,12 +237,7 @@ $competencies = $wpdb->get_results("
 $current_competency_ids = [];
 
 if ($action === 'new') {
-    $current_competency_ids = array_map('intval', (array) $wpdb->get_col("
-        SELECT id
-        FROM {$wpdb->prefix}ouin_exo_competencies
-        WHERE IFNULL(active, 1) = 1
-          AND level = 'Transversal'
-    "));
+    $current_competency_ids = [];
 }
 
 if ($action === 'edit' && $level_id > 0) {
@@ -253,6 +259,7 @@ if (!empty($_POST) && ($action === 'edit' || $action === 'new')) {
         'id'    => isset($_POST['id']) ? (int) $_POST['id'] : 0,
         'slug'  => isset($_POST['slug']) ? sanitize_text_field(wp_unslash((string) $_POST['slug'])) : '',
         'label' => isset($_POST['label']) ? sanitize_text_field(wp_unslash((string) $_POST['label'])) : '',
+        'sort_order' => isset($_POST['sort_order']) ? max(0, (int) $_POST['sort_order']) : 0,
     ];
     $current_competency_ids = isset($_POST['competency_ids']) && is_array($_POST['competency_ids'])
         ? array_map('intval', wp_unslash($_POST['competency_ids']))
@@ -275,6 +282,7 @@ settings_errors('ouinpo_levels');
             <th class="ouinpo-admin-col-id">ID</th>
             <th>Libelle</th>
             <th>Slug</th>
+            <th>Ordre</th>
             <th>Classes</th>
             <th>Eleves</th>
             <th>Exercices</th>
@@ -284,7 +292,7 @@ settings_errors('ouinpo_levels');
         </thead>
         <tbody>
           <?php if (empty($levels)): ?>
-            <tr><td colspan="8">Aucun niveau.</td></tr>
+            <tr><td colspan="9">Aucun niveau.</td></tr>
           <?php else: ?>
             <?php foreach ($levels as $level): ?>
               <?php
@@ -299,6 +307,7 @@ settings_errors('ouinpo_levels');
                 <td><?php echo (int) $level->id; ?></td>
                 <td><strong><?php echo esc_html($level->label); ?></strong></td>
                 <td><code><?php echo esc_html($level->slug); ?></code></td>
+                <td><?php echo (int) $level->sort_order; ?></td>
                 <td><?php echo (int) $level->groups_count; ?></td>
                 <td><?php echo (int) $level->members_count; ?></td>
                 <td><?php echo $exercise_count; ?></td>
@@ -339,6 +348,13 @@ settings_errors('ouinpo_levels');
             <td>
               <input name="slug" id="slug" type="text" class="regular-text" maxlength="20" value="<?php echo esc_attr($current->slug); ?>">
               <p class="description">Laisse vide pour le generer depuis le libelle. Maximum 20 caracteres.</p>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row"><label for="sort_order">Ordre</label></th>
+            <td>
+              <input name="sort_order" id="sort_order" type="number" class="small-text" min="0" step="1" value="<?php echo esc_attr((string) (int) $current->sort_order); ?>">
+              <p class="description">Utilise pour trier les niveaux et, si l'option cumulative est activee, definir la progression.</p>
             </td>
           </tr>
         </table>

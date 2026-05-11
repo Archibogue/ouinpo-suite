@@ -48,7 +48,7 @@ final class Shortcodes {
 
     // ✅ Palmarès public des badges (filtré par année scolaire)
 
-    // Usage : [ouinpo_badges_palmares] ou [ouinpo_badges_palmares year="2025-2026"]
+    // Usage : [ouinpo_badges_palmares] ou [ouinpo_badges_palmares year="annee-active"]
 
     add_shortcode('ouinpo_badges_palmares', [__CLASS__, 'render_badges_palmares']);
 
@@ -1030,19 +1030,13 @@ private static function school_level_options(): array {
   $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 
   if (!$exists) {
-    return [
-      'seconde'   => 'Seconde',
-      'premiere'  => 'Premiere',
-      'terminale' => 'Terminale',
-    ];
+    return [];
   }
 
   $rows = $wpdb->get_results("
     SELECT slug, label
     FROM {$table}
-    ORDER BY FIELD(slug, 'seconde', 'premiere', 'terminale') = 0,
-             FIELD(slug, 'seconde', 'premiere', 'terminale'),
-             id ASC
+    ORDER BY sort_order ASC, id ASC
   ");
 
   $options = [];
@@ -1054,11 +1048,7 @@ private static function school_level_options(): array {
     }
   }
 
-  return $options ?: [
-    'seconde'   => 'Seconde',
-    'premiere'  => 'Premiere',
-    'terminale' => 'Terminale',
-  ];
+  return $options;
 }
 
 private static function school_level_slug_by_id(int $level_id): string {
@@ -1166,7 +1156,12 @@ private static function current_student_school_level_id(): int {
 
         AND {$level_expr} IS NOT NULL
 
-      ORDER BY level_id DESC
+      ORDER BY (
+        SELECT sort_order
+        FROM {$p}school_levels sl
+        WHERE sl.id = {$level_expr}
+        LIMIT 1
+      ) DESC, level_id DESC
 
       LIMIT 1",
 
@@ -1189,18 +1184,6 @@ private static function exercise_level_options_for_current_user(): array {
   $all = self::school_level_options();
   $level_id = self::current_student_school_level_id();
   $student_slug = self::school_level_slug_by_id($level_id);
-
-  if ($student_slug === 'seconde' && isset($all['seconde'])) {
-    return ['seconde' => $all['seconde']];
-  }
-
-  if ($student_slug === 'premiere' && isset($all['premiere'])) {
-    return array_intersect_key($all, array_flip(['seconde', 'premiere']));
-  }
-
-  if ($student_slug === 'terminale' && isset($all['terminale'])) {
-    return $all;
-  }
 
   if ($student_slug !== '' && isset($all[$student_slug])) {
     return [$student_slug => $all[$student_slug]];
@@ -3917,7 +3900,13 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
     // ------------------------------------------------------------
 
-    $levels_order = ['Spécial', 'Terminale', 'Première', 'Seconde', 'Transversal'];
+    $levels_order = ['Spécial'];
+    $school_level_labels = (array) $wpdb->get_col("
+      SELECT label
+      FROM {$wpdb->prefix}ouin_exo_school_levels
+      ORDER BY sort_order DESC, id DESC
+    ");
+    $levels_order = array_merge($levels_order, array_map('strval', $school_level_labels));
 
 
 

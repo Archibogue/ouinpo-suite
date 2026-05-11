@@ -698,22 +698,16 @@ class BadgeEngine {
             $params[] = $year_id;
         }
 
-        $rows = $wpdb->get_col($wpdb->prepare($sql, $params));
-
-        $valid = [
-            'Seconde'   => true,
-            'Première'  => true,
-            'Terminale' => true,
-        ];
-
-        $levels = [];
-        foreach ($rows ?: [] as $label) {
-            $label = (string) $label;
-            if (isset($valid[$label])) {
-                $levels[] = $label;
-            }
-        }
-
+        $rows = $wpdb->get_col($wpdb->prepare($sql, $params));
+
+        $levels = [];
+        foreach ($rows ?: [] as $label) {
+            $label = trim((string) $label);
+            if ($label !== '') {
+                $levels[] = $label;
+            }
+        }
+
         $levels = array_values(array_unique($levels));
         self::$user_level_label_cache[$user_id] = $levels;
 
@@ -753,29 +747,21 @@ class BadgeEngine {
             return false;
         }
 
-        // Badges transversaux : autorisés pour tous les niveaux.
-        if (self::badge_theme_is_transversal($theme)) {
-            return true;
-        }
-
         $user_level_ids = self::current_level_ids_for_user($user_id);
         if (!$user_level_ids) {
             return false;
         }
 
         $user_levels = self::current_level_labels_for_user($user_id);
-
-
-
-        // Méta-badges : uniquement le méta-badge du niveau courant.
-        $meta_levels = [
-            'Meta-Seconde'   => 'Seconde',
-            'Meta-Première'  => 'Première',
-            'Meta-Terminale' => 'Terminale',
-        ];
-
-        if (isset($meta_levels[$theme])) {
-            return in_array($meta_levels[$theme], $user_levels, true);
+        // Meta-badges : uniquement le meta-badge du niveau courant.
+        if (str_starts_with($theme, 'Meta-')) {
+            $metaLevel = substr($theme, 5);
+            foreach ($user_levels as $userLevel) {
+                if ($metaLevel === $userLevel || sanitize_title($metaLevel) === sanitize_title($userLevel)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Badges de domaine BO : le domaine doit exister dans le niveau courant.
@@ -799,32 +785,11 @@ class BadgeEngine {
         );
 
         return (bool) $allowed;
-    }
-
-    protected static function badge_theme_is_transversal(string $theme): bool {
-        global $wpdb;
-
-        if ($theme === 'Transversal' || stripos($theme, 'transversal') !== false) {
-            return true;
-        }
-
-        $t_comp = $wpdb->prefix . 'ouin_exo_competencies';
-
-        $exists = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT 1
-                 FROM $t_comp
-                 WHERE active = 1
-                   AND domain_slug = %s
-                   AND level = 'Transversal'
-                 LIMIT 1",
-                $theme
-            )
-        );
-
-        return (bool) $exists;
-    }
-
+    }
+    protected static function badge_theme_is_transversal(string $theme): bool {
+        return false;
+    }
+
     protected static function award_badge(int $user_id, int $badge_id, string $source = 'auto'): void {
         global $wpdb;
         $t_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';

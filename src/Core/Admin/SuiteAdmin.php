@@ -139,8 +139,8 @@ final class SuiteAdmin
         if (ModuleSettings::isEnabled('flashcards')) {
             add_submenu_page(
                 self::ROOT_SLUG,
-                'Révisions',
-                'Révisions',
+                'RÃ©visions',
+                'RÃ©visions',
                 'edit_posts',
                 'ouinpo-suite-revisions',
                 [self::class, 'renderRevisionsHub']
@@ -149,8 +149,8 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
-            'Évaluations',
-            'Évaluations',
+            'Ã‰valuations',
+            'Ã‰valuations',
             'edit_posts',
             'ouinpo-suite-evaluations',
             [self::class, 'renderEvaluationsHub']
@@ -158,8 +158,8 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
-            'Classes & élèves',
-            'Classes & élèves',
+            'Classes & Ã©lÃ¨ves',
+            'Classes & Ã©lÃ¨ves',
             'edit_posts',
             'ouinpo-suite-classes',
             [self::class, 'renderClassesHub']
@@ -167,8 +167,8 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
-            'Référentiel BO',
-            'Référentiel BO',
+            'RÃ©fÃ©rentiel BO',
+            'RÃ©fÃ©rentiel BO',
             'edit_posts',
             'ouinpo-suite-referentiel',
             [self::class, 'renderReferentielHub']
@@ -196,8 +196,8 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
-            'Réglages',
-            'Réglages',
+            'RÃ©glages',
+            'RÃ©glages',
             'edit_posts',
             'ouinpo-suite-settings',
             [self::class, 'renderSettingsHub']
@@ -223,12 +223,12 @@ final class SuiteAdmin
         ];
 
         if (ModuleSettings::isEnabled('flashcards')) {
-            $tabs['ouinpo-suite-revisions'] = 'Révisions';
+            $tabs['ouinpo-suite-revisions'] = 'RÃ©visions';
         }
 
-        $tabs['ouinpo-suite-evaluations'] = 'Évaluations';
-        $tabs['ouinpo-suite-classes'] = 'Classes & élèves';
-        $tabs['ouinpo-suite-referentiel'] = 'Référentiel BO';
+        $tabs['ouinpo-suite-evaluations'] = 'Ã‰valuations';
+        $tabs['ouinpo-suite-classes'] = 'Classes & Ã©lÃ¨ves';
+        $tabs['ouinpo-suite-referentiel'] = 'RÃ©fÃ©rentiel BO';
 
         if (current_user_can('manage_options')) {
             $tabs['ouinpo-suite-badges'] = 'Badges';
@@ -238,7 +238,7 @@ final class SuiteAdmin
             $tabs['ouinpo-suite-ai'] = 'IA & parcours';
         }
 
-        $tabs['ouinpo-suite-settings'] = 'Réglages';
+        $tabs['ouinpo-suite-settings'] = 'RÃ©glages';
 
         return $tabs;
     }
@@ -331,7 +331,7 @@ final class SuiteAdmin
         <?php
     }
 
-    private static function statusBadge(bool $ok, string $okLabel = 'OK', string $koLabel = 'À vérifier'): void
+    private static function statusBadge(bool $ok, string $okLabel = 'OK', string $koLabel = 'Ã€ vÃ©rifier'): void
     {
         $label  = $ok ? $okLabel : $koLabel;
         $class = $ok ? 'ouinpo-suite-status ouinpo-suite-status--ok' : 'ouinpo-suite-status ouinpo-suite-status--warning';
@@ -388,7 +388,7 @@ final class SuiteAdmin
             <h2 class="ouinpo-suite-card-title"><?php echo esc_html($title); ?></h2>
 
             <?php if (!$posts): ?>
-                <div class="ouinpo-suite-empty">Aucun élément récent.</div>
+                <div class="ouinpo-suite-empty">Aucun Ã©lÃ©ment rÃ©cent.</div>
             <?php else: ?>
                 <ul class="ouinpo-suite-list">
                     <?php foreach ($posts as $post): ?>
@@ -475,30 +475,30 @@ final class SuiteAdmin
     {
         $stats = self::dashboardStats();
 
-        self::pageIntro('OuInPo Suite', 'Vue d’ensemble de la suite et accès rapides aux actions les plus utiles.');
+        self::pageIntro('OuInPo Suite', 'Vue dâ€™ensemble de la suite et accÃ¨s rapides aux actions les plus utiles.');
         self::tabs(self::mainTabs(), self::ROOT_SLUG);
         ?>
 
-        <h2 class="ouinpo-suite-section">Vue d’ensemble</h2>
+        <h2 class="ouinpo-suite-section">Vue dâ€™ensemble</h2>
         <div class="ouinpo-suite-grid-compact">
             <?php
             self::metricCard(
                 'Exercices',
-                ($stats['exercises_total'] !== null ? number_format_i18n($stats['exercises_total']) : '—'),
+                ($stats['exercises_total'] !== null ? number_format_i18n($stats['exercises_total']) : 'â€”'),
                 ($stats['exercises_active'] !== null ? number_format_i18n($stats['exercises_active']) . ' actifs' : 'table non disponible'),
                 admin_url('admin.php?page=ouinpo-suite-contents')
             );
 
             self::metricCard(
-                'Classes & élèves',
-                ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : '—'),
+                'Classes & Ã©lÃ¨ves',
+                ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : 'â€”'),
                 ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) . ' affectations' : 'groupes ou affectations indisponibles'),
                 admin_url('admin.php?page=ouinpo-suite-classes')
             );
 
             if (ModuleSettings::isEnabled('submissions')) {
                 self::metricCard(
-                    'Dépôts élèves',
+                    'DÃ©pÃ´ts Ã©lÃ¨ves',
                     number_format_i18n((int) $stats['submissions_total']),
                     number_format_i18n((int) $stats['submissions_7d']) . ' sur 7 jours',
                     admin_url('edit.php?post_type=ouinpo_submission')
@@ -508,8 +508,8 @@ final class SuiteAdmin
             if (self::hasAiOrPathModule()) {
                 self::metricCard(
                     'IA & parcours',
-                    ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : '—'),
-                    'suggestions' . ($stats['paths_active'] !== null ? ' · ' . number_format_i18n($stats['paths_active']) . ' parcours actifs' : ''),
+                    ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : 'â€”'),
+                    'suggestions' . ($stats['paths_active'] !== null ? ' Â· ' . number_format_i18n($stats['paths_active']) . ' parcours actifs' : ''),
                     admin_url('admin.php?page=ouinpo-suite-ai')
                 );
             }
@@ -520,15 +520,15 @@ final class SuiteAdmin
         <div class="ouinpo-suite-grid">
             <?php
             self::quickAction(
-                'Créer / gérer les contenus',
-                'Accès au catalogue des exercices et sujets pratiques.',
+                'CrÃ©er / gÃ©rer les contenus',
+                'AccÃ¨s au catalogue des exercices et sujets pratiques.',
                 admin_url('admin.php?page=ouinpo-suite-contents')
             );
 
             if (ModuleSettings::isEnabled('flashcards')) {
                 self::quickAction(
-                    'Préparer les révisions',
-                    'Gérer les flashcards et paquets de cartes.',
+                    'PrÃ©parer les rÃ©visions',
+                    'GÃ©rer les flashcards et paquets de cartes.',
                     admin_url('admin.php?page=ouinpo-suite-revisions')
                 );
             }
@@ -540,8 +540,8 @@ final class SuiteAdmin
             );
 
             self::quickAction(
-                'Devoirs surveillés',
-                'Gérer les DS et évaluations.',
+                'Devoirs surveillÃ©s',
+                'GÃ©rer les DS et Ã©valuations.',
                 admin_url('admin.php?page=ouinpo-suite-evaluations&tab=ds')
             );
 
@@ -555,8 +555,8 @@ final class SuiteAdmin
 
             if (ModuleSettings::isEnabled('submissions')) {
                 self::quickAction(
-                    'Dépôts élèves',
-                    'Voir les travaux récents des élèves.',
+                    'DÃ©pÃ´ts Ã©lÃ¨ves',
+                    'Voir les travaux rÃ©cents des Ã©lÃ¨ves.',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
             }
@@ -564,7 +564,7 @@ final class SuiteAdmin
             if (current_user_can('manage_options') && self::hasAiOrPathModule()) {
                 self::quickAction(
                     'IA & parcours',
-                    'Configurer les assistants, les parcours et l’indexation.',
+                    'Configurer les assistants, les parcours et lâ€™indexation.',
                     admin_url('admin.php?page=ouinpo-suite-ai')
                 );
             }
@@ -572,17 +572,17 @@ final class SuiteAdmin
         </div>
 
         <?php if (ModuleSettings::isEnabled('submissions')): ?>
-            <h2 class="ouinpo-suite-section">Activité récente</h2>
+            <h2 class="ouinpo-suite-section">ActivitÃ© rÃ©cente</h2>
             <div class="ouinpo-suite-grid-wide">
                 <?php
                 self::renderRecentPostsPanel(
-                    'Derniers dépôts élèves',
+                    'Derniers dÃ©pÃ´ts Ã©lÃ¨ves',
                     'ouinpo_submission',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
 
                 self::renderRecentPostsPanel(
-                    'Dernières ressources prof',
+                    'DerniÃ¨res ressources prof',
                     'ouinpo_resource',
                     admin_url('edit.php?post_type=ouinpo_resource')
                 );
@@ -599,7 +599,7 @@ final class SuiteAdmin
         $tab   = self::currentTab('catalogue');
         $stats = self::dashboardStats();
 
-        self::pageIntro('Contenus', 'Exercices, sujets pratiques, imports et paramètres des contenus pédagogiques.');
+        self::pageIntro('Contenus', 'Exercices, sujets pratiques, imports et paramÃ¨tres des contenus pÃ©dagogiques.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-contents');
 
         self::subTabs('ouinpo-suite-contents', [
@@ -615,20 +615,20 @@ final class SuiteAdmin
                 <?php
                 self::metricCard(
                     'Exercices',
-                    ($stats['exercises_total'] !== null ? number_format_i18n($stats['exercises_total']) : '—'),
+                    ($stats['exercises_total'] !== null ? number_format_i18n($stats['exercises_total']) : 'â€”'),
                     ($stats['exercises_active'] !== null ? number_format_i18n($stats['exercises_active']) . ' actifs' : 'table non disponible'),
                     admin_url('admin.php?page=ouinpo-exercices')
                 );
 
                 self::quickAction(
-                    'Gérer les exercices',
-                    'Créer, modifier et organiser les exercices du catalogue.',
+                    'GÃ©rer les exercices',
+                    'CrÃ©er, modifier et organiser les exercices du catalogue.',
                     admin_url('admin.php?page=ouinpo-exercices')
                 );
 
                 self::quickAction(
                     'Exercices type bac',
-                    'Retrouver les exercices orientés bac et leurs métadonnées.',
+                    'Retrouver les exercices orientÃ©s bac et leurs mÃ©tadonnÃ©es.',
                     admin_url('admin.php?page=ouinpo-exercices')
                 );
                 ?>
@@ -640,7 +640,7 @@ final class SuiteAdmin
                 <?php
                 self::quickAction(
                     'Sujets pratiques',
-                    'Gérer les sujets pratiques et leurs appels.',
+                    'GÃ©rer les sujets pratiques et leurs appels.',
                     admin_url('admin.php?page=ouinpo-practical-subjects')
                 );
 
@@ -671,14 +671,14 @@ final class SuiteAdmin
                 if (current_user_can('manage_options')) {
                     self::quickAction(
                         'Options des contenus',
-                        'Configurer les réglages du module Exercices.',
+                        'Configurer les rÃ©glages du module Exercices.',
                         admin_url('admin.php?page=ouinpo-exercises-settings')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Options</h3>
-                        <p>Ces réglages sont réservés aux administrateurs.</p>
+                        <p>Ces rÃ©glages sont rÃ©servÃ©s aux administrateurs.</p>
                     </div>
                     <?php
                 }
@@ -707,7 +707,7 @@ final class SuiteAdmin
         $decksCount = self::safeTableCount($tDecks);
         $cardsCount = self::safeTableCount($tCards);
 
-        self::pageIntro('Révisions', 'Flashcards, paquets de cartes et mémorisation active.');
+        self::pageIntro('RÃ©visions', 'Flashcards, paquets de cartes et mÃ©morisation active.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-revisions');
 
         self::subTabs('ouinpo-suite-revisions', [
@@ -721,29 +721,29 @@ final class SuiteAdmin
                 <?php
                 self::metricCard(
                     'Paquets de cartes',
-                    ($decksCount !== null ? number_format_i18n($decksCount) : '—'),
-                    $decksCount !== null ? 'paquets enregistrés' : 'table non disponible',
+                    ($decksCount !== null ? number_format_i18n($decksCount) : 'â€”'),
+                    $decksCount !== null ? 'paquets enregistrÃ©s' : 'table non disponible',
                     current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-flashcards&tab=decks') : null
                 );
 
                 self::metricCard(
                     'Cartes',
-                    ($cardsCount !== null ? number_format_i18n($cardsCount) : '—'),
-                    $cardsCount !== null ? 'cartes enregistrées' : 'table non disponible',
+                    ($cardsCount !== null ? number_format_i18n($cardsCount) : 'â€”'),
+                    $cardsCount !== null ? 'cartes enregistrÃ©es' : 'table non disponible',
                     current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-flashcards&tab=cards') : null
                 );
 
                 if (current_user_can('manage_options')) {
                     self::quickAction(
-                        'Gérer les flashcards',
-                        'Créer les paquets, modifier les cartes et préparer les révisions.',
+                        'GÃ©rer les flashcards',
+                        'CrÃ©er les paquets, modifier les cartes et prÃ©parer les rÃ©visions.',
                         admin_url('admin.php?page=ouinpo-flashcards')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Flashcards</h3>
-                        <p>La gestion des flashcards est réservée aux administrateurs.</p>
+                        <p>La gestion des flashcards est rÃ©servÃ©e aux administrateurs.</p>
                     </div>
                     <?php
                 }
@@ -764,7 +764,7 @@ final class SuiteAdmin
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Import</h3>
-                        <p>Import réservé aux administrateurs.</p>
+                        <p>Import rÃ©servÃ© aux administrateurs.</p>
                     </div>
                     <?php
                 }
@@ -781,7 +781,7 @@ final class SuiteAdmin
         $tab   = self::currentTab('groupes');
         $stats = self::dashboardStats();
 
-        self::pageIntro('Classes & élèves', 'Organisation des classes, affectations et productions des élèves.');
+        self::pageIntro('Classes & Ã©lÃ¨ves', 'Organisation des classes, affectations et productions des Ã©lÃ¨ves.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-classes');
 
         $classTabs = [
@@ -791,7 +791,7 @@ final class SuiteAdmin
         ];
 
         if (ModuleSettings::isEnabled('submissions')) {
-            $classTabs['depots'] = 'Dépôts';
+            $classTabs['depots'] = 'DÃ©pÃ´ts';
             $classTabs['ressources'] = 'Ressources';
         }
 
@@ -828,22 +828,22 @@ final class SuiteAdmin
                 <?php
                 self::metricCard(
                     'Classes',
-                    ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : '—'),
+                    ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : 'â€”'),
                     ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) . ' affectations' : 'indisponible'),
                     current_user_can('edit_users') ? admin_url('admin.php?page=ouinpo-groups') : null
                 );
 
                 if (current_user_can('edit_users')) {
                     self::quickAction(
-                        'Gérer les classes',
-                        'Créer, modifier et organiser les groupes.',
+                        'GÃ©rer les classes',
+                        'CrÃ©er, modifier et organiser les groupes.',
                         admin_url('admin.php?page=ouinpo-groups')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Groupes</h3>
-                        <p>La gestion des groupes est réservée aux profils autorisés.</p>
+                        <p>La gestion des groupes est rÃ©servÃ©e aux profils autorisÃ©s.</p>
                     </div>
                     <?php
                 }
@@ -856,22 +856,22 @@ final class SuiteAdmin
                 <?php
                 self::metricCard(
                     'Affectations',
-                    ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) : '—'),
-                    'élèves liés à des classes',
+                    ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) : 'â€”'),
+                    'Ã©lÃ¨ves liÃ©s Ã  des classes',
                     current_user_can('edit_users') ? admin_url('admin.php?page=ouinpo-assignments') : null
                 );
 
                 if (current_user_can('edit_users')) {
                     self::quickAction(
-                        'Gérer les affectations',
-                        'Associer les élèves aux classes.',
+                        'GÃ©rer les affectations',
+                        'Associer les Ã©lÃ¨ves aux classes.',
                         admin_url('admin.php?page=ouinpo-assignments')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Affectations</h3>
-                        <p>La gestion des affectations est réservée aux profils autorisés.</p>
+                        <p>La gestion des affectations est rÃ©servÃ©e aux profils autorisÃ©s.</p>
                     </div>
                     <?php
                 }
@@ -883,20 +883,20 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid-wide">
                 <?php
                 self::metricCard(
-                    'Dépôts élèves',
+                    'DÃ©pÃ´ts Ã©lÃ¨ves',
                     number_format_i18n((int) $stats['submissions_total']),
                     number_format_i18n((int) $stats['submissions_7d']) . ' sur 7 jours',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
 
                 self::quickAction(
-                    'Voir tous les dépôts',
-                    'Accéder à la liste complète des travaux déposés.',
+                    'Voir tous les dÃ©pÃ´ts',
+                    'AccÃ©der Ã  la liste complÃ¨te des travaux dÃ©posÃ©s.',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
 
                 self::renderRecentPostsPanel(
-                    'Derniers dépôts élèves',
+                    'Derniers dÃ©pÃ´ts Ã©lÃ¨ves',
                     'ouinpo_submission',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
@@ -910,18 +910,18 @@ final class SuiteAdmin
                 self::metricCard(
                     'Ressources prof',
                     number_format_i18n((int) $stats['resources_total']),
-                    'ressources enregistrées',
+                    'ressources enregistrÃ©es',
                     admin_url('edit.php?post_type=ouinpo_resource')
                 );
 
                 self::quickAction(
                     'Voir les ressources',
-                    'Accéder à la liste complète des ressources pédagogiques.',
+                    'AccÃ©der Ã  la liste complÃ¨te des ressources pÃ©dagogiques.',
                     admin_url('edit.php?post_type=ouinpo_resource')
                 );
 
                 self::renderRecentPostsPanel(
-                    'Dernières ressources prof',
+                    'DerniÃ¨res ressources prof',
                     'ouinpo_resource',
                     admin_url('edit.php?post_type=ouinpo_resource')
                 );
@@ -951,7 +951,7 @@ final class SuiteAdmin
 
         if ($hasTable) {
             $rows = $wpdb->get_results(
-                "SELECT id, slug, label FROM {$table} ORDER BY id ASC",
+                "SELECT id, slug, label FROM {$table} ORDER BY sort_order ASC, id ASC",
                 ARRAY_A
             ) ?: [];
 
@@ -970,15 +970,6 @@ final class SuiteAdmin
                 ];
             }
         }
-
-        if (!$levels && !$hasTable) {
-            $levels = [
-                1 => ['id' => 1, 'slug' => 'seconde', 'label' => 'Seconde'],
-                2 => ['id' => 2, 'slug' => 'premiere', 'label' => 'Première'],
-                3 => ['id' => 3, 'slug' => 'terminale', 'label' => 'Terminale'],
-            ];
-        }
-
         return $levels;
     }
 
@@ -1016,8 +1007,8 @@ final class SuiteAdmin
         $levels = self::boSchoolLevels();
         $rawString = trim((string) $raw);
         $normalized = strtolower(remove_accents($rawString));
-        $normalized = str_replace('è', 'e', $normalized);
         $normalized = str_replace('Ã¨', 'e', $normalized);
+        $normalized = str_replace('ÃƒÂ¨', 'e', $normalized);
 
         if ($normalized === 'transversal' || $rawString === '0') {
             return [
@@ -1144,7 +1135,7 @@ final class SuiteAdmin
 
             $level = isset($item['level'])
                 ? self::normalizeBoLevel((string) $item['level'])
-                : 'Première';
+                : 'PremiÃ¨re';
 
             $levelContext = self::boLevelContext($item['level_id'] ?? ($item['level_key'] ?? $level));
             $active = isset($item['active']) ? (int) $item['active'] : 1;
@@ -1208,7 +1199,7 @@ final class SuiteAdmin
                 GROUP BY c.domain, c.domain_slug, c.track, level_key, level_id, level, level_slug
                 ORDER BY
                     FIELD(c.track, 'SNT', 'NSI'),
-                    FIELD(level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
+                    level_key,
                     c.domain ASC"
             );
 
@@ -1387,14 +1378,14 @@ final class SuiteAdmin
     {
         $tab = self::currentTab('competences');
 
-        self::pageIntro('Référentiel BO', 'Domaines, compétences officielles et associations pédagogiques.');
+        self::pageIntro('RÃ©fÃ©rentiel BO', 'Domaines, compÃ©tences officielles et associations pÃ©dagogiques.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-referentiel');
 
         self::subTabs('ouinpo-suite-referentiel', [
-            'competences' => 'Compétences BO',
+            'competences' => 'CompÃ©tences BO',
             'domaines'   => 'Domaines BO',
-            'courses'    => 'Cours ↔ compétences',
-            'years'      => 'Années scolaires',
+            'courses'    => 'Cours â†” compÃ©tences',
+            'years'      => 'AnnÃ©es scolaires',
         ], $tab);
 
         if ($tab === 'domaines') {
@@ -1405,8 +1396,8 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid">
                 <?php
                 self::quickAction(
-                    'Cours ↔ compétences BO',
-                    'Associer les cours WordPress aux compétences du BO.',
+                    'Cours â†” compÃ©tences BO',
+                    'Associer les cours WordPress aux compÃ©tences du BO.',
                     admin_url('admin.php?page=ouinpo-courses-competencies')
                 );
                 ?>
@@ -1418,8 +1409,8 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid">
                 <?php
                 self::quickAction(
-                    'Années scolaires',
-                    'Créer les futures années et choisir l’année active.',
+                    'AnnÃ©es scolaires',
+                    'CrÃ©er les futures annÃ©es et choisir lâ€™annÃ©e active.',
                     admin_url('admin.php?page=ouinpo-years')
                 );
                 ?>
@@ -1438,8 +1429,8 @@ final class SuiteAdmin
         if (!current_user_can('edit_users')) {
             ?>
             <div class="card ouinpo-suite-card-bounded">
-                <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
-                <p>Accès réservé aux profils autorisés.</p>
+                <h2 class="ouinpo-suite-card-title">CompÃ©tences BO</h2>
+                <p>AccÃ¨s rÃ©servÃ© aux profils autorisÃ©s.</p>
             </div>
             <?php
             return;
@@ -1459,8 +1450,8 @@ final class SuiteAdmin
         if (!self::tableExists($tComp)) {
             ?>
             <div class="card ouinpo-suite-card-bounded">
-                <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
-                <p>La table des compétences n’existe pas encore.</p>
+                <h2 class="ouinpo-suite-card-title">CompÃ©tences BO</h2>
+                <p>La table des compÃ©tences nâ€™existe pas encore.</p>
             </div>
             <?php
             return;
@@ -1555,7 +1546,7 @@ final class SuiteAdmin
             WHERE " . implode(' AND ', $where) . "
             ORDER BY
                 FIELD(c.track, 'SNT', 'NSI'),
-                FIELD(c.level, 'Seconde', 'Première', 'Terminale', 'Transversal'),
+                FIELD(c.level, 'Seconde', 'PremiÃ¨re', 'Terminale', 'Transversal'),
                 c.domain ASC,
                 c.id ASC
         ";
@@ -1591,7 +1582,7 @@ final class SuiteAdmin
         <?php if (current_user_can('manage_options')): ?>
             <div id="ouinpo-bo-form" class="card ouinpo-suite-form-card">
                 <h2 class="ouinpo-suite-card-title">
-                    <?php echo $editRow ? 'Modifier une compétence BO' : 'Ajouter une compétence BO'; ?>
+                    <?php echo $editRow ? 'Modifier une compÃ©tence BO' : 'Ajouter une compÃ©tence BO'; ?>
                 </h2>
 
                 <form method="post">
@@ -1606,11 +1597,11 @@ final class SuiteAdmin
                                 <td>
                                     <?php if (!$domainOptions): ?>
                                         <p class="description">
-                                            Aucun domaine BO n’est disponible. Crée d’abord un domaine dans l’onglet “Domaines BO”.
+                                            Aucun domaine BO nâ€™est disponible. CrÃ©e dâ€™abord un domaine dans lâ€™onglet â€œDomaines BOâ€.
                                         </p>
                                     <?php else: ?>
                                         <select id="bo_domain_choice" required>
-                                            <option value="">— Choisir un domaine —</option>
+                                            <option value="">â€” Choisir un domaine â€”</option>
 
                                             <?php foreach ($domainOptions as $key => $domainItem): ?>
                                                 <option
@@ -1622,7 +1613,7 @@ final class SuiteAdmin
                                                     data-level-id="<?php echo esc_attr($domainItem['level_key'] ?? $domainItem['level_id'] ?? ''); ?>"
                                                     <?php selected($selectedDomainKey, $key); ?>
                                                 >
-                                                    <?php echo esc_html($domainItem['domain'] . ' — ' . $domainItem['track'] . ' / ' . $domainItem['level']); ?>
+                                                    <?php echo esc_html($domainItem['domain'] . ' â€” ' . $domainItem['track'] . ' / ' . $domainItem['level']); ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
@@ -1634,12 +1625,12 @@ final class SuiteAdmin
                                     <input id="bo_domain_slug" type="hidden" name="domain_slug" value="<?php echo esc_attr($editRow->domain_slug ?? ''); ?>">
                                     <input id="bo_track" type="hidden" name="track" value="<?php echo esc_attr($editRow->track ?? 'NSI'); ?>">
                                     <input id="bo_level_id" type="hidden" name="level_id" value="<?php echo esc_attr($editRow ? self::referentielLevelKeyForCompetency((int) $editRow->id, (string) $editRow->level) : ''); ?>">
-                                    <input id="bo_level" type="hidden" name="level" value="<?php echo esc_attr($editRow->level ?? 'Première'); ?>">
+                                    <input id="bo_level" type="hidden" name="level" value="<?php echo esc_attr($editRow->level ?? 'PremiÃ¨re'); ?>">
                                 </td>
                             </tr>
 
                             <tr>
-                                <th><label for="bo_competency">Compétence</label></th>
+                                <th><label for="bo_competency">CompÃ©tence</label></th>
                                 <td>
                                     <textarea id="bo_competency" name="competency" rows="4" class="large-text" required><?php
                                         echo esc_textarea($editRow->competency ?? '');
@@ -1648,13 +1639,13 @@ final class SuiteAdmin
                             </tr>
 
                             <tr>
-                                <th><label for="bo_slug">Slug compétence</label></th>
+                                <th><label for="bo_slug">Slug compÃ©tence</label></th>
                                 <td>
                                     <input id="bo_slug" type="text" name="slug" class="regular-text"
                                         value="<?php echo esc_attr($editRow->slug ?? ''); ?>"
                                         placeholder="ex : algorithmique-parcours-tableau">
                                     <p class="description">
-                                        Laisse vide pour générer automatiquement le slug à partir du domaine et de la compétence.
+                                        Laisse vide pour gÃ©nÃ©rer automatiquement le slug Ã  partir du domaine et de la compÃ©tence.
                                     </p>
                                 </td>
                             </tr>
@@ -1664,14 +1655,14 @@ final class SuiteAdmin
                                 <td>
                                     <label>
                                         <input type="checkbox" name="active" value="1" <?php checked((int)($editRow->active ?? 1), 1); ?>>
-                                        Compétence active
+                                        CompÃ©tence active
                                     </label>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <?php submit_button($editRow ? 'Enregistrer les modifications' : 'Ajouter la compétence'); ?>
+                    <?php submit_button($editRow ? 'Enregistrer les modifications' : 'Ajouter la compÃ©tence'); ?>
 
                     <?php if ($editRow): ?>
                         <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-referentiel&tab=competences')); ?>">
@@ -1684,7 +1675,7 @@ final class SuiteAdmin
         <?php endif; ?>
 
         <div class="card ouinpo-suite-card-bounded">
-            <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
+            <h2 class="ouinpo-suite-card-title">CompÃ©tences BO</h2>
 
             <form method="get" class="ouinpo-suite-filter-form">
                 <input type="hidden" name="page" value="ouinpo-suite-referentiel">
@@ -1704,7 +1695,7 @@ final class SuiteAdmin
                     <?php endforeach; ?>
                 </select>
 
-                <input type="search" name="ref_s" value="<?php echo esc_attr($search); ?>" placeholder="Rechercher domaine / compétence / slug">
+                <input type="search" name="ref_s" value="<?php echo esc_attr($search); ?>" placeholder="Rechercher domaine / compÃ©tence / slug">
 
                 <?php submit_button('Filtrer', 'secondary', '', false); ?>
             </form>
@@ -1715,7 +1706,7 @@ final class SuiteAdmin
                         <th class="ouinpo-suite-col-22">Domaine</th>
                         <th class="ouinpo-suite-col-10">Piste</th>
                         <th class="ouinpo-suite-col-10">Niveau</th>
-                        <th>Compétence</th>
+                        <th>CompÃ©tence</th>
                         <th class="ouinpo-suite-col-8">Cours</th>
                         <th class="ouinpo-suite-col-8">Exos</th>
                         <th class="ouinpo-suite-col-8">Actif</th>
@@ -1725,7 +1716,7 @@ final class SuiteAdmin
                 <tbody>
                     <?php if (!$rows): ?>
                         <tr>
-                            <td colspan="8">Aucune compétence trouvée.</td>
+                            <td colspan="8">Aucune compÃ©tence trouvÃ©e.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($rows as $row): ?>
@@ -1755,17 +1746,17 @@ final class SuiteAdmin
                                             <input type="hidden" name="ouinpo_ref_action" value="toggle_competency">
                                             <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
                                             <input type="hidden" name="active" value="<?php echo ((int) $row->active === 1) ? '0' : '1'; ?>">
-                                            <?php submit_button(((int) $row->active === 1) ? 'Désactiver' : 'Réactiver', 'secondary small', '', false); ?>
+                                            <?php submit_button(((int) $row->active === 1) ? 'DÃ©sactiver' : 'RÃ©activer', 'secondary small', '', false); ?>
                                         </form>
 
-                                        <form method="post" class="ouinpo-suite-inline-form" data-confirm="Supprimer cette compétence ? Si elle est liée à des exercices, cours ou suivis, elle sera seulement désactivée.">
+                                        <form method="post" class="ouinpo-suite-inline-form" data-confirm="Supprimer cette compÃ©tence ? Si elle est liÃ©e Ã  des exercices, cours ou suivis, elle sera seulement dÃ©sactivÃ©e.">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="delete_competency">
                                             <input type="hidden" name="competency_id" value="<?php echo (int) $row->id; ?>">
                                             <?php submit_button('Supprimer', 'delete small', '', false); ?>
                                         </form>
                                     <?php else: ?>
-                                        —
+                                        â€”
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -1783,7 +1774,7 @@ final class SuiteAdmin
             ?>
             <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">Domaines BO</h2>
-                <p>Accès réservé aux profils autorisés.</p>
+                <p>AccÃ¨s rÃ©servÃ© aux profils autorisÃ©s.</p>
             </div>
             <?php
             return;
@@ -1808,7 +1799,7 @@ final class SuiteAdmin
             $editDomain = $domains[$editDomainKey];
         }
 
-        $defaultDomainLevelKey = (string) self::boLevelContext('Première')['key'];
+        $defaultDomainLevelKey = (string) self::boLevelContext('PremiÃ¨re')['key'];
         $editDomainLevelKey = $editDomain
             ? (string) self::boLevelContext($editDomain['level_key'] ?? ($editDomain['level_id'] ?? ($editDomain['level'] ?? $defaultDomainLevelKey)))['key']
             : $defaultDomainLevelKey;
@@ -1817,7 +1808,7 @@ final class SuiteAdmin
         <?php if (current_user_can('manage_options')): ?>
             <div id="ouinpo-bo-domain-form" class="card ouinpo-suite-form-card">
                 <h2 class="ouinpo-suite-card-title">
-                    <?php echo $editDomain ? 'Modifier un domaine BO' : 'Créer un domaine BO'; ?>
+                    <?php echo $editDomain ? 'Modifier un domaine BO' : 'CrÃ©er un domaine BO'; ?>
                 </h2>
 
                 <form method="post">
@@ -1841,7 +1832,7 @@ final class SuiteAdmin
                                 <td>
                                     <input id="bo_domain_slug" type="text" name="domain_slug" class="regular-text"
                                         value="<?php echo esc_attr($editDomain['domain_slug'] ?? ''); ?>" required>
-                                    <p class="description">Il est rempli automatiquement à partir du nom, mais peut être corrigé avant enregistrement.</p>
+                                    <p class="description">Il est rempli automatiquement Ã  partir du nom, mais peut Ãªtre corrigÃ© avant enregistrement.</p>
                                 </td>
                             </tr>
 
@@ -1873,7 +1864,7 @@ final class SuiteAdmin
                         </tbody>
                     </table>
 
-                    <?php submit_button($editDomain ? 'Enregistrer le domaine' : 'Créer le domaine'); ?>
+                    <?php submit_button($editDomain ? 'Enregistrer le domaine' : 'CrÃ©er le domaine'); ?>
 
                     <?php if ($editDomain): ?>
                         <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-referentiel&tab=domaines')); ?>">
@@ -1895,16 +1886,16 @@ final class SuiteAdmin
                         <th>Slug</th>
                         <th>Piste</th>
                         <th>Niveau</th>
-                        <th class="ouinpo-suite-col-10">Compétences</th>
+                        <th class="ouinpo-suite-col-10">CompÃ©tences</th>
                         <th class="ouinpo-suite-col-10">Actives</th>
-                        <th class="ouinpo-suite-col-10">État</th>
+                        <th class="ouinpo-suite-col-10">Ã‰tat</th>
                         <th class="ouinpo-suite-col-24">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$domains): ?>
                         <tr>
-                            <td colspan="8">Aucun domaine trouvé.</td>
+                            <td colspan="8">Aucun domaine trouvÃ©.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($domains as $domainKey => $row): ?>
@@ -1920,7 +1911,7 @@ final class SuiteAdmin
                                 <td><?php echo esc_html($row['level']); ?></td>
                                 <td><?php echo number_format_i18n($total); ?></td>
                                 <td><?php echo number_format_i18n($activeTotal); ?></td>
-                                <td><?php echo $isActive ? 'Actif' : 'Masqué'; ?></td>
+                                <td><?php echo $isActive ? 'Actif' : 'MasquÃ©'; ?></td>
                                 <td>
                                     <?php if (current_user_can('manage_options')): ?>
                                         <a class="button button-small" href="<?php echo esc_url(add_query_arg([
@@ -1936,17 +1927,17 @@ final class SuiteAdmin
                                             <input type="hidden" name="ouinpo_ref_action" value="toggle_domain">
                                             <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
                                             <input type="hidden" name="active" value="<?php echo $isActive ? '0' : '1'; ?>">
-                                            <?php submit_button($isActive ? 'Masquer' : 'Réactiver', 'secondary small', '', false); ?>
+                                            <?php submit_button($isActive ? 'Masquer' : 'RÃ©activer', 'secondary small', '', false); ?>
                                         </form>
 
-                                        <form method="post" class="ouinpo-suite-inline-form" data-confirm="Supprimer ce domaine du registre ? Les compétences déjà liées ne seront pas supprimées.">
+                                        <form method="post" class="ouinpo-suite-inline-form" data-confirm="Supprimer ce domaine du registre ? Les compÃ©tences dÃ©jÃ  liÃ©es ne seront pas supprimÃ©es.">
                                             <?php wp_nonce_field('ouinpo_ref_bo_action', 'ouinpo_ref_bo_nonce'); ?>
                                             <input type="hidden" name="ouinpo_ref_action" value="delete_domain">
                                             <input type="hidden" name="domain_key" value="<?php echo esc_attr($domainKey); ?>">
                                             <?php submit_button('Supprimer', 'delete small', '', false); ?>
                                         </form>
                                     <?php else: ?>
-                                        —
+                                        â€”
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -1982,7 +1973,7 @@ final class SuiteAdmin
 
         if ($action === 'save_competency') {
             if (!self::tableExists($tComp)) {
-                add_settings_error('ouinpo_ref_bo', 'bo_missing_table', 'La table des compétences n’existe pas encore.', 'error');
+                add_settings_error('ouinpo_ref_bo', 'bo_missing_table', 'La table des compÃ©tences nâ€™existe pas encore.', 'error');
                 return;
             }
 
@@ -2002,7 +1993,7 @@ final class SuiteAdmin
 
             $level = isset($_POST['level'])
                 ? self::normalizeBoLevel((string) wp_unslash($_POST['level']))
-                : 'Première';
+                : 'PremiÃ¨re';
 
             $levelContext = self::boLevelContext($_POST['level_id'] ?? ($_POST['level'] ?? $level));
             $level = (string) $levelContext['level'];
@@ -2018,7 +2009,7 @@ final class SuiteAdmin
             $active = isset($_POST['active']) ? 1 : 0;
 
             if ($domain === '' || $domainSlug === '' || trim(wp_strip_all_tags($competency)) === '') {
-                add_settings_error('ouinpo_ref_bo', 'bo_missing', 'Domaine et compétence sont obligatoires.', 'error');
+                add_settings_error('ouinpo_ref_bo', 'bo_missing', 'Domaine et compÃ©tence sont obligatoires.', 'error');
                 return;
             }
 
@@ -2026,7 +2017,7 @@ final class SuiteAdmin
             $domains = self::referentielBoDomains($tComp, true);
 
             if (!isset($domains[$domainKey])) {
-                add_settings_error('ouinpo_ref_bo', 'bo_domain_unknown', 'Choisis un domaine BO existant avant de créer une compétence.', 'error');
+                add_settings_error('ouinpo_ref_bo', 'bo_domain_unknown', 'Choisis un domaine BO existant avant de crÃ©er une compÃ©tence.', 'error');
                 return;
             }
 
@@ -2042,11 +2033,11 @@ final class SuiteAdmin
             ));
 
             if ($duplicateId > 0) {
-                add_settings_error('ouinpo_ref_bo', 'bo_duplicate_slug', 'Ce slug de compétence existe déjà.', 'error');
+                add_settings_error('ouinpo_ref_bo', 'bo_duplicate_slug', 'Ce slug de compÃ©tence existe dÃ©jÃ .', 'error');
                 return;
             }
 
-            $label = trim(wp_strip_all_tags($domain . ' — ' . $competency));
+            $label = trim(wp_strip_all_tags($domain . ' â€” ' . $competency));
 
             $data = [
                 'domain'      => $domain,
@@ -2068,7 +2059,7 @@ final class SuiteAdmin
                     return;
                 }
                 self::syncReferentielCompetencyLevels($id, $levelContext['key']);
-                add_settings_error('ouinpo_ref_bo', 'bo_updated', 'Compétence BO modifiée.', 'updated');
+                add_settings_error('ouinpo_ref_bo', 'bo_updated', 'CompÃ©tence BO modifiÃ©e.', 'updated');
             } else {
                 $inserted = $wpdb->insert($tComp, $data, $formats);
                 if ($inserted === false || (int) $wpdb->insert_id <= 0) {
@@ -2076,7 +2067,7 @@ final class SuiteAdmin
                     return;
                 }
                 self::syncReferentielCompetencyLevels((int) $wpdb->insert_id, $levelContext['key']);
-                add_settings_error('ouinpo_ref_bo', 'bo_inserted', 'Compétence BO ajoutée.', 'updated');
+                add_settings_error('ouinpo_ref_bo', 'bo_inserted', 'CompÃ©tence BO ajoutÃ©e.', 'updated');
             }
 
             return;
@@ -2096,7 +2087,7 @@ final class SuiteAdmin
                 add_settings_error(
                     'ouinpo_ref_bo',
                     'bo_toggled',
-                    $active ? 'Compétence réactivée.' : 'Compétence désactivée.',
+                    $active ? 'CompÃ©tence rÃ©activÃ©e.' : 'CompÃ©tence dÃ©sactivÃ©e.',
                     'updated'
                 );
             }
@@ -2122,14 +2113,14 @@ final class SuiteAdmin
                 add_settings_error(
                     'ouinpo_ref_bo',
                     'bo_soft_deleted',
-                    'Cette compétence est liée à des contenus ou suivis. Elle a été désactivée au lieu d’être supprimée.',
+                    'Cette compÃ©tence est liÃ©e Ã  des contenus ou suivis. Elle a Ã©tÃ© dÃ©sactivÃ©e au lieu dâ€™Ãªtre supprimÃ©e.',
                     'updated'
                 );
                 return;
             }
 
             $wpdb->delete($tComp, ['id' => $id], ['%d']);
-            add_settings_error('ouinpo_ref_bo', 'bo_deleted', 'Compétence supprimée définitivement.', 'updated');
+            add_settings_error('ouinpo_ref_bo', 'bo_deleted', 'CompÃ©tence supprimÃ©e dÃ©finitivement.', 'updated');
             return;
         }
 
@@ -2150,7 +2141,7 @@ final class SuiteAdmin
                 ? self::normalizeBoTrack((string) wp_unslash($_POST['track']))
                 : 'NSI';
 
-            $levelContext = self::boLevelContext($_POST['level_id'] ?? ($_POST['level'] ?? 'Première'));
+            $levelContext = self::boLevelContext($_POST['level_id'] ?? ($_POST['level'] ?? 'PremiÃ¨re'));
             $level = (string) $levelContext['level'];
 
             if ($domain === '' || $domainSlug === '') {
@@ -2163,13 +2154,13 @@ final class SuiteAdmin
             $allDomains = self::referentielBoDomains($tComp, false);
 
             if ($oldKey === '' && isset($allDomains[$newKey])) {
-                add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe déjà.', 'error');
+                add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe dÃ©jÃ .', 'error');
                 return;
             }
 
             if ($oldKey !== '' && $oldKey !== $newKey) {
                 if (isset($allDomains[$newKey])) {
-                    add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe déjà.', 'error');
+                    add_settings_error('ouinpo_ref_bo', 'domain_conflict', 'Un domaine avec ce slug, cette piste et ce niveau existe dÃ©jÃ .', 'error');
                     return;
                 }
 
@@ -2235,7 +2226,7 @@ final class SuiteAdmin
 
             self::saveStoredBoDomains($domains);
 
-            add_settings_error('ouinpo_ref_bo', 'domain_saved', 'Domaine BO enregistré.', 'updated');
+            add_settings_error('ouinpo_ref_bo', 'domain_saved', 'Domaine BO enregistrÃ©.', 'updated');
             return;
         }
 
@@ -2273,7 +2264,7 @@ final class SuiteAdmin
                 add_settings_error(
                     'ouinpo_ref_bo',
                     'domain_toggled',
-                    $active ? 'Domaine réactivé.' : 'Domaine masqué pour les nouvelles compétences.',
+                    $active ? 'Domaine rÃ©activÃ©.' : 'Domaine masquÃ© pour les nouvelles compÃ©tences.',
                     'updated'
                 );
             }
@@ -2316,7 +2307,7 @@ final class SuiteAdmin
                 }
             }
 
-            add_settings_error('ouinpo_ref_bo', 'domain_deleted', 'Domaine BO retiré du registre. Les compétences existantes ne sont pas supprimées.', 'updated');
+            add_settings_error('ouinpo_ref_bo', 'domain_deleted', 'Domaine BO retirÃ© du registre. Les compÃ©tences existantes ne sont pas supprimÃ©es.', 'updated');
             return;
         }
     }
@@ -2358,16 +2349,16 @@ final class SuiteAdmin
     {
         $tab = self::currentTab('suivi');
 
-        self::pageIntro('Évaluations', 'Devoirs surveillés et suivi des compétences des élèves.');
+        self::pageIntro('Ã‰valuations', 'Devoirs surveillÃ©s et suivi des compÃ©tences des Ã©lÃ¨ves.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-evaluations');
 
         $tabs = [
-            'suivi' => 'Suivi des compétences',
-            'ds'    => 'Devoirs surveillés',
+            'suivi' => 'Suivi des compÃ©tences',
+            'ds'    => 'Devoirs surveillÃ©s',
         ];
 
         if (ModuleSettings::isEnabled('submissions')) {
-            $tabs['depots'] = 'Dépôts élèves';
+            $tabs['depots'] = 'DÃ©pÃ´ts Ã©lÃ¨ves';
         }
 
         if (!isset($tabs[$tab])) {
@@ -2381,8 +2372,8 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid">
                 <?php
                 self::quickAction(
-                    'Suivi des compétences',
-                    'Accéder à l’écran de suivi par année, classe, domaine et élève.',
+                    'Suivi des compÃ©tences',
+                    'AccÃ©der Ã  lâ€™Ã©cran de suivi par annÃ©e, classe, domaine et Ã©lÃ¨ve.',
                     admin_url('admin.php?page=ouinpo-competencies')
                 );
                 ?>
@@ -2393,14 +2384,14 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid">
                 <?php
                 self::quickAction(
-                    'Devoirs surveillés',
-                    'Créer et gérer les DS.',
+                    'Devoirs surveillÃ©s',
+                    'CrÃ©er et gÃ©rer les DS.',
                     admin_url('admin.php?page=ouinpo-assessments')
                 );
 
                 self::quickAction(
                     'Concepteur de devoirs',
-                    'Composer un devoir à partir des exercices du catalogue.',
+                    'Composer un devoir Ã  partir des exercices du catalogue.',
                     admin_url('admin.php?page=ouinpo-assessment-builder')
                 );
                 ?>
@@ -2411,8 +2402,8 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid">
                 <?php
                 self::quickAction(
-                    'Dépôts élèves',
-                    'Voir les travaux récents pour croiser évaluation et entraînement.',
+                    'DÃ©pÃ´ts Ã©lÃ¨ves',
+                    'Voir les travaux rÃ©cents pour croiser Ã©valuation et entraÃ®nement.',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
                 ?>
@@ -2448,14 +2439,14 @@ final class SuiteAdmin
 
         $stats = self::dashboardStats();
 
-        self::pageIntro('IA & parcours', 'Outils d’accompagnement, recommandations, parcours et assistants.');
+        self::pageIntro('IA & parcours', 'Outils dâ€™accompagnement, recommandations, parcours et assistants.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-ai');
 
         if (empty($aiTabs)) {
             ?>
             <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">IA & parcours</h2>
-                <p>Aucun module IA ou parcours n’est activé.</p>
+                <p>Aucun module IA ou parcours nâ€™est activÃ©.</p>
             </div>
             <?php
             self::endPage();
@@ -2470,28 +2461,28 @@ final class SuiteAdmin
                 <?php
                 self::metricCard(
                     'Suggestions',
-                    ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : '—'),
-                    'suggestions enregistrées',
+                    ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : 'â€”'),
+                    'suggestions enregistrÃ©es',
                     current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-segfault') : null
                 );
 
                 if (current_user_can('manage_options')) {
                     self::quickAction(
                         'Ouvrir SegFault',
-                        'Accéder aux outils, sources, indexation et paramètres SegFault.',
+                        'AccÃ©der aux outils, sources, indexation et paramÃ¨tres SegFault.',
                         admin_url('admin.php?page=ouinpo-segfault')
                     );
 
                     self::quickAction(
-                        'Suivi élèves SegFault',
-                        'Consulter le suivi des élèves lié à SegFault.',
+                        'Suivi Ã©lÃ¨ves SegFault',
+                        'Consulter le suivi des Ã©lÃ¨ves liÃ© Ã  SegFault.',
                         admin_url('admin.php?page=ouinpo-segfault-progress')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">SegFault</h3>
-                        <p>Les réglages SegFault sont réservés aux administrateurs.</p>
+                        <p>Les rÃ©glages SegFault sont rÃ©servÃ©s aux administrateurs.</p>
                     </div>
                     <?php
                 }
@@ -2504,22 +2495,22 @@ final class SuiteAdmin
                 <?php
                 self::metricCard(
                     'Progressions Gate',
-                    ($stats['gate_progress'] !== null ? number_format_i18n($stats['gate_progress']) : '—'),
-                    'entrées de progression',
+                    ($stats['gate_progress'] !== null ? number_format_i18n($stats['gate_progress']) : 'â€”'),
+                    'entrÃ©es de progression',
                     current_user_can('list_users') ? admin_url('admin.php?page=ouinpo') : null
                 );
 
                 if (current_user_can('list_users')) {
                     self::quickAction(
                         'Ouvrir Gate',
-                        'Accéder au suivi global et aux certificats.',
+                        'AccÃ©der au suivi global et aux certificats.',
                         admin_url('admin.php?page=ouinpo')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Gate</h3>
-                        <p>L’accès à Gate est réservé aux profils autorisés.</p>
+                        <p>Lâ€™accÃ¨s Ã  Gate est rÃ©servÃ© aux profils autorisÃ©s.</p>
                     </div>
                     <?php
                 }
@@ -2532,8 +2523,8 @@ final class SuiteAdmin
                 <div class="card ouinpo-suite-card">
                     <h3 class="ouinpo-suite-card-title">Recherche textuelle</h3>
                     <p>
-                        Le module Recherche textuelle fournit principalement un shortcode pédagogique
-                        pour visualiser la recherche dans un texte. Il n’a pas encore d’écran d’administration dédié.
+                        Le module Recherche textuelle fournit principalement un shortcode pÃ©dagogique
+                        pour visualiser la recherche dans un texte. Il nâ€™a pas encore dâ€™Ã©cran dâ€™administration dÃ©diÃ©.
                     </p>
                     <p><code>[ouinpo_recherche_textuelle]</code></p>
                 </div>
@@ -2552,30 +2543,30 @@ final class SuiteAdmin
         $upload_ok = empty($upload['error']) && !empty($upload['basedir']) && is_writable((string) $upload['basedir']);
 
         $environment = [
-            'Version OuInPo Suite' => defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '—',
+            'Version OuInPo Suite' => defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : 'â€”',
             'Version WordPress'    => get_bloginfo('version'),
             'Version PHP'          => PHP_VERSION,
-            'Préfixe des tables'   => $wpdb->prefix,
-            'Jeu de caractères BD' => $wpdb->get_charset_collate(),
-            'Fuseau horaire'       => wp_timezone_string() ?: '—',
-            'Dossier uploads'      => $upload_ok ? 'Accessible en écriture' : 'À vérifier',
+            'PrÃ©fixe des tables'   => $wpdb->prefix,
+            'Jeu de caractÃ¨res BD' => $wpdb->get_charset_collate(),
+            'Fuseau horaire'       => wp_timezone_string() ?: 'â€”',
+            'Dossier uploads'      => $upload_ok ? 'Accessible en Ã©criture' : 'Ã€ vÃ©rifier',
         ];
 
         $options = [
-            'Version BD suite'       => (string) get_option('ouinpo_suite_version', 'non installée'),
-            'Version BD exercices'   => (string) get_option('ouinpo_exo_db_version', 'non installée'),
-            'Version BD flashcards'  => (string) get_option('ouinpo_flashcards_db_version', 'non installée'),
-            'IA Albert'              => ((int) get_option('ouinpo_sf_albert_enabled', 0) === 1) ? 'Activée' : 'Désactivée',
-            'IA publique Albert'     => ((int) get_option('ouinpo_sf_public_albert_enabled', 0) === 1) ? 'Activée' : 'Désactivée',
-            'Clé Albert'             => trim((string) get_option('ouinpo_sf_albert_api_key', '')) !== '' ? 'Présente, valeur masquée' : 'Absente',
-            'Clé OpenAI'             => trim((string) get_option('ouinpo_sf_openai_api_key', '')) !== '' ? 'Présente, valeur masquée' : 'Absente',
-            'Index WXR SegFault'     => trim((string) get_option('ouinpo_sf_wxr_path', '')) !== '' ? 'Chemin configuré' : 'Non configuré',
+            'Version BD suite'       => (string) get_option('ouinpo_suite_version', 'non installÃ©e'),
+            'Version BD exercices'   => (string) get_option('ouinpo_exo_db_version', 'non installÃ©e'),
+            'Version BD flashcards'  => (string) get_option('ouinpo_flashcards_db_version', 'non installÃ©e'),
+            'IA Albert'              => ((int) get_option('ouinpo_sf_albert_enabled', 0) === 1) ? 'ActivÃ©e' : 'DÃ©sactivÃ©e',
+            'IA publique Albert'     => ((int) get_option('ouinpo_sf_public_albert_enabled', 0) === 1) ? 'ActivÃ©e' : 'DÃ©sactivÃ©e',
+            'ClÃ© Albert'             => trim((string) get_option('ouinpo_sf_albert_api_key', '')) !== '' ? 'PrÃ©sente, valeur masquÃ©e' : 'Absente',
+            'ClÃ© OpenAI'             => trim((string) get_option('ouinpo_sf_openai_api_key', '')) !== '' ? 'PrÃ©sente, valeur masquÃ©e' : 'Absente',
+            'Index WXR SegFault'     => trim((string) get_option('ouinpo_sf_wxr_path', '')) !== '' ? 'Chemin configurÃ©' : 'Non configurÃ©',
         ];
         ?>
         <div class="notice notice-info ouinpo-suite-notice">
             <p class="ouinpo-suite-no-margin">
                 <strong>Diagnostic de diffusion.</strong>
-                Cette page sert à vérifier qu’une installation OuInPo est saine et à repérer ce qui ne doit jamais partir dans une archive partagée : clés API, données élèves, logs, réponses, chemins locaux.
+                Cette page sert Ã  vÃ©rifier quâ€™une installation OuInPo est saine et Ã  repÃ©rer ce qui ne doit jamais partir dans une archive partagÃ©e : clÃ©s API, donnÃ©es Ã©lÃ¨ves, logs, rÃ©ponses, chemins locaux.
             </p>
         </div>
 
@@ -2622,48 +2613,48 @@ final class SuiteAdmin
                 $p . 'ouinpo_signatures' => 'Signatures / certificats',
             ],
             'SegFault / parcours' => [
-                $p . 'ouin_sf_paths'        => 'Parcours individualisés',
-                $p . 'ouin_sf_path_items'   => 'Éléments de parcours',
+                $p . 'ouin_sf_paths'        => 'Parcours individualisÃ©s',
+                $p . 'ouin_sf_path_items'   => 'Ã‰lÃ©ments de parcours',
                 $p . 'ouin_sf_path_targets' => 'Affectations de parcours',
                 $p . 'ouin_sf_suggestions'  => 'Suggestions IA / exercices',
             ],
             'Exercices' => [
-                $p . 'ouin_exo_academic_years'          => 'Années scolaires',
+                $p . 'ouin_exo_academic_years'          => 'AnnÃ©es scolaires',
                 $p . 'ouin_exo_school_levels'           => 'Niveaux',
                 $p . 'ouin_exo_groups'                  => 'Classes / groupes',
                 $p . 'ouin_exo_group_members'           => 'Membres des classes',
                 $p . 'ouin_exo_exercises'               => 'Exercices',
                 $p . 'ouin_exo_exercise_school_level'   => 'Niveaux des exercices',
-                $p . 'ouin_exo_difficulties'            => 'Difficultés',
+                $p . 'ouin_exo_difficulties'            => 'DifficultÃ©s',
                 $p . 'ouin_exo_hints'                   => 'Indices',
                 $p . 'ouin_exo_solutions'               => 'Solutions',
-                $p . 'ouin_exo_competencies'            => 'Compétences BO',
-                $p . 'ouin_exo_exercise_competency'     => 'Liens exercices / compétences',
-                $p . 'ouin_exo_post_competency'         => 'Liens cours / compétences',
-                $p . 'ouin_exo_user_status'             => 'Statuts élèves',
-                $p . 'ouin_exo_user_reveals'            => 'Indices / solutions révélés',
-                $p . 'ouin_exo_user_competencies'       => 'Compétences élèves',
-                $p . 'ouin_exo_competency_teaching'     => 'Compétences vues en classe',
-                $p . 'ouin_exo_exam_meta'               => 'Métadonnées bac',
+                $p . 'ouin_exo_competencies'            => 'CompÃ©tences BO',
+                $p . 'ouin_exo_exercise_competency'     => 'Liens exercices / compÃ©tences',
+                $p . 'ouin_exo_post_competency'         => 'Liens cours / compÃ©tences',
+                $p . 'ouin_exo_user_status'             => 'Statuts Ã©lÃ¨ves',
+                $p . 'ouin_exo_user_reveals'            => 'Indices / solutions rÃ©vÃ©lÃ©s',
+                $p . 'ouin_exo_user_competencies'       => 'CompÃ©tences Ã©lÃ¨ves',
+                $p . 'ouin_exo_competency_teaching'     => 'CompÃ©tences vues en classe',
+                $p . 'ouin_exo_exam_meta'               => 'MÃ©tadonnÃ©es bac',
                 $p . 'ouin_exo_practical_calls'         => 'Appels pratiques',
                 $p . 'ouin_exo_practical_files'         => 'Fichiers pratiques',
                 $p . 'ouin_exo_practical_call_attempts' => 'Tentatives pratiques',
                 $p . 'ouin_exo_practical_call_status'   => 'Statuts pratiques',
                 $p . 'ouin_exo_badges'                  => 'Badges',
-                $p . 'ouin_exo_user_badges'             => 'Badges élèves',
+                $p . 'ouin_exo_user_badges'             => 'Badges Ã©lÃ¨ves',
                 $p . 'ouin_exo_assessments'             => 'Devoirs',
                 $p . 'ouin_exo_assessment_items'        => 'Exercices des devoirs',
-                $p . 'ouin_exo_assessment_competencies' => 'Compétences des devoirs',
-                $p . 'ouin_exo_assessment_results'      => 'Résultats des devoirs',
-                $p . 'ouin_exo_assessment_attendance'   => 'Présences aux devoirs',
+                $p . 'ouin_exo_assessment_competencies' => 'CompÃ©tences des devoirs',
+                $p . 'ouin_exo_assessment_results'      => 'RÃ©sultats des devoirs',
+                $p . 'ouin_exo_assessment_attendance'   => 'PrÃ©sences aux devoirs',
                 $p . 'ouin_exo_ai_attempts'             => 'Tentatives IA',
             ],
             'Flashcards' => [
                 $p . 'ouin_fc_decks'           => 'Paquets de cartes',
                 $p . 'ouin_fc_cards'           => 'Cartes',
-                $p . 'ouin_fc_card_competency' => 'Liens cartes / compétences',
-                $p . 'ouin_fc_user_cards'      => 'État des cartes par élève',
-                $p . 'ouin_fc_reviews'         => 'Historique de révision',
+                $p . 'ouin_fc_card_competency' => 'Liens cartes / compÃ©tences',
+                $p . 'ouin_fc_user_cards'      => 'Ã‰tat des cartes par Ã©lÃ¨ve',
+                $p . 'ouin_fc_reviews'         => 'Historique de rÃ©vision',
             ],
         ];
     }
@@ -2674,15 +2665,15 @@ final class SuiteAdmin
         <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
             <h2 class="ouinpo-suite-card-title">Tables attendues</h2>
             <p class="ouinpo-suite-muted">
-                Les compteurs sont utiles pour vérifier une installation. Pour une archive de diffusion, les tables contenant des données élèves doivent être vides ou absentes du paquet exporté.
+                Les compteurs sont utiles pour vÃ©rifier une installation. Pour une archive de diffusion, les tables contenant des donnÃ©es Ã©lÃ¨ves doivent Ãªtre vides ou absentes du paquet exportÃ©.
             </p>
             <table class="widefat striped">
                 <thead>
                     <tr>
                         <th class="ouinpo-suite-col-22">Module</th>
                         <th>Table</th>
-                        <th class="ouinpo-suite-col-26">Rôle</th>
-                        <th class="ouinpo-suite-col-12">État</th>
+                        <th class="ouinpo-suite-col-26">RÃ´le</th>
+                        <th class="ouinpo-suite-col-12">Ã‰tat</th>
                         <th class="ouinpo-suite-col-10">Lignes</th>
                     </tr>
                 </thead>
@@ -2698,7 +2689,7 @@ final class SuiteAdmin
                                 <td><code><?php echo esc_html((string) $table); ?></code></td>
                                 <td><?php echo esc_html((string) $label); ?></td>
                                 <td><?php self::statusBadge($exists, 'OK', 'Absente'); ?></td>
-                                <td><?php echo $count === null ? '—' : esc_html(number_format_i18n($count)); ?></td>
+                                <td><?php echo $count === null ? 'â€”' : esc_html(number_format_i18n($count)); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
@@ -2713,31 +2704,31 @@ final class SuiteAdmin
         global $wpdb;
 
         $sensitiveTables = [
-            $wpdb->prefix . 'ouinpo_logs'                    => 'réponses aux énigmes / exercices interactifs',
+            $wpdb->prefix . 'ouinpo_logs'                    => 'rÃ©ponses aux Ã©nigmes / exercices interactifs',
             $wpdb->prefix . 'ouinpo_progress'                => 'progression Gate',
             $wpdb->prefix . 'ouinpo_signatures'              => 'signatures et messages',
             $wpdb->prefix . 'ouin_exo_group_members'         => 'composition des classes',
-            $wpdb->prefix . 'ouin_exo_user_status'           => 'statuts d’exercices par élève',
-            $wpdb->prefix . 'ouin_exo_user_reveals'          => 'indices et solutions révélés',
-            $wpdb->prefix . 'ouin_exo_user_competencies'     => 'compétences attribuées aux élèves',
-            $wpdb->prefix . 'ouin_exo_user_badges'           => 'badges attribués',
-            $wpdb->prefix . 'ouin_exo_assessment_results'    => 'résultats de devoirs',
-            $wpdb->prefix . 'ouin_exo_assessment_attendance' => 'présences aux devoirs',
+            $wpdb->prefix . 'ouin_exo_user_status'           => 'statuts dâ€™exercices par Ã©lÃ¨ve',
+            $wpdb->prefix . 'ouin_exo_user_reveals'          => 'indices et solutions rÃ©vÃ©lÃ©s',
+            $wpdb->prefix . 'ouin_exo_user_competencies'     => 'compÃ©tences attribuÃ©es aux Ã©lÃ¨ves',
+            $wpdb->prefix . 'ouin_exo_user_badges'           => 'badges attribuÃ©s',
+            $wpdb->prefix . 'ouin_exo_assessment_results'    => 'rÃ©sultats de devoirs',
+            $wpdb->prefix . 'ouin_exo_assessment_attendance' => 'prÃ©sences aux devoirs',
             $wpdb->prefix . 'ouin_exo_ai_attempts'           => 'traces de tentatives IA',
-            $wpdb->prefix . 'ouin_fc_user_cards'             => 'état des flashcards par élève',
-            $wpdb->prefix . 'ouin_fc_reviews'                => 'historique des révisions',
-            $wpdb->prefix . 'ouin_sf_suggestions'            => 'suggestions personnalisées',
+            $wpdb->prefix . 'ouin_fc_user_cards'             => 'Ã©tat des flashcards par Ã©lÃ¨ve',
+            $wpdb->prefix . 'ouin_fc_reviews'                => 'historique des rÃ©visions',
+            $wpdb->prefix . 'ouin_sf_suggestions'            => 'suggestions personnalisÃ©es',
         ];
         ?>
         <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
-            <h2 class="ouinpo-suite-card-title">Contrôle avant partage</h2>
+            <h2 class="ouinpo-suite-card-title">ContrÃ´le avant partage</h2>
             <p class="ouinpo-suite-muted">
-                Ces éléments ne doivent pas être inclus dans une archive destinée à d’autres professeurs.
+                Ces Ã©lÃ©ments ne doivent pas Ãªtre inclus dans une archive destinÃ©e Ã  dâ€™autres professeurs.
             </p>
             <table class="widefat striped">
                 <thead>
                     <tr>
-                        <th>Élément sensible</th>
+                        <th>Ã‰lÃ©ment sensible</th>
                         <th class="ouinpo-suite-col-16">Lignes</th>
                         <th class="ouinpo-suite-col-22">Conclusion</th>
                     </tr>
@@ -2750,7 +2741,7 @@ final class SuiteAdmin
                                 <code><?php echo esc_html($table); ?></code><br>
                                 <span class="ouinpo-suite-muted"><?php echo esc_html($label); ?></span>
                             </td>
-                            <td><?php echo $count === null ? '—' : esc_html(number_format_i18n($count)); ?></td>
+                            <td><?php echo $count === null ? 'â€”' : esc_html(number_format_i18n($count)); ?></td>
                             <td>
                                 <?php
                                 if ($count === null || $count === 0) {
@@ -2763,19 +2754,19 @@ final class SuiteAdmin
                         </tr>
                     <?php endforeach; ?>
                     <tr>
-                        <td><code>ouinpo_sf_albert_api_key</code><br><span class="ouinpo-suite-muted">clé API Albert</span></td>
-                        <td>—</td>
-                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_albert_api_key', '')) === '', 'Absente', 'Présente : ne pas exporter'); ?></td>
+                        <td><code>ouinpo_sf_albert_api_key</code><br><span class="ouinpo-suite-muted">clÃ© API Albert</span></td>
+                        <td>â€”</td>
+                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_albert_api_key', '')) === '', 'Absente', 'PrÃ©sente : ne pas exporter'); ?></td>
                     </tr>
                     <tr>
-                        <td><code>ouinpo_sf_openai_api_key</code><br><span class="ouinpo-suite-muted">clé API OpenAI</span></td>
-                        <td>—</td>
-                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_openai_api_key', '')) === '', 'Absente', 'Présente : ne pas exporter'); ?></td>
+                        <td><code>ouinpo_sf_openai_api_key</code><br><span class="ouinpo-suite-muted">clÃ© API OpenAI</span></td>
+                        <td>â€”</td>
+                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_openai_api_key', '')) === '', 'Absente', 'PrÃ©sente : ne pas exporter'); ?></td>
                     </tr>
                     <tr>
                         <td><code>ouinpo_sf_wxr_path</code><br><span class="ouinpo-suite-muted">chemin local vers un export WordPress / RAG</span></td>
-                        <td>—</td>
-                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_wxr_path', '')) === '', 'Absent', 'Présent : chemin local à nettoyer'); ?></td>
+                        <td>â€”</td>
+                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_wxr_path', '')) === '', 'Absent', 'PrÃ©sent : chemin local Ã  nettoyer'); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -2788,7 +2779,7 @@ final class SuiteAdmin
         if (!current_user_can('manage_options')) {
             ?>
             <div class="notice notice-error">
-                <p>Ces réglages sont réservés aux administrateurs.</p>
+                <p>Ces rÃ©glages sont rÃ©servÃ©s aux administrateurs.</p>
             </div>
             <?php
             return;
@@ -2807,8 +2798,8 @@ final class SuiteAdmin
             <h2 class="ouinpo-suite-card-title">Apparence publique</h2>
 
             <p class="ouinpo-suite-muted">
-                Choisissez le style utilisé par les pages publiques de la suite.
-                Le style sobre est recommandé pour une installation partagée avec d’autres enseignants.
+                Choisissez le style utilisÃ© par les pages publiques de la suite.
+                Le style sobre est recommandÃ© pour une installation partagÃ©e avec dâ€™autres enseignants.
             </p>
 
             <form method="post" action="options.php">
@@ -2817,7 +2808,7 @@ final class SuiteAdmin
                 <table class="form-table" role="presentation">
                     <tbody>
                         <tr>
-                            <th scope="row">Style de l’interface</th>
+                            <th scope="row">Style de lâ€™interface</th>
                             <td>
                                 <fieldset>
                                     <label class="ouinpo-suite-settings-choice">
@@ -2829,7 +2820,7 @@ final class SuiteAdmin
                                         >
                                         <strong>OuInPo</strong>
                                         <span class="ouinpo-suite-muted">
-                                            — style actuel, plus marqué et pataphysique.
+                                            â€” style actuel, plus marquÃ© et pataphysique.
                                         </span>
                                     </label>
 
@@ -2855,12 +2846,12 @@ final class SuiteAdmin
                                         >
                                         <strong>Sobre</strong>
                                         <span class="ouinpo-suite-muted">
-                                            — style neutre, clair, adapté à une version partageable.
+                                            â€” style neutre, clair, adaptÃ© Ã  une version partageable.
                                         </span>
                                     </label>
 
                                     <p class="description">
-                                        Ce réglage ne supprime aucun fichier CSS. Il choisit simplement le thème chargé côté public.
+                                        Ce rÃ©glage ne supprime aucun fichier CSS. Il choisit simplement le thÃ¨me chargÃ© cÃ´tÃ© public.
                                     </p>
                                 </fieldset>
                             </td>
@@ -2868,7 +2859,7 @@ final class SuiteAdmin
                     </tbody>
                 </table>
 
-                <?php submit_button('Enregistrer l’apparence'); ?>
+                <?php submit_button('Enregistrer lâ€™apparence'); ?>
             </form>
         </div>
         <?php
@@ -2879,7 +2870,7 @@ final class SuiteAdmin
         if (!current_user_can('manage_options')) {
             ?>
             <div class="notice notice-error">
-                <p>Ces réglages sont réservés aux administrateurs.</p>
+                <p>Ces rÃ©glages sont rÃ©servÃ©s aux administrateurs.</p>
             </div>
             <?php
             return;
@@ -2916,15 +2907,15 @@ final class SuiteAdmin
         $locked  = ModuleSettings::lockedModules();
 
         if (isset($_GET['updated']) && $_GET['updated'] === '1') {
-            echo '<div class="notice notice-success is-dismissible"><p>Réglages des modules enregistrés.</p></div>';
+            echo '<div class="notice notice-success is-dismissible"><p>RÃ©glages des modules enregistrÃ©s.</p></div>';
         }
         ?>
         <div class="card ouinpo-suite-card-bounded">
             <h2 class="ouinpo-suite-card-title">Modules de la suite</h2>
 
             <p class="ouinpo-suite-muted">
-                Désactiver un module empêche son chargement, ses menus, shortcodes ou fonctionnalités,
-                mais ne supprime aucune table ni aucune donnée.
+                DÃ©sactiver un module empÃªche son chargement, ses menus, shortcodes ou fonctionnalitÃ©s,
+                mais ne supprime aucune table ni aucune donnÃ©e.
             </p>
 
             <form method="post">
@@ -2933,7 +2924,7 @@ final class SuiteAdmin
                 <table class="widefat striped">
                     <thead>
                         <tr>
-                            <th class="ouinpo-suite-col-22">État</th>
+                            <th class="ouinpo-suite-col-22">Ã‰tat</th>
                             <th>Module</th>
                             <th class="ouinpo-suite-col-35">Remarque</th>
                         </tr>
@@ -2954,7 +2945,7 @@ final class SuiteAdmin
                                             <?php checked($isEnabled); ?>
                                             <?php disabled($isLocked); ?>
                                         >
-                                        <?php echo $isEnabled ? 'Activé' : 'Désactivé'; ?>
+                                        <?php echo $isEnabled ? 'ActivÃ©' : 'DÃ©sactivÃ©'; ?>
                                     </label>
 
                                     <?php if ($isLocked): ?>
@@ -2967,15 +2958,15 @@ final class SuiteAdmin
                                 </td>
                                 <td>
                                     <?php if ($id === 'exercises'): ?>
-                                        Socle de la suite. Non désactivable dans cette version.
+                                        Socle de la suite. Non dÃ©sactivable dans cette version.
                                     <?php elseif ($id === 'segfault'): ?>
-                                        Chat, RAG, suggestions et parcours individualisés.
+                                        Chat, RAG, suggestions et parcours individualisÃ©s.
                                     <?php elseif ($id === 'flashcards'): ?>
-                                        Cartes de révision et mémorisation.
+                                        Cartes de rÃ©vision et mÃ©morisation.
                                     <?php elseif ($id === 'submissions'): ?>
-                                        Dépôts élèves et ressources.
+                                        DÃ©pÃ´ts Ã©lÃ¨ves et ressources.
                                     <?php elseif ($id === 'gate'): ?>
-                                        Énigmes, progression Gate et certificats.
+                                        Ã‰nigmes, progression Gate et certificats.
                                     <?php elseif ($id === 'rechtext'): ?>
                                         Recherche textuelle.
                                     <?php elseif ($id === 'meta'): ?>
@@ -3000,7 +2991,7 @@ final class SuiteAdmin
         if (!current_user_can('manage_options')) {
             ?>
             <div class="notice notice-error">
-                <p>Import réservé aux administrateurs.</p>
+                <p>Import rÃ©servÃ© aux administrateurs.</p>
             </div>
             <?php
             return;
@@ -3025,7 +3016,7 @@ final class SuiteAdmin
                 if ($pack === '' || !str_ends_with($pack, '.json')) {
                     $result = [
                         'ok' => false,
-                        'message' => 'Pack intégré invalide.',
+                        'message' => 'Pack intÃ©grÃ© invalide.',
                         'details' => [],
                     ];
                 } else {
@@ -3039,7 +3030,7 @@ final class SuiteAdmin
                 ) {
                     $result = [
                         'ok' => false,
-                        'message' => 'Aucun fichier JSON envoyé.',
+                        'message' => 'Aucun fichier JSON envoyÃ©.',
                         'details' => [],
                     ];
                 } else {
@@ -3050,7 +3041,7 @@ final class SuiteAdmin
                     if (!str_ends_with($name, '.json')) {
                         $result = [
                             'ok' => false,
-                            'message' => 'Le fichier envoyé doit être un JSON.',
+                            'message' => 'Le fichier envoyÃ© doit Ãªtre un JSON.',
                             'details' => [],
                         ];
                     } else {
@@ -3060,7 +3051,7 @@ final class SuiteAdmin
             } else {
                 $result = [
                     'ok' => false,
-                    'message' => 'Source d’import inconnue.',
+                    'message' => 'Source dâ€™import inconnue.',
                     'details' => [],
                 ];
             }
@@ -3123,11 +3114,11 @@ final class SuiteAdmin
 
         ?>
         <div class="card ouinpo-suite-card-bounded">
-            <h2 class="ouinpo-suite-card-title">Import pédagogique</h2>
+            <h2 class="ouinpo-suite-card-title">Import pÃ©dagogique</h2>
 
             <p class="ouinpo-suite-muted">
-                Cette version importe uniquement les niveaux, difficultés et compétences BO.
-                Les exercices, flashcards et sujets pratiques seront traités dans les versions suivantes de l’importeur.
+                Cette version importe uniquement les niveaux, difficultÃ©s et compÃ©tences BO.
+                Les exercices, flashcards et sujets pratiques seront traitÃ©s dans les versions suivantes de lâ€™importeur.
             </p>
 
             <form method="post" enctype="multipart/form-data">
@@ -3136,11 +3127,11 @@ final class SuiteAdmin
                 <table class="form-table" role="presentation">
                     <tbody>
                         <tr>
-                            <th scope="row">Pack intégré</th>
+                            <th scope="row">Pack intÃ©grÃ©</th>
                             <td>
                                 <label>
                                     <input type="radio" name="ouinpo_pack_source" value="bundled" checked>
-                                    Importer un pack fourni avec l’extension
+                                    Importer un pack fourni avec lâ€™extension
                                 </label>
 
                                 <br><br>
@@ -3164,7 +3155,7 @@ final class SuiteAdmin
                             <td>
                                 <label>
                                     <input type="radio" name="ouinpo_pack_source" value="upload">
-                                    Importer un fichier JSON depuis l’ordinateur
+                                    Importer un fichier JSON depuis lâ€™ordinateur
                                 </label>
 
                                 <br><br>
@@ -3203,13 +3194,13 @@ final class SuiteAdmin
                 <?php
                 self::quickAction(
                     'Catalogue des badges',
-                    'Créer, modifier et organiser les badges disponibles.',
+                    'CrÃ©er, modifier et organiser les badges disponibles.',
                     admin_url('admin.php?page=ouinpo-badges')
                 );
 
                 self::quickAction(
                     'Attributions manuelles',
-                    'Attribuer ou retirer des badges à des élèves.',
+                    'Attribuer ou retirer des badges Ã  des Ã©lÃ¨ves.',
                     admin_url('admin.php?page=ouinpo-badge-assignments')
                 );
                 ?>
@@ -3222,13 +3213,13 @@ final class SuiteAdmin
                 <?php
                 self::quickAction(
                     'Attributions manuelles',
-                    'Attribuer un badge à un élève, une classe ou vérifier les badges existants.',
+                    'Attribuer un badge Ã  un Ã©lÃ¨ve, une classe ou vÃ©rifier les badges existants.',
                     admin_url('admin.php?page=ouinpo-badge-assignments')
                 );
 
                 self::quickAction(
                     'Catalogue des badges',
-                    'Revenir à la gestion des badges.',
+                    'Revenir Ã  la gestion des badges.',
                     admin_url('admin.php?page=ouinpo-badges')
                 );
                 ?>
@@ -3243,7 +3234,7 @@ final class SuiteAdmin
     {
         $tab = self::currentTab('modules');
 
-        self::pageIntro('Réglages', 'Paramètres, diagnostic et maintenance légère de la suite.');
+        self::pageIntro('RÃ©glages', 'ParamÃ¨tres, diagnostic et maintenance lÃ©gÃ¨re de la suite.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-settings');
 
         $settingsTabs = [
@@ -3256,7 +3247,7 @@ final class SuiteAdmin
             $settingsTabs['meta'] = 'Meta & Social';
         }
 
-        $settingsTabs['import'] = 'Import pédagogique';
+        $settingsTabs['import'] = 'Import pÃ©dagogique';
         $settingsTabs['diagnostic'] = 'Diagnostic';
         $settingsTabs['maintenance'] = 'Maintenance';
 
@@ -3283,21 +3274,21 @@ final class SuiteAdmin
                 if (current_user_can('manage_options')) {
                     self::quickAction(
                         'Meta & Social',
-                        'Gérer les balises meta, Open Graph et réglages sociaux.',
+                        'GÃ©rer les balises meta, Open Graph et rÃ©glages sociaux.',
                         admin_url('admin.php?page=ouinpo-meta-social')
                     );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
                         <h3 class="ouinpo-suite-card-title">Meta & Social</h3>
-                        <p>Ces réglages avancés sont réservés aux administrateurs.</p>
+                        <p>Ces rÃ©glages avancÃ©s sont rÃ©servÃ©s aux administrateurs.</p>
                     </div>
                     <?php
                 }
 
                 self::quickAction(
                     'Retour au tableau de bord',
-                    'Revenir à la vue d’ensemble de la suite.',
+                    'Revenir Ã  la vue dâ€™ensemble de la suite.',
                     admin_url('admin.php?page=' . self::ROOT_SLUG)
                 );
                 ?>
@@ -3314,26 +3305,26 @@ final class SuiteAdmin
                 <?php
                 self::quickAction(
                     'Importer des exercices',
-                    'Accéder rapidement à l’écran d’import.',
+                    'AccÃ©der rapidement Ã  lâ€™Ã©cran dâ€™import.',
                     admin_url('admin.php?page=ouinpo-import-exercises')
                 );
 
                 self::quickAction(
                     'Options exercices',
-                    'Accéder aux réglages spécifiques du module Exercices.',
+                    'AccÃ©der aux rÃ©glages spÃ©cifiques du module Exercices.',
                     admin_url('admin.php?page=ouinpo-suite-contents&tab=options')
                 );
 
                 if (ModuleSettings::isEnabled('submissions')) {
                     self::quickAction(
-                        'Voir les dépôts élèves',
-                        'Consulter les productions récentes.',
+                        'Voir les dÃ©pÃ´ts Ã©lÃ¨ves',
+                        'Consulter les productions rÃ©centes.',
                         admin_url('edit.php?post_type=ouinpo_submission')
                     );
 
                     self::quickAction(
                         'Voir les ressources prof',
-                        'Accéder aux ressources pédagogiques.',
+                        'AccÃ©der aux ressources pÃ©dagogiques.',
                         admin_url('edit.php?post_type=ouinpo_resource')
                     );
                 }
@@ -3341,7 +3332,7 @@ final class SuiteAdmin
                 if (current_user_can('manage_options') && ModuleSettings::isEnabled('segfault')) {
                     self::quickAction(
                         'SegFault',
-                        'Accéder aux réglages et outils SegFault.',
+                        'AccÃ©der aux rÃ©glages et outils SegFault.',
                         admin_url('admin.php?page=ouinpo-segfault')
                     );
                 }
@@ -3350,7 +3341,7 @@ final class SuiteAdmin
 
             <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
                 <h2 class="ouinpo-suite-card-title">Rappel</h2>
-                <p>Les opérations lourdes ou sensibles restent volontairement sur leurs écrans métier d’origine. Cette page sert surtout de point d’entrée, de contrôle et d’accès rapide.</p>
+                <p>Les opÃ©rations lourdes ou sensibles restent volontairement sur leurs Ã©crans mÃ©tier dâ€™origine. Cette page sert surtout de point dâ€™entrÃ©e, de contrÃ´le et dâ€™accÃ¨s rapide.</p>
             </div>
             <?php
         }

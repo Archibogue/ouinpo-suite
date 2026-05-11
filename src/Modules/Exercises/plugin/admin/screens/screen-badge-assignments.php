@@ -39,12 +39,11 @@ $group_id = isset($_REQUEST['group_id']) ? intval($_REQUEST['group_id']) : 0;
 $search   = isset($_REQUEST['s']) ? sanitize_text_field(wp_unslash($_REQUEST['s'])) : '';
 $badge_level_filter = isset($_REQUEST['badge_level']) ? sanitize_key(wp_unslash($_REQUEST['badge_level'])) : '';
 
-$school_levels = $wpdb->get_results("SELECT id, slug, label FROM {$tbl_levels} ORDER BY id ASC");
+$school_levels = $wpdb->get_results("SELECT id, slug, label FROM {$tbl_levels} ORDER BY sort_order ASC, id ASC");
 $school_levels_by_slug = [];
 
 $badge_level_options = [
     ''             => 'Toutes les catégories',
-    'transversal'  => 'Transversale',
 ];
 
 foreach ($school_levels as $level) {
@@ -239,20 +238,10 @@ if ($badge_level_filter === 'special') {
          ORDER BY title ASC",
         'special'
     ));
-} elseif ($badge_level_filter === 'transversal' || isset($school_levels_by_slug[$badge_level_filter])) {
+} elseif (isset($school_levels_by_slug[$badge_level_filter])) {
     $level_id = isset($school_levels_by_slug[$badge_level_filter])
         ? (int) $school_levels_by_slug[$badge_level_filter]['id']
         : 0;
-
-    $extra_themes = [];
-    if ($badge_level_filter === 'seconde') {
-        $extra_themes[] = 'Meta-Seconde';
-    } elseif ($badge_level_filter === 'premiere') {
-        $extra_themes[] = 'Meta-Première';
-    } elseif ($badge_level_filter === 'terminale') {
-        $extra_themes[] = 'Meta-Terminale';
-    }
-
     $sql = "
         SELECT DISTINCT b.id, b.title, b.slug, b.theme
         FROM {$tbl_badges} b
@@ -261,17 +250,10 @@ if ($badge_level_filter === 'special') {
         LEFT JOIN {$tbl_comp_levels} csl
             ON csl.competency_id = c.id
         WHERE (
-            " . ($level_id > 0 ? 'csl.school_level_id = %d' : "c.level = 'Transversal'") . "
+            csl.school_level_id = %d
     ";
 
-    $params = $level_id > 0 ? [$level_id] : [];
-
-    if (!empty($extra_themes)) {
-        $placeholders = implode(',', array_fill(0, count($extra_themes), '%s'));
-        $sql .= " OR b.theme IN ($placeholders)";
-        $params = array_merge($params, $extra_themes);
-    }
-
+    $params = [$level_id];
     $sql .= "
         )
         ORDER BY b.title ASC

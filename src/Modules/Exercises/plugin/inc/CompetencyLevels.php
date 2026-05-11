@@ -124,9 +124,7 @@ final class CompetencyLevels {
               FROM {$competencies} c
               JOIN {$levels} sl
                 ON sl.label = c.level
-                OR (c.level = 'Seconde' AND sl.slug = 'seconde')
-                OR (c.level = 'Première' AND sl.slug = 'premiere')
-                OR (c.level = 'Terminale' AND sl.slug = 'terminale')
+                OR sl.slug = c.level
              WHERE c.level <> 'Transversal'
         ");
 

@@ -78,6 +78,8 @@ class InstallV2 {
 
             label VARCHAR(50) NOT NULL,
 
+            sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+
             PRIMARY KEY  (id),
 
             UNIQUE KEY slug (slug)
@@ -853,9 +855,9 @@ class InstallV2 {
 
         if ((int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}difficulties") === 0) {
 
-            $wpdb->insert($p . 'difficulties', ['slug' => 'debutant', 'label' => 'Débutant']);
+            $wpdb->insert($p . 'difficulties', ['slug' => 'debutant', 'label' => 'DÃƒÂ©butant']);
 
-            $wpdb->insert($p . 'difficulties', ['slug' => 'confirme', 'label' => 'Confirmé']);
+            $wpdb->insert($p . 'difficulties', ['slug' => 'confirme', 'label' => 'ConfirmÃƒÂ©']);
 
             $wpdb->insert($p . 'difficulties', ['slug' => 'expert', 'label' => 'Expert']);
 
@@ -863,6 +865,7 @@ class InstallV2 {
 
         
 
+        self::ensure_school_level_sort_order();
         self::seed_school_levels();
         self::migrate_competency_level_column();
         self::migrate_competency_school_levels();
@@ -885,14 +888,59 @@ class InstallV2 {
 
 
 
-    $wpdb->query("INSERT IGNORE INTO {$t} (id,slug,label) VALUES
+    $wpdb->query("INSERT IGNORE INTO {$t} (slug,label,sort_order) VALUES
 
-        (1,'seconde','Seconde'),
+        ('seconde','Seconde',10),
 
-        (2,'premiere','Première'),
+        ('premiere','PremiÃ¨re',20),
 
-        (3,'terminale','Terminale')");
+        ('terminale','Terminale',30)");
 
+    }
+
+    private static function ensure_school_level_sort_order(): void {
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_school_levels';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $column = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'sort_order'
+             LIMIT 1",
+            DB_NAME,
+            $table
+        ));
+
+        if ($column === '') {
+            $wpdb->query("ALTER TABLE {$table} ADD sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER label");
+        }
+
+        $rows = $wpdb->get_results("SELECT id, sort_order FROM {$table} ORDER BY id ASC");
+        $position = 10;
+
+        foreach ((array) $rows as $row) {
+            if ((int) $row->sort_order > 0) {
+                continue;
+            }
+
+            $wpdb->update(
+                $table,
+                ['sort_order' => $position],
+                ['id' => (int) $row->id],
+                ['%d'],
+                ['%d']
+            );
+
+            $position += 10;
+        }
     }
 
     private static function migrate_competency_level_column() {
@@ -942,9 +990,7 @@ class InstallV2 {
               FROM {$tbl_comp} c
               JOIN {$tbl_levels} sl
                 ON sl.label = c.level
-                OR (c.level = 'Seconde' AND sl.slug = 'seconde')
-                OR (c.level = 'Première' AND sl.slug = 'premiere')
-                OR (c.level = 'Terminale' AND sl.slug = 'terminale')
+                OR sl.slug = c.level
              WHERE c.level <> 'Transversal'
         ");
 
@@ -976,11 +1022,11 @@ class InstallV2 {
 
                 "INSERT INTO {$t} (slug,starts_on,ends_on,is_active) VALUES (%s,%s,%s,1)",
 
-                '2025-2026',
+                self::default_academic_year_slug(),
 
-                '2025-09-01',
+                self::default_academic_year_start(),
 
-                '2026-08-31'
+                self::default_academic_year_end()
 
             ));
 
@@ -988,6 +1034,26 @@ class InstallV2 {
 
         }
 
+    }
+
+    private static function default_academic_year_slug(): string {
+        $year = (int) gmdate('Y');
+        $month = (int) gmdate('n');
+        $start = $month >= 9 ? $year : $year - 1;
+
+        return $start . '-' . ($start + 1);
+    }
+
+    private static function default_academic_year_start(): string {
+        $start = (int) substr(self::default_academic_year_slug(), 0, 4);
+
+        return $start . '-09-01';
+    }
+
+    private static function default_academic_year_end(): string {
+        $start = (int) substr(self::default_academic_year_slug(), 0, 4);
+
+        return ($start + 1) . '-08-31';
     }
 
     
@@ -1000,7 +1066,7 @@ class InstallV2 {
 
     
 
-        // Unique déjà présent en prod
+        // Unique dÃƒÂ©jÃƒÂ  prÃƒÂ©sent en prod
 
         self::add_unique_if_missing(
 
@@ -1018,7 +1084,7 @@ class InstallV2 {
 
     
 
-        // Foreign keys alignées sur la prod actuelle
+        // Foreign keys alignÃƒÂ©es sur la prod actuelle
 
         self::add_fk_if_missing(
 

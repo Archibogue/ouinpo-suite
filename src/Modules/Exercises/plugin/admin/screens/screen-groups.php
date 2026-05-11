@@ -69,7 +69,7 @@ if (!empty($_POST) && check_admin_referer('ouinpo_groups_form', 'ouinpo_groups_n
 
 $active_year = $wpdb->get_row("SELECT * FROM {$tbl_years} WHERE is_active=1 LIMIT 1");
 $years  = $wpdb->get_results("SELECT id, slug FROM {$tbl_years} ORDER BY starts_on DESC");
-$levels = $wpdb->get_results("SELECT id, label FROM {$tbl_levels} ORDER BY id ASC");
+$levels = $wpdb->get_results("SELECT id, label FROM {$tbl_levels} ORDER BY sort_order ASC, id ASC");
 
 $current = (object)['id'=>0,'label'=>'','year_id'=>$active_year->id ?? null,'school_level_id'=>null];
 if ($action === 'edit' && $group_id>0) {

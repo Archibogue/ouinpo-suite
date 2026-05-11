@@ -79,7 +79,7 @@ if ($group_id) {
     }
 }
 
-$levels = $wpdb->get_results("SELECT id, label FROM {$tbl_levels} ORDER BY id ASC");
+$levels = $wpdb->get_results("SELECT id, label FROM {$tbl_levels} ORDER BY sort_order ASC, id ASC");
 $levels_map = [];
 foreach ($levels as $l) $levels_map[intval($l->id)] = $l->label;
 
