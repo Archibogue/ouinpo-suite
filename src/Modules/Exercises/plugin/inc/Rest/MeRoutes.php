@@ -860,7 +860,7 @@ class MeRoutes {
 
             if ($theme === 'special' || strpos($slug, 'special-') === 0) {
 
-                return 'SpÃ©cial';
+                return 'Spécial';
 
             }
 
@@ -949,7 +949,7 @@ class MeRoutes {
             $level = $infer_level($row);
             if ($is_special) {
 
-                $level = 'SpÃ©cial';
+                $level = 'Spécial';
 
             } elseif ($domain_slug) {
 
@@ -1007,7 +1007,7 @@ class MeRoutes {
 
                 'domain'      => $domain_label,
 
-                'level'       => $level ?: 'SpÃ©cial',
+                'level'       => $level ?: 'Spécial',
 
             ];
 

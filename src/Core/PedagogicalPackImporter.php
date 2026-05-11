@@ -208,7 +208,7 @@ final class PedagogicalPackImporter
 
         foreach ($rows as $row) {
             if (!is_array($row)) {
-                $details['warnings'][] = 'Domaine ignorÃ© : entrÃ©e invalide.';
+                $details['warnings'][] = 'Domaine ignoré : entrée invalide.';
                 continue;
             }
 
@@ -220,7 +220,7 @@ final class PedagogicalPackImporter
             $active = isset($row['active']) ? ((int)$row['active'] === 1 ? 1 : 0) : 1;
 
             if ($slug === '' || $label === '') {
-                $details['warnings'][] = 'Domaine ignorÃ© : slug ou libellÃ© manquant.';
+                $details['warnings'][] = 'Domaine ignoré : slug ou libellé manquant.';
                 continue;
             }
 
@@ -249,7 +249,7 @@ final class PedagogicalPackImporter
                 );
 
                 if ($updated === false) {
-                    $details['warnings'][] = 'Domaine ' . $slug . ' : mise Ã  jour impossible â€” ' . $wpdb->last_error;
+                    $details['warnings'][] = 'Domaine ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
                 } else {
                     $details['domains_updated']++;
                 }
@@ -261,7 +261,7 @@ final class PedagogicalPackImporter
                 );
 
                 if ($inserted === false) {
-                    $details['warnings'][] = 'Domaine ' . $slug . ' : crÃ©ation impossible â€” ' . $wpdb->last_error;
+                    $details['warnings'][] = 'Domaine ' . $slug . ' : création impossible — ' . $wpdb->last_error;
                 } else {
                     $details['domains_inserted']++;
                 }
@@ -311,7 +311,7 @@ final class PedagogicalPackImporter
         );
 
         if ($inserted === false) {
-            $details['warnings'][] = 'Domaine ' . $slug . ' : crÃ©ation automatique impossible â€” ' . $wpdb->last_error;
+            $details['warnings'][] = 'Domaine ' . $slug . ' : création automatique impossible — ' . $wpdb->last_error;
             return null;
         }
 
@@ -512,7 +512,7 @@ final class PedagogicalPackImporter
                 if ($levelId !== null) {
                     $levelIds[] = $levelId;
                 } elseif ($levelSlug !== '') {
-                    $details['warnings'][] = "CompÃ©tence {$competencyId} : niveau inconnu ({$levelSlug}).";
+                    $details['warnings'][] = "Compétence {$competencyId} : niveau inconnu ({$levelSlug}).";
                 }
             }
         }
@@ -523,7 +523,7 @@ final class PedagogicalPackImporter
             if ($levelId !== null) {
                 $levelIds[] = $levelId;
             } elseif ($levelSlug !== '') {
-                $details['warnings'][] = "CompÃ©tence {$competencyId} : niveau inconnu ({$levelSlug}).";
+                $details['warnings'][] = "Compétence {$competencyId} : niveau inconnu ({$levelSlug}).";
             }
         }
 

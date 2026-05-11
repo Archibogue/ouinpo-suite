@@ -91,8 +91,8 @@ class CompetenciesRoutes {
     }
 
     /**
-     * Retourne 'Seconde' | 'PremiÃ¨re' | 'Terminale'
-     * pour une classe (group_id) donnÃ©e et une annÃ©e (year_id).
+     * Retourne 'Seconde' | 'Première' | 'Terminale'
+     * pour une classe (group_id) donnée et une année (year_id).
      */
     private static function find_group_level_label(int $group_id, int $year_id): ?string {
         global $wpdb;
@@ -306,7 +306,7 @@ public static function seedGroup(\WP_REST_Request $req) {
         return rest_ensure_response([
             'seeded' => true,
             'count'  => 0,
-            'message'=> 'Aucune compÃ©tence vue pour cette classe.'
+            'message'=> 'Aucune compétence vue pour cette classe.'
         ]);
     }
 
@@ -407,7 +407,7 @@ public static function teachingStateUpdate(\WP_REST_Request $req) {
     );
 
     if (!$ok) {
-        return new \WP_Error('update_failed', 'Impossible de mettre Ã  jour lâ€™Ã©tat du cours.', ['status' => 500]);
+        return new \WP_Error('update_failed', 'Impossible de mettre à jour l’état du cours.', ['status' => 500]);
     }
 
     return rest_ensure_response([
@@ -841,7 +841,7 @@ public static function assessmentsByDs(\WP_REST_Request $req) {
             ];
         }
 
-        // SÃ©curitÃ© : si un Ã©lÃ¨ve est marquÃ© absent, on nâ€™affiche pas ses rÃ©sultats Ã©ventuels.
+        // Sécurité : si un élève est marqué absent, on n’affiche pas ses résultats éventuels.
         if (!empty($assessments[$aid]['students'][$uid]['is_absent'])) {
             continue;
         }

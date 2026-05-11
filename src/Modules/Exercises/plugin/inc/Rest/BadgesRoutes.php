@@ -28,7 +28,7 @@ class BadgesRoutes {
 
 
 
-        // Liste / crÃ©ation des badges
+        // Liste / création des badges
 
         register_rest_route(self::NS, '/badges', [
 
@@ -64,7 +64,7 @@ class BadgesRoutes {
 
     /* ============================================================
 
-     * LISTE / CRÃ‰ATION
+     * LISTE / CRÉATION
 
      * ========================================================== */
 
@@ -118,7 +118,7 @@ class BadgesRoutes {
 
     /* ============================================================
 
-     * HELPER : RÃ©cupÃ©ration du niveau d'Ã©lÃ¨ve via les groupes
+     * HELPER : Récupération du niveau d'élève via les groupes
 
      * ========================================================== */
 
@@ -162,7 +162,7 @@ class BadgesRoutes {
 
     /* ============================================================
 
-     * BADGES DE Lâ€™Ã‰LÃˆVE (sans badge_requirements)
+     * BADGES DE L’ÉLÈVE (sans badge_requirements)
 
      * ========================================================== */
 
@@ -238,7 +238,7 @@ class BadgesRoutes {
 
 
 
-        /* -------- 2) Domaines connus Ã  partir des compÃ©tences -------- */
+        /* -------- 2) Domaines connus à partir des compétences -------- */
 
         $domains = $wpdb->get_results("
 
@@ -315,7 +315,7 @@ class BadgesRoutes {
 
 
 
-            // META / SPÃ‰CIAUX
+            // META / SPÉCIAUX
 
             $isMeta    = str_starts_with($theme, 'meta') || str_starts_with($slug, 'meta-');
 
@@ -323,7 +323,7 @@ class BadgesRoutes {
 
 
 
-            // Domaine & niveaux dÃ©duits depuis theme -> domain_slug
+            // Domaine & niveaux déduits depuis theme -> domain_slug
 
             $domainSlug  = null;
 
@@ -359,7 +359,7 @@ class BadgesRoutes {
 
             if ($levels_raw) {
 
-                // On privilÃ©gie les niveaux de cycle (Seconde/PremiÃ¨re/Terminale)
+                // On privilégie les niveaux de cycle (Seconde/Première/Terminale)
 
                 $cycleHits = array_intersect($cycleLevels, $levels_raw);
 
@@ -383,15 +383,15 @@ class BadgesRoutes {
 
             } else {
 
-                // Fallback : comme avant, basÃ© sur le theme (utile surtout pour les mÃ©ta-badges)
+                // Fallback : comme avant, basé sur le theme (utile surtout pour les méta-badges)
 
                 if (str_starts_with($theme,'meta-seconde')) {
 
                     $levels = ['Seconde'];
 
-                } elseif (str_starts_with($theme,'meta-premiere') || str_starts_with($theme,'meta-premiÃ¨re')) {
+                } elseif (str_starts_with($theme,'meta-premiere') || str_starts_with($theme,'meta-première')) {
 
-                    $levels = ['PremiÃ¨re'];
+                    $levels = ['Première'];
 
                 } elseif (str_starts_with($theme,'meta-terminale')) {
 
@@ -399,7 +399,7 @@ class BadgesRoutes {
 
                 } else {
 
-                    $levels = ['SpÃ©cial'];
+                    $levels = ['Spécial'];
 
                 }
 
@@ -421,7 +421,7 @@ class BadgesRoutes {
 
 
 
-            // VISIBILITÃ‰ SELON LE NIVEAU (mÃªme logique qu'avant)
+            // VISIBILITÉ SELON LE NIVEAU (même logique qu'avant)
 
             if ($student_level) {
                 if (!$isMeta && !$isSpecial) {
@@ -478,13 +478,13 @@ class BadgesRoutes {
 
             } elseif ($domainSlug) {
 
-                // Badge de domaine : theme a matchÃ© un domain_slug BO
+                // Badge de domaine : theme a matché un domain_slug BO
 
                 $domainBadges[] = $badgeArr;
 
             } else {
 
-                // Badge de compÃ©tence (ou autre non rattachÃ© Ã  un domaine BO)
+                // Badge de compétence (ou autre non rattaché à un domaine BO)
 
                 $competency[] = $badgeArr;
 

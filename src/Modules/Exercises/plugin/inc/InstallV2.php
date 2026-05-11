@@ -892,9 +892,9 @@ class InstallV2 {
 
         if ((int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}difficulties") === 0) {
 
-            $wpdb->insert($p . 'difficulties', ['slug' => 'debutant', 'label' => 'DÃƒÂ©butant']);
+            $wpdb->insert($p . 'difficulties', ['slug' => 'debutant', 'label' => 'Débutant']);
 
-            $wpdb->insert($p . 'difficulties', ['slug' => 'confirme', 'label' => 'ConfirmÃƒÂ©']);
+            $wpdb->insert($p . 'difficulties', ['slug' => 'confirme', 'label' => 'Confirmé']);
 
             $wpdb->insert($p . 'difficulties', ['slug' => 'expert', 'label' => 'Expert']);
 
@@ -931,7 +931,7 @@ class InstallV2 {
 
         ('seconde','Seconde',10),
 
-        ('premiere','PremiÃ¨re',20),
+        ('premiere','Première',20),
 
         ('terminale','Terminale',30)");
 
@@ -1202,7 +1202,7 @@ class InstallV2 {
 
     
 
-        // Unique dÃƒÂ©jÃƒÂ  prÃƒÂ©sent en prod
+        // Unique déjà présent en prod
 
         self::add_unique_if_missing(
 
@@ -1220,7 +1220,7 @@ class InstallV2 {
 
     
 
-        // Foreign keys alignÃƒÂ©es sur la prod actuelle
+        // Foreign keys alignées sur la prod actuelle
 
         self::add_fk_if_missing(
 
