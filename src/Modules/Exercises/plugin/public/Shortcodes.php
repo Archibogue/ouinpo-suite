@@ -1223,7 +1223,7 @@ private static function default_exercise_level_for_current_user(): string {
 
 }
 
-private static function exercise_list_fallback_html(string $page, string $lvl, string $exam_only): string {
+private static function exercise_list_fallback_html(string $page, string $lvl, string $exam_only, int $current_page, int $per_page): string {
   if (!class_exists('\Ouinpo\Exercises\Rest\ExercisesRoutes') || !class_exists('\WP_REST_Request')) {
     return '<div class="ouinpo-loading">Chargement des exercices…</div>';
   }
@@ -1238,6 +1238,9 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
     $request->set_param('exam_only', '1');
   }
 
+  $request->set_param('page', max(1, $current_page));
+  $request->set_param('per_page', max(1, $per_page));
+
   $response = \Ouinpo\Exercises\Rest\ExercisesRoutes::index($request);
 
   if (is_wp_error($response)) {
@@ -1248,6 +1251,10 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
     ? $response->get_data()
     : $response;
 
+  $headers = $response instanceof \WP_REST_Response ? $response->get_headers() : [];
+  $total = isset($headers['X-WP-Total']) ? (int) $headers['X-WP-Total'] : count((array) $items);
+  $total_pages = isset($headers['X-WP-TotalPages']) ? (int) $headers['X-WP-TotalPages'] : 1;
+
   if (!is_array($items)) {
     return '<div class="ouinpo-loading">Chargement des exercices…</div>';
   }
@@ -1256,11 +1263,15 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
     return '<div class="ouinpo-empty">Aucun exercice ne correspond aux filtres.</div>';
   }
 
-  $items = array_slice($items, 0, 200);
+  $current_page = max(1, min($current_page, max(1, $total_pages)));
 
   ob_start();
   ?>
-  <div class="ouinpo-exercises-meta"></div>
+  <div class="ouinpo-exercises-meta">
+    <span class="ouinpo-chip">
+      <?php echo esc_html(count($items) . ' exercice' . (count($items) > 1 ? 's' : '') . ' affiché' . (count($items) > 1 ? 's' : '') . ' sur ' . $total); ?>
+    </span>
+  </div>
   <section class="ouinpo-exo-domain-block">
     <h3 class="ouinpo-exo-domain-title">Tous les exercices</h3>
     <ul class="ouinpo-exercises-list ouinpo-exo-list">
@@ -1288,13 +1299,143 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
       <?php endforeach; ?>
     </ul>
   </section>
+  <?php if ($total_pages > 1): ?>
+    <nav class="ouinpo-pagination" aria-label="Pagination des exercices">
+      <?php if ($current_page > 1): ?>
+        <a class="ouinpo-page-button" href="<?php echo esc_url(add_query_arg('exo_page', $current_page - 1)); ?>">Précédent</a>
+      <?php else: ?>
+        <span class="ouinpo-page-button is-disabled">Précédent</span>
+      <?php endif; ?>
+      <span class="ouinpo-page-status"><?php echo esc_html('Page ' . $current_page . ' / ' . $total_pages); ?></span>
+      <?php if ($current_page < $total_pages): ?>
+        <a class="ouinpo-page-button" href="<?php echo esc_url(add_query_arg('exo_page', $current_page + 1)); ?>">Suivant</a>
+      <?php else: ?>
+        <span class="ouinpo-page-button is-disabled">Suivant</span>
+      <?php endif; ?>
+    </nav>
+  <?php endif; ?>
   <?php
   return trim((string) ob_get_clean());
 }
 
 
 
-  /** Liste des exercices (le JS remplira #ouinpo-exercises depuis l’API REST) */
+  /** Liste des sujets pratiques rendue cote serveur pour les visiteurs. */
+private static function practical_subject_list_fallback_html(string $page, string $lvl, string $source_type, string $theme_bac): string {
+  if (!class_exists('\Ouinpo\Exercises\Rest\PracticalRoutes') || !class_exists('\WP_REST_Request')) {
+    return '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>';
+  }
+
+  $request = new \WP_REST_Request('GET', '/ouinpo/v1/practical-subjects');
+
+  if ($lvl !== '') {
+    $request->set_param('school_level', $lvl);
+  }
+
+  if ($source_type !== '') {
+    $request->set_param('source_type', $source_type);
+  }
+
+  if ($theme_bac !== '') {
+    $request->set_param('theme_bac', $theme_bac);
+  }
+
+  $response = \Ouinpo\Exercises\Rest\PracticalRoutes::index($request);
+
+  if (is_wp_error($response)) {
+    return '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>';
+  }
+
+  $items = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+
+  if (!is_array($items)) {
+    return '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>';
+  }
+
+  if (empty($items)) {
+    return '<div class="ouinpo-empty">Aucun sujet pratique trouve.</div>';
+  }
+
+  ob_start();
+  ?>
+  <div class="ouinpo-exercises-meta">
+    <span class="ouinpo-chip">
+      <?php echo esc_html(count($items) . ' sujet' . (count($items) > 1 ? 's' : '')); ?>
+    </span>
+  </div>
+  <ul class="ouinpo-exercises-list ouinpo-exo-list">
+    <?php foreach ($items as $item): ?>
+      <?php
+      $item = is_object($item) ? $item : (object) $item;
+      $id = isset($item->id) ? (int) $item->id : 0;
+      if ($id <= 0) {
+        continue;
+      }
+
+      $title = isset($item->title) && $item->title !== '' ? (string) $item->title : 'Sujet pratique';
+      $url = add_query_arg('practical', $id, $page);
+      $sub_bits = [];
+
+      foreach (['session_label', 'year_label', 'center_label'] as $field) {
+        if (!empty($item->{$field})) {
+          $sub_bits[] = (string) $item->{$field};
+        }
+      }
+      ?>
+      <li class="ouinpo-exercise-item ouin-exo-li">
+        <div class="ouinpo-exercise-main ouin-exo-main">
+          <a class="ouinpo-exercise-link ouin-exo-link" href="<?php echo esc_url($url); ?>">
+            <?php echo esc_html($title); ?>
+          </a>
+          <?php if (!empty($sub_bits)): ?>
+            <div class="ouinpo-exercise-sub"><?php echo esc_html(implode(' - ', $sub_bits)); ?></div>
+          <?php endif; ?>
+        </div>
+        <div class="ouinpo-badges ouin-exo-status">
+          <?php if (!empty($item->source_type)): ?>
+            <span class="ouinpo-badge ouinpo-badge--exam"><?php echo esc_html(self::source_type_label((string) $item->source_type)); ?></span>
+          <?php endif; ?>
+          <?php if (!empty($item->theme_bac)): ?>
+            <span class="ouinpo-badge ouinpo-badge--competency"><?php echo esc_html(self::theme_bac_label((string) $item->theme_bac)); ?></span>
+          <?php endif; ?>
+          <?php if (!empty($item->difficulty_label)): ?>
+            <span class="ouinpo-badge ouinpo-badge--difficulty"><?php echo esc_html((string) $item->difficulty_label); ?></span>
+          <?php endif; ?>
+          <?php if (isset($item->calls_count)): ?>
+            <span class="ouinpo-badge">
+              <?php echo esc_html((string) (int) $item->calls_count); ?> appel<?php echo ((int) $item->calls_count > 1) ? 's' : ''; ?>
+            </span>
+          <?php endif; ?>
+        </div>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+  <?php
+  return trim((string) ob_get_clean());
+}
+
+private static function source_type_label(string $source_type): string {
+  $labels = [
+    'annale'   => 'Annale',
+    'inspired' => 'Inspire annale',
+    'type_bac' => 'Type bac',
+  ];
+
+  return $labels[strtolower($source_type)] ?? '';
+}
+
+private static function theme_bac_label(string $theme): string {
+  $labels = [
+    'algorithmique'         => 'Algorithmique',
+    'programmation'         => 'Programmation',
+    'structures_de_donnees' => 'Structures de donnees',
+    'bases_de_donnees_sql'  => 'Bases de donnees / SQL',
+    'reseaux_securite'      => 'Reseaux et securite',
+    'architecture_systemes' => 'Architecture et systemes',
+  ];
+
+  return $labels[strtolower($theme)] ?? $theme;
+}
 
 public static function render_list($atts = array(), $content = '') {
 
@@ -1311,6 +1452,8 @@ public static function render_list($atts = array(), $content = '') {
     'lvl'       => '',
 
     'exam_only' => '0',
+
+    'per_page'  => '50',
 
   ), $atts, 'ouinpo_exercises');
 
@@ -1404,9 +1547,12 @@ public static function render_list($atts = array(), $content = '') {
 
     : '0';
 
+  $per_page = max(1, min(100, (int) $atts['per_page']));
+  $current_page = isset($_GET['exo_page']) ? max(1, (int) $_GET['exo_page']) : 1;
+
   $initial_list_html = $is_logged
     ? '<div class="ouinpo-loading">Chargement des exercices…</div>'
-    : self::exercise_list_fallback_html($page, $lvl, $exam_only);
+    : self::exercise_list_fallback_html($page, $lvl, $exam_only, $current_page, $per_page);
 
   if (!$is_logged) {
     wp_add_inline_script(
@@ -1540,25 +1686,7 @@ JS,
 
 
 
-        <div
-
-          id="ouinpo-exercises"
-
-          class="ouinpo-exercises-root"
-
-          data-exo-page="<?php echo esc_attr($page); ?>"
-
-          data-source="shortcode"
-
-          data-logged="<?php echo $is_logged ? '1' : '0'; ?>"
-
-          data-level="<?php echo esc_attr($lvl); ?>"
-
-          data-level-label="<?php echo esc_attr($level_label); ?>"
-
-          data-exam-only="<?php echo esc_attr($exam_only); ?>"
-
-        >
+        <div id="ouinpo-exercises" class="ouinpo-exercises-root" data-exo-page="<?php echo esc_attr($page); ?>" data-source="shortcode" data-logged="<?php echo $is_logged ? '1' : '0'; ?>" data-level="<?php echo esc_attr($lvl); ?>" data-level-label="<?php echo esc_attr($level_label); ?>" data-exam-only="<?php echo esc_attr($exam_only); ?>" data-current-page="<?php echo esc_attr((string) $current_page); ?>" data-per-page="<?php echo esc_attr((string) $per_page); ?>">
 
           <?php echo $initial_list_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
@@ -1651,6 +1779,10 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
   $theme_bac   = sanitize_text_field((string) $atts['theme_bac']);
 
+  $initial_list_html = $is_logged
+    ? '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>'
+    : self::practical_subject_list_fallback_html($page, $lvl, $source_type, $theme_bac);
+
 
 
   ob_start();
@@ -1717,25 +1849,9 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
 
 
-        <div
+        <div id="ouinpo-practical-subjects" class="ouinpo-practical-subjects-root" data-subject-page="<?php echo esc_attr($page); ?>" data-logged="<?php echo $is_logged ? '1' : '0'; ?>" data-level="<?php echo esc_attr($lvl); ?>" data-source-type="<?php echo esc_attr($source_type); ?>" data-theme-bac="<?php echo esc_attr($theme_bac); ?>" data-server-fallback="<?php echo $is_logged ? '0' : '1'; ?>">
 
-          id="ouinpo-practical-subjects"
-
-          class="ouinpo-practical-subjects-root"
-
-          data-subject-page="<?php echo esc_attr($page); ?>"
-
-          data-logged="<?php echo $is_logged ? '1' : '0'; ?>"
-
-          data-level="<?php echo esc_attr($lvl); ?>"
-
-          data-source-type="<?php echo esc_attr($source_type); ?>"
-
-          data-theme-bac="<?php echo esc_attr($theme_bac); ?>"
-
-        >
-
-          <div class="ouinpo-loading">Chargement des sujets pratiques…</div>
+          <?php echo $initial_list_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
         </div>
 
@@ -1879,11 +1995,7 @@ public static function render_practical_subject($atts = array(), $content = '') 
 
 return '
 
-  <div class="ouinpo-practical-subject"
-
-       data-subject-id="' . esc_attr($id) . '"
-
-       data-logged="' . ($is_logged ? '1' : '0') . '">
+  <div class="ouinpo-practical-subject" data-subject-id="' . esc_attr($id) . '" data-logged="' . ($is_logged ? '1' : '0') . '">
 
 
 
@@ -2151,13 +2263,7 @@ $is_logged = is_user_logged_in();
 
   return '
 
-    <div class="ouinpo-exo"
-
-         data-exo-id="' . $id_attr . '"
-
-         data-logged="' . ($is_logged ? '1' : '0') . '"
-
-         data-show-status-actions="' . ($show_status_actions ? '1' : '0') . '">
+    <div class="ouinpo-exo" data-exo-id="' . $id_attr . '" data-logged="' . ($is_logged ? '1' : '0') . '" data-show-status-actions="' . ($show_status_actions ? '1' : '0') . '">
 
         <div class="exo-statement"></div>'
 

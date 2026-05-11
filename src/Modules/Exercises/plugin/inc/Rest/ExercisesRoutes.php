@@ -97,7 +97,9 @@ class ExercisesRoutes {
         $source_type   = '';
         $theme_bac     = '';
         $bac_format    = '';
-        $session_label = '';
+        $session_label = '';
+        $page          = 1;
+        $per_page      = 50;
 
         if ($r instanceof \WP_REST_Request) {
             $difficulty    = sanitize_text_field($r->get_param('difficulty'));
@@ -109,7 +111,13 @@ class ExercisesRoutes {
             $source_type   = mb_strtolower(sanitize_text_field($r->get_param('source_type')));
             $theme_bac     = sanitize_text_field($r->get_param('theme_bac'));
             $bac_format    = sanitize_text_field($r->get_param('bac_format'));
-            $session_label = sanitize_text_field($r->get_param('session_label'));
+            $session_label = sanitize_text_field($r->get_param('session_label'));
+            $page     = max(1, (int) $r->get_param('page'));
+            $per_page = (int) $r->get_param('per_page');
+            if ($per_page <= 0) {
+                $per_page = 50;
+            }
+            $per_page = max(1, min(100, $per_page));
         }
     
         $exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_exo));
@@ -221,7 +229,7 @@ class ExercisesRoutes {
                 {$joins}
                 {$where_sql}
                 {$order}
-                LIMIT 200
+
             ";
     
             $rows = $wpdb->get_results($sql);
@@ -303,7 +311,7 @@ class ExercisesRoutes {
                     {$joins}
                     {$where_sql}
                     {$order}
-                    LIMIT 200
+
                 ";
     
                 $rows = $wpdb->get_results($sql);
@@ -381,14 +389,27 @@ class ExercisesRoutes {
             }
     
             $sql .= $has_created_at ? " ORDER BY e.created_at DESC" : " ORDER BY e.id DESC";
-            $sql .= " LIMIT 200";
+
     
             $rows = !empty($args)
                 ? $wpdb->get_results($wpdb->prepare($sql, $args))
                 : $wpdb->get_results($sql);
         }
     
-        return new \WP_REST_Response(is_array($rows) ? $rows : array(), 200);
+        $rows = is_array($rows) ? array_values($rows) : array();
+        $total = count($rows);
+        $total_pages = max(1, (int) ceil($total / $per_page));
+        $page = min($page, $total_pages);
+        $offset = ($page - 1) * $per_page;
+        $paged_rows = array_slice($rows, $offset, $per_page);
+
+        $response = new \WP_REST_Response($paged_rows, 200);
+        $response->header('X-WP-Total', (string) $total);
+        $response->header('X-WP-TotalPages', (string) $total_pages);
+        $response->header('X-Ouinpo-Page', (string) $page);
+        $response->header('X-Ouinpo-Per-Page', (string) $per_page);
+
+        return $response;
     }
     /** Détail (énoncé) — respecte l'existence des colonnes */
     public static function show($r) {
