@@ -94,6 +94,17 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
     $post_action = isset($_POST['action']) ? sanitize_key(wp_unslash((string) $_POST['action'])) : '';
     $post_id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
 
+    if ($post_action === 'save_settings') {
+        update_option(
+            'ouinpo_exercises_cumulative_school_levels',
+            !empty($_POST['cumulative_school_levels']) ? '1' : '0',
+            false
+        );
+        add_settings_error('ouinpo_levels', 'settings_updated', 'Reglage des niveaux enregistres.', 'updated');
+        $action = '';
+        $level_id = 0;
+    }
+
     if ($post_action === 'save') {
         $label = isset($_POST['label']) ? sanitize_text_field(wp_unslash((string) $_POST['label'])) : '';
         $slug_raw = isset($_POST['slug']) ? sanitize_text_field(wp_unslash((string) $_POST['slug'])) : '';
@@ -249,6 +260,7 @@ $competencies = $wpdb->get_results("
       competency
 ");
 $current_competency_ids = [];
+$cumulative_school_levels = (bool) get_option('ouinpo_exercises_cumulative_school_levels', false);
 
 if ($action === 'new') {
     $current_competency_ids = [];
@@ -292,6 +304,27 @@ settings_errors('ouinpo_levels');
 
   <div class="ouinpo-admin-layout">
     <div class="ouinpo-admin-layout-main">
+      <h2 class="title">Reglages de progression</h2>
+      <form method="post" class="ouinpo-admin-panel">
+        <?php wp_nonce_field('ouinpo_levels_form', 'ouinpo_levels_nonce'); ?>
+        <input type="hidden" name="action" value="save_settings">
+        <fieldset>
+          <label>
+            <input
+              type="checkbox"
+              name="cumulative_school_levels"
+              value="1"
+              <?php checked($cumulative_school_levels); ?>
+            >
+            Activer les niveaux cumulatifs
+          </label>
+          <p class="description">
+            Quand cette option est active, un eleve voit les contenus de son niveau et des niveaux dont l'ordre est inferieur ou egal.
+          </p>
+        </fieldset>
+        <?php submit_button('Enregistrer le reglage', 'secondary', 'submit', false); ?>
+      </form>
+
       <h2 class="title">Liste des niveaux</h2>
       <table class="widefat fixed striped">
         <thead>
