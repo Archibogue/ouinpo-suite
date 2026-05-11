@@ -62,6 +62,14 @@ Une compétence n'est pas rattachée à un niveau par son ancien champ `level`, 
 
 `Transversal` n'est pas un niveau scolaire. Une compétence est considérée comme transversale lorsqu'elle est liée à plusieurs niveaux scolaires. Les anciens packs qui contiennent `level = "Transversal"` restent acceptés : à l'import, la compétence est alors liée aux niveaux existants.
 
+
+### Domaines BO
+
+La source structurée des domaines est la table `ouin_exo_domains`. Une compétence appartient à un domaine via `domain_id`, et peut ensuite être liée à un ou plusieurs niveaux scolaires via `ouin_exo_competency_school_level`.
+
+Les anciens champs `domain` et `domain_slug` de `ouin_exo_competencies` sont conservés pour compatibilité avec les packs et shortcodes existants. Les migrations créent automatiquement les domaines à partir des couples historiques `domain_slug` / `domain` / `track`, puis renseignent `domain_id`.
+
+Un domaine n'est pas un niveau : il peut appartenir à un référentiel ou une filière (`track`) comme `NSI`, `SNT` ou `BTS SIO`, tandis que la transversalité d'une compétence reste déduite de ses liens avec plusieurs niveaux scolaires.
 Les pages publiques ne sont pas créées automatiquement. Il faut les créer dans WordPress, puis y placer les shortcodes nécessaires.
 
 ## Packs pédagogiques
@@ -77,6 +85,9 @@ Les packs pédagogiques permettent d’importer des contenus dans une installati
 
 Le dossier `packs/` contient le schéma et les exemples fournis avec le plugin.
 Un pack peut déclarer ses propres niveaux dans `school_levels`, avec un `slug`, un `label` et optionnellement `sort_order`. Les exercices et compétences peuvent ensuite utiliser `level_slug` pour un niveau ou `level_slugs` pour plusieurs niveaux. Si un niveau référencé n'existe pas et n'est pas déclaré dans le pack, l'import signale un avertissement au lieu de créer silencieusement une donnée imprévue.
+
+
+Un pack peut aussi déclarer ses domaines dans domains, avec slug, label, 	rack, description, sort_order et ctive. Si un pack ancien ne déclare pas domains, l'import crée ou met à jour le domaine à partir des champs de compatibilité de chaque compétence.
 
 Pour une installation de démonstration, importer par exemple :
 

@@ -334,11 +334,45 @@ class InstallV2 {
 
         ) $charset_innodb;";
 
+        $sql_domains = "CREATE TABLE {$p}domains (
+
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+            slug VARCHAR(128) NOT NULL,
+
+            label VARCHAR(191) NOT NULL,
+
+            track VARCHAR(50) NOT NULL DEFAULT '',
+
+            description TEXT NULL,
+
+            sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+
+            active TINYINT(1) NOT NULL DEFAULT 1,
+
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+            PRIMARY KEY  (id),
+
+            UNIQUE KEY uk_slug_track (slug, track),
+
+            KEY idx_track (track),
+
+            KEY idx_active (active),
+
+            KEY idx_sort_order (sort_order)
+
+        ) $charset_innodb;";
+
 
 
         $sql_competencies = "CREATE TABLE {$p}competencies (
 
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+            domain_id BIGINT UNSIGNED NULL,
 
             domain VARCHAR(120) NOT NULL,
 
@@ -350,7 +384,7 @@ class InstallV2 {
 
             example TEXT DEFAULT NULL,
 
-            track ENUM('SNT','NSI') NOT NULL,
+            track VARCHAR(50) NOT NULL,
 
             level VARCHAR(50) NOT NULL,
 
@@ -367,6 +401,8 @@ class InstallV2 {
             PRIMARY KEY  (id),
 
             UNIQUE KEY uk_slug (slug),
+
+            KEY domain_id (domain_id),
 
             KEY idx_track_level (track, level),
 
@@ -790,6 +826,7 @@ class InstallV2 {
         dbDelta($sql_ai_attempts);
 
         dbDelta($sql_user_status);
+        dbDelta($sql_domains);
         dbDelta($sql_competencies);
         dbDelta($sql_competency_school_level);
         dbDelta($sql_competencies_import);
@@ -867,7 +904,9 @@ class InstallV2 {
 
         self::ensure_school_level_sort_order();
         self::seed_school_levels();
+        self::migrate_competency_track_column();
         self::migrate_competency_level_column();
+        self::migrate_domains();
         self::migrate_competency_school_levels();
 
         self::seed_year_if_missing();
@@ -943,6 +982,33 @@ class InstallV2 {
         }
     }
 
+    private static function migrate_competency_track_column(): void {
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_competencies';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $column_type = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_TYPE
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'track'
+             LIMIT 1",
+            DB_NAME,
+            $table
+        ));
+
+        if ($column_type !== '' && stripos($column_type, 'enum(') === 0) {
+            $wpdb->query("ALTER TABLE {$table} MODIFY track VARCHAR(50) NOT NULL");
+        }
+
+    }
+
     private static function migrate_competency_level_column() {
 
         global $wpdb;
@@ -967,6 +1033,76 @@ class InstallV2 {
         if ($column_type !== '' && stripos($column_type, 'enum(') === 0) {
             $wpdb->query("ALTER TABLE {$table} MODIFY level VARCHAR(50) NOT NULL");
         }
+
+    }
+
+    private static function migrate_domains(): void {
+
+        global $wpdb;
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+        $tbl_domains = $p . 'domains';
+        $tbl_comp = $p . 'competencies';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tbl_domains))
+            || !$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tbl_comp))) {
+            return;
+        }
+
+        $has_domain_id = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'domain_id'
+             LIMIT 1",
+            DB_NAME,
+            $tbl_comp
+        ));
+
+        if ($has_domain_id === '') {
+            $wpdb->query("ALTER TABLE {$tbl_comp} ADD domain_id BIGINT UNSIGNED NULL AFTER id");
+            $wpdb->query("ALTER TABLE {$tbl_comp} ADD KEY domain_id (domain_id)");
+        }
+
+        $wpdb->query("
+            INSERT IGNORE INTO {$tbl_domains} (slug, label, track, sort_order, active)
+            SELECT
+                c.domain_slug,
+                MAX(c.domain) AS label,
+                COALESCE(NULLIF(c.track, ''), '') AS track,
+                0 AS sort_order,
+                1 AS active
+            FROM {$tbl_comp} c
+            WHERE c.domain_slug IS NOT NULL
+              AND c.domain_slug <> ''
+              AND c.domain IS NOT NULL
+              AND c.domain <> ''
+            GROUP BY c.domain_slug, COALESCE(NULLIF(c.track, ''), '')
+        ");
+
+        $wpdb->query("
+            UPDATE {$tbl_domains} d
+            JOIN (
+                SELECT id
+                FROM {$tbl_domains}
+                WHERE sort_order = 0
+                ORDER BY track ASC, label ASC, id ASC
+            ) ordered ON ordered.id = d.id
+            SET d.sort_order = d.id * 10
+            WHERE d.sort_order = 0
+        ");
+
+        $wpdb->query("
+            UPDATE {$tbl_comp} c
+            JOIN {$tbl_domains} d
+              ON d.slug = c.domain_slug
+             AND d.track = COALESCE(NULLIF(c.track, ''), '')
+            SET c.domain_id = d.id
+            WHERE c.domain_id IS NULL
+              AND c.domain_slug IS NOT NULL
+              AND c.domain_slug <> ''
+        ");
 
     }
 

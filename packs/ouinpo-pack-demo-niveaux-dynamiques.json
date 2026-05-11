@@ -30,10 +30,28 @@
       "label": "Confirmé"
     }
   ],
+  "domains": [
+    {
+      "slug": "reseaux",
+      "label": "Réseaux",
+      "track": "BTS SIO",
+      "description": "Administration et compréhension de réseaux IP.",
+      "sort_order": 10,
+      "active": 1
+    },
+    {
+      "slug": "methodes-professionnelles",
+      "label": "Méthodes professionnelles",
+      "track": "BTS SIO",
+      "description": "Compétences de documentation, organisation et communication technique.",
+      "sort_order": 20,
+      "active": 1
+    }
+  ],
   "competencies": [
     {
       "slug": "bts-sio-1-reseaux-adressage-001",
-      "track": "NSI",
+      "track": "BTS SIO",
       "level_slug": "bts-sio-1",
       "domain": "Réseaux",
       "domain_slug": "reseaux",
@@ -44,7 +62,7 @@
     },
     {
       "slug": "bts-sio-transversal-documentation-001",
-      "track": "NSI",
+      "track": "BTS SIO",
       "level_slugs": ["bts-sio-1", "bts-sio-2"],
       "domain": "Méthodes professionnelles",
       "domain_slug": "methodes-professionnelles",
@@ -75,7 +93,7 @@
         "slug": "bts-sio-reseaux-demo",
         "title": "BTS SIO - Réseaux démo",
         "description": "Flashcards de démonstration pour niveaux dynamiques.",
-        "track": "NSI",
+        "track": "BTS SIO",
         "level": "BTS SIO 1",
         "is_active": 1
       },

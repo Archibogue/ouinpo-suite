@@ -6,6 +6,20 @@ defined('ABSPATH') || exit;
 
 final class PedagogicalPackImporter
 {
+    private static function tableExists(string $table): bool
+    {
+        global $wpdb;
+
+        return (string) $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
+    }
+
+    private static function hasColumn(string $table, string $column): bool
+    {
+        global $wpdb;
+
+        return (string) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column)) === $column;
+    }
+
     public static function importFromFile(string $path): array
     {
         if (!is_readable($path)) {
@@ -46,6 +60,8 @@ final class PedagogicalPackImporter
         $details = [
             'school_levels_inserted' => 0,
             'school_levels_updated' => 0,
+            'domains_inserted' => 0,
+            'domains_updated' => 0,
             'difficulties_inserted' => 0,
             'difficulties_updated' => 0,
             'competencies_inserted' => 0,
@@ -89,6 +105,7 @@ final class PedagogicalPackImporter
 
         $requiredArrays = [
             'school_levels',
+            'domains',
             'difficulties',
             'competencies',
             'exercises',
@@ -112,6 +129,7 @@ final class PedagogicalPackImporter
         $p = $wpdb->prefix . 'ouin_exo_';
 
         self::importSchoolLevels($p, $data['school_levels'], $details);
+        self::importDomains($p, $data['domains'], $details);
         self::importDifficulties($p, $data['difficulties'], $details);
         self::importCompetencies($p, $data['competencies'], $details);
         self::importExercises($p, $data['exercises'], $details);
@@ -176,6 +194,130 @@ final class PedagogicalPackImporter
                 $details['school_levels_inserted']++;
             }
         }
+    }
+
+    private static function importDomains(string $p, array $rows, array &$details): void
+    {
+        global $wpdb;
+
+        $table = $p . 'domains';
+
+        if (!self::tableExists($table)) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                $details['warnings'][] = 'Domaine ignorÃ© : entrÃ©e invalide.';
+                continue;
+            }
+
+            $slug = sanitize_key((string)($row['slug'] ?? ($row['domain_slug'] ?? '')));
+            $label = sanitize_text_field((string)($row['label'] ?? ($row['domain'] ?? '')));
+            $track = strtoupper(sanitize_text_field((string)($row['track'] ?? '')));
+            $description = wp_kses_post((string)($row['description'] ?? ''));
+            $sortOrder = isset($row['sort_order']) ? (int)$row['sort_order'] : (int)($row['rank'] ?? 0);
+            $active = isset($row['active']) ? ((int)$row['active'] === 1 ? 1 : 0) : 1;
+
+            if ($slug === '' || $label === '') {
+                $details['warnings'][] = 'Domaine ignorÃ© : slug ou libellÃ© manquant.';
+                continue;
+            }
+
+            $payload = [
+                'slug' => $slug,
+                'label' => $label,
+                'track' => $track,
+                'description' => $description !== '' ? $description : null,
+                'sort_order' => max(0, $sortOrder),
+                'active' => $active,
+            ];
+
+            $existingId = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$table} WHERE slug = %s AND track = %s",
+                $slug,
+                $track
+            ));
+
+            if ($existingId > 0) {
+                $updated = $wpdb->update(
+                    $table,
+                    $payload,
+                    ['id' => $existingId],
+                    ['%s', '%s', '%s', '%s', '%d', '%d'],
+                    ['%d']
+                );
+
+                if ($updated === false) {
+                    $details['warnings'][] = 'Domaine ' . $slug . ' : mise Ã  jour impossible â€” ' . $wpdb->last_error;
+                } else {
+                    $details['domains_updated']++;
+                }
+            } else {
+                $inserted = $wpdb->insert(
+                    $table,
+                    $payload,
+                    ['%s', '%s', '%s', '%s', '%d', '%d']
+                );
+
+                if ($inserted === false) {
+                    $details['warnings'][] = 'Domaine ' . $slug . ' : crÃ©ation impossible â€” ' . $wpdb->last_error;
+                } else {
+                    $details['domains_inserted']++;
+                }
+            }
+        }
+    }
+
+    private static function ensureDomain(string $p, string $slug, string $label, string $track, array &$details): ?int
+    {
+        global $wpdb;
+
+        $table = $p . 'domains';
+
+        if (!self::tableExists($table) || $slug === '' || $label === '') {
+            return null;
+        }
+
+        $id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$table} WHERE slug = %s AND track = %s",
+            $slug,
+            $track
+        ));
+
+        if ($id > 0) {
+            $wpdb->update(
+                $table,
+                ['label' => $label],
+                ['id' => $id],
+                ['%s'],
+                ['%d']
+            );
+
+            return $id;
+        }
+
+        $inserted = $wpdb->insert(
+            $table,
+            [
+                'slug' => $slug,
+                'label' => $label,
+                'track' => $track,
+                'description' => null,
+                'sort_order' => 0,
+                'active' => 1,
+            ],
+            ['%s', '%s', '%s', '%s', '%d', '%d']
+        );
+
+        if ($inserted === false) {
+            $details['warnings'][] = 'Domaine ' . $slug . ' : crÃ©ation automatique impossible â€” ' . $wpdb->last_error;
+            return null;
+        }
+
+        $details['domains_inserted']++;
+
+        return (int) $wpdb->insert_id;
     }
 
     private static function importDifficulties(string $p, array $rows, array &$details): void
@@ -248,15 +390,14 @@ final class PedagogicalPackImporter
             }
 
             $track = strtoupper(sanitize_text_field((string)($row['track'] ?? 'NSI')));
-            if (!in_array($track, ['SNT', 'NSI'], true)) {
-                $track = 'NSI';
-            }
+            $track = $track !== '' ? substr($track, 0, 50) : 'NSI';
 
             $rawLevel = sanitize_text_field((string)($row['level'] ?? ''));
             $level = $rawLevel !== '' ? $rawLevel : self::displayLevelFromRow($p, $row);
 
             $domain = sanitize_text_field((string)($row['domain'] ?? ''));
             $domainSlug = sanitize_key((string)($row['domain_slug'] ?? ''));
+            $domainId = self::ensureDomain($p, $domainSlug, $domain, $track, $details);
 
             $competency = wp_kses_post((string)($row['competency'] ?? ''));
             $capacity = wp_kses_post((string)($row['capacity'] ?? ''));
@@ -304,6 +445,11 @@ final class PedagogicalPackImporter
                 '%s', // label
                 '%s', // cycle
             ];
+
+            if ($domainId !== null && self::hasColumn($table, 'domain_id')) {
+                $payload = ['domain_id' => $domainId] + $payload;
+                array_unshift($formats, '%d');
+            }
 
             $existingId = $wpdb->get_var($wpdb->prepare(
                 "SELECT id FROM {$table} WHERE slug = %s",

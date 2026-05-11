@@ -794,17 +794,23 @@ class MeRoutes {
 
         $domain_rows = $wpdb->get_results("
 
-            SELECT DISTINCT c.domain_slug, c.domain, sl.label AS level
+            SELECT DISTINCT
+                COALESCE(NULLIF(d.slug, ''), c.domain_slug) AS domain_slug,
+                COALESCE(NULLIF(d.label, ''), c.domain) AS domain,
+                sl.label AS level
 
             FROM {$p}competencies c
+            LEFT JOIN {$p}domains d ON d.id = c.domain_id
 
             INNER JOIN {$p}competency_school_level csl ON csl.competency_id = c.id
 
             INNER JOIN {$p}school_levels sl ON sl.id = csl.school_level_id
 
-            WHERE c.domain_slug IS NOT NULL
+            WHERE COALESCE(NULLIF(d.slug, ''), c.domain_slug) IS NOT NULL
 
-              AND c.domain_slug <> ''
+              AND COALESCE(NULLIF(d.slug, ''), c.domain_slug) <> ''
+
+              AND COALESCE(d.active, 1) = 1
 
         ", ARRAY_A);
 

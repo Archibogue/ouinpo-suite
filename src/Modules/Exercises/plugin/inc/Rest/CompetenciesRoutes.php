@@ -91,8 +91,8 @@ class CompetenciesRoutes {
     }
 
     /**
-     * Retourne 'Seconde' | 'Première' | 'Terminale'
-     * pour une classe (group_id) donnée et une année (year_id).
+     * Retourne 'Seconde' | 'PremiÃ¨re' | 'Terminale'
+     * pour une classe (group_id) donnÃ©e et une annÃ©e (year_id).
      */
     private static function find_group_level_label(int $group_id, int $year_id): ?string {
         global $wpdb;
@@ -306,7 +306,7 @@ public static function seedGroup(\WP_REST_Request $req) {
         return rest_ensure_response([
             'seeded' => true,
             'count'  => 0,
-            'message'=> 'Aucune compétence vue pour cette classe.'
+            'message'=> 'Aucune compÃ©tence vue pour cette classe.'
         ]);
     }
 
@@ -407,7 +407,7 @@ public static function teachingStateUpdate(\WP_REST_Request $req) {
     );
 
     if (!$ok) {
-        return new \WP_Error('update_failed', 'Impossible de mettre à jour l’état du cours.', ['status' => 500]);
+        return new \WP_Error('update_failed', 'Impossible de mettre Ã  jour lâ€™Ã©tat du cours.', ['status' => 500]);
     }
 
     return rest_ensure_response([
@@ -841,7 +841,7 @@ public static function assessmentsByDs(\WP_REST_Request $req) {
             ];
         }
 
-        // Sécurité : si un élève est marqué absent, on n’affiche pas ses résultats éventuels.
+        // SÃ©curitÃ© : si un Ã©lÃ¨ve est marquÃ© absent, on nâ€™affiche pas ses rÃ©sultats Ã©ventuels.
         if (!empty($assessments[$aid]['students'][$uid]['is_absent'])) {
             continue;
         }
@@ -1192,6 +1192,7 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         $table_esl  = $p . 'exercise_school_level';
         $table_sl   = $p . 'school_levels';
         $table_em   = $p . 'exam_meta';
+        $table_dom  = $p . 'domains';
 
         $uid  = get_current_user_id();
         $rows = [];
@@ -1202,6 +1203,12 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         $esl_exists  = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_esl));
         $sl_exists   = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_sl));
         $em_exists   = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_em));
+        $dom_exists  = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_dom));
+        $domain_join = $dom_exists ? "LEFT JOIN {$table_dom} d ON d.id = c.domain_id" : "";
+        $domain_select = $dom_exists
+            ? "COALESCE(NULLIF(d.label, ''), c.domain) AS domain, COALESCE(NULLIF(d.slug, ''), c.domain_slug) AS domain_slug"
+            : "c.domain, c.domain_slug";
+        $domain_active = $dom_exists ? "AND COALESCE(d.active, 1) = 1" : "";
 
         if (!$comp_exists || !$ec_exists || !$exo_exists) {
             return rest_ensure_response(['domains' => [], 'competencies' => []]);
@@ -1223,8 +1230,9 @@ public static function exercisesProgress(\WP_REST_Request $req) {
 
         if ($school_level !== '' && $esl_exists && $sl_exists) {
             $sql = "
-                SELECT DISTINCT c.id, c.domain, c.domain_slug, c.competency, c.track, c.level
+                SELECT DISTINCT c.id, {$domain_select}, c.competency, c.track, c.level
                   FROM {$table_comp} c
+                  {$domain_join}
                   JOIN {$table_ec}  ec  ON ec.competency_id = c.id
                   JOIN {$table_exo} e   ON e.id = ec.exercise_id
                     {$exam_join}
@@ -1233,8 +1241,9 @@ public static function exercisesProgress(\WP_REST_Request $req) {
                     WHERE {$where_active}
                       {$where_not_practical}
                       AND IFNULL(c.active,1)=1
+                      {$domain_active}
                       AND sl.slug = %s
-                 ORDER BY c.domain, c.competency
+                 ORDER BY domain, c.competency
             ";
             $rows = $wpdb->get_results($wpdb->prepare($sql, $school_level), ARRAY_A);
         }
@@ -1251,8 +1260,9 @@ public static function exercisesProgress(\WP_REST_Request $req) {
                 $in = implode(',', $levels);
 
                 $sql = "
-                    SELECT DISTINCT c.id, c.domain, c.domain_slug, c.competency, c.track, c.level
+                    SELECT DISTINCT c.id, {$domain_select}, c.competency, c.track, c.level
                       FROM {$table_comp} c
+                      {$domain_join}
                       JOIN {$table_ec}  ec  ON ec.competency_id = c.id
                         JOIN {$table_exo} e   ON e.id = ec.exercise_id
                         {$exam_join}
@@ -1260,8 +1270,9 @@ public static function exercisesProgress(\WP_REST_Request $req) {
                         WHERE {$where_active}
                           {$where_not_practical}
                           AND IFNULL(c.active,1)=1
+                          {$domain_active}
                           AND esl.school_level_id IN ({$in})
-                     ORDER BY c.domain, c.competency
+                     ORDER BY domain, c.competency
                 ";
                 $rows = $wpdb->get_results($sql, ARRAY_A);
             }
@@ -1269,15 +1280,17 @@ public static function exercisesProgress(\WP_REST_Request $req) {
 
         if (!$rows) {
             $sql = "
-                SELECT DISTINCT c.id, c.domain, c.domain_slug, c.competency, c.track, c.level
+                SELECT DISTINCT c.id, {$domain_select}, c.competency, c.track, c.level
                   FROM {$table_comp} c
+                  {$domain_join}
                   JOIN {$table_ec}  ec ON ec.competency_id = c.id
                     JOIN {$table_exo} e  ON e.id = ec.exercise_id
                     {$exam_join}
                     WHERE {$where_active}
                       {$where_not_practical}
                       AND IFNULL(c.active,1)=1
-                 ORDER BY c.domain, c.competency
+                      {$domain_active}
+                 ORDER BY domain, c.competency
             ";
             $rows = $wpdb->get_results($sql, ARRAY_A);
         }
