@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.5';
+    const DB_VERSION = '2.6.6';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -925,7 +925,19 @@ class InstallV2 {
 
     $t = $wpdb->prefix . 'ouin_exo_school_levels';
 
+    if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $t))) {
+        return;
+    }
 
+    if (get_option('ouinpo_exo_default_school_levels_seeded')) {
+        return;
+    }
+
+    $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$t}");
+    if ($count > 0) {
+        update_option('ouinpo_exo_default_school_levels_seeded', '1', false);
+        return;
+    }
 
     $wpdb->query("INSERT IGNORE INTO {$t} (slug,label,sort_order) VALUES
 
@@ -934,6 +946,8 @@ class InstallV2 {
         ('premiere','Première',20),
 
         ('terminale','Terminale',30)");
+
+    update_option('ouinpo_exo_default_school_levels_seeded', '1', false);
 
     }
 

@@ -1033,10 +1033,13 @@ private static function school_level_options(): array {
     return [];
   }
 
+  $has_sort_order = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", 'sort_order'));
+  $order_by = $has_sort_order ? 'sort_order ASC, id ASC' : 'id ASC';
+
   $rows = $wpdb->get_results("
     SELECT slug, label
     FROM {$table}
-    ORDER BY sort_order ASC, id ASC
+    ORDER BY {$order_by}
   ");
 
   $options = [];

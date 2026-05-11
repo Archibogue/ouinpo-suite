@@ -950,8 +950,10 @@ final class SuiteAdmin
         $hasTable = self::tableExists($table);
 
         if ($hasTable) {
+            $hasSortOrder = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", 'sort_order'));
+            $orderBy = $hasSortOrder ? 'sort_order ASC, id ASC' : 'id ASC';
             $rows = $wpdb->get_results(
-                "SELECT id, slug, label FROM {$table} ORDER BY sort_order ASC, id ASC",
+                "SELECT id, slug, label FROM {$table} ORDER BY {$orderBy}",
                 ARRAY_A
             ) ?: [];
 

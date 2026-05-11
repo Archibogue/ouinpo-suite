@@ -16,6 +16,11 @@ $tbl_exercises    = $wpdb->prefix . 'ouin_exo_exercises';
 $tbl_exo_levels   = $wpdb->prefix . 'ouin_exo_exercise_school_level';
 $tbl_comp_levels  = $wpdb->prefix . 'ouin_exo_competency_school_level';
 
+$has_sort_order = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$tbl_levels} LIKE %s", 'sort_order'));
+$table_exists = static function (string $table) use ($wpdb): bool {
+    return (bool) $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+};
+
 $action = isset($_GET['action']) ? sanitize_key(wp_unslash((string) $_GET['action'])) : '';
 $level_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -29,33 +34,37 @@ $normalize_slug = static function (string $slug, string $label): string {
     return substr($slug, 0, 20);
 };
 
-$usage_for_level = static function (int $id) use ($wpdb, $tbl_groups, $tbl_members, $tbl_exercises, $tbl_exo_levels, $tbl_comp_levels): array {
+$usage_for_level = static function (int $id) use ($wpdb, $table_exists, $tbl_groups, $tbl_members, $tbl_exercises, $tbl_exo_levels, $tbl_comp_levels): array {
     return [
-        'groups' => (int) $wpdb->get_var($wpdb->prepare(
+        'groups' => $table_exists($tbl_groups) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_groups} WHERE school_level_id = %d",
             $id
-        )),
-        'members' => (int) $wpdb->get_var($wpdb->prepare(
+        )) : 0,
+        'members' => $table_exists($tbl_members) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_members} WHERE school_level_id_override = %d",
             $id
-        )),
-        'exercises_legacy' => (int) $wpdb->get_var($wpdb->prepare(
+        )) : 0,
+        'exercises_legacy' => $table_exists($tbl_exercises) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_exercises} WHERE level_id = %d",
             $id
-        )),
-        'exercises_links' => (int) $wpdb->get_var($wpdb->prepare(
+        )) : 0,
+        'exercises_links' => $table_exists($tbl_exo_levels) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_exo_levels} WHERE school_level_id = %d",
             $id
-        )),
-        'competencies_links' => (int) $wpdb->get_var($wpdb->prepare(
+        )) : 0,
+        'competencies_links' => $table_exists($tbl_comp_levels) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_comp_levels} WHERE school_level_id = %d",
             $id
-        )),
+        )) : 0,
     ];
 };
 
-$sync_level_competencies = static function (int $level_id, array $competency_ids) use ($wpdb, $tbl_comp_levels): void {
+$sync_level_competencies = static function (int $level_id, array $competency_ids) use ($wpdb, $table_exists, $tbl_comp_levels): void {
     if ($level_id <= 0) {
+        return;
+    }
+
+    if (!$table_exists($tbl_comp_levels)) {
         return;
     }
 
@@ -119,11 +128,16 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
         $data = [
             'slug'       => $slug,
             'label'      => $label,
-            'sort_order' => $sort_order,
         ];
+        $formats = ['%s', '%s'];
+
+        if ($has_sort_order) {
+            $data['sort_order'] = $sort_order;
+            $formats[] = '%d';
+        }
 
             if ($post_id > 0) {
-                $updated = $wpdb->update($tbl_levels, $data, ['id' => $post_id], ['%s', '%s', '%d'], ['%d']);
+                $updated = $wpdb->update($tbl_levels, $data, ['id' => $post_id], $formats, ['%d']);
                 if ($updated === false) {
                     add_settings_error('ouinpo_levels', 'db_update_failed', 'Impossible de mettre a jour ce niveau.', 'error');
                     $action = 'edit';
@@ -138,7 +152,7 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
                     $level_id = 0;
                 }
             } else {
-                $inserted = $wpdb->insert($tbl_levels, $data, ['%s', '%s', '%d']);
+                $inserted = $wpdb->insert($tbl_levels, $data, $formats);
                 $new_level_id = (int) $wpdb->insert_id;
                 if ($inserted === false || $new_level_id <= 0) {
                     add_settings_error('ouinpo_levels', 'db_insert_failed', 'Impossible de creer ce niveau.', 'error');
@@ -201,23 +215,23 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
     }
 }
 
+$sort_order_select = $has_sort_order ? 'l.sort_order' : 'l.id * 10 AS sort_order';
+$sort_order_sql = $has_sort_order ? 'l.sort_order ASC, l.id ASC' : 'l.id ASC';
+
 $levels = $wpdb->get_results("
-    SELECT
-        l.*,
-        COUNT(DISTINCT g.id) AS groups_count,
-        COUNT(DISTINCT CONCAT(gm.group_id, ':', gm.user_id)) AS members_count,
-        COUNT(DISTINCT e.id) AS exercises_legacy_count,
-        COUNT(DISTINCT esl.exercise_id) AS exercises_links_count,
-        COUNT(DISTINCT csl.competency_id) AS competencies_links_count
+    SELECT l.*, {$sort_order_select}
     FROM {$tbl_levels} l
-    LEFT JOIN {$tbl_groups} g ON g.school_level_id = l.id
-    LEFT JOIN {$tbl_members} gm ON gm.school_level_id_override = l.id
-    LEFT JOIN {$tbl_exercises} e ON e.level_id = l.id
-    LEFT JOIN {$tbl_exo_levels} esl ON esl.school_level_id = l.id
-    LEFT JOIN {$tbl_comp_levels} csl ON csl.school_level_id = l.id
-    GROUP BY l.id
-    ORDER BY l.sort_order ASC, l.id ASC
+    ORDER BY {$sort_order_sql}
 ");
+
+foreach ((array) $levels as $level) {
+    $usage = $usage_for_level((int) $level->id);
+    $level->groups_count = (int) $usage['groups'];
+    $level->members_count = (int) $usage['members'];
+    $level->exercises_legacy_count = (int) $usage['exercises_legacy'];
+    $level->exercises_links_count = (int) $usage['exercises_links'];
+    $level->competencies_links_count = (int) $usage['competencies_links'];
+}
 
 $current = (object) [
     'id'    => 0,
@@ -243,11 +257,14 @@ if ($action === 'new') {
 if ($action === 'edit' && $level_id > 0) {
     $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$tbl_levels} WHERE id = %d", $level_id));
     if ($row) {
+        if (!isset($row->sort_order)) {
+            $row->sort_order = (int) $row->id * 10;
+        }
         $current = $row;
-        $current_competency_ids = array_map('intval', (array) $wpdb->get_col($wpdb->prepare(
+        $current_competency_ids = $table_exists($tbl_comp_levels) ? array_map('intval', (array) $wpdb->get_col($wpdb->prepare(
             "SELECT competency_id FROM {$tbl_comp_levels} WHERE school_level_id = %d",
             $level_id
-        )));
+        ))) : [];
     } else {
         $action = '';
         $level_id = 0;
