@@ -1180,6 +1180,13 @@ private static function current_student_school_level_id(): int {
 
 }
 
+private static function cumulative_school_levels_enabled(): bool {
+  return (bool) apply_filters(
+    'ouinpo_exercises_cumulative_school_levels',
+    (bool) get_option('ouinpo_exercises_cumulative_school_levels', false)
+  );
+}
+
 
 
 private static function exercise_level_options_for_current_user(): array {
@@ -1187,6 +1194,27 @@ private static function exercise_level_options_for_current_user(): array {
   $all = self::school_level_options();
   $level_id = self::current_student_school_level_id();
   $student_slug = self::school_level_slug_by_id($level_id);
+
+  if (
+    $student_slug !== ''
+    && self::cumulative_school_levels_enabled()
+    && class_exists(__NAMESPACE__ . '\\Years')
+    && class_exists(__NAMESPACE__ . '\\LevelsSchool')
+  ) {
+    $allowed_ids = LevelsSchool::effective_for_user(get_current_user_id(), (int) Years::active_id());
+    $allowed = [];
+
+    foreach ($allowed_ids as $allowed_id) {
+      $slug = self::school_level_slug_by_id((int) $allowed_id);
+      if ($slug !== '' && isset($all[$slug])) {
+        $allowed[$slug] = $all[$slug];
+      }
+    }
+
+    if (!empty($allowed)) {
+      return $allowed;
+    }
+  }
 
   if ($student_slug !== '' && isset($all[$student_slug])) {
     return [$student_slug => $all[$student_slug]];
@@ -1199,6 +1227,10 @@ private static function exercise_level_options_for_current_user(): array {
 
 
 private static function default_exercise_level_for_current_user(): string {
+
+  if (self::cumulative_school_levels_enabled() && self::current_student_school_level_id() > 0) {
+    return '';
+  }
 
   $level_id = self::current_student_school_level_id();
   $student_slug = self::school_level_slug_by_id($level_id);
