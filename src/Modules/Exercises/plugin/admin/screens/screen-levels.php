@@ -354,6 +354,7 @@ settings_errors('ouinpo_levels');
               $competency_count = (int) $level->competencies_links_count;
               $total_usage = (int) $level->groups_count
                 + (int) $level->members_count
+                + (int) $level->exercises_legacy_count
                 + (int) $level->exercises_links_count
                 + $competency_count;
               ?>

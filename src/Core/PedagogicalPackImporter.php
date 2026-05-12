@@ -735,6 +735,7 @@ private static function displayLevelFromRow(string $p, array $row): string
     ));
 
     if (count($labels) > 1) {
+        // Affichage herite uniquement : "Transversal" n'est jamais une source de verite.
         return 'Transversal';
     }
 

@@ -79,12 +79,25 @@
       "statement": "<p>Un poste possède l'adresse <code>192.168.10.42/24</code>. Indiquer l'adresse réseau, l'adresse de diffusion et une passerelle plausible.</p>",
       "difficulty_slug": "debutant",
       "level_slug": "bts-sio-1",
-      "competency_slugs": "bts-sio-1-reseaux-adressage-001|bts-sio-transversal-documentation-001",
+      "competency_slugs": [
+        "bts-sio-1-reseaux-adressage-001",
+        "bts-sio-transversal-documentation-001"
+      ],
       "is_active": 1,
-      "hint_1": "<p>Le préfixe /24 correspond au masque 255.255.255.0.</p>",
-      "solution_1_title": "Correction",
-      "solution_1_html": "<p>Le réseau est <code>192.168.10.0/24</code>, la diffusion <code>192.168.10.255</code>. Une passerelle courante serait <code>192.168.10.1</code>.</p>",
-      "solution_1_official": 1
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Le préfixe /24 correspond au masque 255.255.255.0.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Correction",
+          "content": "<p>Le réseau est <code>192.168.10.0/24</code>, la diffusion <code>192.168.10.255</code>. Une passerelle courante serait <code>192.168.10.1</code>.</p>",
+          "is_official": 1
+        }
+      ]
     }
   ],
   "flashcards": [

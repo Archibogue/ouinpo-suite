@@ -100,13 +100,13 @@ if (is_admin()) {
     require_once __DIR__ . '/admin/AdminMenu.php';
     require_once __DIR__ . '/admin/screens/screen-exercises.php';
 
-    add_action('admin_menu', ['\\OuInPo\\Exercises\\Admin\\AdminMenu', 'register_menu']);
+    add_action('admin_menu', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'register_menu']);
     add_action('admin_enqueue_scripts', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'enqueue_admin_styles']);
-    add_action('admin_post_ouinpo_export_exercises_csv', ['\\OuInPo\\Exercises\\Admin\\AdminMenu', 'handle_export_exercises_csv']);
+    add_action('admin_post_ouinpo_export_exercises_csv', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'handle_export_exercises_csv']);
     add_action('admin_post_ouinpo_save_practical_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_save']);
     
     add_action('admin_notices', function () {
-        if (!class_exists('\\OuInPo\\Exercises\\Admin\\AdminMenu')) {
+        if (!class_exists('\\Ouinpo\\Exercises\\Admin\\AdminMenu')) {
             echo '<div class="notice notice-error"><p>OuInPo Exercices : classe AdminMenu introuvable.</p></div>';
         }
     });
