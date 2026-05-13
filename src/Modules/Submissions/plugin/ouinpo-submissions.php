@@ -668,7 +668,14 @@ class Ouinpo_Submissions_Plugin {
 
         if ( ! get_role('eleve') ) { add_role('eleve','Élève', array('read'=>true, 'upload_files'=>true)); }
 
-        if ( ! get_role('prof') )  { add_role('prof','Professeur', array('read'=>true, 'upload_files'=>true)); }
+        if ( ! get_role('prof') )  {
+            add_role('prof','Professeur', array(
+                'read'=>true,
+                'upload_files'=>true,
+                \Ouinpo\Suite\Core\Capabilities::MANAGE_SUITE=>true,
+                \Ouinpo\Suite\Core\Capabilities::MANAGE_SUBMISSIONS=>true,
+            ));
+        }
 
 
 
@@ -903,6 +910,10 @@ class Ouinpo_Submissions_Plugin {
             'supports'=>array('title','editor','author','thumbnail','custom-fields'),
 
             'taxonomies'=>array(self::TAX_CLASS, self::TAX_SECTION, self::TAX_CHAPTER),
+
+            'capability_type'=>array(self::CPT_RESOURCE, self::CPT_RESOURCE.'s'),
+
+            'map_meta_cap'=>true,
 
         ));
 
@@ -1758,7 +1769,7 @@ class Ouinpo_Submissions_Plugin {
 
         $u        = wp_get_current_user();
 
-        $is_staff = ouinpo_submissions_user_can_manage((int) $u->ID) || in_array('prof', (array) $u->roles, true);
+        $is_staff = ouinpo_submissions_user_can_manage((int) $u->ID);
 
     
 
@@ -2452,7 +2463,7 @@ class Ouinpo_Submissions_Plugin {
 
                 $is_owner = (int)$post->post_author === (int)$user->ID;
 
-                $is_staff = ouinpo_submissions_user_can_manage((int) $user->ID) || in_array('prof', (array)$user->roles, true);
+                $is_staff = ouinpo_submissions_user_can_manage((int) $user->ID);
 
                 if ($args[0]==='read_post') {
 
@@ -2518,7 +2529,7 @@ class Ouinpo_Submissions_Plugin {
 
             if ($parent && $parent->post_type === self::CPT_SUBMISSION) {
 
-                $allowed = ( (int)$parent->post_author === (int)$current->ID ) || ouinpo_submissions_user_can_manage((int) $current->ID) || in_array('prof',(array)$current->roles,true);
+                $allowed = ( (int)$parent->post_author === (int)$current->ID ) || ouinpo_submissions_user_can_manage((int) $current->ID);
 
             } else {
 
@@ -2538,9 +2549,7 @@ class Ouinpo_Submissions_Plugin {
 
                                || count(array_intersect($user_groups, $allowed_groups)) > 0
 
-                               || ouinpo_submissions_user_can_manage((int) $current->ID)
-
-                               || in_array('prof',(array)$current->roles,true);
+                               || ouinpo_submissions_user_can_manage((int) $current->ID);
 
                 }
 
@@ -2768,7 +2777,7 @@ class Ouinpo_Submissions_Plugin {
 
         $user_classes = (array) get_user_meta($user->ID, self::USERMETA_CLASS, true);
 
-        $is_staff = ouinpo_submissions_user_can_manage((int) $user->ID) || in_array('prof', (array)$user->roles, true);
+        $is_staff = ouinpo_submissions_user_can_manage((int) $user->ID);
 
 
 

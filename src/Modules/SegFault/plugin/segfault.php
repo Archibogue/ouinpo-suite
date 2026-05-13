@@ -3683,7 +3683,17 @@ $messages = [
 
 
 
-        \OuInPo\SegFault\DB::delete_session($session);
+        if (!\OuInPo\SegFault\DB::delete_current_client_session($session)) {
+
+          return new \WP_REST_Response([
+
+            'error' => 'forbidden',
+
+            'message' => 'Session inconnue ou non associée à ce client.',
+
+          ], 403);
+
+        }
 
 
 

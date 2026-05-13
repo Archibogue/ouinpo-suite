@@ -29,6 +29,9 @@ final class Capabilities
         self::$initialized = true;
 
         add_filter('user_has_cap', [self::class, 'grantManageOptionsCompatibility'], 10, 4);
+        add_filter('option_page_capability_ouinpo_suite_settings', [self::class, 'settingsOptionCapability']);
+        add_filter('option_page_capability_ouinpo_meta_social_group', [self::class, 'settingsOptionCapability']);
+        add_filter('option_page_capability_ouinpo_sf', [self::class, 'aiOptionCapability']);
     }
 
     public static function all(): array
@@ -99,6 +102,13 @@ final class Capabilities
             }
         }
 
+        $legacyTeacher = get_role('prof');
+        if ($legacyTeacher) {
+            foreach ($teacherCaps as $capability) {
+                $legacyTeacher->add_cap($capability);
+            }
+        }
+
         if (!get_role('ouinpo_student')) {
             add_role('ouinpo_student', 'Élève OuInPo', ['read' => true]);
         }
@@ -117,6 +127,25 @@ final class Capabilities
             $allcaps[$requested] = true;
         }
 
+        if ($requested === self::MANAGE_SUITE && empty($allcaps[self::MANAGE_SUITE])) {
+            foreach (self::all() as $capability) {
+                if ($capability !== self::MANAGE_SUITE && !empty($allcaps[$capability])) {
+                    $allcaps[self::MANAGE_SUITE] = true;
+                    break;
+                }
+            }
+        }
+
         return $allcaps;
+    }
+
+    public static function settingsOptionCapability(): string
+    {
+        return self::MANAGE_SETTINGS;
+    }
+
+    public static function aiOptionCapability(): string
+    {
+        return self::MANAGE_AI;
     }
 }

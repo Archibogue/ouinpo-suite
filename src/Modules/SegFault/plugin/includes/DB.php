@@ -94,7 +94,11 @@ class DB {
   static function ensure_session(string $session='', bool $consent=false): string {
     $db = self::pdo();
     $now = time();
-    if ($session === '' || strlen($session) < 16) {
+    if ($session !== '' && strlen($session) >= 16 && !self::session_belongs_to_current_client($session)) {
+      $session = '';
+    }
+
+    if ($session === '' || strlen($session) < 16) {
       $session = wp_generate_uuid4();
       $st = $db->prepare("INSERT INTO memory_sessions(id,user_hash,consent,created_at,last_seen) VALUES(?,?,?,?,?)");
       $st->execute([$session, self::client_hash(), $consent?1:0, $now, $now]);
@@ -129,7 +133,37 @@ class DB {
         $db->prepare("DELETE FROM memory_sessions WHERE id = ?")->execute([$session]);
     }
 
-  static function client_hash(): string {
+  static function session_belongs_to_current_client(string $session): bool {
+
+    if ($session === '' || strlen($session) < 16) return false;
+
+    $db = self::pdo();
+
+    $st = $db->prepare("SELECT user_hash FROM memory_sessions WHERE id = ? LIMIT 1");
+
+    $st->execute([$session]);
+
+    $stored = (string) $st->fetchColumn();
+
+    return $stored !== '' && hash_equals($stored, self::client_hash());
+
+  }
+
+
+
+  static function delete_current_client_session(string $session): bool {
+
+    if (!self::session_belongs_to_current_client($session)) return false;
+
+    self::delete_session($session);
+
+    return true;
+
+  }
+
+
+
+  static function client_hash(): string {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
     return substr(hash('sha256',$ip.'|'.$ua.'|'.site_url()),0,16);

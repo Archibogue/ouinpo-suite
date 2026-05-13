@@ -11,6 +11,7 @@ final class Installer
         }
 
         self::installOrUpgradeSharedSchema();
+        Capabilities::install();
         update_option('ouinpo_suite_version', OUINPO_SUITE_VERSION, false);
     }
 
