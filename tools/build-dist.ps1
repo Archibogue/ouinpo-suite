@@ -82,7 +82,9 @@ $excludedRootItems = @(
     "tmp",
     "temp",
     "logs",
-    "notes-privees"
+    "notes-privees",
+    "ouinpo-suite-prod",
+    "CSS_additionnels"
 )
 
 Get-ChildItem -Path $root -Force | Where-Object {
@@ -149,6 +151,8 @@ $forbiddenDirs = @(
     "temp",
     "logs",
     "notes-privees",
+    "ouinpo-suite-prod",
+    "CSS_additionnels",
     "tools",
     "__MACOSX"
 )

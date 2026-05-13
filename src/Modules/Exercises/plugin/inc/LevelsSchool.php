@@ -11,25 +11,45 @@ class LevelsSchool {
       global $wpdb;
       $p = $wpdb->prefix.'ouin_exo_';
     
-      $expand = function(array $ids): array {
-        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
-    
-        $out = [];
-    
-        foreach ($ids as $id) {
-          if ($id === 1) {
-            $out[] = 1; // Seconde
-          } elseif ($id === 2) {
-            $out[] = 1; // Seconde
-            $out[] = 2; // Première
-          } elseif ($id === 3) {
-            $out[] = 1; // Seconde
-            $out[] = 2; // Première
-            $out[] = 3; // Terminale
-          }
-        }
-    
-        return array_values(array_unique($out));
+      $expand = function(array $ids) use ($wpdb, $p): array {
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+        if (!$ids) {
+          return [];
+        }
+
+        $cumulative = (bool) apply_filters(
+          'ouinpo_exercises_cumulative_school_levels',
+          (bool) get_option('ouinpo_exercises_cumulative_school_levels', false)
+        );
+
+        if (!$cumulative) {
+          return $ids;
+        }
+
+        $levels_table = $p . 'school_levels';
+        $cols = (array) $wpdb->get_col("SHOW COLUMNS FROM {$levels_table}", 0);
+
+        if (!in_array('sort_order', $cols, true)) {
+          return $ids;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $max_order = (int) $wpdb->get_var($wpdb->prepare(
+          "SELECT MAX(sort_order) FROM {$levels_table} WHERE id IN ({$placeholders})",
+          $ids
+        ));
+
+        if ($max_order <= 0) {
+          return $ids;
+        }
+
+        return array_map('intval', (array) $wpdb->get_col($wpdb->prepare(
+          "SELECT id FROM {$levels_table} WHERE sort_order <= %d ORDER BY sort_order ASC, id ASC",
+          $max_order
+        )));
+
       };
     
       // overrides individuels

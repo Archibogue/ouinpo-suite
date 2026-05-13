@@ -2,6 +2,7 @@
 
 namespace Ouinpo\Exercises\Rest;
 
+use Ouinpo\Exercises\CompetencyLevels;
 use Ouinpo\Exercises\TeachingState;
 
 use WP_REST_Request;
@@ -145,22 +146,33 @@ class MeRoutes {
 
 
     /* ------------ Helpers ------------- */
-
-
-
-    /** Convertit un slug ('seconde'|'premiere'|'terminale') en valeur de c.level ('Seconde'|'Première'|'Terminale') */
+    /** Convertit un slug de niveau scolaire en libelle courant. */
 
     private static function levelSlugToLabel(string $slug): string {
 
-        $slug = strtolower($slug);
+        global $wpdb;
 
-        if ($slug === 'seconde')   return 'Seconde';
+        $slug = sanitize_key($slug);
 
-        if ($slug === 'premiere')  return 'Première';
+        if ($slug === '') {
 
-        if ($slug === 'terminale' || $slug === 'term') return 'Terminale';
+            return '';
 
-        return $slug; // fallback
+        }
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+
+        $label = $wpdb->get_var($wpdb->prepare(
+
+            "SELECT label FROM {$p}school_levels WHERE slug = %s LIMIT 1",
+
+            $slug
+
+        ));
+
+        $label = trim((string) $label);
+
+        return $label !== '' ? $label : $slug;
 
     }
 
@@ -223,6 +235,39 @@ class MeRoutes {
 
     }
 
+    private static function find_user_level_id(int $user_id, int $year_id, ?int $explicit_group_id = null): int {
+        global $wpdb;
+        $p = $wpdb->prefix.'ouin_exo_';
+
+        if ($explicit_group_id) {
+            return (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(gm.school_level_id_override, g.school_level_id)
+                   FROM {$p}groups g
+                   LEFT JOIN {$p}group_members gm
+                     ON gm.group_id = g.id
+                    AND gm.user_id = %d
+                  WHERE g.id = %d
+                    AND g.year_id = %d
+                  LIMIT 1",
+                $user_id,
+                $explicit_group_id,
+                $year_id
+            ));
+        }
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(gm.school_level_id_override, g.school_level_id)
+               FROM {$p}group_members gm
+               JOIN {$p}groups g ON g.id = gm.group_id
+              WHERE gm.user_id = %d
+                AND g.year_id = %d
+              ORDER BY gm.group_id DESC
+              LIMIT 1",
+            $user_id,
+            $year_id
+        ));
+    }
+
 
 
     /** Renvoie (uid, year_id, group_id|null, levelLabel) */
@@ -248,7 +293,9 @@ class MeRoutes {
         $level_slug = self::find_user_level_slug($uid, $year_id, $group_id);
         $level_label = $level_slug ? self::levelSlugToLabel($level_slug) : null;
 
-        return [$uid, $year_id, $group_id, $level_label];
+        $school_level_id = self::find_user_level_id($uid, $year_id, $group_id);
+
+        return [$uid, $year_id, $group_id, $level_label, $school_level_id];
 
     }
 
@@ -266,11 +313,11 @@ class MeRoutes {
 
     
 
-        [$uid, $year_id, $group_id, $levelLabel] = $g;
+        [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
     
 
-        if (!$group_id || !$levelLabel) {
+        if (!$group_id || !$school_level_id) {
 
             return rest_ensure_response([
 
@@ -342,7 +389,7 @@ class MeRoutes {
 
              AND t.teaching_state = 'seen'
 
-             AND (c.level = %s OR c.level = %s)
+             AND " . CompetencyLevels::level_filter_sql('c') . "
 
            GROUP BY c.domain
 
@@ -355,20 +402,6 @@ class MeRoutes {
                WHEN c.track = 'SNT' THEN 2
 
                ELSE 3
-
-             END,
-
-             CASE
-
-               WHEN c.level = 'Terminale' THEN 1
-
-               WHEN c.level = 'Première' THEN 2
-
-               WHEN c.level = 'Seconde' THEN 3
-
-               WHEN c.level = 'Transversal' THEN 4
-
-               ELSE 5
 
              END,
 
@@ -392,9 +425,7 @@ class MeRoutes {
 
             $group_id,
 
-            $levelLabel,
-
-            'Transversal'
+            $school_level_id
 
         ));
 
@@ -472,7 +503,7 @@ class MeRoutes {
 
     
 
-        [$uid, $year_id, $group_id, $levelLabel] = $g;
+        [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
     
 
@@ -528,7 +559,7 @@ class MeRoutes {
 
              AND t.teaching_state = 'seen'
 
-             AND (c.level = %s OR c.level = %s)
+             AND " . CompetencyLevels::level_filter_sql('c') . "
 
            ORDER BY 
 
@@ -539,20 +570,6 @@ class MeRoutes {
                WHEN c.track = 'SNT' THEN 2
 
                ELSE 3
-
-             END,
-
-             CASE
-
-               WHEN c.level = 'Terminale' THEN 1
-
-               WHEN c.level = 'Première' THEN 2
-
-               WHEN c.level = 'Seconde' THEN 3
-
-               WHEN c.level = 'Transversal' THEN 4
-
-               ELSE 5
 
              END,
 
@@ -578,9 +595,7 @@ class MeRoutes {
 
             $group_id,
 
-            $levelLabel,
-
-            'Transversal'
+            $school_level_id
 
         ));
 
@@ -674,11 +689,7 @@ class MeRoutes {
 
     
 
-        return in_array($level, ['Seconde', 'Première', 'Terminale'], true)
-
-            ? $level
-
-            : '';
+        return $level;
 
     }
 
@@ -702,13 +713,16 @@ class MeRoutes {
 
         $student_level = self::current_student_level_label($uid);
 
-        $cycleLevels = ['Seconde', 'Première', 'Terminale'];
-
     
 
         global $wpdb;
 
         $p = $wpdb->prefix . 'ouin_exo_';
+        $cycleLevels = array_map('strval', (array) $wpdb->get_col("
+            SELECT label
+            FROM {$p}school_levels
+            ORDER BY sort_order ASC, id ASC
+        "));
 
     
 
@@ -741,10 +755,16 @@ class MeRoutes {
             ORDER BY ub.awarded_at DESC, b.title ASC
 
         ", $uid), ARRAY_A);
-
-    
-
-        $levels_order = ['Spécial', 'Terminale', 'Première', 'Seconde', 'Transversal'];
+        $levels_order = ['Spécial'];
+        $school_level_labels = (array) $wpdb->get_col("
+            SELECT label
+            FROM {$p}school_levels
+            ORDER BY sort_order DESC, id DESC
+        ");
+        $levels_order = array_merge($levels_order, array_map('strval', $school_level_labels));
+        if ($student_level !== '' && !in_array($student_level, $levels_order, true)) {
+            array_splice($levels_order, 1, 0, [$student_level]);
+        }
 
         $current_title_badge_id = (int) get_user_meta($uid, 'ouinpo_title_badge_id', true);
 
@@ -774,13 +794,23 @@ class MeRoutes {
 
         $domain_rows = $wpdb->get_results("
 
-            SELECT DISTINCT domain_slug, domain, level
+            SELECT DISTINCT
+                COALESCE(NULLIF(d.slug, ''), c.domain_slug) AS domain_slug,
+                COALESCE(NULLIF(d.label, ''), c.domain) AS domain,
+                sl.label AS level
 
-            FROM {$p}competencies
+            FROM {$p}competencies c
+            LEFT JOIN {$p}domains d ON d.id = c.domain_id
 
-            WHERE domain_slug IS NOT NULL
+            INNER JOIN {$p}competency_school_level csl ON csl.competency_id = c.id
 
-              AND domain_slug <> ''
+            INNER JOIN {$p}school_levels sl ON sl.id = csl.school_level_id
+
+            WHERE COALESCE(NULLIF(d.slug, ''), c.domain_slug) IS NOT NULL
+
+              AND COALESCE(NULLIF(d.slug, ''), c.domain_slug) <> ''
+
+              AND COALESCE(d.active, 1) = 1
 
         ", ARRAY_A);
 
@@ -828,53 +858,17 @@ class MeRoutes {
 
             $theme = strtolower((string)($badge['theme'] ?? ''));
 
-    
-
             if ($theme === 'special' || strpos($slug, 'special-') === 0) {
 
                 return 'Spécial';
 
             }
 
-    
-
-            if (strpos($slug, 'seconde') !== false || strpos($theme, 'seconde') !== false) {
-
-                return 'Seconde';
-
-            }
-
-    
-
-            if (
-
-                strpos($slug, 'premiere') !== false || strpos($slug, 'première') !== false ||
-
-                strpos($theme, 'premiere') !== false || strpos($theme, 'première') !== false
-
-            ) {
-
-                return 'Première';
-
-            }
-
-    
-
-            if (strpos($slug, 'terminale') !== false || strpos($theme, 'terminale') !== false) {
-
-                return 'Terminale';
-
-            }
-
-    
-
-            return 'Transversal';
+            return '';
 
         };
 
-    
-
-        $pick_domain_level = static function(array $levels, string $student_level = ''): string {
+        $pick_domain_level = static function(array $levels, string $student_level = '') use ($cycleLevels): string {
 
             if ($student_level !== '' && !empty($levels[$student_level])) {
 
@@ -882,17 +876,7 @@ class MeRoutes {
 
             }
 
-        
-
-            if (!empty($levels['Transversal'])) {
-
-                return 'Transversal';
-
-            }
-
-        
-
-            foreach (['Terminale', 'Première', 'Seconde'] as $candidate) {
+            foreach ($cycleLevels as $candidate) {
 
                 if (!empty($levels[$candidate])) {
 
@@ -902,9 +886,9 @@ class MeRoutes {
 
             }
 
-        
+            $labels = array_keys(array_filter($levels));
 
-            return 'Transversal';
+            return $labels ? (string) reset($labels) : '';
 
         };
 
@@ -963,28 +947,11 @@ class MeRoutes {
     
 
             $level = $infer_level($row);
-
-    
-
-            $is_transversal_domain = (
-
-                !empty($domain_label) &&
-
-                stripos((string)$domain_label, '(transversal)') !== false
-
-            );
-
-    
-
             if ($is_special) {
 
                 $level = 'Spécial';
 
-            } elseif ($is_transversal_domain) {
-
-                $level = 'Transversal';
-
-            } elseif ($level === 'Transversal' && $domain_slug) {
+            } elseif ($domain_slug) {
 
                 $level = $pick_domain_level($domain_levels, $student_level);
 
@@ -998,15 +965,11 @@ class MeRoutes {
 
             // Les badges spéciaux et méta restent gérés à part.
 
-            if ($student_level && in_array($student_level, $cycleLevels, true)) {
+            if ($student_level) {
 
                 if (!$is_meta && !$is_special && $domain_slug) {
 
-                    $allowed_for_student =
-
-                        $level === 'Transversal' ||
-
-                        $level === $student_level;
+                    $allowed_for_student = ($level === $student_level);
 
             
 
@@ -1044,7 +1007,7 @@ class MeRoutes {
 
                 'domain'      => $domain_label,
 
-                'level'       => $level ?: 'Transversal',
+                'level'       => $level ?: 'Spécial',
 
             ];
 
@@ -1086,7 +1049,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
 
 
-    [$uid, $year_id, $group_id, $levelLabel] = $g;
+    [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
 
 
@@ -1110,7 +1073,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
 
 
-    if (!$group_id || !$levelLabel) {
+    if (!$group_id || !$school_level_id) {
         return rest_ensure_response($empty);
     }
 
@@ -1332,7 +1295,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
           AND t.teaching_state = 'seen'
 
-          AND (c.level = %s OR c.level = %s)
+          AND " . CompetencyLevels::level_filter_sql('c') . "
 
 
 
@@ -1351,20 +1314,6 @@ public static function competencies_kpi(\WP_REST_Request $req) {
               WHEN c.track = 'SNT' THEN 2
 
               ELSE 3
-
-            END,
-
-            CASE
-
-              WHEN c.level = 'Terminale' THEN 1
-
-              WHEN c.level = 'Première' THEN 2
-
-              WHEN c.level = 'Seconde' THEN 3
-
-              WHEN c.level = 'Transversal' THEN 4
-
-              ELSE 5
 
             END,
 
@@ -1394,9 +1343,7 @@ public static function competencies_kpi(\WP_REST_Request $req) {
 
         $group_id,
 
-        $levelLabel,
-
-        'Transversal'
+        $school_level_id
 
     ), ARRAY_A) ?: [];
 
@@ -1628,9 +1575,9 @@ public static function assessments_progress(\WP_REST_Request $req) {
 
 
 
-    [$uid, $year_id, $group_id, $levelLabel] = $g;
+    [$uid, $year_id, $group_id, $levelLabel, $school_level_id] = $g;
 
-    if (!$group_id || !$levelLabel) {
+    if (!$group_id || !$school_level_id) {
         return rest_ensure_response([
             'summary' => [
                 'evaluated'      => 0,
@@ -1665,11 +1612,11 @@ public static function assessments_progress(\WP_REST_Request $req) {
 
         'g.year_id = %d',
 
-        '(c.level = %s OR c.level = %s)'
+        CompetencyLevels::level_filter_sql('c')
 
     ];
 
-    $args = [$uid, $year_id, $levelLabel, 'Transversal'];
+    $args = [$uid, $year_id, $school_level_id];
 
 
 

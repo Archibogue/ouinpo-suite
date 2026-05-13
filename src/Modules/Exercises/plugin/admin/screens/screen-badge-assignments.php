@@ -10,6 +10,9 @@ $tbl_badges      = $wpdb->prefix . 'ouin_exo_badges';
 $tbl_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';
 $tbl_groups      = $wpdb->prefix . 'ouin_exo_groups';
 $tbl_members     = $wpdb->prefix . 'ouin_exo_group_members';
+$tbl_competencies = $wpdb->prefix . 'ouin_exo_competencies';
+$tbl_comp_levels  = $wpdb->prefix . 'ouin_exo_competency_school_level';
+$tbl_levels       = $wpdb->prefix . 'ouin_exo_school_levels';
 
 $badge_admin_js_rel = 'assets/js/admin/badges.js';
 $badge_admin_js_dir = defined('OUINPO_SUITE_DIR')
@@ -36,14 +39,27 @@ $group_id = isset($_REQUEST['group_id']) ? intval($_REQUEST['group_id']) : 0;
 $search   = isset($_REQUEST['s']) ? sanitize_text_field(wp_unslash($_REQUEST['s'])) : '';
 $badge_level_filter = isset($_REQUEST['badge_level']) ? sanitize_key(wp_unslash($_REQUEST['badge_level'])) : '';
 
+$school_levels = $wpdb->get_results("SELECT id, slug, label FROM {$tbl_levels} ORDER BY sort_order ASC, id ASC");
+$school_levels_by_slug = [];
+
 $badge_level_options = [
     ''             => 'Toutes les catégories',
-    'transversal'  => 'Transversale',
-    'seconde'      => 'Seconde',
-    'premiere'     => 'Première',
-    'terminale'    => 'Terminale',
-    'special'      => 'Spécial',
 ];
+
+foreach ($school_levels as $level) {
+    $slug = sanitize_key((string) $level->slug);
+    if ($slug === '') {
+        continue;
+    }
+
+    $school_levels_by_slug[$slug] = [
+        'id'    => (int) $level->id,
+        'label' => (string) $level->label,
+    ];
+    $badge_level_options[$slug] = (string) $level->label;
+}
+
+$badge_level_options['special'] = 'Spécial';
 
 if (!array_key_exists($badge_level_filter, $badge_level_options)) {
     $badge_level_filter = '';
@@ -214,13 +230,6 @@ if ($domain_rows) {
     }
 }
 
-$level_map = [
-    'transversal' => 'Transversal',
-    'seconde'     => 'Seconde',
-    'premiere'    => 'Première',
-    'terminale'   => 'Terminale',
-];
-
 if ($badge_level_filter === 'special') {
     $badges = $wpdb->get_results($wpdb->prepare(
         "SELECT id, title, slug, theme
@@ -229,41 +238,30 @@ if ($badge_level_filter === 'special') {
          ORDER BY title ASC",
         'special'
     ));
-} elseif (isset($level_map[$badge_level_filter])) {
-    $level_label = $level_map[$badge_level_filter];
-
-    $extra_themes = [];
-    if ($badge_level_filter === 'seconde') {
-        $extra_themes[] = 'Meta-Seconde';
-    } elseif ($badge_level_filter === 'premiere') {
-        $extra_themes[] = 'Meta-Première';
-    } elseif ($badge_level_filter === 'terminale') {
-        $extra_themes[] = 'Meta-Terminale';
-    }
-
+} elseif (isset($school_levels_by_slug[$badge_level_filter])) {
+    $level_id = isset($school_levels_by_slug[$badge_level_filter])
+        ? (int) $school_levels_by_slug[$badge_level_filter]['id']
+        : 0;
     $sql = "
         SELECT DISTINCT b.id, b.title, b.slug, b.theme
         FROM {$tbl_badges} b
-        LEFT JOIN {$wpdb->prefix}ouin_exo_competencies c
+        LEFT JOIN {$tbl_competencies} c
             ON c.domain_slug = b.theme
+        LEFT JOIN {$tbl_comp_levels} csl
+            ON csl.competency_id = c.id
         WHERE (
-            c.level = %s
+            csl.school_level_id = %d
     ";
 
-    $params = [$level_label];
-
-    if (!empty($extra_themes)) {
-        $placeholders = implode(',', array_fill(0, count($extra_themes), '%s'));
-        $sql .= " OR b.theme IN ($placeholders)";
-        $params = array_merge($params, $extra_themes);
-    }
-
+    $params = [$level_id];
     $sql .= "
         )
         ORDER BY b.title ASC
     ";
 
-    $badges = $wpdb->get_results($wpdb->prepare($sql, $params));
+    $badges = $params
+        ? $wpdb->get_results($wpdb->prepare($sql, $params))
+        : $wpdb->get_results($sql);
 } else {
     $badges = $wpdb->get_results("
         SELECT id, title, slug, theme

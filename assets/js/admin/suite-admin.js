@@ -25,7 +25,8 @@
         var domainInput = document.getElementById('bo_domain');
         var domainSlugInput = document.getElementById('bo_domain_slug');
         var trackInput = document.getElementById('bo_track');
-        var levelInput = document.getElementById('bo_level');
+        var levelInput = document.getElementById('bo_level_id') || document.getElementById('bo_level');
+        var legacyLevelInput = document.getElementById('bo_level');
         var summary = document.getElementById('bo_domain_summary');
 
         var competencyInput = document.getElementById('bo_competency');
@@ -59,6 +60,7 @@
             var domainSlug;
             var track;
             var level;
+            var levelId;
 
             if (!domainChoice) {
                 return;
@@ -78,6 +80,7 @@
             domainSlug = option.dataset.domainSlug || '';
             track = option.dataset.track || '';
             level = option.dataset.level || '';
+            levelId = option.dataset.levelId || '';
 
             if (domainInput) {
                 domainInput.value = domain;
@@ -92,7 +95,11 @@
             }
 
             if (levelInput) {
-                levelInput.value = level;
+                levelInput.value = levelId || level;
+            }
+
+            if (legacyLevelInput && legacyLevelInput !== levelInput) {
+                legacyLevelInput.value = level;
             }
 
             if (summary) {

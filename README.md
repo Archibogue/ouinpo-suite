@@ -27,6 +27,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 - Un thème WordPress compatible avec les shortcodes
 
 Le plugin a été développé pour un usage pédagogique en lycée, principalement en NSI et SNT.
+Les niveaux `Seconde`, `Première` et `Terminale` ne sont que des valeurs installées par défaut. Ils sont gérés comme des niveaux ordinaires : un administrateur peut les renommer, les réordonner, les remplacer par d'autres niveaux, ou les supprimer lorsqu'ils ne sont liés à aucune donnée.
 
 ## Installation
 
@@ -45,15 +46,31 @@ Après activation, vérifier les points suivants :
 1. Les tables du plugin sont bien créées.
 2. Les niveaux scolaires et les difficultés de base sont présents.
 3. Importer un pack pédagogique si l’on souhaite disposer de compétences, d’exercices, de sujets pratiques ou de flashcards de démonstration.
-4. Créer manuellement les pages publiques nécessaires dans WordPress.
-5. Placer les shortcodes dans les pages correspondantes.
+4. Créer les pages publiques depuis **OuInPo Suite > Réglages > Pages & shortcodes**, ou les créer manuellement dans WordPress.
+5. Vérifier que les shortcodes sont présents dans les pages correspondantes.
 6. Vérifier que les liens entre pages fonctionnent, notamment avec les permaliens simples WordPress.
 7. Désactiver ou ignorer les modules non utilisés.
 8. Renseigner les clés API uniquement si l’enseignant souhaite utiliser les fonctions d’IA.
 
 Les compétences BO complètes ne sont pas créées automatiquement par l’installeur. Elles doivent être importées via un pack pédagogique ou créées depuis l’administration du plugin.
 
-Les pages publiques ne sont pas créées automatiquement. Il faut les créer dans WordPress, puis y placer les shortcodes nécessaires.
+### Niveaux scolaires
+
+La source de vérité des niveaux est la table `ouin_exo_school_levels`. Les contenus ne doivent pas supposer que les slugs `seconde`, `premiere` ou `terminale` existent : ce sont seulement les exemples créés sur une installation neuve.
+
+Une compétence n'est pas rattachée à un niveau par son ancien champ `level`, mais par les liens de la table `ouin_exo_competency_school_level`. Le champ `level` reste un champ hérité d'affichage et de compatibilité.
+
+`Transversal` n'est pas un niveau scolaire. Une compétence est considérée comme transversale lorsqu'elle est liée à plusieurs niveaux scolaires. Les anciens packs qui contiennent `level = "Transversal"` restent acceptés : à l'import, la compétence est alors liée aux niveaux existants.
+
+
+### Domaines BO
+
+La source structurée des domaines est la table `ouin_exo_domains`. Une compétence appartient à un domaine via `domain_id`, et peut ensuite être liée à un ou plusieurs niveaux scolaires via `ouin_exo_competency_school_level`.
+
+Les anciens champs `domain` et `domain_slug` de `ouin_exo_competencies` sont conservés pour compatibilité avec les packs et shortcodes existants. Les migrations créent automatiquement les domaines à partir des couples historiques `domain_slug` / `domain` / `track`, puis renseignent `domain_id`.
+
+Un domaine n'est pas un niveau : il peut appartenir à un référentiel ou une filière (`track`) comme `NSI`, `SNT` ou `BTS SIO`, tandis que la transversalité d'une compétence reste déduite de ses liens avec plusieurs niveaux scolaires.
+Les pages publiques peuvent être créées depuis **OuInPo Suite > Réglages > Pages & shortcodes**. Elles peuvent aussi être créées manuellement dans WordPress, puis recevoir les shortcodes nécessaires.
 
 ## Packs pédagogiques
 
@@ -67,6 +84,10 @@ Les packs pédagogiques permettent d’importer des contenus dans une installati
 - flashcards.
 
 Le dossier `packs/` contient le schéma et les exemples fournis avec le plugin.
+Un pack peut déclarer ses propres niveaux dans `school_levels`, avec un `slug`, un `label` et optionnellement `sort_order`. Les exercices et compétences peuvent ensuite utiliser `level_slug` pour un niveau ou `level_slugs` pour plusieurs niveaux. Si un niveau référencé n'existe pas et n'est pas déclaré dans le pack, l'import signale un avertissement au lieu de créer silencieusement une donnée imprévue.
+
+
+Un pack peut aussi déclarer ses domaines dans `domains`, avec `slug`, `label`, `track`, `description`, `sort_order` et `active`. Si un pack ancien ne déclare pas `domains`, l'import crée ou met à jour le domaine à partir des champs de compatibilité de chaque compétence.
 
 Pour une installation de démonstration, importer par exemple :
 
@@ -74,35 +95,42 @@ Pour une installation de démonstration, importer par exemple :
 packs/ouinpo-pack-demo.json
 ```
 
+Pour tester les niveaux personnalisés, importer :
+
+```text
+packs/ouinpo-pack-demo-niveaux-dynamiques.json
+```
+
 Après import, vérifier dans l’administration que les exercices, sujets pratiques et flashcards apparaissent bien.
 
 ## Pages WordPress et shortcodes
 
-Les shortcodes doivent être placés dans des pages WordPress créées manuellement. Les slugs ci-dessous sont conseillés, mais peuvent être adaptés.
+Les pages et shortcodes ci-dessous correspondent à ceux proposés par **OuInPo Suite > Réglages > Pages & shortcodes**. Les slugs peuvent être adaptés si les liens internes sont ajustés en conséquence.
 
 ### Pages indispensables
 
 | Page WordPress | Slug conseillé | Shortcode |
 |---|---|---|
-| Exercices | `exercices` | `[ouinpo_exercises page="/exercice/"]` |
+| Exercices | `exercices` | `[ouinpo_exercises]` |
 | Exercice | `exercice` | `[ouinpo_exercise]` |
-| Sujets pratiques | `sujets-pratiques` | `[ouinpo_practical_subjects page="/epreuve-pratique-sujet/"]` |
+| Épreuve pratique | `epreuve-pratique` | `[ouinpo_practical_subjects]` |
 | Sujet pratique | `epreuve-pratique-sujet` | `[ouinpo_practical_subject]` |
 | Flashcards | `flashcards` | `[ouinpo_flashcards]` |
-| Ma progression | `ma-progression` | `[ouinpo_competences_progress]` |
+| Mes compétences | `mes-competences` | `[ouinpo_competences_progress]` |
 | Mes badges | `mes-badges` | `[ouinpo_student_badges]` |
 | Palmarès des badges | `palmares-badges` | `[ouinpo_badges_palmares]` |
 | Carte du site | `carte-du-site` | `[ouinpo_site_map]` |
+
+La carte du site dynamique est optionnelle et reflète surtout l'organisation du site OuInPo d'origine. Elle peut être ignorée sur une installation plus simple.
 
 ### Pages utiles selon les modules activés
 
 | Page WordPress | Slug conseillé | Shortcode |
 |---|---|---|
-| Dépôt élève | `depot-eleve` | `[ouinpo_upload]` |
+| Dépôt de travaux | `depot-travaux` | `[ouinpo_upload]` |
 | Mes dépôts | `mes-depots` | `[ouinpo_my_submissions]` |
-| Ressources pédagogiques | `ressources-pedagogiques` | `[ouinpo_resources]` |
-| Suivi des compétences prof | `suivi-competences-prof` | `[ouinpo_competences_prof]` |
-| Choisir mon titre | `choisir-mon-titre` | `[ouinpo_title_selector]` |
+| Ressources | `ressources` | `[ouinpo_resources]` |
+| Suivi des compétences | `suivi-competences` | `[ouinpo_competences_prof]` |
 
 Il est possible de regrouper le dépôt et l’historique des dépôts sur une seule page :
 
@@ -116,8 +144,7 @@ Il est possible de regrouper le dépôt et l’historique des dépôts sur une s
 
 | Page WordPress | Slug conseillé | Shortcode |
 |---|---|---|
-| SegFault | `segfault` | `[segfault_chat]` |
-| Mon parcours conseillé | `mon-parcours-conseille` | `[segfault_parcours]` |
+| Assistant SegFault | `assistant-segfault` | `[segfault_chat]` |
 | Mes parcours | `mes-parcours` | `[segfault_mes_parcours]` |
 
 ### Pages optionnelles
@@ -125,8 +152,8 @@ Il est possible de regrouper le dépôt et l’historique des dépôts sur une s
 | Page WordPress | Slug conseillé | Shortcode |
 |---|---|---|
 | Recherche textuelle | `recherche-textuelle` | `[ouinpo_recherche_textuelle]` |
-| Quête OuInPo | `quete-ouinpo` | `[ouinpo_gate page="registre-des-apprentis-satrapes-et-para-satrapes" needed="42" reveal="link"]` |
-| Registre des apprentis | `registre-des-apprentis-satrapes-et-para-satrapes` | `[ouinpo_signpad page="registre-des-apprentis-satrapes-et-para-satrapes" needed="42" show_list="1"]` |
+| Gate | `gate` | `[ouinpo_gate]` |
+| Signatures | `signatures` | `[ouinpo_signpad]` |
 
 ### Shortcodes d’intégration
 

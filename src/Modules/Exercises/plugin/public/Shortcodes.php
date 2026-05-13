@@ -48,7 +48,7 @@ final class Shortcodes {
 
     // ✅ Palmarès public des badges (filtré par année scolaire)
 
-    // Usage : [ouinpo_badges_palmares] ou [ouinpo_badges_palmares year="2025-2026"]
+    // Usage : [ouinpo_badges_palmares] ou [ouinpo_badges_palmares year="annee-active"]
 
     add_shortcode('ouinpo_badges_palmares', [__CLASS__, 'render_badges_palmares']);
 
@@ -1023,6 +1023,56 @@ if ($options['layout'] === 'table') {
 
 
 
+private static function school_level_options(): array {
+  global $wpdb;
+
+  $table = $wpdb->prefix . 'ouin_exo_school_levels';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+
+  if (!$exists) {
+    return [];
+  }
+
+  $has_sort_order = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", 'sort_order'));
+  $order_by = $has_sort_order ? 'sort_order ASC, id ASC' : 'id ASC';
+
+  $rows = $wpdb->get_results("
+    SELECT slug, label
+    FROM {$table}
+    ORDER BY {$order_by}
+  ");
+
+  $options = [];
+  foreach ((array) $rows as $row) {
+    $slug = sanitize_key((string) ($row->slug ?? ''));
+    $label = trim((string) ($row->label ?? ''));
+    if ($slug !== '' && $label !== '') {
+      $options[$slug] = $label;
+    }
+  }
+
+  return $options;
+}
+
+private static function school_level_slug_by_id(int $level_id): string {
+  if ($level_id <= 0) {
+    return '';
+  }
+
+  global $wpdb;
+
+  $table = $wpdb->prefix . 'ouin_exo_school_levels';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+  if (!$exists) {
+    return '';
+  }
+
+  return sanitize_key((string) $wpdb->get_var($wpdb->prepare(
+    "SELECT slug FROM {$table} WHERE id = %d LIMIT 1",
+    $level_id
+  )));
+}
+
 private static function current_student_school_level_id(): int {
 
   if (!is_user_logged_in()) {
@@ -1107,9 +1157,14 @@ private static function current_student_school_level_id(): int {
 
         AND g.year_id = %d
 
-        AND {$level_expr} IN (1,2,3)
+        AND {$level_expr} IS NOT NULL
 
-      ORDER BY level_id DESC
+      ORDER BY (
+        SELECT sort_order
+        FROM {$p}school_levels sl
+        WHERE sl.id = {$level_expr}
+        LIMIT 1
+      ) DESC, level_id DESC
 
       LIMIT 1",
 
@@ -1121,59 +1176,49 @@ private static function current_student_school_level_id(): int {
 
 
 
-  return in_array($level_id, [1, 2, 3], true) ? $level_id : 0;
+  return $level_id > 0 ? $level_id : 0;
 
+}
+
+private static function cumulative_school_levels_enabled(): bool {
+  return (bool) apply_filters(
+    'ouinpo_exercises_cumulative_school_levels',
+    (bool) get_option('ouinpo_exercises_cumulative_school_levels', false)
+  );
 }
 
 
 
 private static function exercise_level_options_for_current_user(): array {
 
-  $all = [
-
-    'seconde'   => 'Seconde',
-
-    'premiere'  => 'Première',
-
-    'terminale' => 'Terminale',
-
-  ];
-
-
-
+  $all = self::school_level_options();
   $level_id = self::current_student_school_level_id();
+  $student_slug = self::school_level_slug_by_id($level_id);
 
+  if (
+    $student_slug !== ''
+    && self::cumulative_school_levels_enabled()
+    && class_exists(__NAMESPACE__ . '\\Years')
+    && class_exists(__NAMESPACE__ . '\\LevelsSchool')
+  ) {
+    $allowed_ids = LevelsSchool::effective_for_user(get_current_user_id(), (int) Years::active_id());
+    $allowed = [];
 
+    foreach ($allowed_ids as $allowed_id) {
+      $slug = self::school_level_slug_by_id((int) $allowed_id);
+      if ($slug !== '' && isset($all[$slug])) {
+        $allowed[$slug] = $all[$slug];
+      }
+    }
 
-  if ($level_id === 1) {
-
-    return ['seconde' => 'Seconde'];
-
+    if (!empty($allowed)) {
+      return $allowed;
+    }
   }
 
-
-
-  if ($level_id === 2) {
-
-    return [
-
-      'seconde'  => 'Seconde',
-
-      'premiere' => 'Première',
-
-    ];
-
+  if ($student_slug !== '' && isset($all[$student_slug])) {
+    return [$student_slug => $all[$student_slug]];
   }
-
-
-
-  if ($level_id === 3) {
-
-    return $all;
-
-  }
-
-
 
   return $all;
 
@@ -1183,23 +1228,20 @@ private static function exercise_level_options_for_current_user(): array {
 
 private static function default_exercise_level_for_current_user(): string {
 
+  if (self::cumulative_school_levels_enabled() && self::current_student_school_level_id() > 0) {
+    return '';
+  }
+
   $level_id = self::current_student_school_level_id();
+  $student_slug = self::school_level_slug_by_id($level_id);
+
+  return $student_slug !== '' ? $student_slug : '';
 
 
-
-  if ($level_id === 1) return 'seconde';
-
-  if ($level_id === 2) return 'premiere';
-
-  if ($level_id === 3) return 'terminale';
-
-
-
-  return '';
 
 }
 
-private static function exercise_list_fallback_html(string $page, string $lvl, string $exam_only): string {
+private static function exercise_list_fallback_html(string $page, string $lvl, string $exam_only, int $current_page, int $per_page): string {
   if (!class_exists('\Ouinpo\Exercises\Rest\ExercisesRoutes') || !class_exists('\WP_REST_Request')) {
     return '<div class="ouinpo-loading">Chargement des exercices…</div>';
   }
@@ -1214,6 +1256,9 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
     $request->set_param('exam_only', '1');
   }
 
+  $request->set_param('page', max(1, $current_page));
+  $request->set_param('per_page', max(1, $per_page));
+
   $response = \Ouinpo\Exercises\Rest\ExercisesRoutes::index($request);
 
   if (is_wp_error($response)) {
@@ -1224,6 +1269,10 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
     ? $response->get_data()
     : $response;
 
+  $headers = $response instanceof \WP_REST_Response ? $response->get_headers() : [];
+  $total = isset($headers['X-WP-Total']) ? (int) $headers['X-WP-Total'] : count((array) $items);
+  $total_pages = isset($headers['X-WP-TotalPages']) ? (int) $headers['X-WP-TotalPages'] : 1;
+
   if (!is_array($items)) {
     return '<div class="ouinpo-loading">Chargement des exercices…</div>';
   }
@@ -1232,11 +1281,15 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
     return '<div class="ouinpo-empty">Aucun exercice ne correspond aux filtres.</div>';
   }
 
-  $items = array_slice($items, 0, 200);
+  $current_page = max(1, min($current_page, max(1, $total_pages)));
 
   ob_start();
   ?>
-  <div class="ouinpo-exercises-meta"></div>
+  <div class="ouinpo-exercises-meta">
+    <span class="ouinpo-chip">
+      <?php echo esc_html(count($items) . ' exercice' . (count($items) > 1 ? 's' : '') . ' affiché' . (count($items) > 1 ? 's' : '') . ' sur ' . $total); ?>
+    </span>
+  </div>
   <section class="ouinpo-exo-domain-block">
     <h3 class="ouinpo-exo-domain-title">Tous les exercices</h3>
     <ul class="ouinpo-exercises-list ouinpo-exo-list">
@@ -1264,13 +1317,143 @@ private static function exercise_list_fallback_html(string $page, string $lvl, s
       <?php endforeach; ?>
     </ul>
   </section>
+  <?php if ($total_pages > 1): ?>
+    <nav class="ouinpo-pagination" aria-label="Pagination des exercices">
+      <?php if ($current_page > 1): ?>
+        <a class="ouinpo-page-button" href="<?php echo esc_url(add_query_arg('exo_page', $current_page - 1)); ?>">Précédent</a>
+      <?php else: ?>
+        <span class="ouinpo-page-button is-disabled">Précédent</span>
+      <?php endif; ?>
+      <span class="ouinpo-page-status"><?php echo esc_html('Page ' . $current_page . ' / ' . $total_pages); ?></span>
+      <?php if ($current_page < $total_pages): ?>
+        <a class="ouinpo-page-button" href="<?php echo esc_url(add_query_arg('exo_page', $current_page + 1)); ?>">Suivant</a>
+      <?php else: ?>
+        <span class="ouinpo-page-button is-disabled">Suivant</span>
+      <?php endif; ?>
+    </nav>
+  <?php endif; ?>
   <?php
   return trim((string) ob_get_clean());
 }
 
 
 
-  /** Liste des exercices (le JS remplira #ouinpo-exercises depuis l’API REST) */
+  /** Liste des sujets pratiques rendue cote serveur pour les visiteurs. */
+private static function practical_subject_list_fallback_html(string $page, string $lvl, string $source_type, string $theme_bac): string {
+  if (!class_exists('\Ouinpo\Exercises\Rest\PracticalRoutes') || !class_exists('\WP_REST_Request')) {
+    return '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>';
+  }
+
+  $request = new \WP_REST_Request('GET', '/ouinpo/v1/practical-subjects');
+
+  if ($lvl !== '') {
+    $request->set_param('school_level', $lvl);
+  }
+
+  if ($source_type !== '') {
+    $request->set_param('source_type', $source_type);
+  }
+
+  if ($theme_bac !== '') {
+    $request->set_param('theme_bac', $theme_bac);
+  }
+
+  $response = \Ouinpo\Exercises\Rest\PracticalRoutes::index($request);
+
+  if (is_wp_error($response)) {
+    return '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>';
+  }
+
+  $items = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+
+  if (!is_array($items)) {
+    return '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>';
+  }
+
+  if (empty($items)) {
+    return '<div class="ouinpo-empty">Aucun sujet pratique trouve.</div>';
+  }
+
+  ob_start();
+  ?>
+  <div class="ouinpo-exercises-meta">
+    <span class="ouinpo-chip">
+      <?php echo esc_html(count($items) . ' sujet' . (count($items) > 1 ? 's' : '')); ?>
+    </span>
+  </div>
+  <ul class="ouinpo-exercises-list ouinpo-exo-list">
+    <?php foreach ($items as $item): ?>
+      <?php
+      $item = is_object($item) ? $item : (object) $item;
+      $id = isset($item->id) ? (int) $item->id : 0;
+      if ($id <= 0) {
+        continue;
+      }
+
+      $title = isset($item->title) && $item->title !== '' ? (string) $item->title : 'Sujet pratique';
+      $url = add_query_arg('practical', $id, $page);
+      $sub_bits = [];
+
+      foreach (['session_label', 'year_label', 'center_label'] as $field) {
+        if (!empty($item->{$field})) {
+          $sub_bits[] = (string) $item->{$field};
+        }
+      }
+      ?>
+      <li class="ouinpo-exercise-item ouin-exo-li">
+        <div class="ouinpo-exercise-main ouin-exo-main">
+          <a class="ouinpo-exercise-link ouin-exo-link" href="<?php echo esc_url($url); ?>">
+            <?php echo esc_html($title); ?>
+          </a>
+          <?php if (!empty($sub_bits)): ?>
+            <div class="ouinpo-exercise-sub"><?php echo esc_html(implode(' - ', $sub_bits)); ?></div>
+          <?php endif; ?>
+        </div>
+        <div class="ouinpo-badges ouin-exo-status">
+          <?php if (!empty($item->source_type)): ?>
+            <span class="ouinpo-badge ouinpo-badge--exam"><?php echo esc_html(self::source_type_label((string) $item->source_type)); ?></span>
+          <?php endif; ?>
+          <?php if (!empty($item->theme_bac)): ?>
+            <span class="ouinpo-badge ouinpo-badge--competency"><?php echo esc_html(self::theme_bac_label((string) $item->theme_bac)); ?></span>
+          <?php endif; ?>
+          <?php if (!empty($item->difficulty_label)): ?>
+            <span class="ouinpo-badge ouinpo-badge--difficulty"><?php echo esc_html((string) $item->difficulty_label); ?></span>
+          <?php endif; ?>
+          <?php if (isset($item->calls_count)): ?>
+            <span class="ouinpo-badge">
+              <?php echo esc_html((string) (int) $item->calls_count); ?> appel<?php echo ((int) $item->calls_count > 1) ? 's' : ''; ?>
+            </span>
+          <?php endif; ?>
+        </div>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+  <?php
+  return trim((string) ob_get_clean());
+}
+
+private static function source_type_label(string $source_type): string {
+  $labels = [
+    'annale'   => 'Annale',
+    'inspired' => 'Inspire annale',
+    'type_bac' => 'Type bac',
+  ];
+
+  return $labels[strtolower($source_type)] ?? '';
+}
+
+private static function theme_bac_label(string $theme): string {
+  $labels = [
+    'algorithmique'         => 'Algorithmique',
+    'programmation'         => 'Programmation',
+    'structures_de_donnees' => 'Structures de donnees',
+    'bases_de_donnees_sql'  => 'Bases de donnees / SQL',
+    'reseaux_securite'      => 'Reseaux et securite',
+    'architecture_systemes' => 'Architecture et systemes',
+  ];
+
+  return $labels[strtolower($theme)] ?? $theme;
+}
 
 public static function render_list($atts = array(), $content = '') {
 
@@ -1287,6 +1470,8 @@ public static function render_list($atts = array(), $content = '') {
     'lvl'       => '',
 
     'exam_only' => '0',
+
+    'per_page'  => '50',
 
   ), $atts, 'ouinpo_exercises');
 
@@ -1380,9 +1565,12 @@ public static function render_list($atts = array(), $content = '') {
 
     : '0';
 
+  $per_page = max(1, min(100, (int) $atts['per_page']));
+  $current_page = isset($_GET['exo_page']) ? max(1, (int) $_GET['exo_page']) : 1;
+
   $initial_list_html = $is_logged
     ? '<div class="ouinpo-loading">Chargement des exercices…</div>'
-    : self::exercise_list_fallback_html($page, $lvl, $exam_only);
+    : self::exercise_list_fallback_html($page, $lvl, $exam_only, $current_page, $per_page);
 
   if (!$is_logged) {
     wp_add_inline_script(
@@ -1516,25 +1704,7 @@ JS,
 
 
 
-        <div
-
-          id="ouinpo-exercises"
-
-          class="ouinpo-exercises-root"
-
-          data-exo-page="<?php echo esc_attr($page); ?>"
-
-          data-source="shortcode"
-
-          data-logged="<?php echo $is_logged ? '1' : '0'; ?>"
-
-          data-level="<?php echo esc_attr($lvl); ?>"
-
-          data-level-label="<?php echo esc_attr($level_label); ?>"
-
-          data-exam-only="<?php echo esc_attr($exam_only); ?>"
-
-        >
+        <div id="ouinpo-exercises" class="ouinpo-exercises-root" data-exo-page="<?php echo esc_attr($page); ?>" data-source="shortcode" data-logged="<?php echo $is_logged ? '1' : '0'; ?>" data-level="<?php echo esc_attr($lvl); ?>" data-level-label="<?php echo esc_attr($level_label); ?>" data-exam-only="<?php echo esc_attr($exam_only); ?>" data-current-page="<?php echo esc_attr((string) $current_page); ?>" data-per-page="<?php echo esc_attr((string) $per_page); ?>">
 
           <?php echo $initial_list_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
@@ -1598,7 +1768,8 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
 
 
-  $allowed = ['seconde', 'premiere', 'terminale'];
+  $level_options = self::school_level_options();
+  $allowed = array_keys($level_options);
 
 
 
@@ -1625,6 +1796,10 @@ public static function render_practical_subjects($atts = array(), $content = '')
   $source_type = sanitize_key((string) $atts['source_type']);
 
   $theme_bac   = sanitize_text_field((string) $atts['theme_bac']);
+
+  $initial_list_html = $is_logged
+    ? '<div class="ouinpo-loading">Chargement des sujets pratiques...</div>'
+    : self::practical_subject_list_fallback_html($page, $lvl, $source_type, $theme_bac);
 
 
 
@@ -1656,11 +1831,11 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
                 <option value="" <?php selected($lvl, ''); ?>>Tous</option>
 
-                <option value="seconde" <?php selected($lvl, 'seconde'); ?>>Seconde</option>
+                <?php foreach ($level_options as $slug => $label): ?>
 
-                <option value="premiere" <?php selected($lvl, 'premiere'); ?>>Première</option>
+                  <option value="<?php echo esc_attr($slug); ?>" <?php selected($lvl, $slug); ?>><?php echo esc_html($label); ?></option>
 
-                <option value="terminale" <?php selected($lvl, 'terminale'); ?>>Terminale</option>
+                <?php endforeach; ?>
 
               </select>
 
@@ -1692,25 +1867,9 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
 
 
-        <div
+        <div id="ouinpo-practical-subjects" class="ouinpo-practical-subjects-root" data-subject-page="<?php echo esc_attr($page); ?>" data-logged="<?php echo $is_logged ? '1' : '0'; ?>" data-level="<?php echo esc_attr($lvl); ?>" data-source-type="<?php echo esc_attr($source_type); ?>" data-theme-bac="<?php echo esc_attr($theme_bac); ?>" data-server-fallback="<?php echo $is_logged ? '0' : '1'; ?>">
 
-          id="ouinpo-practical-subjects"
-
-          class="ouinpo-practical-subjects-root"
-
-          data-subject-page="<?php echo esc_attr($page); ?>"
-
-          data-logged="<?php echo $is_logged ? '1' : '0'; ?>"
-
-          data-level="<?php echo esc_attr($lvl); ?>"
-
-          data-source-type="<?php echo esc_attr($source_type); ?>"
-
-          data-theme-bac="<?php echo esc_attr($theme_bac); ?>"
-
-        >
-
-          <div class="ouinpo-loading">Chargement des sujets pratiques…</div>
+          <?php echo $initial_list_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
         </div>
 
@@ -1854,11 +2013,7 @@ public static function render_practical_subject($atts = array(), $content = '') 
 
 return '
 
-  <div class="ouinpo-practical-subject"
-
-       data-subject-id="' . esc_attr($id) . '"
-
-       data-logged="' . ($is_logged ? '1' : '0') . '">
+  <div class="ouinpo-practical-subject" data-subject-id="' . esc_attr($id) . '" data-logged="' . ($is_logged ? '1' : '0') . '">
 
 
 
@@ -2126,13 +2281,7 @@ $is_logged = is_user_logged_in();
 
   return '
 
-    <div class="ouinpo-exo"
-
-         data-exo-id="' . $id_attr . '"
-
-         data-logged="' . ($is_logged ? '1' : '0') . '"
-
-         data-show-status-actions="' . ($show_status_actions ? '1' : '0') . '">
+    <div class="ouinpo-exo" data-exo-id="' . $id_attr . '" data-logged="' . ($is_logged ? '1' : '0') . '" data-show-status-actions="' . ($show_status_actions ? '1' : '0') . '">
 
         <div class="exo-statement"></div>'
 
@@ -2607,6 +2756,8 @@ public static function render_teacher($atts = [], $content = '') {
 
   $tblComps   = $wpdb->prefix . 'ouin_exo_competencies';
 
+  $tblCompLevels = $wpdb->prefix . 'ouin_exo_competency_school_level';
+
   $tblUsers   = $wpdb->users;
 
 
@@ -2705,23 +2856,19 @@ public static function render_teacher($atts = [], $content = '') {
 
   // --- Domaines disponibles ---
 
-  $tblLevels  = $wpdb->prefix . 'ouin_exo_school_levels';
-
   $domains    = [];
 
-  $levelLabel = null;
+  $schoolLevelId = 0;
 
 
 
   if ($group_id > 0) {
 
-    $levelRow = $wpdb->get_row($wpdb->prepare(
+    $schoolLevelId = (int) $wpdb->get_var($wpdb->prepare(
 
-      "SELECT sl.label
+      "SELECT g.school_level_id
 
        FROM $tblGroups g
-
-       JOIN $tblLevels sl ON sl.id = g.school_level_id
 
        WHERE g.id = %d",
 
@@ -2729,47 +2876,30 @@ public static function render_teacher($atts = [], $content = '') {
 
     ));
 
-
-
-    if ($levelRow) {
-
-      $levelLabel = $levelRow->label;
-
-    }
-
   }
 
 
 
-  if ($levelLabel) {
+  if ($schoolLevelId > 0) {
 
     $domains = $wpdb->get_results($wpdb->prepare(
 
-      "SELECT DISTINCT domain_slug AS slug, domain AS label, level
+      "SELECT DISTINCT c.domain_slug AS slug, c.domain AS label
 
-       FROM $tblComps
+       FROM $tblComps c
 
-       WHERE active = 1
+       WHERE c.active = 1
 
-         AND level IN ('Transversal', %s)
+         AND EXISTS (
+           SELECT 1
+             FROM $tblCompLevels csl
+            WHERE csl.competency_id = c.id
+              AND csl.school_level_id = %d
+         )
 
-       ORDER BY
+       ORDER BY c.domain ASC",
 
-         CASE
-
-           WHEN level = %s THEN 0
-
-           WHEN level = 'Transversal' THEN 1
-
-           ELSE 2
-
-         END,
-
-         domain ASC",
-
-      $levelLabel,
-
-      $levelLabel
+      $schoolLevelId
 
     ));
 
@@ -3805,7 +3935,13 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
     // ------------------------------------------------------------
 
-    $levels_order = ['Spécial', 'Terminale', 'Première', 'Seconde', 'Transversal'];
+    $levels_order = ['Spécial'];
+    $school_level_labels = (array) $wpdb->get_col("
+      SELECT label
+      FROM {$wpdb->prefix}ouin_exo_school_levels
+      ORDER BY sort_order DESC, id DESC
+    ");
+    $levels_order = array_merge($levels_order, array_map('strval', $school_level_labels));
 
 
 

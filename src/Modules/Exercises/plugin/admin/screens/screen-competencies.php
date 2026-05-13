@@ -49,6 +49,7 @@ class Screen_Competencies {
     $tblUC      = $wpdb->prefix . 'ouin_exo_user_competencies';
 
     $tblLevels  = $wpdb->prefix . 'ouin_exo_school_levels';
+    $tblCompLevels = $wpdb->prefix . 'ouin_exo_competency_school_level';
 
     $tblGM      = $wpdb->prefix . 'ouin_exo_group_members';
 
@@ -106,13 +107,11 @@ class Screen_Competencies {
 
     if ($group_id > 0 && $year_id > 0) {
 
-      $lvlSlug = $wpdb->get_var($wpdb->prepare(
+      $schoolLevelId = (int) $wpdb->get_var($wpdb->prepare(
 
-        "SELECT sl.slug
+        "SELECT g.school_level_id
 
            FROM $tblGroups g
-
-           JOIN $tblLevels sl ON sl.id = g.school_level_id
 
           WHERE g.id = %d AND g.year_id = %d
 
@@ -124,23 +123,10 @@ class Screen_Competencies {
 
 
 
-      $levelLabel = null;
-
-      if ($lvlSlug) {
-
-        $s = strtolower($lvlSlug);
-
-        if ($s === 'seconde') $levelLabel = 'Seconde';
-
-        elseif ($s === 'premiere') $levelLabel = 'Première';
-
-        elseif ($s === 'terminale' || $s === 'term') $levelLabel = 'Terminale';
-
-      }
 
 
 
-      if ($levelLabel) {
+      if ($schoolLevelId > 0) {
 
         $domains = $wpdb->get_results($wpdb->prepare(
 
@@ -154,7 +140,12 @@ class Screen_Competencies {
 
               AND uc.group_id = %d
 
-              AND (c.level = %s OR c.level = 'Transversal')
+              AND EXISTS (
+                SELECT 1
+                  FROM $tblCompLevels csl
+                 WHERE csl.competency_id = c.id
+                   AND csl.school_level_id = %d
+              )
 
             GROUP BY c.domain_slug, c.domain
 
@@ -174,7 +165,7 @@ class Screen_Competencies {
 
               c.domain",
 
-          $year_id, $group_id, $levelLabel
+          $year_id, $group_id, $schoolLevelId
 
         ));
 

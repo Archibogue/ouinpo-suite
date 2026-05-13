@@ -2,6 +2,7 @@
 namespace Ouinpo\Exercises\Admin;
 
 use Ouinpo\Exercises\AssessmentsService;
+use Ouinpo\Exercises\CompetencyLevels;
 
 if (!defined('ABSPATH')) exit;
 
@@ -535,7 +536,7 @@ class Screen_Assessment_Builder {
     private static function get_levels(): array {
         global $wpdb;
         return $wpdb->get_results(
-            "SELECT id, label, slug FROM " . self::table('school_levels') . " ORDER BY id ASC"
+            "SELECT id, label, slug FROM " . self::table('school_levels') . " ORDER BY sort_order ASC, id ASC"
         ) ?: [];
     }
 
@@ -553,11 +554,10 @@ class Screen_Assessment_Builder {
         $where = "WHERE active = 1 AND domain_slug IS NOT NULL AND domain_slug <> ''";
         $args = [];
 
-        $level_label = self::level_label((int) $filters['level_id']);
-
-        if ($level_label !== '') {
-            $where .= " AND (level = %s OR level = 'Transversal')";
-            $args[] = $level_label;
+        $level_id = (int) $filters['level_id'];
+        if ($level_id > 0) {
+            $where .= " AND " . CompetencyLevels::level_filter_sql($tbl);
+            $args[] = $level_id;
         }
 
         $sql = "SELECT DISTINCT domain, domain_slug FROM {$tbl} {$where} ORDER BY domain ASC";
@@ -574,11 +574,11 @@ class Screen_Assessment_Builder {
         $where = "WHERE active = 1";
         $args = [];
     
-        $level_label = self::level_label((int) $filters['level_id']);
+        $level_id = (int) $filters['level_id'];
     
-        if ($level_label !== '') {
-            $where .= " AND (level = %s OR level = 'Transversal')";
-            $args[] = $level_label;
+        if ($level_id > 0) {
+            $where .= " AND " . CompetencyLevels::level_filter_sql($tbl);
+            $args[] = $level_id;
         }
     
         $domain_slugs = array_values(array_filter((array) ($filters['domain_slugs'] ?? [])));

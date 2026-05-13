@@ -120,6 +120,25 @@
     padding:10px;
 }
 
+.ouinpo-admin-check-row {
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    padding:6px 0;
+    border-bottom:1px solid #f0f0f1;
+}
+
+.ouinpo-admin-check-row:last-child {
+    border-bottom:0;
+}
+
+.ouinpo-admin-check-row em {
+    display:block;
+    color:#646970;
+    font-size:12px;
+    margin-top:2px;
+}
+
 .ouinpo-admin-layout {
     display:flex;
     gap:24px;
@@ -252,6 +271,10 @@
 
 .ouinpo-admin-col-count {
     width:100px;
+}
+
+.ouinpo-admin-col-competencies {
+    width:130px;
 }
 
 .ouinpo-admin-col-actions {

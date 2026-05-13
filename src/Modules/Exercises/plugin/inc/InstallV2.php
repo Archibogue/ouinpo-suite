@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.3';
+    const DB_VERSION = '2.6.6';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -77,6 +77,8 @@ class InstallV2 {
             slug VARCHAR(20) NOT NULL,
 
             label VARCHAR(50) NOT NULL,
+
+            sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 
             PRIMARY KEY  (id),
 
@@ -332,11 +334,45 @@ class InstallV2 {
 
         ) $charset_innodb;";
 
+        $sql_domains = "CREATE TABLE {$p}domains (
+
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+            slug VARCHAR(128) NOT NULL,
+
+            label VARCHAR(191) NOT NULL,
+
+            track VARCHAR(50) NOT NULL DEFAULT '',
+
+            description TEXT NULL,
+
+            sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+
+            active TINYINT(1) NOT NULL DEFAULT 1,
+
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+            PRIMARY KEY  (id),
+
+            UNIQUE KEY uk_slug_track (slug, track),
+
+            KEY idx_track (track),
+
+            KEY idx_active (active),
+
+            KEY idx_sort_order (sort_order)
+
+        ) $charset_innodb;";
+
 
 
         $sql_competencies = "CREATE TABLE {$p}competencies (
 
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+            domain_id BIGINT UNSIGNED NULL,
 
             domain VARCHAR(120) NOT NULL,
 
@@ -348,9 +384,9 @@ class InstallV2 {
 
             example TEXT DEFAULT NULL,
 
-            track ENUM('SNT','NSI') NOT NULL,
+            track VARCHAR(50) NOT NULL,
 
-            level ENUM('Seconde','Première','Terminale','Transversal') NOT NULL,
+            level VARCHAR(50) NOT NULL,
 
             reference_url VARCHAR(255) DEFAULT NULL,
 
@@ -366,6 +402,8 @@ class InstallV2 {
 
             UNIQUE KEY uk_slug (slug),
 
+            KEY domain_id (domain_id),
+
             KEY idx_track_level (track, level),
 
             KEY idx_domain (domain),
@@ -374,6 +412,13 @@ class InstallV2 {
 
             KEY track (track)
 
+        ) $charset_innodb;";
+
+        $sql_competency_school_level = "CREATE TABLE {$p}competency_school_level (
+            competency_id BIGINT UNSIGNED NOT NULL,
+            school_level_id TINYINT UNSIGNED NOT NULL,
+            PRIMARY KEY  (competency_id, school_level_id),
+            KEY school_level_id (school_level_id)
         ) $charset_innodb;";
 
         $sql_competencies_import = "CREATE TABLE {$p}competencies_import (
@@ -781,7 +826,9 @@ class InstallV2 {
         dbDelta($sql_ai_attempts);
 
         dbDelta($sql_user_status);
+        dbDelta($sql_domains);
         dbDelta($sql_competencies);
+        dbDelta($sql_competency_school_level);
         dbDelta($sql_competencies_import);
         dbDelta($sql_exo_comp);
 
@@ -855,7 +902,12 @@ class InstallV2 {
 
         
 
+        self::ensure_school_level_sort_order();
         self::seed_school_levels();
+        self::migrate_competency_track_column();
+        self::migrate_competency_level_column();
+        self::migrate_domains();
+        self::migrate_competency_school_levels();
 
         self::seed_year_if_missing();
 
@@ -873,15 +925,232 @@ class InstallV2 {
 
     $t = $wpdb->prefix . 'ouin_exo_school_levels';
 
+    if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $t))) {
+        return;
+    }
 
+    if (get_option('ouinpo_exo_default_school_levels_seeded')) {
+        return;
+    }
 
-    $wpdb->query("INSERT IGNORE INTO {$t} (id,slug,label) VALUES
+    $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$t}");
+    if ($count > 0) {
+        update_option('ouinpo_exo_default_school_levels_seeded', '1', false);
+        return;
+    }
 
-        (1,'seconde','Seconde'),
+    $wpdb->query("INSERT IGNORE INTO {$t} (slug,label,sort_order) VALUES
 
-        (2,'premiere','Première'),
+        ('seconde','Seconde',10),
 
-        (3,'terminale','Terminale')");
+        ('premiere','Première',20),
+
+        ('terminale','Terminale',30)");
+
+    update_option('ouinpo_exo_default_school_levels_seeded', '1', false);
+
+    }
+
+    private static function ensure_school_level_sort_order(): void {
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_school_levels';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $column = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'sort_order'
+             LIMIT 1",
+            DB_NAME,
+            $table
+        ));
+
+        if ($column === '') {
+            $wpdb->query("ALTER TABLE {$table} ADD sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER label");
+        }
+
+        $rows = $wpdb->get_results("SELECT id, sort_order FROM {$table} ORDER BY id ASC");
+        $position = 10;
+
+        foreach ((array) $rows as $row) {
+            if ((int) $row->sort_order > 0) {
+                continue;
+            }
+
+            $wpdb->update(
+                $table,
+                ['sort_order' => $position],
+                ['id' => (int) $row->id],
+                ['%d'],
+                ['%d']
+            );
+
+            $position += 10;
+        }
+    }
+
+    private static function migrate_competency_track_column(): void {
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_competencies';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $column_type = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_TYPE
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'track'
+             LIMIT 1",
+            DB_NAME,
+            $table
+        ));
+
+        if ($column_type !== '' && stripos($column_type, 'enum(') === 0) {
+            $wpdb->query("ALTER TABLE {$table} MODIFY track VARCHAR(50) NOT NULL");
+        }
+
+    }
+
+    private static function migrate_competency_level_column() {
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_competencies';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $column_type = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_TYPE
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'level'
+             LIMIT 1",
+            DB_NAME,
+            $table
+        ));
+
+        if ($column_type !== '' && stripos($column_type, 'enum(') === 0) {
+            $wpdb->query("ALTER TABLE {$table} MODIFY level VARCHAR(50) NOT NULL");
+        }
+
+    }
+
+    private static function migrate_domains(): void {
+
+        global $wpdb;
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+        $tbl_domains = $p . 'domains';
+        $tbl_comp = $p . 'competencies';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tbl_domains))
+            || !$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tbl_comp))) {
+            return;
+        }
+
+        $has_domain_id = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'domain_id'
+             LIMIT 1",
+            DB_NAME,
+            $tbl_comp
+        ));
+
+        if ($has_domain_id === '') {
+            $wpdb->query("ALTER TABLE {$tbl_comp} ADD domain_id BIGINT UNSIGNED NULL AFTER id");
+            $wpdb->query("ALTER TABLE {$tbl_comp} ADD KEY domain_id (domain_id)");
+        }
+
+        $wpdb->query("
+            INSERT IGNORE INTO {$tbl_domains} (slug, label, track, sort_order, active)
+            SELECT
+                c.domain_slug,
+                MAX(c.domain) AS label,
+                COALESCE(NULLIF(c.track, ''), '') AS track,
+                0 AS sort_order,
+                1 AS active
+            FROM {$tbl_comp} c
+            WHERE c.domain_slug IS NOT NULL
+              AND c.domain_slug <> ''
+              AND c.domain IS NOT NULL
+              AND c.domain <> ''
+            GROUP BY c.domain_slug, COALESCE(NULLIF(c.track, ''), '')
+        ");
+
+        $wpdb->query("
+            UPDATE {$tbl_domains} d
+            JOIN (
+                SELECT id
+                FROM {$tbl_domains}
+                WHERE sort_order = 0
+                ORDER BY track ASC, label ASC, id ASC
+            ) ordered ON ordered.id = d.id
+            SET d.sort_order = d.id * 10
+            WHERE d.sort_order = 0
+        ");
+
+        $wpdb->query("
+            UPDATE {$tbl_comp} c
+            JOIN {$tbl_domains} d
+              ON d.slug = c.domain_slug
+             AND d.track = COALESCE(NULLIF(c.track, ''), '')
+            SET c.domain_id = d.id
+            WHERE c.domain_id IS NULL
+              AND c.domain_slug IS NOT NULL
+              AND c.domain_slug <> ''
+        ");
+
+    }
+
+    private static function migrate_competency_school_levels() {
+
+        global $wpdb;
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+        $tbl_comp = $p . 'competencies';
+        $tbl_levels = $p . 'school_levels';
+        $tbl_link = $p . 'competency_school_level';
+
+        $tables_ready = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tbl_link));
+        if (!$tables_ready) {
+            return;
+        }
+
+        $wpdb->query("
+            INSERT IGNORE INTO {$tbl_link} (competency_id, school_level_id)
+            SELECT c.id, sl.id
+              FROM {$tbl_comp} c
+              JOIN {$tbl_levels} sl
+                ON sl.label = c.level
+                OR sl.slug = c.level
+             WHERE c.level <> 'Transversal'
+        ");
+
+        $wpdb->query("
+            INSERT IGNORE INTO {$tbl_link} (competency_id, school_level_id)
+            SELECT c.id, sl.id
+              FROM {$tbl_comp} c
+              CROSS JOIN {$tbl_levels} sl
+             WHERE c.level = 'Transversal'
+        ");
 
     }
 
@@ -903,11 +1172,11 @@ class InstallV2 {
 
                 "INSERT INTO {$t} (slug,starts_on,ends_on,is_active) VALUES (%s,%s,%s,1)",
 
-                '2025-2026',
+                self::default_academic_year_slug(),
 
-                '2025-09-01',
+                self::default_academic_year_start(),
 
-                '2026-08-31'
+                self::default_academic_year_end()
 
             ));
 
@@ -915,6 +1184,26 @@ class InstallV2 {
 
         }
 
+    }
+
+    private static function default_academic_year_slug(): string {
+        $year = (int) gmdate('Y');
+        $month = (int) gmdate('n');
+        $start = $month >= 9 ? $year : $year - 1;
+
+        return $start . '-' . ($start + 1);
+    }
+
+    private static function default_academic_year_start(): string {
+        $start = (int) substr(self::default_academic_year_slug(), 0, 4);
+
+        return $start . '-09-01';
+    }
+
+    private static function default_academic_year_end(): string {
+        $start = (int) substr(self::default_academic_year_slug(), 0, 4);
+
+        return ($start + 1) . '-08-31';
     }
 
     
@@ -1168,6 +1457,38 @@ class InstallV2 {
              ADD CONSTRAINT fk_exercise_school_level_exercise
 
              FOREIGN KEY (exercise_id) REFERENCES {$p}exercises(id)
+
+             ON DELETE CASCADE"
+
+        );
+
+        self::add_fk_if_missing(
+
+            $p . 'competency_school_level',
+
+            'fk_competency_school_level_competency',
+
+            "ALTER TABLE {$p}competency_school_level
+
+             ADD CONSTRAINT fk_competency_school_level_competency
+
+             FOREIGN KEY (competency_id) REFERENCES {$p}competencies(id)
+
+             ON DELETE CASCADE"
+
+        );
+
+        self::add_fk_if_missing(
+
+            $p . 'competency_school_level',
+
+            'fk_competency_school_level_level',
+
+            "ALTER TABLE {$p}competency_school_level
+
+             ADD CONSTRAINT fk_competency_school_level_level
+
+             FOREIGN KEY (school_level_id) REFERENCES {$p}school_levels(id)
 
              ON DELETE CASCADE"
 

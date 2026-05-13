@@ -57,6 +57,22 @@
     return res.json();
   }
 
+  async function apiGETWithMeta(path) {
+    const res = await fetch(restUrl(path), {
+      headers: commonHeaders(),
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    return {
+      data: await res.json(),
+      total: Number(res.headers.get('X-WP-Total') || 0),
+      totalPages: Number(res.headers.get('X-WP-TotalPages') || 1),
+      page: Number(res.headers.get('X-Ouinpo-Page') || 1),
+      perPage: Number(res.headers.get('X-Ouinpo-Per-Page') || 50)
+    };
+  }
+
 
 
   async function apiPOST(path, body) {
@@ -404,6 +420,27 @@ function buildExamSubtitleHtml(ex) {
 
 }
 
+function renderExercisesPagination(pagination) {
+  if (!pagination || Number(pagination.totalPages || 1) <= 1) return '';
+
+  const page = Math.max(1, Number(pagination.page || 1));
+  const totalPages = Math.max(1, Number(pagination.totalPages || 1));
+  const prevPage = Math.max(1, page - 1);
+  const nextPage = Math.min(totalPages, page + 1);
+
+  return [
+    '<nav class="ouinpo-pagination" aria-label="Pagination des exercices">',
+    page > 1
+      ? `<button type="button" class="ouinpo-page-button" data-page="${prevPage}">Précédent</button>`
+      : '<button type="button" class="ouinpo-page-button is-disabled" disabled>Précédent</button>',
+    `<span class="ouinpo-page-status">Page ${page} / ${totalPages}</span>`,
+    page < totalPages
+      ? `<button type="button" class="ouinpo-page-button" data-page="${nextPage}">Suivant</button>`
+      : '<button type="button" class="ouinpo-page-button is-disabled" disabled>Suivant</button>',
+    '</nav>'
+  ].join('');
+}
+
   function renderExercisesList(container, items, opts) {
 
   if (!container) return;
@@ -417,6 +454,8 @@ function buildExamSubtitleHtml(ex) {
   const currentDomainSlug = (opts && opts.currentDomainSlug) ? opts.currentDomainSlug : '';
 
   const currentFilters = (opts && opts.currentFilters) ? opts.currentFilters : {};
+
+  const pagination = (opts && opts.pagination) ? opts.pagination : null;
 
 
 
@@ -562,7 +601,15 @@ function buildExamSubtitleHtml(ex) {
 
   const chips = [];
 
-  chips.push(buildMetaChip(totalExercises + ' exercice' + (totalExercises > 1 ? 's' : '')));
+  const totalAvailable = pagination && Number(pagination.total)
+    ? Number(pagination.total)
+    : totalExercises;
+
+  if (totalAvailable > totalExercises) {
+    chips.push(buildMetaChip(totalExercises + ' exercice' + (totalExercises > 1 ? 's' : '') + ' affiché' + (totalExercises > 1 ? 's' : '') + ' sur ' + totalAvailable));
+  } else {
+    chips.push(buildMetaChip(totalExercises + ' exercice' + (totalExercises > 1 ? 's' : '')));
+  }
 
 
 
@@ -744,6 +791,8 @@ function buildExamSubtitleHtml(ex) {
 
 
 
+  html += renderExercisesPagination(pagination);
+
   container.innerHTML = html;
 
 }
@@ -771,6 +820,10 @@ const schoolLevelLabel = (rootForList.dataset.levelLabel || '');
 const presetExamOnly = (rootForList.dataset.examOnly || '');
 
   const isExamMode = (presetExamOnly === '1');
+
+  const perPage = Math.max(1, Math.min(100, Number(rootForList.dataset.perPage || 50) || 50));
+  const queryPage = new URLSearchParams(window.location.search).get('exo_page');
+  let currentPage = Math.max(1, Number(rootForList.dataset.currentPage || queryPage || 1) || 1);
 
 
 
@@ -1186,6 +1239,9 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
     if (schoolLevel) params.set('school_level', schoolLevel);
 
+    params.set('page', String(currentPage));
+    params.set('per_page', String(perPage));
+
 
 
     renderMessage(rootForList, 'Chargement des exercices…', 'ouinpo-loading');
@@ -1194,7 +1250,11 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
     try {
 
-      const items = await apiGET('/exercises' + (params.toString() ? '?' + params.toString() : ''));
+      const result = await apiGETWithMeta('/exercises' + (params.toString() ? '?' + params.toString() : ''));
+      const items = Array.isArray(result.data) ? result.data : [];
+
+      currentPage = Math.max(1, Number(result.page || currentPage) || currentPage);
+      rootForList.dataset.currentPage = String(currentPage);
 
 
 
@@ -1222,9 +1282,18 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
           competencyLabel: selectedText(selComp)
 
+        },
+
+        pagination: {
+          page: currentPage,
+          perPage: Number(result.perPage || perPage),
+          total: Number(result.total || items.length),
+          totalPages: Math.max(1, Number(result.totalPages || 1))
         }
 
       });
+
+      bindPaginationControls();
 
     } catch (e) {
 
@@ -1236,35 +1305,52 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
   }
 
+  function bindPaginationControls() {
+    rootForList.querySelectorAll('.ouinpo-page-button[data-page]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const nextPage = Math.max(1, Number(btn.dataset.page || 1) || 1);
+        if (btn.disabled || nextPage === currentPage) return;
+
+        currentPage = nextPage;
+        reloadList();
+      });
+    });
+  }
+
+  function reloadFirstPage() {
+    currentPage = 1;
+    reloadList();
+  }
+
 
 
   if (selExam) {
 
-    selExam.addEventListener('change', reloadList);
+    selExam.addEventListener('change', reloadFirstPage);
 
   }
 
   if (selSource) {
 
-    selSource.addEventListener('change', reloadList);
+    selSource.addEventListener('change', reloadFirstPage);
 
   }
 
   if (selThemeBac) {
 
-    selThemeBac.addEventListener('change', reloadList);
+    selThemeBac.addEventListener('change', reloadFirstPage);
 
   }
 
   if (selBacFormat) {
 
-    selBacFormat.addEventListener('change', reloadList);
+    selBacFormat.addEventListener('change', reloadFirstPage);
 
   }  
 
   if (selDifficulty) {
 
-    selDifficulty.addEventListener('change', reloadList);
+    selDifficulty.addEventListener('change', reloadFirstPage);
 
   }
 
@@ -1276,7 +1362,7 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
       if (selComp) selComp.value = '';
 
-      reloadList();
+      reloadFirstPage();
 
     });
 
@@ -1284,7 +1370,7 @@ const presetExamOnly = (rootForList.dataset.examOnly || '');
 
   if (selComp) {
 
-    selComp.addEventListener('change', reloadList);
+    selComp.addEventListener('change', reloadFirstPage);
 
   }
 

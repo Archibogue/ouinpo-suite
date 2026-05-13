@@ -39,6 +39,10 @@ class AdminMenu {
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
             ],
+            'ouinpo-levels' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
             'ouinpo-assignments' => [
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
@@ -74,6 +78,7 @@ class AdminMenu {
             'ouinpo-exercices',
             'ouinpo-courses-competencies',
             'ouinpo-groups',
+            'ouinpo-levels',
             'ouinpo-paths',
             'ouinpo-years',
         ];
@@ -224,6 +229,17 @@ class AdminMenu {
             'ouinpo-groups',
             [self::class, 'renderGroups']
         );
+
+        $levels_parent = defined('OUINPO_SUITE_ADMIN_SLUG') ? null : $parent;
+
+        add_submenu_page(
+            $levels_parent,
+            'Niveaux scolaires',
+            'Niveaux',
+            'edit_users',
+            'ouinpo-levels',
+            [self::class, 'renderLevels']
+        );
     
         add_submenu_page(
             $parent,
@@ -365,6 +381,10 @@ class AdminMenu {
 
     public static function renderGroups() {
         require_once __DIR__ . '/screens/screen-groups.php';
+    }
+
+    public static function renderLevels() {
+        require_once __DIR__ . '/screens/screen-levels.php';
     }
 
     public static function renderAssignments() {

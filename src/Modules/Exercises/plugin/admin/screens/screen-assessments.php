@@ -2,6 +2,7 @@
 namespace Ouinpo\Exercises\Admin;
 
 use Ouinpo\Exercises\AssessmentsService;
+use Ouinpo\Exercises\CompetencyLevels;
 
 defined('ABSPATH') || exit;
 
@@ -191,17 +192,17 @@ class Screen_Assessments {
         $tblC = self::table('competencies');
 
         $group = $groupId ? self::get_group((int) $groupId) : null;
-        if ($group && !empty($group->level_label)) {
+        if ($group && !empty($group->school_level_id)) {
             return $wpdb->get_results($wpdb->prepare(
                 "SELECT id, domain, competency, track, level, slug
                  FROM {$tblC}
                  WHERE active = 1
-                   AND (level = %s OR level = 'Transversal')
+                   AND " . CompetencyLevels::level_filter_sql($tblC) . "
                  ORDER BY
                    CASE WHEN track = 'NSI' THEN 1 WHEN track = 'SNT' THEN 2 ELSE 3 END,
                    domain,
                    id",
-                $group->level_label
+                (int) $group->school_level_id
             )) ?: [];
         }
 

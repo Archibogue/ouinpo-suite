@@ -22,7 +22,9 @@ class BadgeEngine {
     /**
      * Cache local des niveaux scolaires courants des utilisateurs.
      */
-    protected static array $user_level_label_cache = [];
+    protected static array $user_level_label_cache = [];
+
+    protected static array $user_level_id_cache = [];
 
     /**
      * Point d’entrée : recalculer tous les badges pour un utilisateur.
@@ -128,29 +130,34 @@ class BadgeEngine {
         $t_status      = $wpdb->prefix . 'ouin_exo_user_status';
         $t_badges      = $wpdb->prefix . 'ouin_exo_badges';
         $t_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';
-        $t_exam_meta   = $wpdb->prefix . 'ouin_exo_exam_meta';
+        $t_exam_meta   = $wpdb->prefix . 'ouin_exo_exam_meta';
+        $t_comp_level  = $wpdb->prefix . 'ouin_exo_competency_school_level';
 
         // On ne calcule les badges de domaine que sur le niveau courant de l'élève.
         // Cela évite qu'un élève de Terminale gagne des badges de Première,
         // ou inversement, lorsqu'un même domain_slug existe dans plusieurs niveaux.
-        $user_levels = self::current_level_labels_for_user($user_id);
+        $user_level_ids = self::current_level_ids_for_user($user_id);
         
-        if (!$user_levels) {
+        if (!$user_level_ids) {
             return [];
         }
         
-        $level_placeholders = implode(',', array_fill(0, count($user_levels), '%s'));
+        $level_placeholders = implode(',', array_fill(0, count($user_level_ids), '%d'));
 
         // 1) Total des compétences par domaine
         $rows_total = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT domain_slug, COUNT(*) AS total_comp
-                 FROM $t_comp
-                 WHERE active = 1
-                   AND domain_slug <> ''
-                   AND level IN ($level_placeholders)
-                 GROUP BY domain_slug",
-                $user_levels
+                "SELECT c.domain_slug, COUNT(DISTINCT c.id) AS total_comp
+                 FROM $t_comp c
+
+                 JOIN $t_comp_level csl
+
+                   ON csl.competency_id = c.id
+                 WHERE c.active = 1
+                   AND c.domain_slug <> ''
+                   AND csl.school_level_id IN ($level_placeholders)
+                 GROUP BY c.domain_slug",
+                $user_level_ids
             ),
             OBJECT_K
         );
@@ -174,7 +181,11 @@ class BadgeEngine {
                    ON c.id = ec.competency_id
                   AND c.active = 1
                   AND c.domain_slug <> ''
-                  AND c.level IN ($level_placeholders)
+                JOIN $t_comp_level csl
+
+                  ON csl.competency_id = c.id
+
+                 AND csl.school_level_id IN ($level_placeholders)
                 JOIN $t_ex e
                   ON e.id = us.exercise_id
                  AND e.is_active = 1
@@ -184,7 +195,7 @@ class BadgeEngine {
                   AND us.status  = 'solved'
                   AND (em.exam_type IS NULL OR em.exam_type <> 'practical_subject')
                  GROUP BY c.domain_slug, us.exercise_id",
-                array_merge($user_levels, [$user_id])
+                array_merge($user_level_ids, [$user_id])
             )
         );
 
@@ -201,7 +212,11 @@ class BadgeEngine {
                    ON c.id = ec.competency_id
                   AND c.active = 1
                   AND c.domain_slug <> ''
-                  AND c.level IN ($level_placeholders)
+                 JOIN $t_comp_level csl
+
+                   ON csl.competency_id = c.id
+
+                  AND csl.school_level_id IN ($level_placeholders)
                  JOIN $t_ex e
                    ON e.id = us.exercise_id
                   AND e.is_active = 1
@@ -210,7 +225,7 @@ class BadgeEngine {
                  WHERE us.user_id = %d
                    AND us.status  = 'solved'
                    AND (em.exam_type IS NULL OR em.exam_type <> 'practical_subject')",
-                array_merge($user_levels, [$user_id])
+                array_merge($user_level_ids, [$user_id])
             )
         );
 
@@ -417,8 +432,8 @@ class BadgeEngine {
         ];
 
         // Un élève ne peut obtenir que le méta-badge de son niveau courant.
-        $user_levels = self::current_level_labels_for_user($user_id);
-        if (!$user_levels) {
+        $user_levels = self::current_level_labels_for_user($user_id);
+        if (!$user_levels) {
             return;
         }
 
@@ -570,7 +585,79 @@ class BadgeEngine {
         return in_array($user_id, self::AUTO_BADGES_DISABLED_USER_IDS, true);
     }
 
-    protected static function current_level_labels_for_user(int $user_id): array {
+    protected static function current_level_ids_for_user(int $user_id): array {
+
+        global $wpdb;
+
+        if ($user_id <= 0) {
+
+            return [];
+
+        }
+
+        if (isset(self::$user_level_id_cache[$user_id])) {
+
+            return self::$user_level_id_cache[$user_id];
+
+        }
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+
+        $year_id = 0;
+
+        if (class_exists(__NAMESPACE__ . '\\Years')) {
+
+            $active_id = Years::active_id();
+
+            $year_id = $active_id ? (int) $active_id : 0;
+
+        }
+
+        if ($year_id <= 0) {
+
+            $year_id = (int) get_option('ouin_exo_active_year_id', 0);
+
+        }
+
+        $sql = "
+
+            SELECT DISTINCT COALESCE(gm.school_level_id_override, g.school_level_id) AS level_id
+
+            FROM {$p}group_members gm
+
+            JOIN {$p}groups g
+
+              ON g.id = gm.group_id
+
+            WHERE gm.user_id = %d
+
+              AND gm.role = 'student'
+
+              AND COALESCE(gm.school_level_id_override, g.school_level_id) IS NOT NULL
+
+        ";
+
+        $params = [$user_id];
+
+        if ($year_id > 0) {
+
+            $sql .= " AND (g.year_id = %d OR g.year_id IS NULL)";
+
+            $params[] = $year_id;
+
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $wpdb->get_col($wpdb->prepare($sql, $params))))));
+
+        self::$user_level_id_cache[$user_id] = $ids;
+
+        return $ids;
+
+    }
+
+
+
+    protected static function current_level_labels_for_user(int $user_id): array {
         global $wpdb;
 
         if ($user_id <= 0) {
@@ -611,22 +698,16 @@ class BadgeEngine {
             $params[] = $year_id;
         }
 
-        $rows = $wpdb->get_col($wpdb->prepare($sql, $params));
-
-        $valid = [
-            'Seconde'   => true,
-            'Première'  => true,
-            'Terminale' => true,
-        ];
-
-        $levels = [];
-        foreach ($rows ?: [] as $label) {
-            $label = (string) $label;
-            if (isset($valid[$label])) {
-                $levels[] = $label;
-            }
-        }
-
+        $rows = $wpdb->get_col($wpdb->prepare($sql, $params));
+
+        $levels = [];
+        foreach ($rows ?: [] as $label) {
+            $label = trim((string) $label);
+            if ($label !== '') {
+                $levels[] = $label;
+            }
+        }
+
         $levels = array_values(array_unique($levels));
         self::$user_level_label_cache[$user_id] = $levels;
 
@@ -637,7 +718,8 @@ class BadgeEngine {
         global $wpdb;
 
         $t_badges = $wpdb->prefix . 'ouin_exo_badges';
-        $t_comp   = $wpdb->prefix . 'ouin_exo_competencies';
+        $t_comp   = $wpdb->prefix . 'ouin_exo_competencies';
+        $t_comp_level = $wpdb->prefix . 'ouin_exo_competency_school_level';
 
         $badge = $wpdb->get_row(
             $wpdb->prepare(
@@ -665,70 +747,49 @@ class BadgeEngine {
             return false;
         }
 
-        // Badges transversaux : autorisés pour tous les niveaux.
-        if (self::badge_theme_is_transversal($theme)) {
-            return true;
-        }
-
-        $user_levels = self::current_level_labels_for_user($user_id);
-        if (!$user_levels) {
+        $user_level_ids = self::current_level_ids_for_user($user_id);
+        if (!$user_level_ids) {
             return false;
         }
 
-        // Méta-badges : uniquement le méta-badge du niveau courant.
-        $meta_levels = [
-            'Meta-Seconde'   => 'Seconde',
-            'Meta-Première'  => 'Première',
-            'Meta-Terminale' => 'Terminale',
-        ];
-
-        if (isset($meta_levels[$theme])) {
-            return in_array($meta_levels[$theme], $user_levels, true);
+        $user_levels = self::current_level_labels_for_user($user_id);
+        // Meta-badges : uniquement le meta-badge du niveau courant.
+        if (str_starts_with($theme, 'Meta-')) {
+            $metaLevel = substr($theme, 5);
+            foreach ($user_levels as $userLevel) {
+                if ($metaLevel === $userLevel || sanitize_title($metaLevel) === sanitize_title($userLevel)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Badges de domaine BO : le domaine doit exister dans le niveau courant.
-        $placeholders = implode(',', array_fill(0, count($user_levels), '%s'));
-        $params = array_merge([$theme], $user_levels);
+        $placeholders = implode(',', array_fill(0, count($user_level_ids), '%d'));
+        $params = array_merge([$theme], $user_level_ids);
 
         $allowed = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT 1
-                 FROM $t_comp
-                 WHERE active = 1
-                   AND domain_slug = %s
-                   AND level IN ($placeholders)
+                 FROM $t_comp c
+
+                 JOIN $t_comp_level csl
+
+                   ON csl.competency_id = c.id
+                 WHERE c.active = 1
+                   AND c.domain_slug = %s
+                   AND csl.school_level_id IN ($placeholders)
                  LIMIT 1",
                 $params
             )
         );
 
         return (bool) $allowed;
-    }
-
-    protected static function badge_theme_is_transversal(string $theme): bool {
-        global $wpdb;
-
-        if ($theme === 'Transversal' || stripos($theme, 'transversal') !== false) {
-            return true;
-        }
-
-        $t_comp = $wpdb->prefix . 'ouin_exo_competencies';
-
-        $exists = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT 1
-                 FROM $t_comp
-                 WHERE active = 1
-                   AND domain_slug = %s
-                   AND level = 'Transversal'
-                 LIMIT 1",
-                $theme
-            )
-        );
-
-        return (bool) $exists;
-    }
-
+    }
+    protected static function badge_theme_is_transversal(string $theme): bool {
+        return false;
+    }
+
     protected static function award_badge(int $user_id, int $badge_id, string $source = 'auto'): void {
         global $wpdb;
         $t_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';

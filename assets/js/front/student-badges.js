@@ -139,7 +139,7 @@
       let level =
         b.level ||
         inferLevelFromBadge(b) ||
-        'Transversal';
+        'Spécial';
 
       if (theme === 'special' || slug.startsWith('special-')) {
         level = 'Spécial';
@@ -231,7 +231,7 @@
         raw.levels_order.length
       )
         ? raw.levels_order
-        : ['Spécial', 'Terminale', 'Première', 'Seconde', 'Transversal'],
+        : ['Spécial'],
       current_title_badge_id: (
         raw &&
         !Array.isArray(raw) &&
@@ -341,10 +341,10 @@
       badges.forEach(b => {
         const levels = Array.isArray(b.levels) && b.levels.length
           ? b.levels
-          : [b.level || 'Transversal'];
+          : [b.level || 'Spécial'];
     
         levels.forEach(lvl => {
-          let L = lvl || 'Transversal';
+          let L = lvl || 'Spécial';
     
           const theme = (b.theme || '').toLowerCase();
           const slug  = (b.slug  || '').toLowerCase();

@@ -49,13 +49,26 @@
 
   async function apiGET(path) {
 
-    const res = await fetch(restUrl(path), {
+    const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const timer = controller ? window.setTimeout(function () {
+      controller.abort();
+    }, 12000) : null;
 
-      headers: commonHeaders(),
+    let res;
 
-      credentials: 'include'
+    try {
+      res = await fetch(restUrl(path), {
 
-    });
+        headers: commonHeaders(),
+
+        credentials: 'include',
+
+        signal: controller ? controller.signal : undefined
+
+      });
+    } finally {
+      if (timer) window.clearTimeout(timer);
+    }
 
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
@@ -755,6 +768,11 @@ function themeBacLabel(theme) {
     async function reloadList() {
 
       const params = new URLSearchParams();
+      const previousHtml = rootForList.innerHTML;
+      const canRestoreServerFallback =
+        rootForList.dataset.serverFallback === '1' &&
+        previousHtml &&
+        previousHtml.indexOf('ouinpo-loading') === -1;
 
 
 
@@ -802,7 +820,11 @@ function themeBacLabel(theme) {
 
         console.error('[ouinpo] Erreur de chargement des sujets pratiques', e);
 
-        renderMessage(rootForList, 'Erreur de chargement des sujets pratiques.', 'ouinpo-empty');
+        if (canRestoreServerFallback) {
+          rootForList.innerHTML = previousHtml;
+        } else {
+          renderMessage(rootForList, 'Erreur de chargement des sujets pratiques.', 'ouinpo-empty');
+        }
 
       }
 
