@@ -415,7 +415,7 @@ settings_errors('ouinpo_levels');
         </table>
 
         <h3>Competences associees</h3>
-        <p class="description">Coche les competences disponibles pour ce niveau. Les anciennes competences transversales sont cochees par defaut lors de la creation d'un nouveau niveau.</p>
+        <p class="description">Coche les competences disponibles pour ce niveau. Une competence associee a plusieurs niveaux sera consideree comme transversale.</p>
           <div class="ouinpo-admin-scroll-box">
             <?php if (empty($competencies)): ?>
               <p>Aucune competence active.</p>

@@ -112,7 +112,7 @@
       },
       "cards": [
         {
-          "type": "basic",
+          "card_type": "definition",
           "front_html": "<p>Que signifie le préfixe /24 en IPv4 ?</p>",
           "back_html": "<p>Il indique que les 24 premiers bits identifient le réseau.</p>",
           "sort_order": 1,
