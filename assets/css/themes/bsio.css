@@ -750,8 +750,13 @@
 }
 
 .ouinpo-competences .ouinpo-me-panel {
+  display: none;
   position: relative;
   z-index: 1;
+}
+
+.ouinpo-competences .ouinpo-me-panel.is-active {
+  display: block;
 }
 
 /* Correctifs de contraste finaux : badges, tableaux et controles recalcitrants. */
