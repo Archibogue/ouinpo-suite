@@ -1,6 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 defined('ABSPATH') || exit;
 
 final class ScreenPractical
@@ -18,7 +20,7 @@ final class ScreenPractical
     }
 
     public static function render(): void {
-        if (!current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_PRACTICAL_SUBJECTS)) {
             wp_die('Accès refusé.');
         }
 
@@ -319,7 +321,7 @@ final class ScreenPractical
     }
 
     public static function handle_save(): void {
-        if (!current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_PRACTICAL_SUBJECTS)) {
             wp_die('Accès refusé.');
         }
 

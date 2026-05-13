@@ -1076,7 +1076,7 @@ private static function current_visibility_scope(): array {
   }
 
   // Prof / admin : accès aux documents prof et corrigés.
-  if (current_user_can('manage_options') || current_user_can('edit_users')) {
+  if (\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI) || \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::VIEW_STUDENT_DATA)) {
     return ['public', 'teacher', 'solution'];
   }
 
@@ -1976,7 +1976,7 @@ private static function exercise_intent_allowed_for_user(string $query, int $use
   }
 
   // Prof / admin : pas de bridage pédagogique.
-  if (current_user_can('manage_options') || current_user_can('edit_users')) {
+  if (\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI) || \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::VIEW_STUDENT_DATA)) {
     return true;
   }
 
@@ -2997,7 +2997,7 @@ private static function document_row_allowed_for_user(array $row, int $user_id):
   }
 
   // Prof / admin : pas de bridage pédagogique.
-  if (current_user_can('manage_options') || current_user_can('edit_users')) {
+  if (\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI) || \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::VIEW_STUDENT_DATA)) {
     return true;
   }
 

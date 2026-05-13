@@ -567,7 +567,7 @@ add_action('admin_menu', function(){
     add_menu_page(
       'Ouinpo',
       'Ouinpo',
-      'list_users',
+      \Ouinpo\Suite\Core\Capabilities::MANAGE_AI,
       'ouinpo',
       'ouinpo_admin_progress',
       'dashicons-shield',
@@ -579,14 +579,14 @@ add_action('admin_menu', function(){
     $parent,
     'Ouinpo / Gate',
     'Gate',
-    'list_users',
+    \Ouinpo\Suite\Core\Capabilities::MANAGE_AI,
     'ouinpo',
     'ouinpo_admin_progress'
   );
 });
 
 function ouinpo_admin_progress(){
-  if(!current_user_can('list_users')) { wp_die('Nope'); }
+  if(!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI)) { wp_die('Nope'); }
   global $wpdb; $t_prog=$wpdb->prefix.'ouinpo_progress'; $t_logs=$wpdb->prefix.'ouinpo_logs'; $t_sign=$wpdb->prefix.'ouinpo_signatures';
   $page = sanitize_title($_GET['page_slug'] ?? 'sample-page');
   if(isset($_GET['export']) && $_GET['export']==='csv'){

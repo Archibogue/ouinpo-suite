@@ -1,7 +1,13 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 if (!defined('ABSPATH')) exit;
+
+if (!Capabilities::can(Capabilities::MANAGE_CLASSES)) {
+    wp_die('Accès refusé');
+}
 
 // use wpdb; ❌ → à supprimer
 

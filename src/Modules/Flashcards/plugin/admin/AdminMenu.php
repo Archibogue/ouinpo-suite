@@ -2,6 +2,7 @@
 namespace Ouinpo\Flashcards\Admin;
 
 use Ouinpo\Flashcards\Service;
+use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
 
@@ -39,7 +40,7 @@ final class AdminMenu
             'ouinpo-suite',
             'Flashcards',
             'Flashcards',
-            'manage_options',
+            Capabilities::MANAGE_EXERCISES,
             'ouinpo-flashcards',
             ['\\Ouinpo\\Flashcards\\Admin\\ScreenFlashcards', 'render']
         );
@@ -104,7 +105,7 @@ final class AdminMenu
 
     private static function guard(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
             wp_die('Accès refusé.');
         }
         check_admin_referer('ouinpo_fc_admin_action');

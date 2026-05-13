@@ -12,7 +12,8 @@ class PracticalRoutes {
             [
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'index'],
-                'permission_callback' => '__return_true',
+                // Public: liste des sujets pratiques consultable côté élève.
+                'permission_callback' => '__return_true',
             ],
         ]);
 
@@ -21,7 +22,8 @@ class PracticalRoutes {
             [
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'show'],
-                'permission_callback' => '__return_true',
+                // Public: détail d’un sujet pratique consultable côté élève.
+                'permission_callback' => '__return_true',
             ],
         ]);
 
@@ -30,7 +32,8 @@ class PracticalRoutes {
             [
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'calls'],
-                'permission_callback' => '__return_true',
+                // Public: appels évaluateurs affichés dans le sujet pratique.
+                'permission_callback' => '__return_true',
             ],
         ]);
 
@@ -39,7 +42,8 @@ class PracticalRoutes {
             [
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'files'],
-                'permission_callback' => '__return_true',
+                // Public: fichiers liés au sujet pratique affichés dans l’interface.
+                'permission_callback' => '__return_true',
             ],
         ]);
 

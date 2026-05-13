@@ -3,6 +3,7 @@ namespace Ouinpo\Exercises\Rest;
 
 use Ouinpo\Exercises\CompetencyLevels;
 use Ouinpo\Exercises\TeachingState;
+use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
 
@@ -14,12 +15,12 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'index'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_view'],
             ],
             [
                 'methods'  => 'POST',
                 'callback' => [__CLASS__, 'bulkUpdate'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_manage'],
                 'args' => [
                     'items' => ['required' => true],
                 ]
@@ -30,7 +31,7 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'POST',
                 'callback' => [__CLASS__, 'seedGroup'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_manage'],
             ],
         ]);
 
@@ -38,12 +39,12 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'teachingStateIndex'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_view'],
             ],
             [
                 'methods'  => 'POST',
                 'callback' => [__CLASS__, 'teachingStateUpdate'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_manage'],
             ],
         ]);
 
@@ -51,6 +52,7 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'options'],
+                // Public: options de filtrage utilisées par les interfaces publiques.
                 'permission_callback' => '__return_true',
             ],
         ]);
@@ -59,7 +61,7 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'assessmentsProgress'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_view'],
             ],
         ]);
 
@@ -67,7 +69,7 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'assessmentsByDs'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_view'],
             ],
         ]);
 
@@ -75,14 +77,19 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'exercisesProgress'],
-                'permission_callback' => [__CLASS__, 'can_edit'],
+                'permission_callback' => [__CLASS__, 'can_view'],
             ],
         ]);
 
     }
 
-    public static function can_edit() {
-        return current_user_can('edit_users');
+    public static function can_manage() {
+        return Capabilities::can(Capabilities::MANAGE_COMPETENCIES);
+    }
+
+    public static function can_view() {
+        return Capabilities::can(Capabilities::MANAGE_COMPETENCIES)
+            || Capabilities::can(Capabilities::VIEW_STUDENT_DATA);
     }
 
     private static function sanitize_school_level($raw): string {

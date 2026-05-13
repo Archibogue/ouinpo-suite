@@ -1,6 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 if (!defined('ABSPATH')) exit;
 
 class AdminMenu {
@@ -159,7 +161,7 @@ class AdminMenu {
             add_menu_page(
                 'Exercices OuInPo',
                 'Exercices NSI',
-                'edit_posts',
+                Capabilities::MANAGE_EXERCISES,
                 'ouinpo-exercices',
                 [self::class, 'render_exercises'],
                 'dashicons-welcome-learn-more',
@@ -171,7 +173,7 @@ class AdminMenu {
             $parent,
             'Exercices OuInPo',
             'Exercices NSI',
-            'edit_posts',
+            Capabilities::MANAGE_EXERCISES,
             'ouinpo-exercices',
             [self::class, 'render_exercises']
         );
@@ -180,7 +182,7 @@ class AdminMenu {
             $parent,
             'Badges',
             'Badges',
-            'manage_options',
+            Capabilities::MANAGE_BADGES,
             'ouinpo-badges',
             [self::class, 'render_badges']
         );
@@ -189,7 +191,7 @@ class AdminMenu {
             $parent,
             'Devoirs surveillés',
             'Devoirs surveillés',
-            'edit_posts',
+            Capabilities::MANAGE_ASSESSMENTS,
             'ouinpo-assessments',
             [self::class, 'render_assessments']
         );
@@ -198,7 +200,7 @@ class AdminMenu {
             $parent,
             'Concepteur de devoirs',
             'Concepteur de devoirs',
-            'edit_posts',
+            Capabilities::MANAGE_ASSESSMENTS,
             'ouinpo-assessment-builder',
             [self::class, 'render_assessment_builder']
         );
@@ -207,7 +209,7 @@ class AdminMenu {
             $parent,
             'Importer des exercices',
             'Import exercices',
-            'edit_posts',
+            Capabilities::MANAGE_EXERCISES,
             'ouinpo-import-exercises',
             [self::class, 'render_import_exercises']
         );
@@ -216,7 +218,7 @@ class AdminMenu {
             $parent,
             'Suivi des compétences',
             'Suivi compétences',
-            'edit_users',
+            Capabilities::VIEW_STUDENT_DATA,
             'ouinpo-competencies',
             [self::class, 'render_competencies']
         );
@@ -225,7 +227,7 @@ class AdminMenu {
             $parent,
             'Classes',
             'Classes',
-            'edit_users',
+            Capabilities::MANAGE_CLASSES,
             'ouinpo-groups',
             [self::class, 'renderGroups']
         );
@@ -236,7 +238,7 @@ class AdminMenu {
             $levels_parent,
             'Niveaux scolaires',
             'Niveaux',
-            'edit_users',
+            Capabilities::MANAGE_CLASSES,
             'ouinpo-levels',
             [self::class, 'renderLevels']
         );
@@ -245,7 +247,7 @@ class AdminMenu {
             $parent,
             'Affectations',
             'Affectations',
-            'edit_users',
+            Capabilities::MANAGE_CLASSES,
             'ouinpo-assignments',
             [self::class, 'renderAssignments']
         );
@@ -254,7 +256,7 @@ class AdminMenu {
             $parent,
             'Cours ↔ compétences BO',
             'Cours ↔ BO',
-            'edit_users',
+            Capabilities::MANAGE_COMPETENCIES,
             'ouinpo-courses-competencies',
             [self::class, 'render_courses_competencies']
         );
@@ -263,7 +265,7 @@ class AdminMenu {
             $parent,
             'Années scolaires',
             'Années scolaires',
-            'edit_users',
+            Capabilities::MANAGE_CLASSES,
             'ouinpo-years',
             [self::class, 'render_years']
         );
@@ -272,7 +274,7 @@ class AdminMenu {
             $parent,
             'Attributions de badges',
             'Attributions de badges',
-            'manage_options',
+            Capabilities::MANAGE_BADGES,
             'ouinpo-badge-assignments',
             [self::class, 'renderBadgeAssignments']
         );
@@ -281,7 +283,7 @@ class AdminMenu {
             $parent,
             'Parcours',
             'Parcours',
-            'edit_users',
+            Capabilities::MANAGE_COMPETENCIES,
             'ouinpo-paths',
             [self::class, 'render_paths']
         );        
@@ -289,7 +291,7 @@ class AdminMenu {
             $parent,
             'Options exercices',
             'Options exercices',
-            'manage_options',
+            Capabilities::MANAGE_SETTINGS,
             'ouinpo-exercises-settings',
             [self::class, 'render_settings']
         );
@@ -298,7 +300,7 @@ class AdminMenu {
             $parent,
             'Sujets pratiques',
             'Sujets pratiques',
-            'edit_users',
+            Capabilities::MANAGE_PRACTICAL_SUBJECTS,
             'ouinpo-practical-subjects',
             ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'render']
         );
@@ -355,7 +357,7 @@ class AdminMenu {
     }
 
     public static function handle_export_exercises_csv() {
-        if (!current_user_can('edit_posts')) {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
             wp_die('Accès refusé.');
         }
     

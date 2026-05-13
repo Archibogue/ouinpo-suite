@@ -2,6 +2,7 @@
 namespace Ouinpo\Exercises\Admin;
 
 use Ouinpo\Exercises\PathsService;
+use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
 
@@ -19,7 +20,7 @@ class Screen_Paths
 
     public static function render(): void
     {
-        if (!current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
             wp_die('Accès refusé');
         }
 
@@ -566,7 +567,7 @@ class Screen_Paths
 
     private static function handle_post(): void
     {
-        if (!current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
             wp_die('Accès refusé');
         }
 

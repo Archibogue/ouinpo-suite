@@ -1,6 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 if (!defined('ABSPATH')) exit;
 
 /**
@@ -19,7 +21,7 @@ if (!defined('ABSPATH')) exit;
 class Screen_Exercises {
 
   public static function render() {
-    if (!current_user_can('edit_posts')) {
+    if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
       wp_die('Accès refusé');
     }
 
@@ -270,7 +272,7 @@ class Screen_Exercises {
   }
 
   private static function handle_bulk() {
-    if (!current_user_can('edit_posts')) {
+    if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
       wp_die('Droits insuffisants.');
     }
     if (!isset($_POST['ouin_exo_bulk_nonce']) || !wp_verify_nonce($_POST['ouin_exo_bulk_nonce'], 'ouin_exo_bulk')) {
@@ -862,7 +864,7 @@ class Screen_Exercises {
     if (!isset($_POST['ouin_exo_nonce']) || !wp_verify_nonce($_POST['ouin_exo_nonce'], 'ouin_exo_save')) {
       wp_die('Nonce invalide.');
     }
-    if (!current_user_can('edit_posts')) wp_die('Droits insuffisants.');
+    if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) wp_die('Droits insuffisants.');
 
     global $wpdb;
     $p_exo  = self::table('exercises');

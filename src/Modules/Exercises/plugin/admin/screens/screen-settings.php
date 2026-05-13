@@ -1,6 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 defined('ABSPATH') || exit;
 
 class Screen_Settings
@@ -11,7 +13,7 @@ class Screen_Settings
 
     public static function render(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
             wp_die('Accès refusé');
         }
 

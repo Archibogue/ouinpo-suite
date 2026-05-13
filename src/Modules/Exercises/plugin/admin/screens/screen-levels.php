@@ -1,9 +1,11 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 if (!defined('ABSPATH')) exit;
 
-if (!current_user_can('edit_users')) {
+if (!Capabilities::can(Capabilities::MANAGE_CLASSES)) {
     wp_die('Acces refuse.');
 }
 

@@ -1,6 +1,8 @@
 <?php
-namespace Ouinpo\Exercises;
-
+namespace Ouinpo\Exercises;
+
+use Ouinpo\Suite\Core\Capabilities;
+
 if (!defined('ABSPATH')) exit;
 
 final class RevisionBand
@@ -59,7 +61,7 @@ final class RevisionBand
 
     public static function can_edit_post_meta(): bool
     {
-        return current_user_can('edit_posts');
+        return Capabilities::can(Capabilities::MANAGE_EXERCISES);
     }
 
     public static function sanitize_text($value): string

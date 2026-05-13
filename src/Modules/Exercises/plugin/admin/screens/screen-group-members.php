@@ -4,6 +4,10 @@
  */
 defined('ABSPATH') || exit;
 
+if (!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_CLASSES)) {
+    wp_die('Accès refusé');
+}
+
 global $wpdb;
 
 $tbl_groups  = $wpdb->prefix . 'ouin_exo_groups';

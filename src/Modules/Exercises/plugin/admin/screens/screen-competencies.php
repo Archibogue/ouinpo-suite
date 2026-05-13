@@ -2,6 +2,7 @@
 
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
 
 
 if (!defined('ABSPATH')) exit;
@@ -30,7 +31,7 @@ class Screen_Competencies {
 
   public static function render() {
 
-    if (!current_user_can('edit_users')) {
+    if (!Capabilities::can(Capabilities::VIEW_STUDENT_DATA)) {
 
       wp_die(__('Accès refusé', 'ouinpo'));
 

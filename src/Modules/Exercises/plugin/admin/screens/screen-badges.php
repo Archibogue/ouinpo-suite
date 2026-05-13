@@ -1,10 +1,13 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
+
+use Ouinpo\Suite\Core\Capabilities;
+
 defined('ABSPATH') || exit;
 
 class Screen_Badges {
     public static function render() {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_BADGES)) {
             return;
         }
 

@@ -3,6 +3,7 @@
 namespace Ouinpo\Suite\Core\Admin;
 
 use Ouinpo\Suite\Core\Bootstrap;
+use Ouinpo\Suite\Core\Capabilities;
 use Ouinpo\Suite\Core\ModuleSettings;
 use Ouinpo\Suite\Core\PedagogicalPackImporter;
 
@@ -111,7 +112,7 @@ final class SuiteAdmin
         add_menu_page(
             'OuInPo Suite',
             'OuInPo Suite',
-            'edit_posts',
+            Capabilities::MANAGE_SUITE,
             self::ROOT_SLUG,
             [self::class, 'renderDashboard'],
             'dashicons-screenoptions',
@@ -122,7 +123,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Tableau de bord',
             'Tableau de bord',
-            'edit_posts',
+            Capabilities::MANAGE_SUITE,
             self::ROOT_SLUG,
             [self::class, 'renderDashboard']
         );
@@ -131,7 +132,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Contenus',
             'Contenus',
-            'edit_posts',
+            Capabilities::MANAGE_EXERCISES,
             'ouinpo-suite-contents',
             [self::class, 'renderContentsHub']
         );
@@ -141,7 +142,7 @@ final class SuiteAdmin
                 self::ROOT_SLUG,
                 'Révisions',
                 'Révisions',
-                'edit_posts',
+                Capabilities::MANAGE_EXERCISES,
                 'ouinpo-suite-revisions',
                 [self::class, 'renderRevisionsHub']
             );
@@ -151,7 +152,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Évaluations',
             'Évaluations',
-            'edit_posts',
+            Capabilities::MANAGE_ASSESSMENTS,
             'ouinpo-suite-evaluations',
             [self::class, 'renderEvaluationsHub']
         );
@@ -160,7 +161,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Classes & élèves',
             'Classes & élèves',
-            'edit_posts',
+            Capabilities::MANAGE_CLASSES,
             'ouinpo-suite-classes',
             [self::class, 'renderClassesHub']
         );
@@ -169,7 +170,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Référentiel BO',
             'Référentiel BO',
-            'edit_posts',
+            Capabilities::MANAGE_COMPETENCIES,
             'ouinpo-suite-referentiel',
             [self::class, 'renderReferentielHub']
         );
@@ -178,7 +179,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Badges',
             'Badges',
-            'manage_options',
+            Capabilities::MANAGE_BADGES,
             'ouinpo-suite-badges',
             [self::class, 'renderBadgesHub']
         );
@@ -188,7 +189,7 @@ final class SuiteAdmin
                 self::ROOT_SLUG,
                 'IA & parcours',
                 'IA & parcours',
-                'edit_posts',
+                Capabilities::MANAGE_AI,
                 'ouinpo-suite-ai',
                 [self::class, 'renderAiHub']
             );
@@ -198,7 +199,7 @@ final class SuiteAdmin
             self::ROOT_SLUG,
             'Réglages',
             'Réglages',
-            'edit_posts',
+            Capabilities::MANAGE_SETTINGS,
             'ouinpo-suite-settings',
             [self::class, 'renderSettingsHub']
         );
@@ -230,7 +231,7 @@ final class SuiteAdmin
         $tabs['ouinpo-suite-classes'] = 'Classes & élèves';
         $tabs['ouinpo-suite-referentiel'] = 'Référentiel BO';
 
-        if (current_user_can('manage_options')) {
+        if (Capabilities::can(Capabilities::MANAGE_BADGES)) {
             $tabs['ouinpo-suite-badges'] = 'Badges';
         }
 
@@ -545,7 +546,7 @@ final class SuiteAdmin
                 admin_url('admin.php?page=ouinpo-suite-evaluations&tab=ds')
             );
 
-            if (current_user_can('edit_users')) {
+            if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                 self::quickAction(
                     'Groupes',
                     'Organiser les classes et affectations.',
@@ -561,7 +562,7 @@ final class SuiteAdmin
                 );
             }
 
-            if (current_user_can('manage_options') && self::hasAiOrPathModule()) {
+            if (Capabilities::can(Capabilities::MANAGE_AI) && self::hasAiOrPathModule()) {
                 self::quickAction(
                     'IA & parcours',
                     'Configurer les assistants, les parcours et l’indexation.',
@@ -668,7 +669,7 @@ final class SuiteAdmin
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
-                if (current_user_can('manage_options')) {
+                if (Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
                     self::quickAction(
                         'Options des contenus',
                         'Configurer les réglages du module Exercices.',
@@ -723,17 +724,17 @@ final class SuiteAdmin
                     'Paquets de cartes',
                     ($decksCount !== null ? number_format_i18n($decksCount) : '—'),
                     $decksCount !== null ? 'paquets enregistrés' : 'table non disponible',
-                    current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-flashcards&tab=decks') : null
+                    Capabilities::can(Capabilities::MANAGE_EXERCISES) ? admin_url('admin.php?page=ouinpo-flashcards&tab=decks') : null
                 );
 
                 self::metricCard(
                     'Cartes',
                     ($cardsCount !== null ? number_format_i18n($cardsCount) : '—'),
                     $cardsCount !== null ? 'cartes enregistrées' : 'table non disponible',
-                    current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-flashcards&tab=cards') : null
+                    Capabilities::can(Capabilities::MANAGE_EXERCISES) ? admin_url('admin.php?page=ouinpo-flashcards&tab=cards') : null
                 );
 
-                if (current_user_can('manage_options')) {
+                if (Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
                     self::quickAction(
                         'Gérer les flashcards',
                         'Créer les paquets, modifier les cartes et préparer les révisions.',
@@ -754,7 +755,7 @@ final class SuiteAdmin
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
-                if (current_user_can('manage_options')) {
+                if (Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
                     self::quickAction(
                         'Importer des cartes',
                         'Importer des flashcards dans un paquet existant.',
@@ -805,7 +806,7 @@ final class SuiteAdmin
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
-                if (current_user_can('edit_users')) {
+                if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                     self::quickAction(
                         'Gerer les niveaux',
                         'Creer, modifier ou supprimer les niveaux scolaires utilises par les classes et exercices.',
@@ -830,10 +831,10 @@ final class SuiteAdmin
                     'Classes',
                     ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : '—'),
                     ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) . ' affectations' : 'indisponible'),
-                    current_user_can('edit_users') ? admin_url('admin.php?page=ouinpo-groups') : null
+                    Capabilities::can(Capabilities::MANAGE_CLASSES) ? admin_url('admin.php?page=ouinpo-groups') : null
                 );
 
-                if (current_user_can('edit_users')) {
+                if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                     self::quickAction(
                         'Gérer les classes',
                         'Créer, modifier et organiser les groupes.',
@@ -858,10 +859,10 @@ final class SuiteAdmin
                     'Affectations',
                     ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) : '—'),
                     'élèves liés à des classes',
-                    current_user_can('edit_users') ? admin_url('admin.php?page=ouinpo-assignments') : null
+                    Capabilities::can(Capabilities::MANAGE_CLASSES) ? admin_url('admin.php?page=ouinpo-assignments') : null
                 );
 
-                if (current_user_can('edit_users')) {
+                if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                     self::quickAction(
                         'Gérer les affectations',
                         'Associer les élèves aux classes.',
@@ -1428,7 +1429,7 @@ final class SuiteAdmin
 
     private static function renderReferentielCompetenciesTable(): void
     {
-        if (!current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
             ?>
             <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">Compétences BO</h2>
@@ -1562,7 +1563,7 @@ final class SuiteAdmin
         $editId = isset($_GET['edit_competency_id']) ? (int) $_GET['edit_competency_id'] : 0;
         $editRow = null;
 
-        if ($editId > 0 && current_user_can('manage_options')) {
+        if ($editId > 0 && Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
             $editRow = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM {$tComp} WHERE id = %d",
                 $editId
@@ -1581,7 +1582,7 @@ final class SuiteAdmin
         }
         ?>
 
-        <?php if (current_user_can('manage_options')): ?>
+        <?php if (Capabilities::can(Capabilities::MANAGE_COMPETENCIES)): ?>
             <div id="ouinpo-bo-form" class="card ouinpo-suite-form-card">
                 <h2 class="ouinpo-suite-card-title">
                     <?php echo $editRow ? 'Modifier une compétence BO' : 'Ajouter une compétence BO'; ?>
@@ -1734,7 +1735,7 @@ final class SuiteAdmin
                                 <td><?php echo number_format_i18n((int) $row->exercise_count); ?></td>
                                 <td><?php echo ((int) $row->active === 1) ? 'Oui' : 'Non'; ?></td>
                                 <td>
-                                    <?php if (current_user_can('manage_options')): ?>
+                                    <?php if (Capabilities::can(Capabilities::MANAGE_COMPETENCIES)): ?>
                                         <a class="button button-small" href="<?php echo esc_url(add_query_arg([
                                             'page' => 'ouinpo-suite-referentiel',
                                             'tab' => 'competences',
@@ -1772,7 +1773,7 @@ final class SuiteAdmin
 
     private static function renderReferentielDomainsTable(): void
     {
-        if (!current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
             ?>
             <div class="card ouinpo-suite-card-bounded">
                 <h2 class="ouinpo-suite-card-title">Domaines BO</h2>
@@ -1797,7 +1798,7 @@ final class SuiteAdmin
 
         $editDomain = null;
 
-        if ($editDomainKey !== '' && current_user_can('manage_options') && isset($domains[$editDomainKey])) {
+        if ($editDomainKey !== '' && Capabilities::can(Capabilities::MANAGE_COMPETENCIES) && isset($domains[$editDomainKey])) {
             $editDomain = $domains[$editDomainKey];
         }
 
@@ -1807,7 +1808,7 @@ final class SuiteAdmin
             : $defaultDomainLevelKey;
         ?>
 
-        <?php if (current_user_can('manage_options')): ?>
+        <?php if (Capabilities::can(Capabilities::MANAGE_COMPETENCIES)): ?>
             <div id="ouinpo-bo-domain-form" class="card ouinpo-suite-form-card">
                 <h2 class="ouinpo-suite-card-title">
                     <?php echo $editDomain ? 'Modifier un domaine BO' : 'Créer un domaine BO'; ?>
@@ -1915,7 +1916,7 @@ final class SuiteAdmin
                                 <td><?php echo number_format_i18n($activeTotal); ?></td>
                                 <td><?php echo $isActive ? 'Actif' : 'Masqué'; ?></td>
                                 <td>
-                                    <?php if (current_user_can('manage_options')): ?>
+                                    <?php if (Capabilities::can(Capabilities::MANAGE_COMPETENCIES)): ?>
                                         <a class="button button-small" href="<?php echo esc_url(add_query_arg([
                                             'page' => 'ouinpo-suite-referentiel',
                                             'tab' => 'domaines',
@@ -1957,7 +1958,7 @@ final class SuiteAdmin
             return;
         }
 
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
             return;
         }
 
@@ -2465,10 +2466,10 @@ final class SuiteAdmin
                     'Suggestions',
                     ($stats['suggestions_total'] !== null ? number_format_i18n($stats['suggestions_total']) : '—'),
                     'suggestions enregistrées',
-                    current_user_can('manage_options') ? admin_url('admin.php?page=ouinpo-segfault') : null
+                    Capabilities::can(Capabilities::MANAGE_AI) ? admin_url('admin.php?page=ouinpo-segfault') : null
                 );
 
-                if (current_user_can('manage_options')) {
+                if (Capabilities::can(Capabilities::MANAGE_AI)) {
                     self::quickAction(
                         'Ouvrir SegFault',
                         'Accéder aux outils, sources, indexation et paramètres SegFault.',
@@ -2499,10 +2500,10 @@ final class SuiteAdmin
                     'Progressions Gate',
                     ($stats['gate_progress'] !== null ? number_format_i18n($stats['gate_progress']) : '—'),
                     'entrées de progression',
-                    current_user_can('list_users') ? admin_url('admin.php?page=ouinpo') : null
+                    Capabilities::can(Capabilities::MANAGE_AI) ? admin_url('admin.php?page=ouinpo') : null
                 );
 
-                if (current_user_can('list_users')) {
+                if (Capabilities::can(Capabilities::MANAGE_AI)) {
                     self::quickAction(
                         'Ouvrir Gate',
                         'Accéder au suivi global et aux certificats.',
@@ -2778,7 +2779,7 @@ final class SuiteAdmin
 
     private static function renderAppearanceSettings(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
             ?>
             <div class="notice notice-error">
                 <p>Ces réglages sont réservés aux administrateurs.</p>
@@ -2869,7 +2870,7 @@ final class SuiteAdmin
 
     private static function renderModulesSettings(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
             ?>
             <div class="notice notice-error">
                 <p>Ces réglages sont réservés aux administrateurs.</p>
@@ -2990,7 +2991,7 @@ final class SuiteAdmin
 
     private static function renderPedagogicalImportHub(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
             ?>
             <div class="notice notice-error">
                 <p>Import réservé aux administrateurs.</p>
@@ -3243,6 +3244,7 @@ final class SuiteAdmin
             'modules' => 'Modules',
             'appearance' => 'Apparence',
             'pages' => 'Pages & shortcodes',
+            'rights' => 'Droits',
         ];
 
         if (ModuleSettings::isEnabled('meta')) {
@@ -3269,11 +3271,14 @@ final class SuiteAdmin
             settings_errors('ouinpo_suite_pages');
             PagesSetup::render();
 
+        } elseif ($tab === 'rights') {
+            RightsPage::render();
+
         } elseif ($tab === 'meta' && ModuleSettings::isEnabled('meta')) {
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
-                if (current_user_can('manage_options')) {
+                if (Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
                     self::quickAction(
                         'Meta & Social',
                         'Gérer les balises meta, Open Graph et réglages sociaux.',
@@ -3331,7 +3336,7 @@ final class SuiteAdmin
                     );
                 }
 
-                if (current_user_can('manage_options') && ModuleSettings::isEnabled('segfault')) {
+                if (Capabilities::can(Capabilities::MANAGE_AI) && ModuleSettings::isEnabled('segfault')) {
                     self::quickAction(
                         'SegFault',
                         'Accéder aux réglages et outils SegFault.',

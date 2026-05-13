@@ -32,7 +32,7 @@ final class SettingsPage
             $parent_slug,
             'Réglages OuInPo Suite',
             'Réglages',
-            'manage_options',
+            Capabilities::MANAGE_SETTINGS,
             self::PAGE_SLUG,
             [self::class, 'render']
         );
@@ -62,7 +62,7 @@ final class SettingsPage
 
     public static function render(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
             wp_die('Accès refusé.');
         }
 

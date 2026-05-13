@@ -770,7 +770,7 @@ final class Ouinpo_Meta_Social {
 
                 'Meta & Social',
 
-                'manage_options',
+                \Ouinpo\Suite\Core\Capabilities::MANAGE_SETTINGS,
 
                 'ouinpo-meta-social',
 
@@ -790,7 +790,7 @@ final class Ouinpo_Meta_Social {
 
             'OuInPo Meta & Social',
 
-            'manage_options',
+            \Ouinpo\Suite\Core\Capabilities::MANAGE_SETTINGS,
 
             'ouinpo-meta-social',
 
@@ -826,7 +826,7 @@ final class Ouinpo_Meta_Social {
 
     public static function render_settings_page(): void {
 
-        if (!current_user_can('manage_options')) return;
+        if (!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_SETTINGS)) return;
 
 
 

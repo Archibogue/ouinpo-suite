@@ -2,6 +2,7 @@
 namespace Ouinpo\Flashcards\Admin;
 
 use Ouinpo\Flashcards\Service;
+use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
 
@@ -9,7 +10,7 @@ final class ScreenFlashcards
 {
     public static function render(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
             wp_die('Accès refusé.');
         }
 

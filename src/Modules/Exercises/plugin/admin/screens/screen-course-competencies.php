@@ -2,6 +2,10 @@
 
 if (!defined('ABSPATH')) exit;
 
+if (!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_COMPETENCIES)) {
+    wp_die('Accès refusé');
+}
+
 /**
  * Récupère les domaines de compétences, triés :
  * SNT, puis NSI Première, NSI Terminale, puis Transversal.

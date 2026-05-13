@@ -6,6 +6,7 @@ namespace Ouinpo\Exercises\Rest;
 
 
 
+use Ouinpo\Suite\Core\Capabilities;
 use WP_REST_Request;
 
 use WP_REST_Response;
@@ -38,6 +39,7 @@ class BadgesRoutes {
 
                 'callback'            => [__CLASS__, 'list'],
 
+                // Public: les badges affichables peuvent être consultés côté élève.
                 'permission_callback' => '__return_true'
 
             ],
@@ -50,7 +52,7 @@ class BadgesRoutes {
 
                 'permission_callback' => function () {
 
-                    return current_user_can('manage_options');
+                    return Capabilities::can(Capabilities::MANAGE_BADGES);
 
                 }
 

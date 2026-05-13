@@ -1,6 +1,8 @@
 <?php
-namespace Ouinpo\Exercises;
-
+namespace Ouinpo\Exercises;
+
+use Ouinpo\Suite\Core\Capabilities;
+
 defined('ABSPATH') || exit;
 
 class AccessGate {
@@ -52,7 +54,7 @@ class AccessGate {
         exit;
       }
 
-      if (!current_user_can('edit_users')) {
+      if (!Capabilities::can(Capabilities::VIEW_STUDENT_DATA)) {
         status_header(403);
         nocache_headers();
         wp_die(

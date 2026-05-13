@@ -12,7 +12,8 @@ class ExercisesRoutes {
             array(
                 'methods'             => 'GET',
                 'callback'            => array(__CLASS__, 'index'),
-                'permission_callback' => '__return_true',
+                // Public: liste des exercices affichée par les shortcodes.
+                'permission_callback' => '__return_true',
             ),
         ));
 
@@ -21,7 +22,8 @@ class ExercisesRoutes {
             array(
                 'methods'             => 'GET',
                 'callback'            => array(__CLASS__, 'show'),
-                'permission_callback' => '__return_true',
+                // Public: détail d’un exercice affiché par les shortcodes.
+                'permission_callback' => '__return_true',
             ),
         ));
 
@@ -30,7 +32,8 @@ class ExercisesRoutes {
             array(
                 'methods'             => 'GET',
                 'callback'            => array(__CLASS__, 'solutions'),
-                'permission_callback' => '__return_true',
+                // Public: métadonnées des solutions, sans contenu révélé.
+                'permission_callback' => '__return_true',
             ),
         ));
 

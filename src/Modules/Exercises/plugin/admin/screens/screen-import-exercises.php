@@ -1,12 +1,14 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 if (!defined('ABSPATH')) exit;
 
 class Screen_Import_Exercises {
 
     public static function render() {
-        if (!current_user_can('edit_posts')) {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
             wp_die(__('Accès refusé.', 'ouinpo-exercises'));
         }
 
@@ -397,7 +399,7 @@ class Screen_Import_Exercises {
     }
 
     public static function export_csv(): void {
-        if (!current_user_can('edit_posts')) {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
             wp_die('Accès refusé.');
         }
 

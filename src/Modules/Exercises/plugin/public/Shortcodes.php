@@ -2,6 +2,8 @@
 
 namespace Ouinpo\Exercises;
 
+use Ouinpo\Suite\Core\Capabilities;
+
 
 
 if (!defined('ABSPATH')) exit;
@@ -825,7 +827,7 @@ if ($options['layout'] === 'table') {
 
 
 
-    $use_cache = !current_user_can('edit_pages');
+    $use_cache = !Capabilities::can(Capabilities::MANAGE_EXERCISES);
 
     if ($use_cache) {
 
@@ -1085,7 +1087,7 @@ private static function current_student_school_level_id(): int {
 
   // Les comptes prof/admin gardent une vue libre : pas de restriction ni défaut imposé.
 
-  if (current_user_can('edit_posts') || current_user_can('edit_users')) {
+  if (Capabilities::can(Capabilities::MANAGE_EXERCISES) || Capabilities::can(Capabilities::VIEW_STUDENT_DATA)) {
 
     return 0;
 
@@ -1545,7 +1547,7 @@ public static function render_list($atts = array(), $content = '') {
 
 
 
-  $show_all_option = (!$is_logged || $default_lvl === '' || current_user_can('edit_posts') || current_user_can('edit_users'));
+  $show_all_option = (!$is_logged || $default_lvl === '' || Capabilities::can(Capabilities::MANAGE_EXERCISES) || Capabilities::can(Capabilities::VIEW_STUDENT_DATA));
 
 
 
@@ -2736,7 +2738,7 @@ public static function render_teacher($atts = [], $content = '') {
 
 
 
-  if (!current_user_can('edit_users')) {
+  if (!Capabilities::can(Capabilities::VIEW_STUDENT_DATA)) {
 
     return '<div class="ouinpo-competences ouinpo-alert">Cette page est réservée aux enseignants.</div>';
 

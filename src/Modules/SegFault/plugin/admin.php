@@ -61,7 +61,7 @@ add_action('admin_menu', function () {
 
       'SegFault (NSI)',
 
-      'manage_options',
+      \Ouinpo\Suite\Core\Capabilities::MANAGE_AI,
 
       'ouinpo-segfault',
 
@@ -83,7 +83,7 @@ add_action('admin_menu', function () {
 
     'SegFault',
 
-    'manage_options',
+    \Ouinpo\Suite\Core\Capabilities::MANAGE_AI,
 
     'ouinpo-segfault',
 
@@ -101,7 +101,7 @@ add_action('admin_menu', function () {
 
     'Suivi élèves',
 
-    'edit_users',
+    \Ouinpo\Suite\Core\Capabilities::VIEW_STUDENT_DATA,
 
     'ouinpo-segfault-progress',
 
@@ -179,7 +179,7 @@ add_action('admin_init', function () {
   ]);
 
 
-  if (is_admin() && current_user_can('manage_options')) {
+  if (is_admin() && \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI)) {
 
     ouinpo_sf_ensure_progress_tables();
 
@@ -423,7 +423,7 @@ if (!function_exists(__NAMESPACE__.'\\ouinpo_sf_student_level_from_group')) {
 
 add_action('wp_ajax_ouinpo_sf_filters', function () {
 
-  if (!current_user_can('edit_users')) {
+  if (!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::VIEW_STUDENT_DATA)) {
 
     wp_send_json_error(['message' => 'forbidden'], 403);
 
@@ -1917,7 +1917,7 @@ function ouinpo_sf_render_rag_status_box(): void {
 
 function ouinpo_sf_render_rag_tester(): void {
 
-  if (!current_user_can('manage_options')) {
+  if (!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI)) {
 
     return;
 
@@ -5960,7 +5960,7 @@ function ouinpo_sf_find_exercise_ids_by_domain_and_comp(
 
 function admin_progress_page() {
 
-  if (!current_user_can('edit_users')) {
+  if (!\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::VIEW_STUDENT_DATA)) {
 
     wp_die('Accès refusé.');
 

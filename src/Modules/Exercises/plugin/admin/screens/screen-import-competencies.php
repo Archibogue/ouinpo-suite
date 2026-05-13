@@ -1,9 +1,13 @@
 <?php
-namespace Ouinpo\Exercises\Admin; defined('ABSPATH') || exit;
+namespace Ouinpo\Exercises\Admin;
+
+use Ouinpo\Suite\Core\Capabilities;
+
+defined('ABSPATH') || exit;
 
 class Screen_Import_Competencies {
     public static function render() {
-        if (!current_user_can('manage_options')) return;
+        if (!Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) return;
         global $wpdb; $p=$wpdb->prefix.'ouin_exo_'; $messages=[];
 
         if (!empty($_POST['ouin_comp_import_nonce']) && wp_verify_nonce($_POST['ouin_comp_import_nonce'],'import_comp') && !empty($_FILES['csv']['tmp_name'])) {

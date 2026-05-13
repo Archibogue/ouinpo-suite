@@ -1,7 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
-use Ouinpo\Exercises\AssessmentsService;
+use Ouinpo\Exercises\AssessmentsService;
+use Ouinpo\Suite\Core\Capabilities;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -18,12 +19,12 @@ class AssessmentsCompetencyRoutes
             [
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'list'],
-                'permission_callback' => fn() => current_user_can('edit_posts'),
+                'permission_callback' => fn() => Capabilities::can(Capabilities::MANAGE_ASSESSMENTS),
             ],
             [
                 'methods'             => 'POST',
                 'callback'            => [__CLASS__, 'create'],
-                'permission_callback' => fn() => current_user_can('edit_posts'),
+                'permission_callback' => fn() => Capabilities::can(Capabilities::MANAGE_ASSESSMENTS),
             ],
         ]);
 
@@ -31,12 +32,12 @@ class AssessmentsCompetencyRoutes
             [
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'get'],
-                'permission_callback' => fn() => current_user_can('edit_posts'),
+                'permission_callback' => fn() => Capabilities::can(Capabilities::MANAGE_ASSESSMENTS),
             ],
             [
                 'methods'             => 'POST',
                 'callback'            => [__CLASS__, 'update'],
-                'permission_callback' => fn() => current_user_can('edit_posts'),
+                'permission_callback' => fn() => Capabilities::can(Capabilities::MANAGE_ASSESSMENTS),
             ],
         ]);
 
@@ -44,7 +45,7 @@ class AssessmentsCompetencyRoutes
             [
                 'methods'             => 'POST',
                 'callback'            => [__CLASS__, 'save_results'],
-                'permission_callback' => fn() => current_user_can('edit_posts'),
+                'permission_callback' => fn() => Capabilities::can(Capabilities::MANAGE_ASSESSMENTS),
             ],
         ]);
     }

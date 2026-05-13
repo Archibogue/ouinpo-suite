@@ -3,6 +3,7 @@ namespace Ouinpo\Exercises\Admin;
 
 use Ouinpo\Exercises\AssessmentsService;
 use Ouinpo\Exercises\CompetencyLevels;
+use Ouinpo\Suite\Core\Capabilities;
 
 if (!defined('ABSPATH')) exit;
 
@@ -12,7 +13,7 @@ class Screen_Assessment_Builder {
     private const NONCE_NAME = 'ouinpo_assessment_builder_nonce';
 
     public static function render(): void {
-        if (!current_user_can('edit_posts') && !current_user_can('edit_users')) {
+        if (!Capabilities::can(Capabilities::MANAGE_ASSESSMENTS)) {
             wp_die('Accès refusé.');
         }
 

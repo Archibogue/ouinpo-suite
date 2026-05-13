@@ -2,6 +2,7 @@
 
 namespace Ouinpo\Suite\Core\Admin;
 
+use Ouinpo\Suite\Core\Capabilities;
 use Ouinpo\Suite\Core\ModuleSettings;
 
 if (!defined('ABSPATH')) {
@@ -15,7 +16,7 @@ final class PagesSetup
 
     public static function render(): void
     {
-        if (!current_user_can('manage_options')) {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
             ?>
             <div class="notice notice-error">
                 <p>Cette configuration est réservée aux administrateurs.</p>

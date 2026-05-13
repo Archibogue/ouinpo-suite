@@ -23,6 +23,7 @@ final class Plugin
     {
         // Source unique de vérité pour le schéma partagé.
         Installer::installOrUpgradeSharedSchema();
+        Capabilities::install();
 
         foreach ($this->registry->all() as $module) {
             $module->activate();
@@ -53,6 +54,8 @@ final class Plugin
 
     public function boot(): void
     {
+        Capabilities::init();
+
         if (is_admin()) {
             \Ouinpo\Suite\Core\Admin\SuiteAdmin::init();
             \Ouinpo\Suite\Core\SettingsPage::init();
