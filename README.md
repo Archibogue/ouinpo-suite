@@ -182,6 +182,18 @@ Ces pages supposent le module SegFault active. Le chat peut etre public ou reser
 
 Ces pages correspondent a des modules avances desactives par defaut sur une installation neuve. Les activer seulement si elles sont configurees et utiles au site.
 
+
+### Gate configurable
+
+Le module Gate se configure depuis l'administration OuInPo Suite, onglet `Gate > Configuration`.
+
+Chaque enigme possede un identifiant stable, un ordre, un etat actif/inactif, un enonce, une aide optionnelle, une reponse de reference, des variantes acceptees, des criteres de validation IA, un niveau, un theme, des messages de feedback, des limites de tentatives, un cooldown et des options IA/fallback. Les reponses de reference et les criteres ne sont pas exposes dans le HTML public.
+
+Lors de la premiere activation avec une configuration absente, OuInPo initialise `ouinpo_gate_questions` a partir de l'ancien corpus de 42 enigmes. Une configuration existante n'est pas ecrasee et les progressions eleves conservees dans `ouinpo_progress` ne sont pas reinitialisees. Les anciennes progressions par index sont relues et migrees progressivement vers les identifiants d'enigmes au prochain enregistrement.
+
+La validation IA Gate est optionnelle et s'appuie sur les reglages IA centralises du plugin lorsque les classes IA sont disponibles. Le serveur envoie uniquement l'enonce, la reponse de reference, les variantes, les criteres, le niveau, le theme et la reponse saisie. L'IA doit repondre en JSON strict avec une decision booleenne et un feedback court. Si l'IA est desactivee ou indisponible, le fallback exact normalise peut etre autorise globalement et par enigme.
+
+Un cooldown anti-spam est controle cote serveur avant chaque validation. Le JavaScript affiche seulement le compte a rebours et evite les doubles clics ; modifier le HTML ne permet pas de contourner le delai. Les logs Gate ne stockent pas les reponses completes par defaut.
 ### Shortcodes d’intégration
 
 Ces shortcodes ne nécessitent pas forcément une page dédiée :

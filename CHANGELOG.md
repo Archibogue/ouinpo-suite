@@ -14,6 +14,8 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Encadrement des logs IA/RAG : logs synthetiques uniquement si `WP_DEBUG` et l'option de debug IA/RAG sont actifs.
 - Documentation des dependances systeme optionnelles, des routes publiques et des consequences des reglages anonymes.
 - Documentation des assets, licences et elements remplacables par les enseignants.
+- Gate : ajout d'une configuration admin versionnee des enigmes, migration douce depuis le corpus historique, validation IA/fallback exact configurables et cooldown serveur anti-spam.
+- Gate : progression adaptee aux identifiants stables d'enigmes, sans reinitialiser les progressions existantes ni supprimer la signature/certificat.
 
 ## [0.4.0] — 2026-05-01
 
