@@ -115,68 +115,7 @@ add_action('admin_menu', function () {
 
 add_action('admin_init', function () {
 
-  register_setting('ouinpo_sf', 'ouinpo_sf_openai_api_key', ['default' => '']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_model', ['default'=>'gpt-5-mini']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_embed_model', ['default'=>'text-embedding-3-large']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_memory_days', ['default'=>30]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_members_only', ['default' => 0]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_wxr_path', ['default' => '']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_enabled', ['default' => 0]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_public_albert_enabled', ['default' => 0]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_api_key', ['default' => '']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_base_url', ['default' => 'https://albert.api.etalab.gouv.fr/v1']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_model', ['default' => 'openai/gpt-oss-120b']);
-
-  
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_code_model', [
-
-    'default' => 'openweight-code',
-
-    'sanitize_callback' => 'sanitize_text_field',
-
-  ]);  
-
-  
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_embedding_model', ['default' => 'BAAI/bge-m3']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_albert_reranker_model', ['default' => 'BAAI/bge-reranker-v2-m3']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_rag_embedding_provider', ['default' => 'openai']);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_public_hourly_limit', ['default' => 5]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_public_daily_limit', ['default' => 100]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_rag_rerank_candidates', ['default' => 40]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_max_embeddings_run', ['default' => 120]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_ai_notice_url', [
-  'default' => '/donnees-personnelles-ia-et-usages-pedagogiques-sur-ouinpo/',
-  'sanitize_callback' => 'sanitize_text_field',
-  ]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_ai_notice_public', [
-  'default' => "Assistant IA public — N’écris pas de nom, prénom, note, adresse ou information personnelle. Les réponses peuvent contenir des erreurs.",
-  'sanitize_callback' => 'wp_kses_post',
-  ]);
-
-  register_setting('ouinpo_sf', 'ouinpo_sf_ai_notice_logged', [
-    'default' => "IA pédagogique — N’écris pas de données personnelles. Les réponses proposées par l’assistant doivent être vérifiées et ne remplacent pas le professeur.",
-    'sanitize_callback' => 'wp_kses_post',
-  ]);
+  \Ouinpo\Suite\Core\AiSettings::register_settings('ouinpo_sf');
 
 
   if (is_admin() && \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_AI)) {
@@ -1207,7 +1146,6 @@ function ouinpo_sf_get_clean_wxr_excluded_slugs(): array {
 
     'politique-de-confidentialite-cookies',
 
-    'donnees-personnelles-ia-et-usages-pedagogiques-sur-ouinpo',
 
     'mon-compte',
 
@@ -4075,7 +4013,16 @@ try {
 
       <?php settings_fields('ouinpo_sf'); do_settings_sections('ouinpo_sf'); ?>
 
-        <table class="form-table" role="presentation">
+      <div class="ouinpo-sf-settings-tabs" role="tablist" aria-label="Sections des reglages IA">
+        <button type="button" class="button button-secondary is-active" data-ouinpo-sf-tab="overview">Vue d'ensemble</button>
+        <button type="button" class="button button-secondary" data-ouinpo-sf-tab="providers">Fournisseurs</button>
+        <button type="button" class="button button-secondary" data-ouinpo-sf-tab="prompts">Prompts</button>
+        <button type="button" class="button button-secondary" data-ouinpo-sf-tab="public">Acces publics</button>
+        <button type="button" class="button button-secondary" data-ouinpo-sf-tab="privacy">Confidentialite</button>
+        <button type="button" class="button button-secondary" data-ouinpo-sf-tab="rag">RAG / indexation</button>
+      </div>
+
+        <table class="form-table ouinpo-sf-settings-table" role="presentation">
 
         
 
@@ -4130,6 +4077,126 @@ try {
           </tr>
 
         
+
+          <tr>
+
+            <th colspan="2">
+
+              <h2>Reglages IA generaux</h2>
+
+            </th>
+
+          </tr>
+
+          <tr>
+            <th>Activation IA</th>
+            <td>
+              <label><input type="checkbox" name="ouinpo_ai_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_ai_enabled', 0)); ?> /> Activer globalement les usages IA OuInPo.</label><br>
+              <label><input type="checkbox" name="ouinpo_ai_public_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_ai_public_enabled', 0)); ?> /> Autoriser les usages IA publics anonymes.</label><br>
+              <label><input type="checkbox" name="ouinpo_ai_debug_logs" value="1" <?php checked(1, (int)get_option('ouinpo_ai_debug_logs', 0)); ?> /> Activer les logs IA/RAG synthetiques quand WP_DEBUG est actif.</label>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Usages IA autorises</th>
+            <td>
+              <?php foreach ([
+                'chat_rag' => 'Chat / RAG',
+                'exercise_help' => 'Aide aux exercices',
+                'exercise_correction' => 'Correction exercices',
+                'practical_correction' => 'Correction sujets pratiques',
+                'feedback_generation' => 'Generation de feedback',
+                'pedagogical_suggestions' => 'Suggestions pedagogiques',
+              ] as $usage_key => $usage_label): ?>
+                <label><input type="checkbox" name="<?php echo esc_attr('ouinpo_ai_usage_' . $usage_key); ?>" value="1" <?php checked(1, (int)get_option('ouinpo_ai_usage_' . $usage_key, 1)); ?> /> <?php echo esc_html($usage_label); ?></label><br>
+              <?php endforeach; ?>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Fournisseurs</th>
+            <td>
+              <?php foreach (['ouinpo_ai_default_provider' => 'Defaut', 'ouinpo_ai_public_provider' => 'Anonymes', 'ouinpo_ai_logged_provider' => 'Connectes'] as $option => $label): ?>
+                <?php $provider = (string)get_option($option, 'albert'); ?>
+                <label><?php echo esc_html($label); ?>
+                  <select name="<?php echo esc_attr($option); ?>">
+                    <option value="albert" <?php selected($provider, 'albert'); ?>>Albert</option>
+                    <option value="openai" <?php selected($provider, 'openai'); ?>>OpenAI</option>
+                  </select>
+                </label><br>
+              <?php endforeach; ?>
+            </td>
+          </tr>
+
+          <tr>
+            <th>API, modeles et limites</th>
+            <td>
+              <label>URL de base <input name="ouinpo_ai_api_base_url" class="regular-text" value="<?php echo esc_attr(get_option('ouinpo_ai_api_base_url', 'https://albert.api.etalab.gouv.fr/v1')); ?>" /></label><br>
+              <label>Cle API <input type="password" name="ouinpo_ai_api_key" class="regular-text" autocomplete="off" value="<?php echo esc_attr(get_option('ouinpo_ai_api_key', '')); ?>" /></label><br>
+              <label>Modele chat <input name="ouinpo_ai_chat_model" value="<?php echo esc_attr(get_option('ouinpo_ai_chat_model', 'openai/gpt-oss-120b')); ?>" /></label>
+              <label>Modele code <input name="ouinpo_ai_code_model" value="<?php echo esc_attr(get_option('ouinpo_ai_code_model', 'openweight-code')); ?>" /></label>
+              <label>Modele embeddings <input name="ouinpo_ai_embedding_model" value="<?php echo esc_attr(get_option('ouinpo_ai_embedding_model', 'BAAI/bge-m3')); ?>" /></label><br>
+              <label>Timeout <input type="number" min="5" max="120" name="ouinpo_ai_timeout" value="<?php echo esc_attr((int)get_option('ouinpo_ai_timeout', 45)); ?>" class="ouinpo-sf-input-small" /></label>
+              <label>Max tokens <input type="number" min="128" max="8000" name="ouinpo_ai_max_tokens" value="<?php echo esc_attr((int)get_option('ouinpo_ai_max_tokens', 800)); ?>" class="ouinpo-sf-input-medium" /></label>
+              <label>Temperature <input type="number" min="0" max="2" step="0.1" name="ouinpo_ai_temperature" value="<?php echo esc_attr((float)get_option('ouinpo_ai_temperature', 0.3)); ?>" class="ouinpo-sf-input-small" /></label>
+              <label>Top p <input type="number" min="0" max="1" step="0.05" name="ouinpo_ai_top_p" value="<?php echo esc_attr((float)get_option('ouinpo_ai_top_p', 1)); ?>" class="ouinpo-sf-input-small" /></label><br>
+              <label>Frequency penalty <input type="number" min="-2" max="2" step="0.1" name="ouinpo_ai_frequency_penalty" value="<?php echo esc_attr((float)get_option('ouinpo_ai_frequency_penalty', 0)); ?>" class="ouinpo-sf-input-small" /></label>
+              <label>Presence penalty <input type="number" min="-2" max="2" step="0.1" name="ouinpo_ai_presence_penalty" value="<?php echo esc_attr((float)get_option('ouinpo_ai_presence_penalty', 0)); ?>" class="ouinpo-sf-input-small" /></label><br>
+              <label>Limite connectes / jour <input type="number" min="0" max="10000" name="ouinpo_ai_user_daily_limit" value="<?php echo esc_attr((int)get_option('ouinpo_ai_user_daily_limit', 200)); ?>" class="ouinpo-sf-input-medium" /></label>
+              <label>Limite anonymes / jour <input type="number" min="0" max="10000" name="ouinpo_ai_public_daily_limit" value="<?php echo esc_attr((int)get_option('ouinpo_ai_public_daily_limit', 10)); ?>" class="ouinpo-sf-input-medium" /></label>
+            </td>
+          </tr>
+
+          <tr>
+            <th colspan="2">
+              <h2>Prompts, personas et messages</h2>
+            </th>
+          </tr>
+
+          <tr>
+            <th>Messages et prompts</th>
+            <td>
+              <label>Message IA desactivee<br><input name="ouinpo_ai_disabled_message" class="large-text" value="<?php echo esc_attr(get_option('ouinpo_ai_disabled_message', 'L assistant IA est desactive pour le moment.')); ?>" /></label><br>
+              <label>Information RGPD / usage pedagogique<br><textarea name="ouinpo_ai_privacy_notice" rows="3" class="large-text"><?php echo esc_textarea(get_option('ouinpo_ai_privacy_notice', \Ouinpo\Suite\Core\AiSettings::defaults()['ouinpo_ai_privacy_notice'])); ?></textarea></label>
+              <?php foreach ([
+                'ouinpo_ai_persona_general' => 'Persona generale',
+                'ouinpo_ai_persona_public' => 'Persona publique',
+                'ouinpo_ai_persona_student' => 'Persona eleve',
+                'ouinpo_ai_persona_teacher' => 'Persona professeur',
+                'ouinpo_ai_rag_system_prompt' => 'Consigne systeme RAG',
+                'ouinpo_ai_exercise_correction_prompt' => 'Consigne corrections exercices',
+                'ouinpo_ai_practical_correction_prompt' => 'Consigne sujets pratiques',
+                'ouinpo_ai_suggestions_prompt' => 'Consigne suggestions pedagogiques',
+                'ouinpo_ai_out_of_program_guardrails' => 'Garde-fous hors programme par niveau',
+              ] as $option => $label): ?>
+                <label><?php echo esc_html($label); ?><br><textarea name="<?php echo esc_attr($option); ?>" rows="3" class="large-text"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea></label><br>
+              <?php endforeach; ?>
+              <label>Niveau anonyme par defaut <input name="ouinpo_ai_anonymous_default_school_level" value="<?php echo esc_attr(get_option('ouinpo_ai_anonymous_default_school_level', 'premiere')); ?>" /></label><br>
+              <label><input type="checkbox" name="ouinpo_ai_show_rag_sources" value="1" <?php checked(1, (int)get_option('ouinpo_ai_show_rag_sources', 1)); ?> /> Afficher les references / sources dans les reponses RAG.</label>
+            </td>
+          </tr>
+
+          <tr>
+            <th colspan="2">
+              <h2>Acces publics</h2>
+            </th>
+          </tr>
+
+          <tr>
+            <th>Acces REST publics anonymes</th>
+            <td>
+              <?php foreach ([
+                'ouinpo_public_exercises_enabled' => 'Voir les exercices',
+                'ouinpo_public_hints_enabled' => 'Voir les indices',
+                'ouinpo_public_solutions_enabled' => 'Voir les solutions',
+                'ouinpo_public_practical_subjects_enabled' => 'Voir les sujets pratiques',
+                'ouinpo_public_practical_files_enabled' => 'Acceder aux fichiers des sujets pratiques',
+              ] as $option => $label): ?>
+                <label><input type="checkbox" name="<?php echo esc_attr($option); ?>" value="1" <?php checked(1, (int)get_option($option, 0)); ?> /> <?php echo esc_html($label); ?></label><br>
+              <?php endforeach; ?>
+              <p class="description">Sur une nouvelle installation, ces acces sont fermes par defaut. Une migration conserve les acces publics des sites deja installes.</p>
+            </td>
+          </tr>
 
           <tr>
 
@@ -4409,11 +4476,11 @@ try {
     <input
       type="text"
       name="ouinpo_sf_ai_notice_url"
-      value="<?php echo esc_attr(get_option('ouinpo_sf_ai_notice_url', '/donnees-personnelles-ia-et-usages-pedagogiques-sur-ouinpo/')); ?>"
+      value="<?php echo esc_attr(get_option('ouinpo_sf_ai_notice_url', '')); ?>"
       class="regular-text"
     />
     <p class="description">
-      Lien affiché sous les messages d’information IA. Peut être une URL complète ou un chemin relatif du site.
+      Lien affiché sous les messages d’information IA. Peut être vide, une URL complète ou un chemin relatif du site.
     </p>
   </td>
 </tr>
@@ -4445,6 +4512,12 @@ try {
     </p>
   </td>
 </tr>
+
+        <tr>
+          <th colspan="2">
+            <h2>RAG et embeddings</h2>
+          </th>
+        </tr>
 
         <tr>
 

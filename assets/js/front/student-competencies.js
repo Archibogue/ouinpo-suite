@@ -1038,7 +1038,7 @@ function buildGlobalSubline(summary) {
 
 
 
-function buildArchibogueAdvice(summary, priorities, fromSegfault = false) {
+function buildLearningAdvice(summary, priorities, fromSegfault = false) {
 
   const total = Number(summary.total || 0);
 
@@ -1542,11 +1542,11 @@ function renderGlobalOverview(wrap, summary, domains, rows, segfaultCards = []) 
 
 
 
-        <article class="ouinpo-focus-card archibogue">
+        <article class="ouinpo-focus-card learning-advice">
 
-          <h4>Conseil du Pr Archibogue</h4>
+          <h4>Conseil de progression</h4>
 
-          <p>${escapeHTML(buildArchibogueAdvice(summary, priorities, prioritiesFromSegfault))}</p>
+          <p>${escapeHTML(buildLearningAdvice(summary, priorities, prioritiesFromSegfault))}</p>
 
         </article>
 

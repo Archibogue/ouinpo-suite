@@ -11,6 +11,7 @@ final class Installer
         }
 
         self::installOrUpgradeSharedSchema();
+        AiSettings::migrate_public_access_for_existing_site($installed);
         Capabilities::install();
         update_option('ouinpo_suite_version', OUINPO_SUITE_VERSION, false);
     }

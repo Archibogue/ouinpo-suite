@@ -27,11 +27,6 @@ final class ModuleSettings
         return [
             'exercises',
             'flashcards',
-            'submissions',
-            'segfault',
-            'gate',
-            'rechtext',
-            'meta',
         ];
     }
 

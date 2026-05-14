@@ -55,6 +55,7 @@ final class Plugin
     public function boot(): void
     {
         Capabilities::init();
+        AiSettings::init();
 
         if (is_admin()) {
             \Ouinpo\Suite\Core\Admin\SuiteAdmin::init();

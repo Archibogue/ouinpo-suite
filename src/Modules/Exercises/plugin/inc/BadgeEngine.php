@@ -11,13 +11,13 @@ if (!defined('ABSPATH')) exit;
  * Les "badges de compétence" sont virtuels : on les déduit
  * du nombre d’exos réussis par compétence, pour calculer les domaines et méta.
  */
-class BadgeEngine {
-
-    /**
-     * Comptes exclus de l’attribution automatique des badges.
-     * Ici : user_id 2.
-     */
-    protected const AUTO_BADGES_DISABLED_USER_IDS = [2];
+class BadgeEngine {
+
+    /**
+     * Option interne : liste d'IDs exclus des badges automatiques.
+     * Exemple de valeur : "2,15".
+     */
+    protected const AUTO_BADGES_DISABLED_USER_IDS_OPTION = 'ouinpo_exo_auto_badges_disabled_user_ids';
 
     /**
      * Cache local des niveaux scolaires courants des utilisateurs.
@@ -33,10 +33,9 @@ class BadgeEngine {
 
         if ($user_id <= 0) return;
 
-        // Le user 2 ne gagne jamais de badge automatiquement.
-        if (self::auto_badges_disabled_for_user($user_id)) {
-            return;
-        }
+        if (self::auto_badges_disabled_for_user($user_id)) {
+            return;
+        }
 
         // 1) Statistiques par compétence + niveaux Bronze / Argent / Or
         $competency_levels = self::compute_competency_levels($user_id);
@@ -573,17 +572,20 @@ class BadgeEngine {
             return false;
         }
 
-        // Blocage demandé : user 2 exclu des badges automatiques.
-        if ($source === 'auto' && self::auto_badges_disabled_for_user($user_id)) {
-            return false;
-        }
+        if ($source === 'auto' && self::auto_badges_disabled_for_user($user_id)) {
+            return false;
+        }
 
         return self::badge_matches_user_level($user_id, $badge_id);
     }
 
-    protected static function auto_badges_disabled_for_user(int $user_id): bool {
-        return in_array($user_id, self::AUTO_BADGES_DISABLED_USER_IDS, true);
-    }
+    protected static function auto_badges_disabled_for_user(int $user_id): bool {
+        $raw = get_option(self::AUTO_BADGES_DISABLED_USER_IDS_OPTION, '');
+        $ids = is_array($raw) ? $raw : preg_split('/[\s,;]+/', (string) $raw);
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $ids))));
+
+        return in_array($user_id, $ids, true);
+    }
 
     protected static function current_level_ids_for_user(int $user_id): array {
 

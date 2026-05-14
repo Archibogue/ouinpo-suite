@@ -39,6 +39,25 @@ Les niveaux `Seconde`, `Première` et `Terminale` ne sont que des valeurs instal
 6. Aller dans **OuInPo Suite → Réglages → Diagnostic**.
 7. Vérifier que les tables principales sont présentes.
 
+## Archives et distribution
+
+Le depot GitHub de developpement peut contenir des outils de maintenance, par exemple `.distignore`, `tools/` et `tools/build-dist.ps1`.
+
+Le zip installable WordPress doit contenir le dossier du plugin, son code, ses assets, sa documentation publique et les packs pedagogiques prevus. Il ne doit pas contenir le dossier `dist/`, d'anciennes archives, de dumps SQL, d'exports WordPress personnels, de secrets ou de fichiers locaux.
+
+Le zip de distribution est l'archive partagee aux enseignants. Il peut etre produit depuis le depot de developpement, mais il doit rester directement installable dans WordPress comme une extension classique.
+
+## Test sur WordPress vierge
+
+Pour valider une archive avant partage :
+
+1. Installer un WordPress neuf avec une base vide.
+2. Installer le zip du plugin depuis **Extensions > Ajouter une extension > Televerser une extension**.
+3. Activer le plugin puis ouvrir **OuInPo Suite > Reglages > Diagnostic**.
+4. Verifier que les tables principales existent et qu'aucune cle API ou chemin local n'est configure.
+5. Importer un pack de demonstration depuis **OuInPo Suite > Reglages > Import pedagogique**.
+6. Creer les pages depuis **Pages & shortcodes**, puis tester les pages publiques et les pages eleves avec un compte distinct.
+
 ## Première configuration
 
 Après activation, vérifier les points suivants :
@@ -107,6 +126,8 @@ Après import, vérifier dans l’administration que les exercices, sujets prati
 
 Les pages et shortcodes ci-dessous correspondent à ceux proposés par **OuInPo Suite > Réglages > Pages & shortcodes**. Les slugs peuvent être adaptés si les liens internes sont ajustés en conséquence.
 
+Attention : les shortcodes publics peuvent afficher des exercices, indices, solutions, sujets pratiques ou fichiers selon les reglages et les contenus disponibles. L'enseignant doit choisir volontairement les pages ou ils sont places.
+
 ### Pages indispensables
 
 | Page WordPress | Slug conseillé | Shortcode |
@@ -132,6 +153,8 @@ La carte du site dynamique est optionnelle et reflète surtout l'organisation du
 | Ressources | `ressources` | `[ouinpo_resources]` |
 | Suivi des compétences | `suivi-competences` | `[ouinpo_competences_prof]` |
 
+Les trois premieres pages de ce tableau sont prevues pour des eleves connectes lorsque le module Submissions est active. Le suivi des competences est reserve aux enseignants ou administrateurs ayant les capacites OuInPo necessaires.
+
 Il est possible de regrouper le dépôt et l’historique des dépôts sur une seule page :
 
 ```text
@@ -147,6 +170,8 @@ Il est possible de regrouper le dépôt et l’historique des dépôts sur une s
 | Assistant SegFault | `assistant-segfault` | `[segfault_chat]` |
 | Mes parcours | `mes-parcours` | `[segfault_mes_parcours]` |
 
+Ces pages supposent le module SegFault active. Le chat peut etre public ou reserve selon les reglages IA ; les parcours sont destines aux eleves connectes.
+
 ### Pages optionnelles
 
 | Page WordPress | Slug conseillé | Shortcode |
@@ -154,6 +179,8 @@ Il est possible de regrouper le dépôt et l’historique des dépôts sur une s
 | Recherche textuelle | `recherche-textuelle` | `[ouinpo_recherche_textuelle]` |
 | Gate | `gate` | `[ouinpo_gate]` |
 | Signatures | `signatures` | `[ouinpo_signpad]` |
+
+Ces pages correspondent a des modules avances desactives par defaut sur une installation neuve. Les activer seulement si elles sont configurees et utiles au site.
 
 ### Shortcodes d’intégration
 
@@ -164,6 +191,8 @@ Ces shortcodes ne nécessitent pas forcément une page dédiée :
 | `[ouinpo_revision_band]` | Bandeau de révision à placer dans un cours ou une page élève |
 | `[ouinpo_hint]...[/ouinpo_hint]` | Contenu conditionnel lié au module Gate |
 | `[ouinpo_class_field]` | Champ classe à intégrer dans un formulaire ou une page d’inscription personnalisée |
+
+Shortcodes egalement enregistres : `[ouinpo-flashcards]`, `[ouinpo-exercises]`, `[ouinpo-exercise]`, `[ouinpo-revision-band]`, `[ouinpo-site-map]`, `[ouinpo-practical-subjects]`, `[ouinpo-practical-subject]`, `[segfault_parcours]`.
 
 ## Permaliens simples WordPress
 
@@ -191,6 +220,12 @@ Les fonctions IA sont optionnelles.
 
 Aucune clé API n’est fournie avec le plugin. Chaque enseignant doit configurer ses propres accès, s’il souhaite utiliser un fournisseur d’IA.
 
+Le lien "En savoir plus" des notices IA est vide par defaut. L'enseignant peut renseigner une URL complete ou un chemin relatif dans les reglages SegFault.
+
+### Page recommandee : donnees personnelles, IA et usages pedagogiques
+
+Il est recommande de creer une page locale expliquant les usages pedagogiques de l'IA, les donnees a ne pas saisir, les limites des reponses automatiques, les personnes a contacter et le cadre applicable dans l'etablissement. Aucun modele de page complet n'est fourni dans cette version.
+
 Avant toute utilisation avec des élèves, il est recommandé de :
 
 - vérifier le cadre applicable dans l’établissement ;
@@ -214,6 +249,10 @@ Avant de partager une archive du plugin, ne jamais inclure :
 - clés API ;
 - export WordPress personnel ;
 - fichier de configuration local.
+
+## Roles et capacites
+
+Les roles actuels sont `ouinpo_teacher` et `ouinpo_student`. Les anciens roles `prof` et `eleve` restent supportes pour compatibilite avec les installations existantes et certains modules historiques. Les deux familles peuvent donc coexister volontairement.
 
 ## Diagnostic
 
@@ -245,6 +284,7 @@ Voir :
 
 - `LICENSE`
 - `CONTENT-LICENSE.md`
+- `THIRD-PARTY-NOTICES.md`
 
 ## Avertissement
 
@@ -270,9 +310,11 @@ Avant diffusion large, vérifier :
 
 La désactivation du plugin ne supprime aucune donnée.
 
-La désinstallation du plugin ne supprime pas automatiquement les tables, exercices, compétences, flashcards, badges, résultats, historiques ou réglages.
+La desinstallation WordPress conserve volontairement les donnees : tables, exercices, competences, flashcards, badges, resultats, historiques et reglages ne sont pas supprimes automatiquement.
 
-Ce comportement est volontaire : il évite toute perte accidentelle de données pédagogiques ou de données élèves.
+La suppression complete doit etre faite manuellement, ou via une future option dediee.
+
+Ce comportement evite la perte accidentelle d'exercices, competences, traces eleves ou contenus pedagogiques.
 
 Avant toute suppression définitive de données OuInPo, l’administrateur du site doit effectuer une sauvegarde complète de la base de données.
 
@@ -287,3 +329,27 @@ Les différences restantes sont non bloquantes :
 - ordre d’index ou syntaxe phpMyAdmin dans les exports ;
 - commentaires SQL absents sur certaines colonnes ;
 - contraintes étrangères Flashcards présentes sur installation neuve, car les tables sont créées en InnoDB.
+## Securite, IA et acces publics
+
+OuInPo Suite 0.5.0 ajoute une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas et consignes systeme. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
+
+Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
+
+- exercices visibles par les visiteurs anonymes ;
+- indices visibles par les visiteurs anonymes ;
+- solutions visibles par les visiteurs anonymes ;
+- sujets pratiques visibles par les visiteurs anonymes ;
+- fichiers associes aux sujets pratiques accessibles aux visiteurs anonymes.
+
+Sur une nouvelle installation, ces acces anonymes sont fermes par defaut pour une distribution prudente. Lors d'une mise a jour depuis une version anterieure a 0.5.0, une migration douce conserve les acces publics existants afin de ne pas casser un site deja configure.
+
+Les logs IA/RAG detailles sont desactives par defaut. Les logs synthetiques ne sont emis que si `WP_DEBUG` est actif et si l'option de debug IA/RAG OuInPo est activee. Ils ne doivent pas contenir de cle API, prompt complet, reponse complete de l'IA ou donnee personnelle.
+
+## Dependances systeme optionnelles
+
+Certaines fonctionnalites utilisent des outils ou fonctions disponibles selon l'hebergement :
+
+- `pdftotext` : optionnel pour extraire du texte de certains PDF lors de l'indexation RAG SegFault. Si l'outil est absent, l'indexation ignore proprement ces PDF ou utilise les fallbacks PHP disponibles.
+- `proc_open` avec `python3` ou `python` : optionnel pour verifier la syntaxe Python via `ast.parse` dans les corrections d'exercices. Si la fonction PHP ou l'interpreteur est indisponible, la correction continue sans verification syntaxique automatique.
+
+Recommandation d'hebergement : PHP 8.1+, WordPress 6.4+, fonctions de processus autorisees uniquement si l'hebergeur les encadre correctement, et aucun binaire systeme expose a des utilisateurs non fiables. L'absence de ces dependances ne doit pas provoquer d'erreur fatale.

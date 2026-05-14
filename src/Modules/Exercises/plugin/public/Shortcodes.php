@@ -101,7 +101,16 @@ private static function page_url_or_fallback(string $slug, string $fallback): st
 
 private static function render_ai_notice(string $context = 'exercise'): string {
 
-  $url = esc_url(home_url('/donnees-personnelles-ia-et-usages-pedagogiques-sur-ouinpo/'));
+  $raw_url = trim((string) get_option('ouinpo_sf_ai_notice_url', ''));
+  $url = '';
+
+  if ($raw_url !== '') {
+    $url = preg_match('#^https?://#i', $raw_url)
+      ? esc_url($raw_url)
+      : esc_url(home_url($raw_url));
+  }
+
+  $more = $url !== '' ? ' <a href="' . $url . '">En savoir plus</a>' : '';
 
 
 
@@ -115,7 +124,7 @@ private static function render_ai_notice(string $context = 'exercise'): string {
 
           <strong>IA pédagogique</strong> — N’écris pas de données personnelles.
 
-          <a href="' . $url . '">En savoir plus</a>
+          ' . $more . '
 
         </p>
 
@@ -143,7 +152,7 @@ private static function render_ai_notice(string $context = 'exercise'): string {
 
           L’IA aide à progresser, mais elle ne remplace pas le professeur.
 
-          <a href="' . $url . '">En savoir plus</a>
+          ' . $more . '
 
         </p>
 
@@ -169,7 +178,7 @@ private static function render_ai_notice(string $context = 'exercise'): string {
 
         L’IA aide à progresser, mais elle ne remplace pas le professeur.
 
-        <a href="' . $url . '">En savoir plus</a>
+        ' . $more . '
 
       </p>
 
@@ -733,9 +742,9 @@ if ($options['layout'] === 'table') {
 
       'outils_menu'      => 'outils',
 
-      'exclude_slugs'    => 'carte-du-site,a-propos-de-l-ouinpo,privacy-policy,quizz-premiere,quizz-tale,recherche-textuelle,simulation-recherche-textuelle,tests-diagnostiques,pr-archibald-bogue,manifeste-de-l-ouinpo,badges-2,compte,console,deconnexion,exercice,reset-password,reinitialisation-du-mot-de-passe,utilisateur-utilisatrice,members-2,register,login,mot-de-passe-oublie,merci-inscription',
+      'exclude_slugs'    => 'carte-du-site,a-propos-de-l-ouinpo,privacy-policy,quizz-premiere,quizz-tale,recherche-textuelle,simulation-recherche-textuelle,tests-diagnostiques,manifeste-de-l-ouinpo,badges-2,compte,console,deconnexion,exercice,reset-password,reinitialisation-du-mot-de-passe,utilisateur-utilisatrice,members-2,register,login,mot-de-passe-oublie,merci-inscription',
 
-      'exclude_titles'   => "À propos de l’ OUINPO,Badges 2,Compte,Console,Déconnexion,Exercice,MANIFESTE DE L’OuInPo,MANIFESTE DE L'OuInPo,Mentions légales,Mentions Légales Potentielles,Pr Archibald Bogue,Quizz 1ere,Quizz Tale,Réinitialisation du mot de passe,Simulation : Recherche textuelle,Tests diagnostiques,Utilisateur/utilisatrice",
+      'exclude_titles'   => "À propos de l’ OUINPO,Badges 2,Compte,Console,Déconnexion,Exercice,MANIFESTE DE L’OuInPo,MANIFESTE DE L'OuInPo,Mentions légales,Mentions Légales Potentielles,Quizz 1ere,Quizz Tale,Réinitialisation du mot de passe,Simulation : Recherche textuelle,Tests diagnostiques,Utilisateur/utilisatrice",
 
       'cache_minutes'    => '10',
 
@@ -4373,23 +4382,9 @@ if ($is_meta) {
 
               $html .= '<div class="ouinpo-badge-earned">';
 
-            // ✅ Libellé du compteur (cas spécial Pr. Archibogue = user_id 2)
+            // Libelle neutre du compteur : pas d'ID utilisateur code en dur.
 
             $label = $count . ' élève' . ($count > 1 ? 's' : '');
-
-            
-
-            if ($count === 1) {
-
-              $only_uid = (int) ($holders_by_badge[$bid][0] ?? 0);
-
-              if ($only_uid === 2) {
-
-                $label = '1 professeur';
-
-              }
-
-            }
 
             
 

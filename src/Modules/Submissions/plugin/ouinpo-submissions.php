@@ -666,7 +666,8 @@ class Ouinpo_Submissions_Plugin {
 
     public function maybe_add_roles() {
 
-        if ( ! get_role('eleve') ) { add_role('eleve','Élève', array('read'=>true, 'upload_files'=>true)); }
+        if ( ! get_role('eleve') ) { add_role('eleve','Élève', array_fill_keys(\Ouinpo\Suite\Core\Capabilities::student(), true)); }
+        if ( ! get_role('ouinpo_student') ) { add_role('ouinpo_student','Élève OuInPo', array_fill_keys(\Ouinpo\Suite\Core\Capabilities::student(), true)); }
 
         if ( ! get_role('prof') )  {
             add_role('prof','Professeur', array(
@@ -719,14 +720,18 @@ class Ouinpo_Submissions_Plugin {
 
         }
 
-        if ($r = get_role('eleve')) {
+        foreach (array('eleve','ouinpo_student') as $role_slug) {
+            if ($r = get_role($role_slug)) {
 
-            foreach(array('read','read_private_ouinpo_resources') as $cap){
+                $r->remove_cap('upload_files');
 
-                if (!$r->has_cap($cap)) { $r->add_cap($cap); }
+                foreach(array_merge(\Ouinpo\Suite\Core\Capabilities::student(), array('read_private_ouinpo_resources')) as $cap){
+
+                    if (!$r->has_cap($cap)) { $r->add_cap($cap); }
+
+                }
 
             }
-
         }
 
     }
@@ -1231,7 +1236,7 @@ class Ouinpo_Submissions_Plugin {
 
         $eleves = get_users(array(
 
-            'role__in'=>array('eleve'),
+            'role__in'=>array('eleve','ouinpo_student'),
 
             'orderby'=>'display_name',
 
@@ -1479,12 +1484,6 @@ class Ouinpo_Submissions_Plugin {
 
     public function ajax_res_upload(){
 
-        if ( ! current_user_can('upload_files') ) {
-
-            wp_send_json_error(array('message'=>'Droit upload_files requis'), 403);
-
-        }
-
         check_ajax_referer('ouinpo_res_upload', 'nonce');
 
 
@@ -1494,6 +1493,12 @@ class Ouinpo_Submissions_Plugin {
         if (!$post_id || get_post_type($post_id)!==self::CPT_RESOURCE) {
 
             wp_send_json_error(array('message'=>'post_id invalide'), 400);
+
+        }
+
+        if ( ! current_user_can(\Ouinpo\Suite\Core\Capabilities::MANAGE_SUBMISSIONS) && ! current_user_can('edit_post', $post_id) ) {
+
+            wp_send_json_error(array('message'=>'Droits OuInPo insuffisants'), 403);
 
         }
 
@@ -1568,6 +1573,12 @@ class Ouinpo_Submissions_Plugin {
         }
 
 
+
+        if ( ! current_user_can(\Ouinpo\Suite\Core\Capabilities::SUBMIT_WORK) || ! current_user_can(\Ouinpo\Suite\Core\Capabilities::UPLOAD_SUBMISSION) ) {
+
+            return '<div class="ouinpo-box">Votre rÃ´le ne permet pas le dÃ©pÃ´t de travaux.</div>';
+
+        }
 
         $u = wp_get_current_user();
 
@@ -2489,7 +2500,7 @@ class Ouinpo_Submissions_Plugin {
 
         $u = wp_get_current_user();
 
-        if (in_array('eleve', (array)$u->roles, true)) {
+        if (array_intersect(array('eleve','ouinpo_student'), (array)$u->roles)) {
 
             $args['author'] = $u->ID;
 

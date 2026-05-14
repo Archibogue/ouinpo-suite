@@ -19,7 +19,7 @@
 - [x] Le préfixe WordPress n’est jamais supposé être `wp_`.
 - [x] Les pages nécessaires peuvent être créées ou documentées.
 - [x] La désactivation ne supprime pas les données.
-- [ ] La désinstallation est prudente et documentée.
+- [x] La désinstallation est prudente et documentée.
 
 ## 3. Configuration
 
@@ -48,7 +48,7 @@
 
 ## 6. Paquet de diffusion
 
-- [x] Le fichier `.distignore` existe.
+- [x] Le fichier `.distignore` existe dans le dépôt de développement.
 - [x] Aucun dump SQL n’est présent dans l’archive.
 - [x] Aucun export XML du site n’est présent dans l’archive.
 - [x] Aucun fichier `.env` ou secret local n’est présent.
@@ -66,8 +66,8 @@
 
 ## 8. Construction du paquet
 
-- [x] Le dossier `tools/` existe.
-- [x] Le script `tools/build-dist.ps1` existe.
+- [x] Le dossier `tools/` existe dans le dépôt de développement.
+- [x] Le script `tools/build-dist.ps1` existe dans le dépôt de développement.
 - [x] Le script produit un zip dans `dist/`.
 - [x] Le zip contient un dossier racine `ouinpo-suite/`.
 - [x] Le zip ne contient aucun dump SQL.
@@ -75,6 +75,12 @@
 - [x] Le zip ne contient aucun fichier de configuration local.
 - [x] Le zip ne contient aucune archive précédente.
 - [x] Le zip a été testé sur un WordPress vierge.
+
+Notes :
+
+- Depot de developpement GitHub : peut contenir `.distignore`, `tools/`, `dist/`, checklists et fichiers de travail.
+- Zip installable WordPress : doit contenir le dossier du plugin directement installable, sans `dist/`, sans ancienne archive et sans donnees locales.
+- Zip de distribution : archive partageable aux enseignants, construite depuis le depot, avec seulement le code, les assets, la documentation publique et les packs pedagogiques prevus.
 
 ## 10. Packs pédagogiques
 

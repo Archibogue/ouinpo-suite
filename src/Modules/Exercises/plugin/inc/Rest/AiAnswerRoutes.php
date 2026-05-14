@@ -41,7 +41,9 @@ public static function can_evaluate_ai() {
 }
 
 private static function public_ai_enabled(): bool {
-  return class_exists('\\OuInPo\\SegFault\\Albert')
+  return \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('exercise_correction')
+    && \Ouinpo\Suite\Core\AiSettings::public_enabled()
+    && class_exists('\\OuInPo\\SegFault\\Albert')
     && \OuInPo\SegFault\Albert::public_available();
 }
 
@@ -341,7 +343,11 @@ Réponds UNIQUEMENT avec un JSON valide, sans aucun texte avant ou après, au fo
   "confidence": 0.84,
   "safe_to_mark_solved": false
 }
-TXT;
+TXT;
+    $configured_system = trim((string) get_option('ouinpo_ai_exercise_correction_prompt', ''));
+    if ($configured_system !== '') {
+      $system = $configured_system . "\n\n" . $code_guidance . "\n\nReponds uniquement avec un JSON valide au format demande.";
+    }
 
     $user_parts = [
       "TITRE DE L'EXERCICE :",
@@ -393,8 +399,8 @@ TXT;
 
     try {
     $options = [
-      'temperature' => 0.0,
-      'max_tokens'  => $parts['has_code'] ? 900 : 700,
+      'temperature' => (float) get_option('ouinpo_ai_temperature', 0.0),
+      'max_tokens'  => min((int) get_option('ouinpo_ai_max_tokens', $parts['has_code'] ? 900 : 700), $parts['has_code'] ? 900 : 700),
       'response_format' => [
         'type' => 'json_object',
       ],
@@ -409,7 +415,7 @@ TXT;
       ['role' => 'user',   'content' => implode("\n\n", $user_parts)],
     ], $options);
     } catch (\Throwable $e) {
-      error_log('[OuInPo Exercises] IA error: ' . $e->getMessage());
+      \Ouinpo\Suite\Core\AiSettings::debug_log('Exercise correction AI error', ['usage' => 'exercise_correction', 'error' => $e->getMessage()]);
     return [
       'technical_error' => true,
       'message'         => 'Le correcteur IA a rencontré une erreur.',
@@ -418,7 +424,7 @@ TXT;
 
     $parsed = self::extract_json($raw);
     if (!is_array($parsed)) {
-      error_log('[OuInPo Exercises] JSON IA invalide: ' . substr((string) $raw, 0, 500));
+      \Ouinpo\Suite\Core\AiSettings::debug_log('Exercise correction invalid JSON', ['usage' => 'exercise_correction']);
       return [
         'technical_error' => true,
         'message'         => 'Je n’ai pas réussi à analyser correctement ta réponse cette fois-ci.',

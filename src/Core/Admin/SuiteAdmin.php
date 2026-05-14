@@ -277,6 +277,30 @@ final class SuiteAdmin
         return $tab !== '' ? $tab : $default;
     }
 
+    private static function isImportablePedagogicalPack(string $path): bool
+    {
+        if (!is_readable($path) || !str_ends_with($path, '.json')) {
+            return false;
+        }
+
+        $raw = file_get_contents($path);
+        if ($raw === false || trim($raw) === '') {
+            return false;
+        }
+
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            return false;
+        }
+
+        $pack = $data['pack'] ?? null;
+
+        return (string) ($data['schema_version'] ?? '') === '1.0'
+            && is_array($pack)
+            && trim((string) ($pack['slug'] ?? '')) !== ''
+            && trim((string) ($pack['title'] ?? '')) !== '';
+    }
+
     private static function subTabs(string $page, array $tabs, string $current): void
     {
         if (empty($tabs)) {
@@ -2538,6 +2562,59 @@ final class SuiteAdmin
         self::endPage();
     }
 
+    private static function renderAiSettingsEntry(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_AI)) {
+            ?>
+            <div class="card ouinpo-suite-card-bounded">
+                <h2 class="ouinpo-suite-card-title">IA</h2>
+                <p>Les reglages IA sont reserves aux profils autorises.</p>
+            </div>
+            <?php
+            return;
+        }
+
+        $segfaultEnabled = ModuleSettings::isEnabled('segfault');
+        $aiEnabled = ((int) get_option('ouinpo_ai_enabled', 0) === 1);
+        $publicAiEnabled = ((int) get_option('ouinpo_ai_public_enabled', 0) === 1);
+        ?>
+        <div class="ouinpo-suite-grid">
+            <div class="card ouinpo-suite-card">
+                <h3 class="ouinpo-suite-card-title">Reglages IA</h3>
+                <p>
+                    Les reglages complets de l'IA se trouvent dans l'ecran SegFault :
+                    activation globale, IA publique, usages, fournisseurs, cles API, modeles,
+                    quotas, prompts, personas, RAG et logs.
+                </p>
+                <p>
+                    <?php self::statusBadge($aiEnabled, 'IA active', 'IA desactivee'); ?>
+                    <?php self::statusBadge($publicAiEnabled, 'IA publique active', 'IA publique fermee'); ?>
+                </p>
+                <?php if ($segfaultEnabled): ?>
+                    <p class="ouinpo-suite-bottomless">
+                        <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-segfault')); ?>">
+                            Ouvrir les reglages IA
+                        </a>
+                    </p>
+                <?php else: ?>
+                    <p class="description">
+                        Le module SegFault est desactive. Active-le dans l'onglet Modules pour afficher le formulaire IA complet.
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <div class="card ouinpo-suite-card">
+                <h3 class="ouinpo-suite-card-title">Acces publics</h3>
+                <p>Les routes anonymes des exercices, indices, solutions, sujets pratiques et fichiers associes se reglent aussi dans l'ecran IA.</p>
+                <p>
+                    <?php self::statusBadge(((int) get_option('ouinpo_public_exercises_enabled', 0) === 1), 'Exercices publics', 'Exercices connectes'); ?>
+                    <?php self::statusBadge(((int) get_option('ouinpo_public_solutions_enabled', 0) === 1), 'Solutions publiques', 'Solutions connectees'); ?>
+                </p>
+            </div>
+        </div>
+        <?php
+    }
+
     private static function renderDiagnosticHub(): void
     {
         global $wpdb;
@@ -3016,7 +3093,7 @@ final class SuiteAdmin
 
                 $path = trailingslashit(OUINPO_SUITE_DIR) . 'packs/' . $pack;
 
-                if ($pack === '' || !str_ends_with($pack, '.json')) {
+                if ($pack === '' || !str_ends_with($pack, '.json') || !self::isImportablePedagogicalPack($path)) {
                     $result = [
                         'ok' => false,
                         'message' => 'Pack intégré invalide.',
@@ -3067,7 +3144,7 @@ final class SuiteAdmin
             foreach (glob($packsDir . '*.json') ?: [] as $file) {
                 $base = basename($file);
 
-                if ($base === 'ouinpo-pack.schema.json') {
+                if ($base === 'ouinpo-pack.schema.json' || !self::isImportablePedagogicalPack($file)) {
                     continue;
                 }
 
@@ -3120,8 +3197,9 @@ final class SuiteAdmin
             <h2 class="ouinpo-suite-card-title">Import pédagogique</h2>
 
             <p class="ouinpo-suite-muted">
-                Cette version importe uniquement les niveaux, difficultés et compétences BO.
-                Les exercices, flashcards et sujets pratiques seront traités dans les versions suivantes de l’importeur.
+                L'import peut traiter les niveaux, domaines, difficultes, competences, exercices,
+                indices, solutions, metadonnees d'examen, sujets et fichiers pratiques, ainsi que les flashcards.
+                Le contenu effectivement importe depend des sections presentes dans le fichier JSON.
             </p>
 
             <form method="post" enctype="multipart/form-data">
@@ -3243,6 +3321,7 @@ final class SuiteAdmin
         $settingsTabs = [
             'modules' => 'Modules',
             'appearance' => 'Apparence',
+            'ai' => 'IA',
             'pages' => 'Pages & shortcodes',
             'rights' => 'Droits',
         ];
@@ -3266,6 +3345,9 @@ final class SuiteAdmin
 
         } elseif ($tab === 'appearance') {
             self::renderAppearanceSettings();
+
+        } elseif ($tab === 'ai') {
+            self::renderAiSettingsEntry();
 
         } elseif ($tab === 'pages') {
             settings_errors('ouinpo_suite_pages');

@@ -20,15 +20,21 @@ class OpenAI {
 
   static function chat_model(): string {
 
-    $m = trim((string) get_option('ouinpo_sf_model', 'gpt-4o-mini'));
+    $m = trim((string) get_option('ouinpo_sf_model', ''));
+    if ($m === '') {
+      $m = trim((string) get_option('ouinpo_ai_chat_model', 'gpt-5-mini'));
+    }
 
-    return $m !== '' ? $m : 'gpt-4o-mini';
+    return $m !== '' ? $m : 'gpt-5-mini';
 
   }
 
   static function embed_model(): string {
 
-    $m = (string) get_option('ouinpo_sf_embed_model','text-embedding-3-large');
+    $m = (string) get_option('ouinpo_sf_embed_model','');
+    if ($m === '') {
+      $m = (string) get_option('ouinpo_ai_embedding_model','text-embedding-3-large');
+    }
 
     return $m !== '' ? $m : 'text-embedding-3-large';
 
@@ -255,7 +261,10 @@ $context = trim(
 
     $messages = [];
 
-$system_blocks = array_merge([$persona], $extra_system, [
+$configured_rag_prompt = trim((string) get_option('ouinpo_ai_rag_system_prompt', ''));
+$configured_guardrails = trim((string) get_option('ouinpo_ai_out_of_program_guardrails', ''));
+
+$system_blocks = array_merge(array_filter([$persona, $configured_rag_prompt, $configured_guardrails]), $extra_system, [
 
   // Consignes pour lier la requête générique au sujet précédent
 
@@ -423,11 +432,11 @@ if ($out_of_program_notice !== '') {
 
 
 
-        error_log('[SegFault] Albert returned an error-like answer: ' . substr($answer, 0, 300));
+        \Ouinpo\Suite\Core\AiSettings::debug_log('Albert returned an error-like answer', ['provider' => 'albert']);
 
       } catch (\Throwable $e) {
 
-        error_log('[SegFault] Albert exception: ' . $e->getMessage());
+        \Ouinpo\Suite\Core\AiSettings::debug_log('Albert exception', ['provider' => 'albert', 'error' => $e->getMessage()]);
 
       }
 
@@ -515,11 +524,11 @@ if ($out_of_program_notice !== '') {
 
       'messages'    => $messages,
 
-      'temperature' => array_key_exists('temperature', $options) ? (float) $options['temperature'] : 0.3,
+      'temperature' => array_key_exists('temperature', $options) ? (float) $options['temperature'] : (float) get_option('ouinpo_ai_temperature', 0.3),
 
-      'top_p'       => array_key_exists('top_p', $options) ? (float) $options['top_p'] : 1.0,
+      'top_p'       => array_key_exists('top_p', $options) ? (float) $options['top_p'] : (float) get_option('ouinpo_ai_top_p', 1.0),
 
-      'max_tokens'  => array_key_exists('max_tokens', $options) ? (int) $options['max_tokens'] : 800,
+      'max_tokens'  => array_key_exists('max_tokens', $options) ? (int) $options['max_tokens'] : (int) get_option('ouinpo_ai_max_tokens', 800),
 
     ];
 
@@ -555,7 +564,7 @@ if ($out_of_program_notice !== '') {
 
         'body'       => wp_json_encode($payload),
 
-        'timeout'    => 35,
+        'timeout'    => (int) get_option('ouinpo_ai_timeout', 35),
 
         'user-agent' => self::user_agent('Fallback'),
 
@@ -565,7 +574,7 @@ if ($out_of_program_notice !== '') {
 
       if (is_wp_error($resp)) {
 
-        error_log('[SegFault] OpenAI fallback HTTP error: ' . $resp->get_error_message());
+        \Ouinpo\Suite\Core\AiSettings::debug_log('OpenAI fallback HTTP error', ['provider' => 'openai', 'error' => $resp->get_error_message()]);
 
         if ($attempts < 2) usleep(250000);
 
@@ -585,7 +594,7 @@ if ($out_of_program_notice !== '') {
 
       if ($code === 429 || ($code >= 500 && $code < 600)) {
 
-        error_log('[SegFault] OpenAI fallback retry (code ' . $code . '): ' . substr($raw, 0, 400));
+        \Ouinpo\Suite\Core\AiSettings::debug_log('OpenAI fallback retry', ['provider' => 'openai', 'http_code' => $code]);
 
         if ($attempts < 2) {
 
@@ -601,7 +610,7 @@ if ($out_of_program_notice !== '') {
 
       if ($code !== 200) {
 
-        error_log('[SegFault] OpenAI fallback non-200 (' . $code . '): ' . substr($raw, 0, 500));
+        \Ouinpo\Suite\Core\AiSettings::debug_log('OpenAI fallback non-200', ['provider' => 'openai', 'http_code' => $code]);
 
         return "Oups, chat perché : l’IA de secours n’a pas répondu correctement.";
 
@@ -641,7 +650,7 @@ if ($out_of_program_notice !== '') {
 
 
 
-      error_log('[SegFault] OpenAI fallback parse fail: ' . substr($raw, 0, 800));
+      \Ouinpo\Suite\Core\AiSettings::debug_log('OpenAI fallback parse fail', ['provider' => 'openai']);
 
       return "Je ronronne dans le vide : réponse vide reçue par l’IA de secours.";
 
@@ -681,7 +690,7 @@ if ($out_of_program_notice !== '') {
 
       'body'=>wp_json_encode(['model'=>$model,'input'=>$text]),
 
-      'timeout'=>35,
+      'timeout'=>(int) get_option('ouinpo_ai_timeout', 35),
 
       'user-agent' => self::user_agent('Default'),
 
@@ -691,7 +700,7 @@ if ($out_of_program_notice !== '') {
 
     if (is_wp_error($resp)) {
 
-      error_log('[SegFault] Embedding HTTP error: '.$resp->get_error_message());
+      \Ouinpo\Suite\Core\AiSettings::debug_log('Embedding HTTP error', ['provider' => 'openai', 'error' => $resp->get_error_message()]);
 
       return [];
 
@@ -701,7 +710,7 @@ if ($out_of_program_notice !== '') {
 
     if ($code !== 200) {
 
-      error_log('[SegFault] Embedding non-200 ('.$code.'): '.substr(wp_remote_retrieve_body($resp),0,500));
+      \Ouinpo\Suite\Core\AiSettings::debug_log('Embedding non-200', ['provider' => 'openai', 'http_code' => $code]);
 
       return [];
 

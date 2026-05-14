@@ -2,6 +2,19 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.5.0] - 2026-05-14
+
+### Securite et distribution
+
+- Nettoyage de la version de distribution et corrections de packaging.
+- Durcissement des capacites eleves : retrait de `upload_files` pour les roles `eleve` et `ouinpo_student`, remplace par des capacites OuInPo dediees aux depots.
+- Reglages IA rendus configurables depuis l'administration : activation globale/publique, usages, fournisseurs, URL, cle API, modeles, quotas, parametres de generation, personas et consignes systeme.
+- Durcissement des reglages SegFault/RAG via `register_setting` et callbacks de sanitation adaptes.
+- Reglages d'administration pour les acces REST anonymes aux exercices, indices, solutions, sujets pratiques et fichiers associes.
+- Encadrement des logs IA/RAG : logs synthetiques uniquement si `WP_DEBUG` et l'option de debug IA/RAG sont actifs.
+- Documentation des dependances systeme optionnelles, des routes publiques et des consequences des reglages anonymes.
+- Documentation des assets, licences et elements remplacables par les enseignants.
+
 ## [0.4.0] — 2026-05-01
 
 ### Ajouté

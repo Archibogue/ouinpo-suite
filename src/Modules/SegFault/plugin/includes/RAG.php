@@ -65,7 +65,7 @@ class RAG {
     // 1) Fichiers texte (.md / .txt)
     foreach (glob(OUINPO_SF_SRC.'*.{md,txt}', GLOB_BRACE) as $file) {
       if (is_file($file) && filesize($file) > $max_text_size) {
-        error_log('[SegFault] Fichier texte trop lourd ignoré (index_sources): '.$file);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] Fichier texte trop lourd ignoré (index_sources): '.$file);
         continue;
       }
 
@@ -80,7 +80,7 @@ class RAG {
     // 2) Fichiers PDF (lecture seule pour l'IA, sans lien public)
     foreach (glob(OUINPO_SF_SRC.'*.pdf') as $file) {
       if (is_file($file) && filesize($file) > $max_pdf_size) {
-        error_log('[SegFault] PDF trop lourd ignoré (index_sources): '.$file);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] PDF trop lourd ignoré (index_sources): '.$file);
         continue;
       }
 
@@ -125,7 +125,7 @@ class RAG {
 
   public static function index_wxr_xml(string $xml_file): int {
     if (!is_file($xml_file)) {
-      error_log('[SegFault] XML introuvable (index_wxr_xml): '.$xml_file);
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] XML introuvable (index_wxr_xml): '.$xml_file);
       return 0;
     }
 
@@ -135,13 +135,13 @@ class RAG {
     libxml_use_internal_errors(true);
     $raw = @file_get_contents($xml_file);
     if ($raw === false || trim($raw) === '') {
-      error_log('[SegFault] XML vide/illisible (index_wxr_xml): '.$xml_file);
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] XML vide/illisible (index_wxr_xml): '.$xml_file);
       return 0;
     }
 
     $xml = simplexml_load_string($raw);
     if (!$xml || !isset($xml->channel->item)) {
-      error_log('[SegFault] XML invalide ou sans items (index_wxr_xml): '.$xml_file);
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] XML invalide ou sans items (index_wxr_xml): '.$xml_file);
       return 0;
     }
 
@@ -376,7 +376,7 @@ public static function cron_reindex_nightly(): void {
   $missing = self::index_missing_site_posts(80);
   $done_site += $missing;
 
-  error_log(sprintf('[SegFault] Cron nightly : site=%d, sources=%d', $done_site, $done_src));
+  \Ouinpo\Suite\Core\AiSettings::debug_log(sprintf('[SegFault] Cron nightly : site=%d, sources=%d', $done_site, $done_src));
 }
 
 public static function cron_reindex_nightly_stats(): array {
@@ -418,7 +418,7 @@ public static function cron_reindex_nightly_stats(): array {
   $wxr_total_after = (int) get_option('ouinpo_sf_wxr_total', 0);
   $wxr_done_after = (int) get_option('ouinpo_sf_wxr_done', 0);
 
-  error_log(sprintf(
+  \Ouinpo\Suite\Core\AiSettings::debug_log(sprintf(
     '[SegFault] Cron manual : mode=%s site=%d sources=%d wxr=%d/%d -> %d/%d done=%d xml_exists=%d xml=%s',
     $mode,
     $done_site,
@@ -497,13 +497,13 @@ public static function cron_reindex_nightly_stats(): array {
 
     if (in_array($ext, ['md', 'txt'], true)) {
       if ($size > $max_text_size) {
-        error_log('[SegFault] Fichier texte trop lourd ignoré (index_one_source_file): '.$file);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] Fichier texte trop lourd ignoré (index_one_source_file): '.$file);
         return 0;
       }
       $text = @file_get_contents($file) ?: '';
     } elseif ($ext === 'pdf') {
       if ($size > $max_pdf_size) {
-        error_log('[SegFault] PDF trop lourd ignoré (index_one_source_file): '.$file);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] PDF trop lourd ignoré (index_one_source_file): '.$file);
         return 0;
       }
       $text = self::pdf_to_text($file);
@@ -617,19 +617,19 @@ public static function index_site_posts_by_slugs(array $slugs, int $limit = 20):
       ", $slug));
 
       if ($post_id <= 0) {
-        error_log('[SegFault] index_site_posts_by_slugs : post introuvable pour slug '.$slug);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] index_site_posts_by_slugs : post introuvable pour slug '.$slug);
         continue;
       }
 
       $post = get_post($post_id);
       if (!$post) {
-        error_log('[SegFault] index_site_posts_by_slugs : get_post impossible pour slug '.$slug);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] index_site_posts_by_slugs : get_post impossible pour slug '.$slug);
         continue;
       }
 
       $url = get_permalink($post_id);
       if (!$url) {
-        error_log('[SegFault] index_site_posts_by_slugs : URL introuvable pour slug '.$slug);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] index_site_posts_by_slugs : URL introuvable pour slug '.$slug);
         continue;
       }
 
@@ -639,7 +639,7 @@ public static function index_site_posts_by_slugs(array $slugs, int $limit = 20):
       $text  = self::html_to_text($html);
 
       if (trim($text) === '') {
-        error_log('[SegFault] index_site_posts_by_slugs : texte vide pour '.$slug);
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] index_site_posts_by_slugs : texte vide pour '.$slug);
         continue;
       }
 
@@ -654,7 +654,7 @@ public static function index_site_posts_by_slugs(array $slugs, int $limit = 20):
         get_post_type($post_id) ?: 'post'
       );
 
-      error_log('[SegFault] index_site_posts_by_slugs : '.$slug.' -> '.$added.' chunks');
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] index_site_posts_by_slugs : '.$slug.' -> '.$added.' chunks');
 
       $count += (int)$added;
     }
@@ -920,7 +920,7 @@ if ($indexed > 0) {
    */
 $save_one = self::save_sources_index_state($stored);
 
-error_log(sprintf(
+\Ouinpo\Suite\Core\AiSettings::debug_log(sprintf(
   '[SegFault] Source état sauvegardé : rel=%s indexed=%d saved=%d stored_count=%d check_count=%d',
   $rel,
   $indexed,
@@ -933,7 +933,7 @@ error_log(sprintf(
 } else {
       $seen['zero_chunks']++;
 
-      error_log('[SegFault] Source détectée mais 0 chunk indexé : '.$file);
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] Source détectée mais 0 chunk indexé : '.$file);
     }
   }
 
@@ -943,7 +943,7 @@ $stored_count = (int)$save_final['stored_count'];
 $saved = (bool)$save_final['ok'];
 $check_count = (int)$save_final['check_count'];
 
-error_log(sprintf(
+\Ouinpo\Suite\Core\AiSettings::debug_log(sprintf(
   '[SegFault] Sources diff : detected=%d skipped_up_to_date=%d forced_missing_chunks=%d indexed_files=%d zero_chunks=%d removed=%d stored_count=%d saved=%d check_count=%d provider=%s model=%s',
   $seen['detected'],
   $seen['skipped_up_to_date'],
@@ -1025,7 +1025,7 @@ private static function rerank_results(string $query, array $scored, int $k): ar
 
     return array_slice($reranked, 0, $k);
   } catch (\Throwable $e) {
-    error_log('[SegFault RAG rerank] erreur ignorée : ' . $e->getMessage());
+    \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault RAG rerank] erreur ignorée : ' . $e->getMessage());
     return array_slice($scored, 0, $k);
   }
 }
@@ -1151,7 +1151,7 @@ $ins = $db->prepare("
 $n = 0;
 foreach ($chunks as $idx => $item) {
     if ($embeddings_used >= $max_embeddings_run) {
-      error_log('[SegFault] budget embeddings atteint, arrêt pour cette exécution');
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] budget embeddings atteint, arrêt pour cette exécution');
       break;
     }
 
@@ -1163,7 +1163,7 @@ foreach ($chunks as $idx => $item) {
 
     $emb = self::embed_text($c);
     if (!$emb) {
-      error_log('[SegFault] embedding vide pour un chunk, ignoré');
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] embedding vide pour un chunk, ignoré');
       continue;
     }
 
@@ -1583,7 +1583,7 @@ if ($exercise_intent && $exercise_allowed) {
 return self::rerank_results($query, $scored, $k);
 
   } catch (\Throwable $e) {
-    error_log('[SegFault RAG search] erreur ignorée : ' . $e->getMessage());
+    \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault RAG search] erreur ignorée : ' . $e->getMessage());
     return [];
   }
 }
@@ -1917,7 +1917,7 @@ if ($exercise_intent) {
     ];
 
   } catch (\Throwable $e) {
-    error_log('[SegFault RAG debug_search] erreur : ' . $e->getMessage());
+    \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault RAG debug_search] erreur : ' . $e->getMessage());
     return [
       'query' => $query,
       'error' => $e->getMessage(),
@@ -2835,7 +2835,7 @@ $order_origin = $exercise_intent
     return self::rerank_results($query, $scored, $k);
 
       } catch (\Throwable $e) {
-        error_log('[SegFault RAG search_sources] erreur ignorée : ' . $e->getMessage());
+        \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault RAG search_sources] erreur ignorée : ' . $e->getMessage());
         return [];
       }
     }

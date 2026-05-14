@@ -48,7 +48,12 @@ final class PracticalAiBridge {
             "Tu dois répondre dans un français correct et naturel. N'utilise pas de mots anglais sauf s'ils apparaissent dans le code ou dans un nom technique imposé.",
             "Si le verdict est correct et que safe_to_mark_solved vaut true, next_steps doit être une liste vide, sauf si une consigne explicite demande encore une action.",
             "Réponds uniquement en JSON valide, sans texte autour."
-        ]);
+        ]);
+
+        $configured_prompt = trim((string) get_option('ouinpo_ai_practical_correction_prompt', ''));
+        if ($configured_prompt !== '') {
+            $system_prompt = $configured_prompt . "\n\nReponds uniquement en JSON valide, sans texte autour.";
+        }
 
         $user_prompt_parts = [
             "Sujet : " . $subject_title,
@@ -135,26 +140,26 @@ TXT;
         }
     
         try {
-            error_log('[OuInPo Practical] appel IA pratique avec albert_purpose=code');
+            \Ouinpo\Suite\Core\AiSettings::debug_log('Practical correction AI call', ['usage' => 'practical_correction', 'purpose' => 'code']);
             $raw = \OuInPo\SegFault\OpenAI::respond([
                 ['role' => 'system', 'content' => $system_prompt],
                 ['role' => 'user',   'content' => $user_prompt],
             ], [
-                'temperature' => 0.0,
-                'max_tokens'  => 900,
+                'temperature' => (float) get_option('ouinpo_ai_temperature', 0.0),
+                'max_tokens'  => min((int) get_option('ouinpo_ai_max_tokens', 900), 900),
                 'albert_purpose' => 'code',
                 'response_format' => [
                     'type' => 'json_object',
                 ],
             ]);
         } catch (\Throwable $e) {
-            error_log('[OuInPo Practical] IA error: ' . $e->getMessage());
+            \Ouinpo\Suite\Core\AiSettings::debug_log('Practical correction AI error', ['usage' => 'practical_correction', 'error' => $e->getMessage()]);
             return null;
         }
     
         $parsed = self::extract_json((string) $raw);
         if (!is_array($parsed)) {
-            error_log('[OuInPo Practical] JSON IA invalide: ' . substr((string) $raw, 0, 500));
+            \Ouinpo\Suite\Core\AiSettings::debug_log('Practical correction invalid JSON', ['usage' => 'practical_correction']);
             return null;
         }
     

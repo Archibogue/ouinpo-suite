@@ -142,7 +142,7 @@ class Titles {
 
 
 
-        // Format : "Pr. Archibogue — Transcendant Satrape du Calcul ..."
+        // Format : "Nom — titre de badge choisi"
 
         return $name . ' — ' . $title;
 

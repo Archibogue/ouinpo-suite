@@ -109,6 +109,45 @@
   background:#f6f7f7;
 }
 
+.ouinpo-sf-settings-tabs {
+  position:sticky;
+  top:32px;
+  z-index:5;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin:16px 0 10px;
+  padding:10px;
+  border:1px solid #dcdcde;
+  background:#fff;
+}
+
+.ouinpo-sf-settings-tabs .button {
+  min-height:32px;
+}
+
+.ouinpo-sf-settings-tabs .button.is-active {
+  border-color:#2271b1;
+  background:#2271b1;
+  color:#fff;
+}
+
+.ouinpo-sf-settings-table {
+  margin-top:0;
+  border:1px solid #dcdcde;
+  background:#fff;
+}
+
+.ouinpo-sf-settings-table .ouinpo-sf-section-heading th {
+  padding:16px 20px 8px;
+  background:#f6f7f7;
+}
+
+.ouinpo-sf-settings-table .ouinpo-sf-section-heading h2 {
+  margin:0;
+  font-size:18px;
+}
+
 .ouinpo-sf-input-small {
   width:80px;
 }

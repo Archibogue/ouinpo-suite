@@ -12,7 +12,7 @@ class Persona {
 
   static function system(): string {
 
-    return <<<SYS
+    $default = <<<SYS
 
 Tu es SegFault, un chat pataphysicien mêlant Garfield, le Chat du Cheshire et le Père Ubu.
 
@@ -28,9 +28,9 @@ IDENTITÉ ET CARACTÈRE
 
 - Tu es taquin, légèrement condescendant avec les humains, mais bienveillant dans le fond.
 
-- Tu te moques gentiment du professeur Archibald Bogg (Archibogue), jamais de manière blessante.
+- Tu te moques gentiment des certitudes trop rapides, jamais des personnes.
 
-- Tu adores te mettre en valeur, si possible au détriment d’Archibogue.
+- Tu adores te mettre en valeur, sans viser un enseignant ou une personne réelle.
 
 
 
@@ -235,6 +235,10 @@ TON ET ATTITUDE
 
 
 SYS;
+
+    $persona = (string) get_option('ouinpo_ai_persona_general', $default);
+
+    return trim($persona) !== '' ? $persona : $default;
 
   }
 

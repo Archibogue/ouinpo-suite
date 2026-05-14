@@ -13,7 +13,7 @@ class PracticalRoutes {
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'index'],
                 // Public: liste des sujets pratiques consultable côté élève.
-                'permission_callback' => '__return_true',
+                'permission_callback' => [__CLASS__, 'can_view_public_subjects'],
             ],
         ]);
 
@@ -23,7 +23,7 @@ class PracticalRoutes {
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'show'],
                 // Public: détail d’un sujet pratique consultable côté élève.
-                'permission_callback' => '__return_true',
+                'permission_callback' => [__CLASS__, 'can_view_public_subjects'],
             ],
         ]);
 
@@ -33,7 +33,7 @@ class PracticalRoutes {
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'calls'],
                 // Public: appels évaluateurs affichés dans le sujet pratique.
-                'permission_callback' => '__return_true',
+                'permission_callback' => [__CLASS__, 'can_view_public_subjects'],
             ],
         ]);
 
@@ -43,7 +43,7 @@ class PracticalRoutes {
                 'methods'             => 'GET',
                 'callback'            => [__CLASS__, 'files'],
                 // Public: fichiers liés au sujet pratique affichés dans l’interface.
-                'permission_callback' => '__return_true',
+                'permission_callback' => [__CLASS__, 'can_view_public_files'],
             ],
         ]);
 
@@ -92,8 +92,30 @@ class PracticalRoutes {
         return true;
     }
     
-    private static function public_ai_enabled(): bool {
-        return class_exists('\\OuInPo\\SegFault\\Albert')
+    public static function can_view_public_subjects() {
+        if (is_user_logged_in()) {
+            return true;
+        }
+
+        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_practical_subjects_enabled')
+            ? true
+            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les sujets pratiques.', ['status' => 401]);
+    }
+
+    public static function can_view_public_files() {
+        if (is_user_logged_in()) {
+            return true;
+        }
+
+        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_practical_files_enabled')
+            ? true
+            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les fichiers des sujets pratiques.', ['status' => 401]);
+    }
+
+    private static function public_ai_enabled(): bool {
+        return \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('practical_correction')
+            && \Ouinpo\Suite\Core\AiSettings::public_enabled()
+            && class_exists('\\OuInPo\\SegFault\\Albert')
             && \OuInPo\SegFault\Albert::public_available();
     }
     

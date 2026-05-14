@@ -13,7 +13,7 @@ class ExercisesRoutes {
                 'methods'             => 'GET',
                 'callback'            => array(__CLASS__, 'index'),
                 // Public: liste des exercices affichée par les shortcodes.
-                'permission_callback' => '__return_true',
+                'permission_callback' => array(__CLASS__, 'can_view_public_exercises'),
             ),
         ));
 
@@ -23,7 +23,7 @@ class ExercisesRoutes {
                 'methods'             => 'GET',
                 'callback'            => array(__CLASS__, 'show'),
                 // Public: détail d’un exercice affiché par les shortcodes.
-                'permission_callback' => '__return_true',
+                'permission_callback' => array(__CLASS__, 'can_view_public_exercises'),
             ),
         ));
 
@@ -33,7 +33,7 @@ class ExercisesRoutes {
                 'methods'             => 'GET',
                 'callback'            => array(__CLASS__, 'solutions'),
                 // Public: métadonnées des solutions, sans contenu révélé.
-                'permission_callback' => '__return_true',
+                'permission_callback' => array(__CLASS__, 'can_view_public_solutions'),
             ),
         ));
 
@@ -42,7 +42,7 @@ class ExercisesRoutes {
             array(
                 'methods'             => 'POST',
                 'callback'            => array(__CLASS__, 'reveal_solution'),
-                'permission_callback' => '__return_true', // ✅ anonymes OK
+                'permission_callback' => array(__CLASS__, 'can_view_public_solutions'), // ✅ anonymes OK
             ),
         ));
 
@@ -51,7 +51,7 @@ class ExercisesRoutes {
             array(
                 'methods'             => 'POST',
                 'callback'            => array(__CLASS__, 'reveal_hint'),
-                'permission_callback' => '__return_true', // ✅ anonymes OK
+                'permission_callback' => array(__CLASS__, 'can_view_public_hints'), // ✅ anonymes OK
             ),
         ));
 
@@ -69,6 +69,36 @@ class ExercisesRoutes {
     // ------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------
+    public static function can_view_public_exercises() {
+        if (is_user_logged_in()) {
+            return true;
+        }
+
+        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_exercises_enabled')
+            ? true
+            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les exercices.', array('status' => 401));
+    }
+
+    public static function can_view_public_hints() {
+        if (is_user_logged_in()) {
+            return true;
+        }
+
+        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_hints_enabled')
+            ? true
+            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les indices.', array('status' => 401));
+    }
+
+    public static function can_view_public_solutions() {
+        if (is_user_logged_in()) {
+            return true;
+        }
+
+        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_solutions_enabled')
+            ? true
+            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les solutions.', array('status' => 401));
+    }
+
     private static function sanitize_school_level($raw) {
         $raw = sanitize_key((string)$raw);
         return substr($raw, 0, 20);

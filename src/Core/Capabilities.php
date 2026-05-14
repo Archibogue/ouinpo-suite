@@ -17,6 +17,8 @@ final class Capabilities
     public const MANAGE_AI = 'ouinpo_manage_ai';
     public const VIEW_STUDENT_DATA = 'ouinpo_view_student_data';
     public const MANAGE_SUBMISSIONS = 'ouinpo_manage_submissions';
+    public const UPLOAD_SUBMISSION = 'ouinpo_upload_submission';
+    public const SUBMIT_WORK = 'ouinpo_submit_work';
 
     private static bool $initialized = false;
 
@@ -51,6 +53,15 @@ final class Capabilities
         ];
     }
 
+    public static function student(): array
+    {
+        return [
+            'read',
+            self::UPLOAD_SUBMISSION,
+            self::SUBMIT_WORK,
+        ];
+    }
+
     public static function labels(): array
     {
         return [
@@ -65,6 +76,8 @@ final class Capabilities
             self::MANAGE_AI => 'IA et parcours',
             self::VIEW_STUDENT_DATA => 'Consultation des données élèves',
             self::MANAGE_SUBMISSIONS => 'Dépôts élèves',
+            self::UPLOAD_SUBMISSION => 'Envoyer un fichier de depot OuInPo',
+            self::SUBMIT_WORK => 'Soumettre un travail OuInPo',
         ];
     }
 
@@ -109,8 +122,27 @@ final class Capabilities
             }
         }
 
-        if (!get_role('ouinpo_student')) {
-            add_role('ouinpo_student', 'Élève OuInPo', ['read' => true]);
+        $studentCaps = self::student();
+
+        $student = get_role('ouinpo_student');
+        if (!$student) {
+            add_role('ouinpo_student', 'Élève OuInPo', array_fill_keys($studentCaps, true));
+            $student = get_role('ouinpo_student');
+        }
+
+        if ($student) {
+            $student->remove_cap('upload_files');
+            foreach ($studentCaps as $capability) {
+                $student->add_cap($capability);
+            }
+        }
+
+        $legacyStudent = get_role('eleve');
+        if ($legacyStudent) {
+            $legacyStudent->remove_cap('upload_files');
+            foreach ($studentCaps as $capability) {
+                $legacyStudent->add_cap($capability);
+            }
         }
     }
 

@@ -11,6 +11,9 @@ if (!defined('ABSPATH')) exit;
 class Albert {
 
   static function enabled(): bool {
+    if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('chat_rag')) {
+      return false;
+    }
 
     /*
 
@@ -58,7 +61,8 @@ class Albert {
 
      */
 
-    return self::enabled()
+    return \Ouinpo\Suite\Core\AiSettings::public_enabled()
+      && self::enabled()
 
       && (int) get_option('ouinpo_sf_public_albert_enabled', 0) === 1;
 
@@ -84,7 +88,12 @@ class Albert {
 
   static function api_key(): string {
 
-    return trim((string) get_option('ouinpo_sf_albert_api_key', ''));
+    $key = trim((string) get_option('ouinpo_sf_albert_api_key', ''));
+    if ($key === '') {
+      $key = trim((string) get_option('ouinpo_ai_api_key', ''));
+    }
+
+    return $key;
 
   }
 
@@ -99,7 +108,10 @@ class Albert {
 
   static function base_url(): string {
 
-    $url = trim((string) get_option('ouinpo_sf_albert_base_url', 'https://albert.api.etalab.gouv.fr/v1'));
+    $url = trim((string) get_option('ouinpo_sf_albert_base_url', ''));
+    if ($url === '') {
+      $url = trim((string) get_option('ouinpo_ai_api_base_url', 'https://albert.api.etalab.gouv.fr/v1'));
+    }
 
     $url = rtrim($url, '/');
 
@@ -111,7 +123,10 @@ class Albert {
 
   static function chat_model(): string {
 
-    $m = trim((string) get_option('ouinpo_sf_albert_model', 'openai/gpt-oss-120b'));
+    $m = trim((string) get_option('ouinpo_sf_albert_model', ''));
+    if ($m === '') {
+      $m = trim((string) get_option('ouinpo_ai_chat_model', 'openai/gpt-oss-120b'));
+    }
 
     return $m !== '' ? $m : 'openai/gpt-oss-120b';
 
@@ -121,7 +136,10 @@ class Albert {
 
 static function code_model(): string {
 
-  $m = trim((string) get_option('ouinpo_sf_albert_code_model', 'openweight-code'));
+  $m = trim((string) get_option('ouinpo_sf_albert_code_model', ''));
+  if ($m === '') {
+    $m = trim((string) get_option('ouinpo_ai_code_model', 'openweight-code'));
+  }
 
 
 
@@ -141,7 +159,10 @@ static function code_model(): string {
 
     static function embedding_model(): string {
 
-      $m = trim((string) get_option('ouinpo_sf_albert_embedding_model', 'BAAI/bge-m3'));
+      $m = trim((string) get_option('ouinpo_sf_albert_embedding_model', ''));
+      if ($m === '') {
+        $m = trim((string) get_option('ouinpo_ai_embedding_model', 'BAAI/bge-m3'));
+      }
 
       return $m !== '' ? $m : 'BAAI/bge-m3';
 
@@ -165,7 +186,7 @@ static function embed(string $text): array {
 
   if ($api_key === '') {
 
-    error_log('[SegFault Albert embeddings] clé API Albert manquante');
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert embeddings API key missing', ['provider' => 'albert']);
 
     return [];
 
@@ -203,7 +224,7 @@ static function embed(string $text): array {
 
     'body'       => wp_json_encode($payload),
 
-    'timeout'    => 45,
+    'timeout'    => (int) get_option('ouinpo_ai_timeout', 45),
 
     'user-agent' => self::user_agent('RAG'),
 
@@ -213,7 +234,7 @@ static function embed(string $text): array {
 
   if (is_wp_error($resp)) {
 
-    error_log('[SegFault Albert embeddings] HTTP error: ' . $resp->get_error_message());
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert embeddings HTTP error', ['provider' => 'albert', 'error' => $resp->get_error_message()]);
 
     return [];
 
@@ -231,7 +252,7 @@ static function embed(string $text): array {
 
   if ($code < 200 || $code >= 300) {
 
-    error_log('[SegFault Albert embeddings] non-200 ('.$code.'): '.substr($raw, 0, 700));
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert embeddings non-200', ['provider' => 'albert', 'http_code' => $code]);
 
     return [];
 
@@ -243,7 +264,7 @@ static function embed(string $text): array {
 
   if (!is_array($emb) || !$emb) {
 
-    error_log('[SegFault Albert embeddings] réponse inattendue: '.substr($raw, 0, 700));
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert embeddings unexpected response', ['provider' => 'albert']);
 
     return [];
 
@@ -263,7 +284,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
   if ($api_key === '') {
 
-    error_log('[SegFault Albert rerank] clé API Albert manquante');
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert rerank API key missing', ['provider' => 'albert']);
 
     return $documents;
 
@@ -343,7 +364,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
     'body'       => wp_json_encode($payload),
 
-    'timeout'    => 45,
+    'timeout'    => (int) get_option('ouinpo_ai_timeout', 45),
 
     'user-agent' => self::user_agent('RAG'),
 
@@ -353,7 +374,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
   if (is_wp_error($resp)) {
 
-    error_log('[SegFault Albert rerank] HTTP error: ' . $resp->get_error_message());
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert rerank HTTP error', ['provider' => 'albert', 'error' => $resp->get_error_message()]);
 
     return $documents;
 
@@ -371,7 +392,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
   if ($code < 200 || $code >= 300) {
 
-    error_log('[SegFault Albert rerank] non-200 ('.$code.'): '.substr($raw, 0, 700));
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert rerank non-200', ['provider' => 'albert', 'http_code' => $code]);
 
     return $documents;
 
@@ -383,7 +404,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
   if (!is_array($results)) {
 
-    error_log('[SegFault Albert rerank] réponse inattendue: '.substr($raw, 0, 700));
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert rerank unexpected response', ['provider' => 'albert']);
 
     return $documents;
 
@@ -465,7 +486,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
 
 
-    $max_tokens = 700;
+    $max_tokens = (int) get_option('ouinpo_ai_max_tokens', 700);
 
     if (array_key_exists('max_completion_tokens', $options)) {
 
@@ -533,7 +554,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
       'messages' => $messages,
 
-      'temperature' => array_key_exists('temperature', $options) ? (float) $options['temperature'] : 0.3,
+      'temperature' => array_key_exists('temperature', $options) ? (float) $options['temperature'] : (float) get_option('ouinpo_ai_temperature', 0.3),
 
       'max_completion_tokens' => $max_tokens,
 
@@ -544,6 +565,8 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
     if (array_key_exists('top_p', $options)) {
 
       $payload['top_p'] = (float) $options['top_p'];
+    } else {
+      $payload['top_p'] = (float) get_option('ouinpo_ai_top_p', 1.0);
 
     }
 
@@ -577,7 +600,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
         'body'       => wp_json_encode($payload),
 
-        'timeout'    => 45,
+        'timeout'    => (int) get_option('ouinpo_ai_timeout', 45),
 
         'user-agent' => self::user_agent('Public'),
 
@@ -605,7 +628,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
       if ($code === 429 || $code === 503 || ($code >= 500 && $code < 600)) {
 
-        error_log('[SegFault Albert] retry code '.$code.': '.substr($raw, 0, 400));
+        \Ouinpo\Suite\Core\AiSettings::debug_log('Albert retry', ['provider' => 'albert', 'http_code' => $code]);
 
         if ($attempts < 2) { usleep(500000); continue; }
 
@@ -615,7 +638,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
       if ($code !== 200) {
 
-        error_log('[SegFault Albert] non-200 ('.$code.'): '.substr($raw, 0, 700));
+        \Ouinpo\Suite\Core\AiSettings::debug_log('Albert non-200', ['provider' => 'albert', 'http_code' => $code]);
 
         return "SegFault public est momentanément indisponible.";
 
@@ -631,7 +654,7 @@ static function rerank(string $query, array $documents, int $top_n = 6): array {
 
 
 
-      error_log('[SegFault Albert] parse fail: '.substr($raw, 0, 800));
+      \Ouinpo\Suite\Core\AiSettings::debug_log('Albert parse fail', ['provider' => 'albert']);
 
       return "SegFault public a reçu une réponse vide.";
 

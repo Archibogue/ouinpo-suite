@@ -658,6 +658,8 @@ return $out;
 
 function ouinpo_sf_sources_to_answer_html(array $sources): string {
 
+  if ((int) get_option('ouinpo_ai_show_rag_sources', 1) !== 1) return '';
+
   if (empty($sources)) return '';
 
 
@@ -1630,7 +1632,7 @@ if (!function_exists('ouinpo_sf_ai_notice_url')) {
   function ouinpo_sf_ai_notice_url(): string {
     $raw = trim((string) get_option(
       'ouinpo_sf_ai_notice_url',
-      '/donnees-personnelles-ia-et-usages-pedagogiques-sur-ouinpo/'
+      ''
     ));
 
     if ($raw === '') {
@@ -1795,7 +1797,12 @@ function ouinpo_sf_public_sanitize_message($value): string {
 
 function ouinpo_sf_public_system_prompt(): string {
 
-  return "Tu es SegFault, l’assistant public du site OuInPo.\n"
+  $configured = trim((string) get_option('ouinpo_ai_persona_public', ''));
+  if ($configured !== '') {
+    return $configured;
+  }
+
+return "Tu es SegFault, l’assistant public du site OuInPo.\n"
 
     . "Tu aides à comprendre les notions de SNT et de NSI pour des élèves de lycée.\n"
 
@@ -2875,11 +2882,11 @@ add_action('rest_api_init', function () {
 
           // Même nom d’option accepté que l’IA habituelle ; Albert convertit en max_completion_tokens.
 
-          'temperature' => 0.3,
+          'temperature' => (float) get_option('ouinpo_ai_temperature', 0.3),
 
-          'top_p'       => 1.0,
+          'top_p'       => (float) get_option('ouinpo_ai_top_p', 1.0),
 
-          'max_tokens'  => 700,
+          'max_tokens'  => (int) get_option('ouinpo_ai_max_tokens', 700),
 
         ]);
 
@@ -2941,7 +2948,7 @@ add_action('rest_api_init', function () {
 
       } catch (\Throwable $e) {
 
-        error_log('[SegFault Public Albert] REST error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
+        \Ouinpo\Suite\Core\AiSettings::debug_log('SegFault public REST error', ['usage' => 'chat_rag', 'error' => $e->getMessage()]);
 
         return new \WP_REST_Response([
 
@@ -3627,7 +3634,7 @@ $messages = [
 
         } catch (\Throwable $e) {
 
-          error_log('[SegFault Chat] REST error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
+          \Ouinpo\Suite\Core\AiSettings::debug_log('SegFault chat REST error', ['usage' => 'chat_rag', 'error' => $e->getMessage()]);
 
           return new \WP_REST_Response([
 
@@ -3707,7 +3714,7 @@ $messages = [
 
       } catch (\Throwable $e) {
 
-        error_log('[SegFault Memory Clear] REST error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
+        \Ouinpo\Suite\Core\AiSettings::debug_log('SegFault memory clear REST error', ['usage' => 'memory_clear', 'error' => $e->getMessage()]);
 
         return new \WP_REST_Response([
 
