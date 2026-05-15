@@ -249,16 +249,7 @@ private static function ensureGateSignatureUniqueIndex(string $table): void
         return;
     }
 
-    $indexExists = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*)
-        FROM information_schema.statistics
-        WHERE table_schema = DATABASE()
-            AND table_name = %s
-            AND index_name = 'user_page'",
-        $table
-    ));
-
-    if ((int) $indexExists > 0) {
+    if (self::gateSignatureIndexIsValid($table)) {
         return;
     }
 
@@ -276,10 +267,44 @@ private static function ensureGateSignatureUniqueIndex(string $table): void
            AND s1.id < s2.id"
     );
 
+    if (!empty($wpdb->last_error)) {
+        error_log('[ouinpo suite] Gate signatures deduplication failed: ' . $wpdb->last_error);
+        return;
+    }
+
+    $existingUserPage = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'user_page'");
+    if (!empty($existingUserPage)) {
+        $wpdb->query("ALTER TABLE {$table} DROP INDEX user_page");
+        if (!empty($wpdb->last_error)) {
+            error_log('[ouinpo suite] Gate signatures user_page index drop failed: ' . $wpdb->last_error);
+            return;
+        }
+    }
+
     $wpdb->query("ALTER TABLE {$table} ADD UNIQUE KEY user_page (user_id, page_slug)");
 
     if (!empty($wpdb->last_error)) {
         error_log('[ouinpo suite] Gate signatures unique index failed: ' . $wpdb->last_error);
     }
+}
+
+private static function gateSignatureIndexIsValid(string $table): bool
+{
+    global $wpdb;
+
+    $rows = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'user_page'");
+    if (empty($rows)) {
+        return false;
+    }
+
+    usort($rows, static function ($a, $b): int {
+        return (int) $a->Seq_in_index <=> (int) $b->Seq_in_index;
+    });
+
+    $columns = array_map(static fn($row): string => (string) $row->Column_name, $rows);
+    $nonUniqueValues = array_map(static fn($row): int => (int) $row->Non_unique, $rows);
+
+    return $columns === ['user_id', 'page_slug']
+        && count(array_filter($nonUniqueValues)) === 0;
 }
 }

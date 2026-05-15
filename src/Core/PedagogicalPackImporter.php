@@ -26,7 +26,12 @@ final class PedagogicalPackImporter
             return [
                 'ok' => false,
                 'message' => 'Fichier illisible.',
-                'details' => [],
+                'details' => [
+                    'import_status' => 'failed',
+                    'rollback_performed' => 0,
+                    'errors' => ['Fichier illisible.'],
+                    'warnings' => [],
+                ],
             ];
         }
 
@@ -36,7 +41,12 @@ final class PedagogicalPackImporter
             return [
                 'ok' => false,
                 'message' => 'Fichier vide ou impossible à lire.',
-                'details' => [],
+                'details' => [
+                    'import_status' => 'failed',
+                    'rollback_performed' => 0,
+                    'errors' => ['Fichier vide ou impossible à lire.'],
+                    'warnings' => [],
+                ],
             ];
         }
 
@@ -46,7 +56,12 @@ final class PedagogicalPackImporter
             return [
                 'ok' => false,
                 'message' => 'JSON invalide : ' . json_last_error_msg(),
-                'details' => [],
+                'details' => [
+                    'import_status' => 'failed',
+                    'rollback_performed' => 0,
+                    'errors' => ['JSON invalide : ' . json_last_error_msg()],
+                    'warnings' => [],
+                ],
             ];
         }
 
@@ -84,12 +99,16 @@ final class PedagogicalPackImporter
             'flashcard_competency_links' => 0,
             'transaction_started' => 0,
             'rollback_performed' => 0,
+            'import_status' => 'pending',
             'warnings' => [],
+            'errors' => [],
         ];
 
         $schemaVersion = (string)($data['schema_version'] ?? '');
 
         if ($schemaVersion !== '1.0') {
+            $details['import_status'] = 'failed';
+            $details['errors'][] = 'Version de schéma non supportée.';
             return [
                 'ok' => false,
                 'message' => 'Version de schéma non supportée : ' . ($schemaVersion !== '' ? $schemaVersion : 'absente'),
@@ -98,6 +117,8 @@ final class PedagogicalPackImporter
         }
 
         if (!isset($data['pack']) || !is_array($data['pack'])) {
+            $details['import_status'] = 'failed';
+            $details['errors'][] = 'Métadonnées du pack absentes.';
             return [
                 'ok' => false,
                 'message' => 'Métadonnées du pack absentes.',
@@ -120,6 +141,8 @@ final class PedagogicalPackImporter
             }
 
             if (!is_array($data[$key])) {
+                $details['import_status'] = 'failed';
+                $details['errors'][] = "Le champ {$key} doit être un tableau.";
                 return [
                     'ok' => false,
                     'message' => "Le champ {$key} doit être un tableau.",
@@ -140,13 +163,23 @@ final class PedagogicalPackImporter
             self::importExercises($p, $data['exercises'], $details);
             self::importFlashcards($data['flashcards'], $details);
 
+            $blockingWarnings = self::blockingWarnings($details['warnings']);
+            if (!empty($blockingWarnings)) {
+                $details['errors'] = array_values(array_unique(array_merge($details['errors'], $blockingWarnings)));
+                throw new \RuntimeException('Import interrompu par erreurs bloquantes.');
+            }
+
             if ($transaction) {
                 $wpdb->query('COMMIT');
             }
 
+            $details['import_status'] = !empty($details['warnings']) ? 'partial' : 'success';
+
             return [
                 'ok' => true,
-                'message' => 'Pack importé.',
+                'message' => $details['import_status'] === 'partial'
+                    ? 'Pack importé avec avertissements.'
+                    : 'Pack importé.',
                 'details' => $details,
             ];
         } catch (\Throwable $e) {
@@ -155,7 +188,8 @@ final class PedagogicalPackImporter
                 $details['rollback_performed'] = 1;
             }
 
-            $details['warnings'][] = 'Import interrompu : ' . $e->getMessage();
+            $details['import_status'] = 'failed';
+            $details['errors'][] = 'Import interrompu : ' . $e->getMessage();
 
             return [
                 'ok' => false,
@@ -177,6 +211,31 @@ final class PedagogicalPackImporter
 
         $details['transaction_started'] = 1;
         return true;
+    }
+
+    private static function blockingWarnings(array $warnings): array
+    {
+        $blocking = [];
+
+        foreach ($warnings as $warning) {
+            $message = (string) $warning;
+            $normalized = function_exists('remove_accents')
+                ? strtolower(remove_accents($message))
+                : strtolower($message);
+
+            if (str_contains($normalized, 'transaction sql indisponible')) {
+                continue;
+            }
+
+            foreach (['inconnu', 'inconnue', 'impossible', 'sql', 'identifiant apres import'] as $needle) {
+                if (str_contains($normalized, $needle)) {
+                    $blocking[] = $message;
+                    break;
+                }
+            }
+        }
+
+        return $blocking;
     }
 
     private static function importSchoolLevels(string $p, array $rows, array &$details): void
@@ -206,7 +265,7 @@ final class PedagogicalPackImporter
             ));
 
             if ($existingId) {
-                $wpdb->update(
+                $updated = $wpdb->update(
                     $table,
                     [
                         'label' => $label,
@@ -217,9 +276,13 @@ final class PedagogicalPackImporter
                     ['%s']
                 );
 
-                $details['school_levels_updated']++;
+                if ($updated === false) {
+                    $details['warnings'][] = 'Niveau ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
+                } else {
+                    $details['school_levels_updated']++;
+                }
             } else {
-                $wpdb->insert(
+                $inserted = $wpdb->insert(
                     $table,
                     [
                         'slug' => $slug,
@@ -229,7 +292,11 @@ final class PedagogicalPackImporter
                     ['%s', '%s', '%d']
                 );
 
-                $details['school_levels_inserted']++;
+                if ($inserted === false) {
+                    $details['warnings'][] = 'Niveau ' . $slug . ' : création impossible — ' . $wpdb->last_error;
+                } else {
+                    $details['school_levels_inserted']++;
+                }
             }
         }
     }
@@ -384,7 +451,7 @@ final class PedagogicalPackImporter
             ));
 
             if ($existingId) {
-                $wpdb->update(
+                $updated = $wpdb->update(
                     $table,
                     ['label' => $label],
                     ['slug' => $slug],
@@ -392,9 +459,13 @@ final class PedagogicalPackImporter
                     ['%s']
                 );
 
-                $details['difficulties_updated']++;
+                if ($updated === false) {
+                    $details['warnings'][] = 'Difficulté ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
+                } else {
+                    $details['difficulties_updated']++;
+                }
             } else {
-                $wpdb->insert(
+                $inserted = $wpdb->insert(
                     $table,
                     [
                         'slug' => $slug,
@@ -403,7 +474,11 @@ final class PedagogicalPackImporter
                     ['%s', '%s']
                 );
 
-                $details['difficulties_inserted']++;
+                if ($inserted === false) {
+                    $details['warnings'][] = 'Difficulté ' . $slug . ' : création impossible — ' . $wpdb->last_error;
+                } else {
+                    $details['difficulties_inserted']++;
+                }
             }
         }
     }
@@ -673,7 +748,7 @@ final class PedagogicalPackImporter
         if ($existingId) {
             $exerciseId = (int)$existingId;
 
-            $wpdb->update(
+            $updated = $wpdb->update(
                 $tExercises,
                 $payload,
                 ['id' => $exerciseId],
@@ -681,18 +756,27 @@ final class PedagogicalPackImporter
                 ['%d']
             );
 
-            $details['exercises_updated']++;
+            if ($updated === false) {
+                $details['warnings'][] = "Exercice {$slug} : mise à jour impossible — " . $wpdb->last_error;
+            } else {
+                $details['exercises_updated']++;
+            }
         } else {
             $payload['created_at'] = current_time('mysql');
 
-            $wpdb->insert(
+            $inserted = $wpdb->insert(
                 $tExercises,
                 $payload,
                 array_merge($formats, ['%s'])
             );
 
-            $exerciseId = (int)$wpdb->insert_id;
-            $details['exercises_inserted']++;
+            if ($inserted === false) {
+                $details['warnings'][] = "Exercice {$slug} : création impossible — " . $wpdb->last_error;
+                $exerciseId = 0;
+            } else {
+                $exerciseId = (int)$wpdb->insert_id;
+                $details['exercises_inserted']++;
+            }
         }
 
         if ($exerciseId <= 0) {

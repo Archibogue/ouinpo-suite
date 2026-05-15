@@ -62,7 +62,7 @@ final class PagesSetup
                                         type="checkbox"
                                         name="pages[]"
                                         value="<?php echo esc_attr($key); ?>"
-                                        <?php checked($status !== 'ok'); ?>
+                                        <?php checked(self::shouldRepair($status)); ?>
                                     >
                                 </td>
                                 <td>
@@ -90,6 +90,15 @@ final class PagesSetup
                                     <?php if ($existing): ?>
                                         <?php if ($status === 'ok'): ?>
                                             <span class="ouinpo-suite-status ouinpo-suite-status--success">Correcte</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php elseif ($status === 'content_custom'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Contenu personnalisé à vérifier</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php elseif ($status === 'content_empty'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Contenu vide</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php elseif ($status === 'content_short'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Contenu trop court</span>
                                             <span class="ouinpo-suite-muted"> - </span>
                                         <?php else: ?>
                                             <span class="ouinpo-suite-status ouinpo-suite-status--warning">Shortcode manquant</span>
@@ -158,6 +167,12 @@ final class PagesSetup
                 if (!empty($page['shortcode']) && !self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])) {
                     $update['post_content'] = self::appendShortcode((string) $existing->post_content, (string) $page['shortcode']);
                     $repaired++;
+                } elseif (empty($page['shortcode'])) {
+                    $status = self::pageStatus($page, $existing);
+                    if ($status === 'content_empty' || $status === 'content_short') {
+                        $update['post_content'] = (string) $page['content'];
+                        $repaired++;
+                    }
                 }
 
                 $result = wp_update_post($update, true);
@@ -186,7 +201,7 @@ final class PagesSetup
             add_settings_error(
                 'ouinpo_suite_pages',
                 'pages_saved',
-                sprintf('%d page(s) creee(s), %d page(s) mise(s) a jour, %d shortcode(s) ajoute(s).', $created, $updated, $repaired),
+                sprintf('%d page(s) creee(s), %d page(s) mise(s) a jour, %d contenu(s) repare(s).', $created, $updated, $repaired),
                 'updated'
             );
         } else {
@@ -322,7 +337,8 @@ final class PagesSetup
 
     private static function privacyAiPageContent(): string
     {
-        return "<h2>Donnees personnelles, IA et usages pedagogiques</h2>\n\n"
+        return "<!-- ouinpo-privacy-ai-template -->\n"
+            . "<h2>Donnees personnelles, IA et usages pedagogiques</h2>\n\n"
             . "<p>Cette page est un modele a adapter par l'etablissement. Elle explique les usages pedagogiques du site et ne suffit pas, a elle seule, a garantir une conformite juridique complete.</p>\n\n"
             . "<h3>Donnees possibles</h3>\n"
             . "<p>Selon les modules actives, le site peut stocker des progressions d'exercices, competences, badges, revisions de flashcards, devoirs, soumissions, progression Gate, signatures Gate, dates, messages et traces techniques limitees.</p>\n\n"
@@ -339,12 +355,36 @@ final class PagesSetup
         }
 
         if (empty($page['shortcode'])) {
-            return 'ok';
+            return self::staticPageStatus((string) $existing->post_content);
         }
 
         return self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])
             ? 'ok'
             : 'shortcode_missing';
+    }
+
+    private static function staticPageStatus(string $content): string
+    {
+        $text = trim(wp_strip_all_tags($content));
+
+        if ($text === '') {
+            return 'content_empty';
+        }
+
+        if (str_contains($content, 'ouinpo-privacy-ai-template')) {
+            return 'ok';
+        }
+
+        if (strlen($text) < 220) {
+            return 'content_short';
+        }
+
+        return 'content_custom';
+    }
+
+    private static function shouldRepair(string $status): bool
+    {
+        return in_array($status, ['missing', 'shortcode_missing', 'content_empty', 'content_short'], true);
     }
 
     private static function containsShortcode(string $content, string $shortcode): bool

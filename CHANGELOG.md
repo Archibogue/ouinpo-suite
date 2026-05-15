@@ -2,6 +2,33 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.5.1-beta] - 2026-05-15
+
+Version bêta technique destinée à des tests contrôlés avant diffusion large.
+
+### Ajouté
+
+- Écran de première configuration.
+- Modèle de page « Données personnelles, IA et usages pédagogiques ».
+- Documentation dédiée aux rôles et droits.
+- Pack NSI complet de démonstration.
+- Script `scripts/test-dist.ps1`.
+
+### Modifié
+
+- Documentation README complétée pour la bêta technique destinée à des tests contrôlés.
+- Niveaux Gate rendus dynamiques avec fallback compatible.
+- Import pédagogique renforcé avec statuts `success`, `partial` et `failed`.
+- Schéma JSON des packs pédagogiques complété.
+
+### Corrigé
+
+- Signature Gate sécurisée côté serveur.
+- Badge Gate rendu configurable.
+- Suppression des anciens éléments codés en dur du Gate.
+- Ajout ou renforcement de l’unicité des signatures Gate.
+- Détection plus prudente de la page statique « Données personnelles, IA et usages pédagogiques ».
+
 ## [0.5.0] - 2026-05-14
 
 ### Securite et distribution

@@ -482,7 +482,7 @@ final class SuiteAdmin
                 <h2 class="ouinpo-suite-card-title">Checklist</h2>
                 <ul class="ouinpo-suite-disc-list">
                     <li>Creer ou reparer les pages publiques necessaires.</li>
-                    <li>Importer le pack <code>demo-basic-nsi.json</code> sur une installation de test.</li>
+                    <li>Importer le pack <code>ouinpo-pack-nsi-complet.json</code> sur une installation de test.</li>
                     <li>Verifier que l'IA reste desactivee tant qu'aucun fournisseur n'est configure.</li>
                     <li>Controler les roles enseignant et eleve avant de creer les comptes.</li>
                     <li>Lancer le diagnostic final avant partage.</li>
@@ -492,7 +492,7 @@ final class SuiteAdmin
         <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
             <?php
             self::quickAction('Pages & shortcodes', 'Creer les pages manquantes ou ajouter les shortcodes attendus.', admin_url('admin.php?page=ouinpo-suite-settings&tab=pages'));
-            self::quickAction('Import pedagogique', 'Importer le pack demo-basic-nsi.json ou un pack de competences.', admin_url('admin.php?page=ouinpo-suite-settings&tab=import'));
+            self::quickAction('Import pedagogique', 'Importer le pack ouinpo-pack-nsi-complet.json ou un pack de competences.', admin_url('admin.php?page=ouinpo-suite-settings&tab=import'));
             self::quickAction('Reglages IA', 'Verifier que l IA est desactivee ou configurer explicitement Albert/OpenAI.', admin_url('admin.php?page=ouinpo-suite-settings&tab=ai'));
             self::quickAction('Roles et droits', 'Verifier les capacites attribuees aux enseignants et aux eleves.', admin_url('admin.php?page=ouinpo-suite-settings&tab=rights'));
             self::quickAction('Diagnostic', 'Verifier les tables, options sensibles et donnees a ne pas exporter.', admin_url('admin.php?page=ouinpo-suite-settings&tab=diagnostic'));
@@ -3243,6 +3243,11 @@ final class SuiteAdmin
                                     <strong>Avertissements :</strong>
                                     <?php echo esc_html((string) count($value)); ?>
                                 </li>
+                            <?php elseif ($key === 'errors' && is_array($value)): ?>
+                                <li>
+                                    <strong>Erreurs :</strong>
+                                    <?php echo esc_html((string) count($value)); ?>
+                                </li>
                             <?php elseif (!is_array($value)): ?>
                                 <li>
                                     <?php echo esc_html((string) $key); ?> :
@@ -3258,6 +3263,16 @@ final class SuiteAdmin
                             <ul class="ouinpo-suite-disc-list">
                                 <?php foreach ($result['details']['warnings'] as $warning): ?>
                                     <li><?php echo esc_html((string) $warning); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </details>
+                    <?php endif; ?>
+                    <?php if (!empty($result['details']['errors']) && is_array($result['details']['errors'])): ?>
+                        <details open>
+                            <summary>Voir les erreurs bloquantes</summary>
+                            <ul class="ouinpo-suite-disc-list">
+                                <?php foreach ($result['details']['errors'] as $error): ?>
+                                    <li><?php echo esc_html((string) $error); ?></li>
                                 <?php endforeach; ?>
                             </ul>
                         </details>

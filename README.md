@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.5.1-beta : beta technique pour test controle. Le plugin est partageable pour evaluation, installation pilote ou usage encadre, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
+Version 0.5.1-beta : bêta technique destinée à des tests contrôlés avant diffusion large. Le plugin est partageable pour evaluation, installation pilote ou usage encadre, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
 
@@ -52,6 +52,12 @@ Le depot GitHub de developpement peut contenir des outils de maintenance, par ex
 Le zip installable WordPress doit contenir le dossier du plugin, son code, ses assets, sa documentation publique et les packs pedagogiques prevus. Il ne doit pas contenir le dossier `dist/`, d'anciennes archives, de dumps SQL, d'exports WordPress personnels, de secrets ou de fichiers locaux.
 
 Le zip de distribution est l'archive partagee aux enseignants. Il peut etre produit depuis le depot de developpement, mais il doit rester directement installable dans WordPress comme une extension classique.
+
+Avant partage, le script PowerShell `scripts/test-dist.ps1` peut verifier rapidement l'archive presente dans `dist/` :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-dist.ps1
+```
 
 ## Test sur WordPress vierge
 
@@ -116,19 +122,25 @@ Un pack peut déclarer ses propres niveaux dans `school_levels`, avec un `slug`,
 
 Un pack peut aussi déclarer ses domaines dans `domains`, avec `slug`, `label`, `track`, `description`, `sort_order` et `active`. Si un pack ancien ne déclare pas `domains`, l'import crée ou met à jour le domaine à partir des champs de compatibilité de chaque compétence.
 
-Pour une installation de démonstration, importer par exemple :
+Pour une installation de démonstration, importer le pack NSI complet :
 
 ```text
-packs/demo-basic-nsi.json
+packs/ouinpo-pack-nsi-complet.json
 ```
 
-Ce pack de demonstration contient quelques niveaux, competences, exercices, indices, solutions, flashcards et un sujet pratique simple. Il utilise des slugs `demo-*` stables pour limiter les doublons : un nouvel import met a jour les contenus portant les memes slugs lorsque l'importeur le permet.
+Ce pack contient quatre niveaux, trois difficultes, dix domaines, vingt-et-une competences, dix-sept exercices dont deux sujets pratiques, ainsi que vingt flashcards. Il utilise des slugs stables pour limiter les doublons : un nouvel import met a jour les contenus portant les memes slugs lorsque l'importeur le permet.
 
-Pour tester les niveaux personnalisés, importer :
+### Tester rapidement avec le pack NSI complet
 
-```text
-packs/ouinpo-pack-demo-niveaux-dynamiques.json
-```
+1. Installer le plugin depuis le zip.
+2. Activer l'extension.
+3. Ouvrir **OuInPo Suite > Premiere configuration**.
+4. Creer ou reparer les pages publiques.
+5. Importer `packs/ouinpo-pack-nsi-complet.json`.
+6. Creer un utilisateur enseignant et un utilisateur eleve.
+7. Tester un exercice public puis une soumission.
+8. Tester une flashcard.
+9. Tester un sujet pratique.
 
 Après import, vérifier dans l’administration que les exercices, sujets pratiques et flashcards apparaissent bien.
 
