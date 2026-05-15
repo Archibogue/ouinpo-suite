@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.6';
+    const DB_VERSION = '2.6.7';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -908,6 +908,7 @@ class InstallV2 {
         self::migrate_competency_level_column();
         self::migrate_domains();
         self::migrate_competency_school_levels();
+        self::ensure_assessment_item_edit_columns();
 
         self::seed_year_if_missing();
 
@@ -993,6 +994,33 @@ class InstallV2 {
             );
 
             $position += 10;
+        }
+    }
+
+    public static function ensure_assessment_item_edit_columns(): void {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_assessment_items';
+
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $columns = $wpdb->get_col($wpdb->prepare(
+            "SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s",
+            DB_NAME,
+            $table
+        )) ?: [];
+
+        if (!in_array('sort_order', $columns, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER exercise_id");
+        }
+
+        if (!in_array('points', $columns, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN points DECIMAL(5,2) NULL AFTER sort_order");
         }
     }
 

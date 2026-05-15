@@ -55,13 +55,14 @@ final class PagesSetup
                     <tbody>
                         <?php foreach ($pages as $key => $page): ?>
                             <?php $existing = self::findPage((string) $page['slug']); ?>
+                            <?php $status = self::pageStatus($page, $existing); ?>
                             <tr>
                                 <td>
                                     <input
                                         type="checkbox"
                                         name="pages[]"
                                         value="<?php echo esc_attr($key); ?>"
-                                        <?php checked(!$existing); ?>
+                                        <?php checked($status !== 'ok'); ?>
                                     >
                                 </td>
                                 <td>
@@ -81,6 +82,13 @@ final class PagesSetup
                                 <td><code><?php echo esc_html((string) $page['shortcode']); ?></code></td>
                                 <td>
                                     <?php if ($existing): ?>
+                                        <?php if ($status === 'ok'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--success">Correcte</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php else: ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Shortcode manquant</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php endif; ?>
                                         <a href="<?php echo esc_url(get_edit_post_link($existing->ID)); ?>">Modifier</a>
                                         <span class="ouinpo-suite-muted"> · </span>
                                         <a href="<?php echo esc_url(get_permalink($existing)); ?>">Voir</a>
@@ -118,6 +126,7 @@ final class PagesSetup
         $pages = self::pages();
         $created = 0;
         $updated = 0;
+        $repaired = 0;
 
         foreach ($selected as $key) {
             if (!isset($pages[$key])) {
@@ -135,10 +144,17 @@ final class PagesSetup
             $content = (string) $page['shortcode'];
 
             if ($existing) {
-                $result = wp_update_post([
+                $update = [
                     'ID' => $existing->ID,
                     'post_title' => $title,
-                ], true);
+                ];
+
+                if (!self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])) {
+                    $update['post_content'] = self::appendShortcode((string) $existing->post_content, (string) $page['shortcode']);
+                    $repaired++;
+                }
+
+                $result = wp_update_post($update, true);
 
                 if (!is_wp_error($result)) {
                     $updated++;
@@ -164,7 +180,7 @@ final class PagesSetup
             add_settings_error(
                 'ouinpo_suite_pages',
                 'pages_saved',
-                sprintf('%d page(s) créée(s), %d page(s) renommée(s).', $created, $updated),
+                sprintf('%d page(s) creee(s), %d page(s) mise(s) a jour, %d shortcode(s) ajoute(s).', $created, $updated, $repaired),
                 'updated'
             );
         } else {
@@ -290,5 +306,39 @@ final class PagesSetup
         $page = get_page_by_path($slug);
 
         return $page instanceof \WP_Post ? $page : null;
+    }
+
+    private static function pageStatus(array $page, ?\WP_Post $existing): string
+    {
+        if (!$existing) {
+            return 'missing';
+        }
+
+        return self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])
+            ? 'ok'
+            : 'shortcode_missing';
+    }
+
+    private static function containsShortcode(string $content, string $shortcode): bool
+    {
+        $tag = self::shortcodeTag($shortcode);
+
+        return $tag !== '' && has_shortcode($content, $tag);
+    }
+
+    private static function shortcodeTag(string $shortcode): string
+    {
+        if (preg_match('/^\[([A-Za-z0-9_-]+)/', trim($shortcode), $matches)) {
+            return (string) $matches[1];
+        }
+
+        return '';
+    }
+
+    private static function appendShortcode(string $content, string $shortcode): string
+    {
+        $content = rtrim($content);
+
+        return $content === '' ? $shortcode : $content . "\n\n" . $shortcode;
     }
 }

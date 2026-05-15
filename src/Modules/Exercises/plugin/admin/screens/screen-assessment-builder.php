@@ -19,7 +19,6 @@ class Screen_Assessment_Builder {
 
         self::load_dependencies();
         self::enqueue_script();
-        self::ensure_assessment_item_columns();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             self::handle_post();
@@ -1277,25 +1276,8 @@ class Screen_Assessment_Builder {
     }
 
     private static function ensure_assessment_item_columns(): void {
-        global $wpdb;
-
-        $table = self::table('assessment_items');
-
-        $columns = $wpdb->get_col($wpdb->prepare(
-            "SELECT COLUMN_NAME
-             FROM INFORMATION_SCHEMA.COLUMNS
-             WHERE TABLE_SCHEMA = %s
-               AND TABLE_NAME = %s",
-            DB_NAME,
-            $table
-        )) ?: [];
-
-        if (!in_array('sort_order', $columns, true)) {
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER exercise_id");
-        }
-
-        if (!in_array('points', $columns, true)) {
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN points DECIMAL(5,2) NULL AFTER sort_order");
+        if (class_exists(\Ouinpo\Exercises\InstallV2::class)) {
+            \Ouinpo\Exercises\InstallV2::maybe_upgrade();
         }
     }
 }

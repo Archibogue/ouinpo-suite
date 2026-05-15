@@ -6,7 +6,17 @@ if (!defined('ABSPATH')) {
 }
 
 /* ================= Helpers ================= */
-function ouinpo_gate_salt(){ return 'ouinpo_salt_2025_change_me'; } // ⚠️ à personnaliser
+function ouinpo_gate_salt(){
+  if (defined('OUINPO_GATE_SALT') && OUINPO_GATE_SALT !== '') {
+    return (string)OUINPO_GATE_SALT;
+  }
+  $salt = (string)get_option('ouinpo_gate_salt', '');
+  if ($salt === '') {
+    $salt = wp_generate_password(64, true, true);
+    add_option('ouinpo_gate_salt', $salt, '', false);
+  }
+  return $salt;
+}
 
 function ouinpo_norm($s){
   $s = trim((string)$s);
@@ -113,7 +123,7 @@ function ouinpo_enigmes(){
     [ 'theme'=>'SQL - jointure', 'prompt'=>"Mot-clé pour combiner plusieurs tables ?", 'canon'=>"join", 'note'=>38 ],
     [ 'theme'=>'Complexité', 'prompt'=>"Quel est le nom de l'algorithme qui permet de trouver le plus court chemin entre un noeud de départ et tous les autres noeuds ?", 'canon'=>"Dijkstra", 'note'=>39 ],
     [ 'theme'=>'Réseaux', 'prompt'=>"Protocole d’envoi de mail ?", 'canon'=>"smtp", 'note'=>40 ],
-    [ 'theme'=>'POO - héritage', 'prompt'=>"Mot-clé Python pour hériter d’une classe ?", 'canon'=>"super", 'note'=>41 ],
+    [ 'theme'=>'POO - heritage', 'prompt'=>"Fonction utilisee pour appeler une methode de la classe parente ?", 'canon'=>"super", 'note'=>41 ],
     [ 'theme'=>'OuInPo', 'prompt'=>"Quel laboratoire virtuel se consacre à la Poétique du Code et à la Science de l'Inutile ?", 'canon'=>"ouinpo", 'note'=>42 ],
   ];
 }
@@ -163,6 +173,7 @@ function ouinpo_gate_default_settings(): array {
     'global_cooldown' => 10,
     'global_max_attempts' => 0,
     'fallback_exact_enabled' => 1,
+    'completion_badge_id' => 0,
     'ai_unavailable_message' => "La validation automatique est indisponible pour le moment. Reessaie plus tard.",
     'system_prompt' => ouinpo_gate_default_ai_prompt(),
     'debug_logs' => 0,
@@ -239,6 +250,7 @@ function ouinpo_gate_sanitize_settings(array $raw): array {
     'global_cooldown' => max(0, min(3600, (int)($raw['global_cooldown'] ?? 10))),
     'global_max_attempts' => max(0, min(100, (int)($raw['global_max_attempts'] ?? 0))),
     'fallback_exact_enabled' => ouinpo_gate_sanitize_bool($raw['fallback_exact_enabled'] ?? 0),
+    'completion_badge_id' => max(0, (int)($raw['completion_badge_id'] ?? 0)),
     'ai_unavailable_message' => sanitize_text_field((string)($raw['ai_unavailable_message'] ?? $defaults['ai_unavailable_message'])),
     'system_prompt' => ouinpo_gate_sanitize_long_text($raw['system_prompt'] ?? $defaults['system_prompt']),
     'debug_logs' => ouinpo_gate_sanitize_bool($raw['debug_logs'] ?? 0),
@@ -306,9 +318,12 @@ function ouinpo_gate_sanitize_questions($raw): array {
 }
 
 function ouinpo_gate_ensure_config(): void {
+  ouinpo_gate_salt();
   // Migration douce : on initialise depuis l'ancien corpus uniquement si aucune configuration Gate n'existe.
   if (get_option('ouinpo_gate_questions', null) === null) {
     add_option('ouinpo_gate_questions', ouinpo_gate_default_questions(), '', false);
+  } else {
+    ouinpo_gate_migrate_default_questions();
   }
   if (get_option('ouinpo_gate_settings', null) === null) {
     add_option('ouinpo_gate_settings', ouinpo_gate_default_settings(), '', false);
@@ -318,6 +333,33 @@ function ouinpo_gate_ensure_config(): void {
   }
 }
 add_action('init', 'ouinpo_gate_ensure_config', 5);
+
+function ouinpo_gate_migrate_default_questions(): void {
+  $questions = get_option('ouinpo_gate_questions', []);
+  if (!is_array($questions)) {
+    return;
+  }
+
+  $changed = false;
+  foreach ($questions as &$question) {
+    if (!is_array($question)) {
+      continue;
+    }
+    $id = (string)($question['id'] ?? '');
+    $expected = ouinpo_gate_answer_norm((string)($question['expected_answer'] ?? ''));
+    $prompt = (string)($question['prompt'] ?? '');
+    if ($id === 'gate-041' && $expected === 'super' && stripos(remove_accents($prompt), 'heriter') !== false) {
+      $question['title'] = 'POO - heritage';
+      $question['prompt'] = 'Fonction utilisee pour appeler une methode de la classe parente ?';
+      $changed = true;
+    }
+  }
+  unset($question);
+
+  if ($changed) {
+    update_option('ouinpo_gate_questions', ouinpo_gate_sanitize_questions($questions), false);
+  }
+}
 
 add_action('admin_init', function(): void {
   register_setting('ouinpo_gate', 'ouinpo_gate_settings', [
@@ -437,10 +479,21 @@ function ouinpo_gate_next_question_index(int $uid, string $page): int {
 
 function ouinpo_gate_answer_norm(string $value): string {
   $value = trim(wp_strip_all_tags($value));
+  $value = str_replace(["\xC2\xB2", "\xC2\xB3", "\xC2\xB9"], ['2', '3', '1'], $value);
+  $value = strtr($value, [
+    '²' => '2',
+    '³' => '3',
+    '¹' => '1',
+    '’' => "'",
+    '‘' => "'",
+    '´' => "'",
+    '`' => "'",
+  ]);
   $value = remove_accents($value);
   $value = mb_strtolower($value, 'UTF-8');
   $value = preg_replace('/[[:punct:]]+/u', ' ', $value);
   $value = preg_replace('~[\s\p{Z}]+~u', ' ', $value);
+  $value = preg_replace('/\bn\s+([0-9])\b/u', 'n$1', (string)$value);
   return trim((string)$value);
 }
 
@@ -453,12 +506,24 @@ function ouinpo_gate_variants(array $question): array {
   return array_values(array_filter(array_map('trim', $items), static fn($v) => $v !== ''));
 }
 
+function ouinpo_gate_builtin_variants(array $question): array {
+  $answer_norm = ouinpo_gate_answer_norm((string)($question['expected_answer'] ?? ''));
+  $variants = [
+    'bfs' => ['parcours en largeur'],
+    'fusion' => ['tri fusion', 'tri par fusion', 'mergesort'],
+    'pataphysique' => ["'pataphysique", 'la pataphysique', 'lapataphysique'],
+    'o n2' => ['o(n^2)', 'O(n^2)', 'o(n²)', 'O(n²)'],
+  ];
+
+  return $variants[$answer_norm] ?? [];
+}
+
 function ouinpo_gate_fallback_match(array $question, string $answer): bool {
   $answer_norm = ouinpo_gate_answer_norm($answer);
   if ($answer_norm === '') {
     return false;
   }
-  foreach (ouinpo_gate_variants($question) as $candidate) {
+  foreach (array_merge(ouinpo_gate_variants($question), ouinpo_gate_builtin_variants($question)) as $candidate) {
     if ($answer_norm === ouinpo_gate_answer_norm($candidate)) {
       return true;
     }
@@ -479,7 +544,7 @@ function ouinpo_gate_debug_log(string $message, array $context = []): void {
 }
 
 function ouinpo_gate_ai_globally_available(): bool {
-  return !class_exists('\Ouinpo\Suite\Core\AiSettings') || \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('exercise_correction');
+  return !class_exists('\Ouinpo\Suite\Core\AiSettings') || \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('gate_validation');
 }
 
 function ouinpo_gate_parse_ai_json(string $raw): ?array {
@@ -514,7 +579,7 @@ function ouinpo_gate_validate_with_ai(array $question, string $answer, array $se
       'schema' => ['ok' => 'boolean', 'confidence' => 'number 0..1', 'feedback' => 'court, pedagogique, sans reveler la reponse', 'reason' => 'court'],
       'enonce' => $question['prompt'],
       'reponse_reference' => $question['expected_answer'],
-      'variantes_acceptees' => ouinpo_gate_variants($question),
+      'variantes_acceptees' => array_values(array_unique(array_merge(ouinpo_gate_variants($question), ouinpo_gate_builtin_variants($question)))),
       'criteres_validation' => $question['ai_criteria'],
       'niveau' => $question['school_level'],
       'theme' => $question['domain'],
@@ -557,6 +622,17 @@ function ouinpo_gate_validate_with_ai(array $question, string $answer, array $se
 }
 
 function ouinpo_gate_validate_answer(array $question, string $answer, array $settings): array {
+  if (!empty($settings['fallback_exact_enabled']) && !empty($question['fallback_exact'])) {
+    $ok = ouinpo_gate_fallback_match($question, $answer);
+    if ($ok) {
+      return [
+        'ok' => true,
+        'feedback' => $question['success_message'],
+        'method' => 'fallback',
+      ];
+    }
+  }
+
   $ai = ouinpo_gate_validate_with_ai($question, $answer, $settings);
   if (is_array($ai)) {
     return [
@@ -566,19 +642,10 @@ function ouinpo_gate_validate_answer(array $question, string $answer, array $set
     ];
   }
 
-  if (!empty($settings['fallback_exact_enabled']) && !empty($question['fallback_exact'])) {
-    $ok = ouinpo_gate_fallback_match($question, $answer);
-    return [
-      'ok' => $ok,
-      'feedback' => $ok ? $question['success_message'] : $question['failure_message'],
-      'method' => 'fallback',
-    ];
-  }
-
   return [
     'ok' => false,
-    'feedback' => $settings['ai_unavailable_message'],
-    'method' => 'unavailable',
+    'feedback' => !empty($settings['ai_validation_enabled']) ? $settings['ai_unavailable_message'] : $question['failure_message'],
+    'method' => 'fallback',
   ];
 }
 
@@ -631,6 +698,46 @@ function ouinpo_gate_clear_attempts(int $uid, string $page, string $question_id)
   if ($uid > 0) {
     delete_user_meta($uid, ouinpo_gate_attempt_key($page, $question_id));
   }
+}
+
+function ouinpo_gate_award_completion_badge(int $uid): void {
+  if ($uid < 1) {
+    return;
+  }
+
+  $settings = ouinpo_gate_settings();
+  $badge_id = (int)($settings['completion_badge_id'] ?? 0);
+  if ($badge_id < 1) {
+    return;
+  }
+
+  global $wpdb;
+  $t_badges = $wpdb->prefix . 'ouin_exo_badges';
+  $t_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';
+
+  $badge_exists = $wpdb->get_var($wpdb->prepare(
+    "SELECT id FROM $t_badges WHERE id=%d LIMIT 1",
+    $badge_id
+  ));
+  if (!$badge_exists) {
+    return;
+  }
+
+  $already = $wpdb->get_var($wpdb->prepare(
+    "SELECT 1 FROM $t_user_badges WHERE user_id=%d AND badge_id=%d LIMIT 1",
+    $uid,
+    $badge_id
+  ));
+  if ($already) {
+    return;
+  }
+
+  $wpdb->insert($t_user_badges, [
+    'user_id' => $uid,
+    'badge_id' => $badge_id,
+    'awarded_at' => current_time('mysql'),
+    'source' => 'auto',
+  ], ['%d', '%d', '%s', '%s']);
 }
 
 /* ================= Shortcode principal : [ouinpo_gate] =================
@@ -791,21 +898,7 @@ function ouinpo_check_configured(){
 
       $needed = ouinpo_gate_needed();
       if ($progress >= $needed && $prev_progress < $needed) {
-        $t_user_badges = $wpdb->prefix.'ouin_exo_user_badges';
-        $badge_id_42 = 86;
-        $already = $wpdb->get_var($wpdb->prepare(
-          "SELECT 1 FROM $t_user_badges WHERE user_id=%d AND badge_id=%d LIMIT 1",
-          $uid,
-          $badge_id_42
-        ));
-        if (!$already) {
-          $wpdb->insert($t_user_badges, [
-            'user_id' => $uid,
-            'badge_id' => $badge_id_42,
-            'awarded_at' => current_time('mysql'),
-            'source' => 'auto',
-          ]);
-        }
+        ouinpo_gate_award_completion_badge($uid);
         update_user_meta($uid, 'ouinpo_pass_42', current_time('mysql'));
       }
     }
@@ -896,6 +989,7 @@ if($progress < $needed){
         <label>Pseudo : <input name="pseudo"></label><br>
         <label>Message : <textarea name="message" rows="3"></textarea></label><br>
         <input type="hidden" name="page" value="<?php echo esc_attr($page);?>">
+        <input type="hidden" name="needed" value="<?php echo esc_attr((int)$needed);?>">
         <input type="hidden" name="nonce" value="<?php echo esc_attr($nonce);?>">
         <button type="submit">Signer</button>
       </form>
@@ -934,7 +1028,7 @@ if($progress < $needed){
 add_action('wp_ajax_ouinpo_sign','ouinpo_sign');
 add_action('wp_ajax_nopriv_ouinpo_sign','ouinpo_sign'); // retour JSON clair si déconnecté
 function ouinpo_sign(){
-  if(!is_user_logged_in()) wp_send_json(['ok'=>false,'msg'=>'login']);
+  if(!is_user_logged_in()) wp_send_json(['ok'=>false,'msg'=>'login'], 403);
   check_ajax_referer('ouinpo_nonce','nonce');
   global $wpdb;
   $t_sign=$wpdb->prefix.'ouinpo_signatures';
@@ -943,11 +1037,29 @@ function ouinpo_sign(){
   $pseudo = sanitize_text_field( wp_unslash( $_POST['pseudo'] ?? '' ) );
   $message = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
   $page = sanitize_title( wp_unslash( $_POST['page'] ?? 'sample-page' ) );
-  if(empty($nom)) wp_send_json(['ok'=>false,'msg'=>'Nom requis']);
-  $wpdb->insert($t_sign,[
+  $needed = ouinpo_gate_needed((int)($_POST['needed'] ?? 0));
+  $progress = ouinpo_gate_progress_value($uid, $page);
+  if($progress < $needed) {
+    wp_send_json(['ok'=>false,'msg'=>'Gate incomplet','progress'=>$progress,'needed'=>$needed], 403);
+  }
+  $already = $wpdb->get_var($wpdb->prepare(
+    "SELECT 1 FROM $t_sign WHERE user_id=%d AND page_slug=%s LIMIT 1",
+    $uid,
+    $page
+  ));
+  if($already) {
+    wp_send_json(['ok'=>false,'msg'=>'Signature deja enregistree'], 409);
+  }
+  if(empty($nom)) wp_send_json(['ok'=>false,'msg'=>'Nom requis'], 400);
+  $ip = sanitize_text_field((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+  $ua = sanitize_textarea_field(substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500));
+  $inserted = $wpdb->insert($t_sign,[
     'user_id'=>$uid,'page_slug'=>$page,'nom'=>$nom,'pseudo'=>$pseudo,'message'=>$message,
-    'ip'=>($_SERVER['REMOTE_ADDR']??''),'ua'=>($_SERVER['HTTP_USER_AGENT']??''),'date_time'=>current_time('mysql')
-  ]);
+    'ip'=>$ip,'ua'=>$ua,'date_time'=>current_time('mysql')
+  ], ['%d','%s','%s','%s','%s','%s','%s','%s']);
+  if(!$inserted) {
+    wp_send_json(['ok'=>false,'msg'=>'Signature impossible'], 500);
+  }
   wp_send_json(['ok'=>true]);
 }
 
@@ -1127,6 +1239,17 @@ function ouinpo_gate_admin_checked($value): string {
   return checked(1, (int)$value, false);
 }
 
+function ouinpo_gate_admin_badge_options(): array {
+  global $wpdb;
+  $table = $wpdb->prefix . 'ouin_exo_badges';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+  if ($exists !== $table) {
+    return [];
+  }
+
+  return $wpdb->get_results("SELECT id, title, slug FROM $table ORDER BY title ASC, id ASC") ?: [];
+}
+
 function ouinpo_gate_admin_question_fields(array $q, string $name, bool $is_new = false): void {
   $levels = ['seconde' => 'Seconde', 'premiere' => 'Premiere', 'terminale' => 'Terminale', 'transversal' => 'Transversal'];
   ?>
@@ -1172,6 +1295,7 @@ function ouinpo_gate_admin_question_fields(array $q, string $name, bool $is_new 
 function ouinpo_gate_admin_settings_page(): void {
   $settings = ouinpo_gate_settings();
   $questions = ouinpo_gate_questions(false);
+  $badges = ouinpo_gate_admin_badge_options();
   ?>
   <form method="post">
     <?php wp_nonce_field('ouinpo_gate_admin'); ?>
@@ -1197,6 +1321,17 @@ function ouinpo_gate_admin_settings_page(): void {
       <tr><th>Anti-spam</th><td>
         Cooldown global <input type="number" min="0" max="3600" name="gate_settings[global_cooldown]" value="<?php echo esc_attr($settings['global_cooldown']); ?>" class="small-text"> s
         Tentatives globales <input type="number" min="0" max="100" name="gate_settings[global_max_attempts]" value="<?php echo esc_attr($settings['global_max_attempts']); ?>" class="small-text">
+      </td></tr>
+      <tr><th>Badge de reussite</th><td>
+        <select name="gate_settings[completion_badge_id]">
+          <option value="0">Aucun badge automatique</option>
+          <?php foreach ($badges as $badge): ?>
+            <option value="<?php echo esc_attr((int)$badge->id); ?>" <?php selected((int)$settings['completion_badge_id'], (int)$badge->id); ?>>
+              <?php echo esc_html($badge->title . ' (' . $badge->slug . ')'); ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+        <p class="description">Badge attribue quand l'utilisateur termine le Gate. Laisser vide pour ne rien attribuer.</p>
       </td></tr>
       <tr><th>Messages</th><td>
         <input type="text" name="gate_settings[ai_unavailable_message]" value="<?php echo esc_attr($settings['ai_unavailable_message']); ?>" class="large-text">

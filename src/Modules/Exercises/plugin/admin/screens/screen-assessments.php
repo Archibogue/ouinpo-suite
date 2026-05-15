@@ -509,17 +509,8 @@ class Screen_Assessments {
     }
 
     private static function ensure_assessment_item_edit_columns(): void {
-        global $wpdb;
-    
-        $table = self::table('assessment_items');
-        $columns = self::table_columns($table);
-    
-        if (!in_array('sort_order', $columns, true)) {
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER exercise_id");
-        }
-    
-        if (!in_array('points', $columns, true)) {
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN points DECIMAL(5,2) NULL AFTER sort_order");
+        if (class_exists(\Ouinpo\Exercises\InstallV2::class)) {
+            \Ouinpo\Exercises\InstallV2::maybe_upgrade();
         }
     }
     

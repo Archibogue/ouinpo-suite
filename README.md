@@ -4,6 +4,12 @@ OuInPo Suite est un plugin WordPress destiné aux enseignants de NSI et de SNT.
 
 Il propose un ensemble d’outils pédagogiques pour organiser des exercices, suivre la progression des élèves, gérer des compétences du programme, préparer des devoirs, utiliser des flashcards, attribuer des badges et, si l’enseignant le souhaite, activer certaines fonctions d’assistance par IA.
 
+## Statut
+
+Version 0.5.0 : beta technique pour test controle. Le plugin est partageable pour evaluation, installation pilote ou usage encadre, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
+
+Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
+
 ## Fonctionnalités principales
 
 - Banque d’exercices NSI / SNT
@@ -65,8 +71,8 @@ Après activation, vérifier les points suivants :
 1. Les tables du plugin sont bien créées.
 2. Les niveaux scolaires et les difficultés de base sont présents.
 3. Importer un pack pédagogique si l’on souhaite disposer de compétences, d’exercices, de sujets pratiques ou de flashcards de démonstration.
-4. Créer les pages publiques depuis **OuInPo Suite > Réglages > Pages & shortcodes**, ou les créer manuellement dans WordPress.
-5. Vérifier que les shortcodes sont présents dans les pages correspondantes.
+4. Créer ou reparer les pages publiques depuis **OuInPo Suite > Réglages > Pages & shortcodes**, ou les créer manuellement dans WordPress.
+5. Vérifier que les shortcodes sont présents dans les pages correspondantes. Une page au bon slug mais sans shortcode attendu doit etre reparee avant d'etre consideree comme correcte.
 6. Vérifier que les liens entre pages fonctionnent, notamment avec les permaliens simples WordPress.
 7. Désactiver ou ignorer les modules non utilisés.
 8. Renseigner les clés API uniquement si l’enseignant souhaite utiliser les fonctions d’IA.
@@ -193,6 +199,10 @@ Lors de la premiere activation avec une configuration absente, OuInPo initialise
 
 La validation IA Gate est optionnelle et s'appuie sur les reglages IA centralises du plugin lorsque les classes IA sont disponibles. Le serveur envoie uniquement l'enonce, la reponse de reference, les variantes, les criteres, le niveau, le theme et la reponse saisie. L'IA doit repondre en JSON strict avec une decision booleenne et un feedback court. Si l'IA est desactivee ou indisponible, le fallback exact normalise peut etre autorise globalement et par enigme.
 
+La validation IA Gate utilise l'usage dedie `gate_validation`, desactive par defaut dans les reglages IA centraux. Il est donc possible d'autoriser ou couper cette validation sans modifier la correction IA des exercices.
+
+Le badge attribue a la fin du Gate est configurable dans l'administration Gate. Aucune installation ne doit dependre d'un identifiant de badge issu d'un site de production.
+
 Un cooldown anti-spam est controle cote serveur avant chaque validation. Le JavaScript affiche seulement le compte a rebours et evite les doubles clics ; modifier le HTML ne permet pas de contourner le delai. Les logs Gate ne stockent pas les reponses completes par defaut.
 ### Shortcodes d’intégration
 
@@ -249,6 +259,8 @@ Avant toute utilisation avec des élèves, il est recommandé de :
 ## Données élèves
 
 Le plugin peut stocker des données de progression, de statut d’exercice, de badges, de devoirs et de révision.
+
+Le module Gate peut stocker, selon les usages actives : la progression par utilisateur et par page, les enigmes resolues, des logs de validation sans reponse complete par defaut, la date de reussite, les signatures, le nom public saisi, le pseudo, le message, l'adresse IP et le user-agent associes a une signature. Ces donnees servent a verifier la completion du Gate, empecher les signatures multiples, afficher le registre et generer un certificat.
 
 Avant de partager une archive du plugin, ne jamais inclure :
 

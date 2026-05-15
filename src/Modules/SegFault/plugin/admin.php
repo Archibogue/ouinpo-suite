@@ -4104,11 +4104,13 @@ try {
                 'chat_rag' => 'Chat / RAG',
                 'exercise_help' => 'Aide aux exercices',
                 'exercise_correction' => 'Correction exercices',
+                'gate_validation' => 'Validation Gate',
                 'practical_correction' => 'Correction sujets pratiques',
                 'feedback_generation' => 'Generation de feedback',
                 'pedagogical_suggestions' => 'Suggestions pedagogiques',
               ] as $usage_key => $usage_label): ?>
-                <label><input type="checkbox" name="<?php echo esc_attr('ouinpo_ai_usage_' . $usage_key); ?>" value="1" <?php checked(1, (int)get_option('ouinpo_ai_usage_' . $usage_key, 1)); ?> /> <?php echo esc_html($usage_label); ?></label><br>
+                <?php $usage_default = $usage_key === 'gate_validation' ? 0 : 1; ?>
+                <label><input type="checkbox" name="<?php echo esc_attr('ouinpo_ai_usage_' . $usage_key); ?>" value="1" <?php checked(1, (int)get_option('ouinpo_ai_usage_' . $usage_key, $usage_default)); ?> /> <?php echo esc_html($usage_label); ?></label><br>
               <?php endforeach; ?>
             </td>
           </tr>
