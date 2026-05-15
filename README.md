@@ -318,7 +318,7 @@ Les corrections automatiques, suggestions et aides éventuelles doivent toujours
 
 ## État du projet
 
-Version de partage en préparation.
+Version bêta technique destinée à des tests contrôlés avant diffusion large.
 
 Avant diffusion large, vérifier :
 

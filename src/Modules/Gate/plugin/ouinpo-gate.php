@@ -114,12 +114,12 @@ function ouinpo_enigmes(){
     [ 'theme'=>'Réseaux', 'prompt'=>"Combien d’hôtes utilisables dans un /24 ?", 'canon'=>"254", 'note'=>31 ],
     [ 'theme'=>'Encodage', 'prompt'=>"ASCII : ord('A') vaut ?", 'canon'=>"65", 'note'=>32 ],
     [ 'theme'=>'Algorithmes', 'prompt'=>"Nom de l’algorithme de tri O(n log n) stable ?", 'canon'=>"fusion", 'note'=>33 ],
-    [ 'theme'=>'Fichiers', 'prompt'=>"Python : mot-clé pour ouvrir un fichier ?", 'canon'=>"open", 'note'=>34 ],
+    [ 'theme'=>'Fichiers', 'prompt'=>"Python : fonction native pour ouvrir un fichier ?", 'canon'=>"open", 'note'=>34 ],
     [ 'theme'=>'OuInPo', 'prompt'=>"Si ton code devient infini, dans quel univers entre-t-il ?", 'canon'=>"boucle divine", 'note'=>35 ],
 
     /* ==== TERMINALE AVANCÉE / FIN DE CURSUS ==== */
     [ 'theme'=>'POO - égalité', 'prompt'=>"Méthode spéciale Python pour == ?", 'canon'=>"__eq__", 'note'=>36 ],
-    [ 'theme'=>'POO - représentation', 'prompt'=>"Méthode spéciale pour affichage lisible d’un objet ?", 'canon'=>"__repr__", 'note'=>37 ],
+    [ 'theme'=>'POO - représentation', 'prompt'=>"Méthode spéciale pour obtenir une représentation non ambiguë d’un objet ?", 'canon'=>"__repr__", 'note'=>37 ],
     [ 'theme'=>'SQL - jointure', 'prompt'=>"Mot-clé pour combiner plusieurs tables ?", 'canon'=>"join", 'note'=>38 ],
     [ 'theme'=>'Complexité', 'prompt'=>"Quel est le nom de l'algorithme qui permet de trouver le plus court chemin entre un noeud de départ et tous les autres noeuds ?", 'canon'=>"Dijkstra", 'note'=>39 ],
     [ 'theme'=>'Réseaux', 'prompt'=>"Protocole d’envoi de mail ?", 'canon'=>"smtp", 'note'=>40 ],
@@ -131,23 +131,7 @@ function ouinpo_enigmes(){
 
 /* ================= Aliases & Hashes ================= */
 function ouinpo_aliases(){
-  return [
-    5 => [ // index 5 => 6e énigme
-      "t1 = tache(1, 'init', 15)",
-      "t1=tache(1,'init',15)",
-      "t1 = tache(1, \"init\", 15)",
-      "t1=tache(1,\"init\",15)",
-      "t1 = Tache(1, 'Init', 15)",
-      "t1=Tache(1,'Init',15)",
-      "t1 = Tache(1, \"Init\", 15)",
-      "t1=Tache(1,\"Init\",15)",
-      "t1=Tache(1, 'Init', 15)",
-      "t1 =Tache(1,'Init',15)",
-      "t1= Tache(1,'Init',15)",
-      "t1 = Tache(1, 'Init', 15);",
-      "t1=Tache(1,'Init',15);",
-    ],
-  ];
+  return [];
 }
 function ouinpo_hashes(){
   $HS = [];
@@ -989,7 +973,6 @@ if($progress < $needed){
         <label>Pseudo : <input name="pseudo"></label><br>
         <label>Message : <textarea name="message" rows="3"></textarea></label><br>
         <input type="hidden" name="page" value="<?php echo esc_attr($page);?>">
-        <input type="hidden" name="needed" value="<?php echo esc_attr((int)$needed);?>">
         <input type="hidden" name="nonce" value="<?php echo esc_attr($nonce);?>">
         <button type="submit">Signer</button>
       </form>
@@ -1037,7 +1020,7 @@ function ouinpo_sign(){
   $pseudo = sanitize_text_field( wp_unslash( $_POST['pseudo'] ?? '' ) );
   $message = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
   $page = sanitize_title( wp_unslash( $_POST['page'] ?? 'sample-page' ) );
-  $needed = ouinpo_gate_needed((int)($_POST['needed'] ?? 0));
+  $needed = ouinpo_gate_needed();
   $progress = ouinpo_gate_progress_value($uid, $page);
   if($progress < $needed) {
     wp_send_json(['ok'=>false,'msg'=>'Gate incomplet','progress'=>$progress,'needed'=>$needed], 403);
