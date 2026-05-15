@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.5.0 : beta technique pour test controle. Le plugin est partageable pour evaluation, installation pilote ou usage encadre, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
+Version 0.5.1-beta : beta technique pour test controle. Le plugin est partageable pour evaluation, installation pilote ou usage encadre, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
 
@@ -68,6 +68,8 @@ Pour valider une archive avant partage :
 
 Après activation, vérifier les points suivants :
 
+Un ecran d'aide est disponible dans **OuInPo Suite > Premiere configuration**. Il regroupe les liens vers les modules, les pages, l'import pedagogique, les reglages IA, les roles et le diagnostic.
+
 1. Les tables du plugin sont bien créées.
 2. Les niveaux scolaires et les difficultés de base sont présents.
 3. Importer un pack pédagogique si l’on souhaite disposer de compétences, d’exercices, de sujets pratiques ou de flashcards de démonstration.
@@ -117,8 +119,10 @@ Un pack peut aussi déclarer ses domaines dans `domains`, avec `slug`, `label`, 
 Pour une installation de démonstration, importer par exemple :
 
 ```text
-packs/ouinpo-pack-demo.json
+packs/demo-basic-nsi.json
 ```
+
+Ce pack de demonstration contient quelques niveaux, competences, exercices, indices, solutions, flashcards et un sujet pratique simple. Il utilise des slugs `demo-*` stables pour limiter les doublons : un nouvel import met a jour les contenus portant les memes slugs lorsque l'importeur le permet.
 
 Pour tester les niveaux personnalisés, importer :
 
@@ -246,7 +250,7 @@ Le lien "En savoir plus" des notices IA est vide par defaut. L'enseignant peut r
 
 ### Page recommandee : donnees personnelles, IA et usages pedagogiques
 
-Il est recommande de creer une page locale expliquant les usages pedagogiques de l'IA, les donnees a ne pas saisir, les limites des reponses automatiques, les personnes a contacter et le cadre applicable dans l'etablissement. Aucun modele de page complet n'est fourni dans cette version.
+Il est recommande de creer une page locale expliquant les usages pedagogiques de l'IA, les donnees a ne pas saisir, les limites des reponses automatiques, les personnes a contacter et le cadre applicable dans l'etablissement. Un modele adaptable est fourni dans `docs/modele-donnees-personnelles-ia.md` et une page suggeree peut etre creee depuis **Pages & shortcodes**.
 
 Avant toute utilisation avec des élèves, il est recommandé de :
 
@@ -277,6 +281,15 @@ Avant de partager une archive du plugin, ne jamais inclure :
 ## Roles et capacites
 
 Les roles actuels sont `ouinpo_teacher` et `ouinpo_student`. Les anciens roles `prof` et `eleve` restent supportes pour compatibilite avec les installations existantes et certains modules historiques. Les deux familles peuvent donc coexister volontairement.
+
+| Profil | Role attendu |
+|---|---|
+| Administrateur WordPress | Installe le plugin, active les modules, configure les pages, configure l'IA, gere les reglages globaux, les roles et les capacites. |
+| Enseignant OuInPo | Gere les exercices, competences, classes/groupes si le module le permet, soumissions, evaluations et badges selon les capacites attribuees. |
+| Eleve OuInPo | Consulte les exercices autorises, repond, suit sa progression, utilise les flashcards, accede eventuellement aux badges et au Gate. |
+| Visiteur | Accede uniquement aux pages publiques. L'IA publique n'est disponible que si l'administrateur l'active explicitement. |
+
+Les droits reels dependent des modules actives, des options du plugin, des roles/capacites WordPress et des reglages de visibilite des pages. Voir aussi `docs/roles-et-droits.md`.
 
 ## Diagnostic
 
@@ -343,6 +356,10 @@ Ce comportement evite la perte accidentelle d'exercices, competences, traces ele
 Avant toute suppression définitive de données OuInPo, l’administrateur du site doit effectuer une sauvegarde complète de la base de données.
 
 Une future version pourra proposer une option explicite de purge complète, mais aucune suppression automatique n’est effectuée par défaut.
+
+## Notes de maintenance
+
+Les images du certificat Gate (`parchment_bg.jpg`, `logo_ouinpo.png`) restent a optimiser dans une passe dediee avec un outil graphique fiable. Elles n'ont pas ete regenerees automatiquement afin d'eviter une image degradee ou inutilisable dans le certificat.
 
 ## Schéma SQL
 

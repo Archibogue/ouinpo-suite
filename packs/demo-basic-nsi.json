@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "demo-basic-nsi",
+    "title": "Demo basique NSI / SNT",
+    "description": "Pack leger pour tester OuInPo Suite apres installation : niveaux, competences, exercices, indices, solutions, flashcards et un sujet pratique simple. Aucune donnee eleve.",
+    "author": "OuInPo",
+    "license": "CC BY-NC-SA 4.0",
+    "created_at": "2026-05-15"
+  },
+  "school_levels": [
+    { "slug": "seconde", "label": "Seconde", "sort_order": 10 },
+    { "slug": "premiere", "label": "Premiere", "sort_order": 20 }
+  ],
+  "domains": [
+    { "slug": "algorithmique", "label": "Algorithmique", "track": "NSI", "sort_order": 10, "active": 1 },
+    { "slug": "donnees", "label": "Representation des donnees", "track": "SNT", "sort_order": 20, "active": 1 },
+    { "slug": "programmation", "label": "Programmation Python", "track": "NSI", "sort_order": 30, "active": 1 }
+  ],
+  "difficulties": [
+    { "slug": "debutant", "label": "Debutant" },
+    { "slug": "confirme", "label": "Confirme" }
+  ],
+  "competencies": [
+    {
+      "slug": "demo-nsi-parcours-tableau",
+      "track": "NSI",
+      "level_slug": "premiere",
+      "domain": "Algorithmique",
+      "domain_slug": "algorithmique",
+      "competency": "Parcourir un tableau pour calculer une valeur.",
+      "capacity": "Utiliser une boucle et une variable d'accumulation.",
+      "example": "Calculer une somme ou rechercher un maximum.",
+      "active": 1
+    },
+    {
+      "slug": "demo-nsi-conditions-python",
+      "track": "NSI",
+      "level_slug": "premiere",
+      "domain": "Programmation Python",
+      "domain_slug": "programmation",
+      "competency": "Ecrire une fonction Python avec conditions.",
+      "capacity": "Choisir une condition et retourner une valeur adaptee.",
+      "example": "Tester si un nombre est pair.",
+      "active": 1
+    },
+    {
+      "slug": "demo-snt-donnees-table",
+      "track": "SNT",
+      "level_slug": "seconde",
+      "domain": "Representation des donnees",
+      "domain_slug": "donnees",
+      "competency": "Lire et interpreter des donnees tabulaires simples.",
+      "capacity": "Identifier une colonne, une ligne et une valeur.",
+      "example": "Lire un tableau de mesures.",
+      "active": 1
+    }
+  ],
+  "exercises": [
+    {
+      "title": "Somme d'un tableau",
+      "slug": "demo-basic-somme-tableau",
+      "level_slug": "premiere",
+      "difficulty_slug": "debutant",
+      "statement": "<p>Ecris une fonction <code>somme(tab)</code> qui renvoie la somme des entiers d'un tableau.</p><p>Exemple : <code>somme([2, 5, 3])</code> renvoie <code>10</code>.</p>",
+      "is_active": 1,
+      "competency_slugs": ["demo-nsi-parcours-tableau"],
+      "hints": [
+        { "order": 1, "content": "<p>Initialise une variable a <code>0</code>.</p>" },
+        { "order": 2, "content": "<p>Ajoute chaque valeur du tableau a cette variable.</p>" }
+      ],
+      "solutions": [
+        { "order": 1, "title": "Solution", "content": "<pre><code>def somme(tab):\n    total = 0\n    for valeur in tab:\n        total = total + valeur\n    return total</code></pre>", "is_official": 1 }
+      ]
+    },
+    {
+      "title": "Nombre pair",
+      "slug": "demo-basic-nombre-pair",
+      "level_slug": "premiere",
+      "difficulty_slug": "debutant",
+      "statement": "<p>Ecris une fonction <code>est_pair(n)</code> qui renvoie <code>True</code> si <code>n</code> est pair, et <code>False</code> sinon.</p>",
+      "is_active": 1,
+      "competency_slugs": ["demo-nsi-conditions-python"],
+      "hints": [
+        { "order": 1, "content": "<p>Le reste de la division par 2 se calcule avec <code>%</code>.</p>" }
+      ],
+      "solutions": [
+        { "order": 1, "title": "Solution", "content": "<pre><code>def est_pair(n):\n    return n % 2 == 0</code></pre>", "is_official": 1 }
+      ]
+    },
+    {
+      "title": "Lire une table de donnees",
+      "slug": "demo-basic-table-donnees",
+      "level_slug": "seconde",
+      "difficulty_slug": "debutant",
+      "statement": "<p>On dispose d'un tableau de mesures avec les colonnes <code>ville</code> et <code>temperature</code>. Explique comment trouver la temperature associee a une ville donnee.</p>",
+      "is_active": 1,
+      "competency_slugs": ["demo-snt-donnees-table"],
+      "hints": [
+        { "order": 1, "content": "<p>Il faut parcourir les lignes et comparer la colonne <code>ville</code>.</p>" }
+      ],
+      "solutions": [
+        { "order": 1, "title": "Explication", "content": "<p>On lit chaque ligne, on cherche celle dont la colonne <code>ville</code> correspond a la ville demandee, puis on lit la valeur de la colonne <code>temperature</code>.</p>", "is_official": 1 }
+      ]
+    },
+    {
+      "title": "Maximum d'un tableau",
+      "slug": "demo-basic-maximum-tableau",
+      "level_slug": "premiere",
+      "difficulty_slug": "confirme",
+      "statement": "<p>Ecris une fonction <code>maximum(tab)</code> qui renvoie la plus grande valeur d'un tableau non vide.</p>",
+      "is_active": 1,
+      "competency_slugs": ["demo-nsi-parcours-tableau"],
+      "hints": [
+        { "order": 1, "content": "<p>Commence avec <code>maxi = tab[0]</code>.</p>" },
+        { "order": 2, "content": "<p>Remplace <code>maxi</code> quand une valeur plus grande est trouvee.</p>" }
+      ],
+      "solutions": [
+        { "order": 1, "title": "Solution", "content": "<pre><code>def maximum(tab):\n    maxi = tab[0]\n    for valeur in tab:\n        if valeur > maxi:\n            maxi = valeur\n    return maxi</code></pre>", "is_official": 1 }
+      ]
+    },
+    {
+      "title": "Sujet pratique : compter les pairs",
+      "slug": "demo-basic-pratique-compter-pairs",
+      "level_slug": "premiere",
+      "difficulty_slug": "confirme",
+      "statement": "<p>Sujet pratique de demonstration : compter les valeurs paires d'un tableau.</p>",
+      "is_active": 1,
+      "competency_slugs": ["demo-nsi-parcours-tableau", "demo-nsi-conditions-python"],
+      "exam_meta": {
+        "exam_type": "practical_subject",
+        "source_type": "type_bac",
+        "theme_bac": "algorithmique",
+        "bac_format": "ecriture_complete",
+        "estimated_minutes": 20,
+        "is_exam_like": 1,
+        "subject_group": "demo-basic",
+        "sort_in_subject": 1
+      },
+      "practical_calls": [
+        {
+          "call_order": 1,
+          "title": "Ecrire la fonction",
+          "prompt_html": "<p>Ecris <code>compte_pairs(tab)</code>, qui renvoie le nombre d'entiers pairs dans <code>tab</code>.</p>",
+          "ai_rubric": "La fonction doit initialiser un compteur, parcourir le tableau, tester n % 2 == 0 et retourner le compteur.",
+          "answer_mode": "code",
+          "max_points": 10,
+          "is_active": 1
+        }
+      ]
+    }
+  ],
+  "flashcards": [
+    {
+      "deck": {
+        "title": "Demo NSI - bases Python",
+        "slug": "demo-basic-nsi-python",
+        "description": "Cartes de revision simples pour tester le module Flashcards.",
+        "track": "NSI",
+        "level": "Premiere",
+        "is_active": 1
+      },
+      "cards": [
+        { "card_type": "definition", "front_html": "<p>A quoi sert une variable d'accumulation ?</p>", "back_html": "<p>Elle conserve un resultat qui evolue pendant une boucle, par exemple une somme.</p>", "sort_order": 1, "is_active": 1, "competency_slugs": ["demo-nsi-parcours-tableau"] },
+        { "card_type": "syntaxe", "front_html": "<p>Quelle expression teste si <code>n</code> est pair ?</p>", "back_html": "<p><code>n % 2 == 0</code></p>", "sort_order": 2, "is_active": 1, "competency_slugs": ["demo-nsi-conditions-python"] },
+        { "card_type": "repere", "front_html": "<p>Pourquoi initialiser <code>maxi</code> avec <code>tab[0]</code> ?</p>", "back_html": "<p>Parce que le tableau est non vide et que la premiere valeur est un candidat valable.</p>", "sort_order": 3, "is_active": 1, "competency_slugs": ["demo-nsi-parcours-tableau"] },
+        { "card_type": "vocabulaire", "front_html": "<p>Que signifie parcourir un tableau ?</p>", "back_html": "<p>Visiter ses elements un par un, souvent avec une boucle <code>for</code>.</p>", "sort_order": 4, "is_active": 1, "competency_slugs": ["demo-nsi-parcours-tableau"] },
+        { "card_type": "distinction", "front_html": "<p>Difference entre indice et valeur ?</p>", "back_html": "<p>L'indice est la position dans le tableau ; la valeur est le contenu a cette position.</p>", "sort_order": 5, "is_active": 1, "competency_slugs": ["demo-nsi-parcours-tableau"] },
+        { "card_type": "definition", "front_html": "<p>Qu'est-ce qu'une condition ?</p>", "back_html": "<p>Une expression vraie ou fausse qui permet de choisir une branche du programme.</p>", "sort_order": 6, "is_active": 1, "competency_slugs": ["demo-nsi-conditions-python"] },
+        { "card_type": "syntaxe", "front_html": "<p>Quelle instruction permet de renvoyer une valeur depuis une fonction ?</p>", "back_html": "<p><code>return</code></p>", "sort_order": 7, "is_active": 1, "competency_slugs": ["demo-nsi-conditions-python"] },
+        { "card_type": "repere", "front_html": "<p>Que vaut <code>[4, 8, 1][0]</code> ?</p>", "back_html": "<p><code>4</code>, car les indices Python commencent a 0.</p>", "sort_order": 8, "is_active": 1, "competency_slugs": ["demo-nsi-parcours-tableau"] }
+      ]
+    }
+  ],
+  "badges": []
+}

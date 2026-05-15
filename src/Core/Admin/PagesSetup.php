@@ -79,7 +79,13 @@ final class PagesSetup
                                         Slug : <code><?php echo esc_html((string) $page['slug']); ?></code>
                                     </p>
                                 </td>
-                                <td><code><?php echo esc_html((string) $page['shortcode']); ?></code></td>
+                                <td>
+                                    <?php if (!empty($page['shortcode'])): ?>
+                                        <code><?php echo esc_html((string) $page['shortcode']); ?></code>
+                                    <?php else: ?>
+                                        <span class="ouinpo-suite-muted">Contenu statique</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php if ($existing): ?>
                                         <?php if ($status === 'ok'): ?>
@@ -141,7 +147,7 @@ final class PagesSetup
             }
 
             $existing = self::findPage((string) $page['slug']);
-            $content = (string) $page['shortcode'];
+            $content = (string) ($page['content'] ?? $page['shortcode']);
 
             if ($existing) {
                 $update = [
@@ -149,7 +155,7 @@ final class PagesSetup
                     'post_title' => $title,
                 ];
 
-                if (!self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])) {
+                if (!empty($page['shortcode']) && !self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])) {
                     $update['post_content'] = self::appendShortcode((string) $existing->post_content, (string) $page['shortcode']);
                     $repaired++;
                 }
@@ -236,6 +242,12 @@ final class PagesSetup
                 'slug' => 'carte-du-site',
                 'shortcode' => '[ouinpo_site_map]',
             ],
+            'privacy_ai' => [
+                'title' => 'Donnees personnelles, IA et usages pedagogiques',
+                'slug' => 'donnees-personnelles-ia',
+                'shortcode' => '',
+                'content' => self::privacyAiPageContent(),
+            ],
         ];
 
         if (ModuleSettings::isEnabled('flashcards')) {
@@ -308,10 +320,26 @@ final class PagesSetup
         return $page instanceof \WP_Post ? $page : null;
     }
 
+    private static function privacyAiPageContent(): string
+    {
+        return "<h2>Donnees personnelles, IA et usages pedagogiques</h2>\n\n"
+            . "<p>Cette page est un modele a adapter par l'etablissement. Elle explique les usages pedagogiques du site et ne suffit pas, a elle seule, a garantir une conformite juridique complete.</p>\n\n"
+            . "<h3>Donnees possibles</h3>\n"
+            . "<p>Selon les modules actives, le site peut stocker des progressions d'exercices, competences, badges, revisions de flashcards, devoirs, soumissions, progression Gate, signatures Gate, dates, messages et traces techniques limitees.</p>\n\n"
+            . "<h3>IA optionnelle</h3>\n"
+            . "<p>Les fonctions IA sont desactivees par defaut. Un administrateur doit les activer et configurer explicitement un fournisseur. Il est recommande de ne pas saisir de donnees personnelles dans les prompts IA et de relire les reponses produites.</p>\n\n"
+            . "<h3>Adaptation locale</h3>\n"
+            . "<p>Chaque etablissement doit adapter cette page a ses outils, ses durees de conservation, ses contacts et ses procedures internes.</p>";
+    }
+
     private static function pageStatus(array $page, ?\WP_Post $existing): string
     {
         if (!$existing) {
             return 'missing';
+        }
+
+        if (empty($page['shortcode'])) {
+            return 'ok';
         }
 
         return self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])

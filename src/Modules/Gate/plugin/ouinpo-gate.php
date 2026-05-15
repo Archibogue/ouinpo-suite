@@ -220,6 +220,41 @@ function ouinpo_gate_sanitize_long_text($value): string {
   return trim(wp_kses($value, []));
 }
 
+function ouinpo_gate_available_levels(): array {
+  global $wpdb;
+
+  $fallback = [
+    'seconde' => 'Seconde',
+    'premiere' => 'Premiere',
+    'terminale' => 'Terminale',
+    'transversal' => 'Transversal',
+  ];
+
+  $table = $wpdb->prefix . 'ouin_exo_school_levels';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+  if ($exists !== $table) {
+    return $fallback;
+  }
+
+  $rows = $wpdb->get_results("SELECT slug, label FROM $table ORDER BY sort_order ASC, id ASC");
+  $levels = [];
+  foreach ((array)$rows as $row) {
+    $slug = sanitize_key((string)($row->slug ?? ''));
+    $label = sanitize_text_field((string)($row->label ?? ''));
+    if ($slug !== '' && $label !== '') {
+      $levels[$slug] = $label;
+    }
+  }
+
+  foreach ($fallback as $slug => $label) {
+    if (!isset($levels[$slug])) {
+      $levels[$slug] = $label;
+    }
+  }
+
+  return $levels ?: $fallback;
+}
+
 function ouinpo_gate_sanitize_settings(array $raw): array {
   $defaults = ouinpo_gate_default_settings();
   $raw = array_merge($defaults, $raw);
@@ -247,7 +282,7 @@ function ouinpo_gate_sanitize_question(array $raw, int $fallback_order = 0): ?ar
     $id = 'gate-' . wp_generate_password(8, false, false);
   }
 
-  $levels = ['seconde', 'premiere', 'terminale', 'transversal'];
+  $levels = array_keys(ouinpo_gate_available_levels());
   $level = sanitize_key((string)($raw['school_level'] ?? 'transversal'));
   if (!in_array($level, $levels, true)) {
     $level = 'transversal';
@@ -724,6 +759,18 @@ function ouinpo_gate_award_completion_badge(int $uid): void {
   ], ['%d', '%d', '%s', '%s']);
 }
 
+function ouinpo_gate_pdf_text($value): string {
+  $text = wp_specialchars_decode(wp_strip_all_tags((string)$value), ENT_QUOTES);
+  if (function_exists('iconv')) {
+    $converted = @iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $text);
+    if (is_string($converted)) {
+      return $converted;
+    }
+  }
+
+  return remove_accents($text);
+}
+
 /* ================= Shortcode principal : [ouinpo_gate] =================
    Usage : [ouinpo_gate page="sample-page" needed="42" reveal="embed|link|redirect"]
 */
@@ -1098,7 +1145,7 @@ function ouinpo_certificate(){
   // $pdf->SetDrawColor(60,100,60); $pdf->SetLineWidth(0.8); $pdf->Rect(10,10,277,190);
   // $pdf->SetDrawColor(120,160,120); $pdf->Rect(13,13,271,184);
   // $pdf->SetTextColor(120,180,120); $pdf->SetFont('Times','B',60);
-  // $pdf->RotatedText(80,160,utf8_decode('OUINPO'),20);
+  // $pdf->RotatedText(80,160,ouinpo_gate_pdf_text('OUINPO'),20);
   // $pdf->SetTextColor(0,0,0);
 
   $post = get_page_by_path($page);
@@ -1108,27 +1155,27 @@ function ouinpo_certificate(){
 
   $pdf->SetY(24);
   $pdf->SetFont('Times','B',24);
-  $pdf->Cell(0,12,utf8_decode("CERTIFICAT DE RÉUSSITE DE L'OuInPo"),0,1,'C');
+  $pdf->Cell(0,12,ouinpo_gate_pdf_text("CERTIFICAT DE RÉUSSITE DE L'OuInPo"),0,1,'C');
   $pdf->SetFont('Times','',14);
-  $pdf->Cell(0,8,utf8_decode("Récompense : ".$titre_page),0,1,'C');
+  $pdf->Cell(0,8,ouinpo_gate_pdf_text("Récompense : ".$titre_page),0,1,'C');
   $pdf->Ln(6);
 
   $pdf->SetFont('Times','',14);
-  $pdf->Cell(0,8,utf8_decode("Ce document atteste que :"),0,1,'C');
+  $pdf->Cell(0,8,ouinpo_gate_pdf_text("Ce document atteste que :"),0,1,'C');
   $pdf->Ln(2);
   $pdf->SetFont('Times','B',30);
   $pdf->SetTextColor(40,100,60);
-  $pdf->Cell(0,14,utf8_decode($row->nom),0,1,'C');
+  $pdf->Cell(0,14,ouinpo_gate_pdf_text($row->nom),0,1,'C');
   $pdf->SetTextColor(0,0,0);
-  if(!empty($row->pseudo)){ $pdf->SetFont('Times','I',13); $pdf->Cell(0,8,utf8_decode('alias : '.$row->pseudo),0,1,'C'); }
+  if(!empty($row->pseudo)){ $pdf->SetFont('Times','I',13); $pdf->Cell(0,8,ouinpo_gate_pdf_text('alias : '.$row->pseudo),0,1,'C'); }
 
   $pdf->SetFont('Courier','',11); $pdf->SetTextColor(90,90,90);
-  $pdf->Cell(0,6,utf8_decode('Certificat n° '.$certnum),0,1,'C');
+  $pdf->Cell(0,6,ouinpo_gate_pdf_text('Certificat n° '.$certnum),0,1,'C');
   $pdf->SetTextColor(0,0,0);
 
   $pdf->Ln(6);
   $pdf->SetFont('Times','',14);
-  $pdf->MultiCell(0,8,utf8_decode("a brillamment franchi les ".$needed." épreuves actives de l'OuInPo.\n\nPar ce certificat, l'intéressé(e) est déclaré(e) membre honoraire du Cercle des Débogueurs Métaphysiques et gardien(ne) des variables instables."),0,'C');
+  $pdf->MultiCell(0,8,ouinpo_gate_pdf_text("a brillamment franchi les ".$needed." épreuves actives de l'OuInPo.\n\nPar ce certificat, l'intéressé(e) est déclaré(e) membre honoraire du Cercle des Débogueurs Métaphysiques et gardien(ne) des variables instables."),0,'C');
 
   $pdf->Ln(6);
   $pdf->SetDrawColor(120,160,120); $pdf->SetLineWidth(0.4);
@@ -1136,14 +1183,14 @@ function ouinpo_certificate(){
   $pdf->Rect($x, $y, $w, 20);
   $pdf->SetFont('Times','I',12);
   $pdf->SetXY($x+4, $y+4);
-  $pdf->MultiCell($w-8,6,utf8_decode("« L'erreur est humaine, mais le segfault est divin. »"),0,'C');
+  $pdf->MultiCell($w-8,6,ouinpo_gate_pdf_text("« L'erreur est humaine, mais le segfault est divin. »"),0,'C');
 
   $pdf->Ln(12);
   $pdf->SetFont('Times','B',13);
   $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
-  $pdf->Cell(0,8,utf8_decode("Fait à ".$site_name.", le ".$dateStr),0,1,'C');
+  $pdf->Cell(0,8,ouinpo_gate_pdf_text("Fait à ".$site_name.", le ".$dateStr),0,1,'C');
   $pdf->SetFont('Times','',12);
-  $pdf->Cell(0,8,utf8_decode("L'equipe pedagogique"),0,1,'C');
+  $pdf->Cell(0,8,ouinpo_gate_pdf_text("L'equipe pedagogique"),0,1,'C');
   $pdf->SetDrawColor(60,100,60); $pdf->SetLineWidth(0.8);
   $pdf->Line(110, 180, 187, 180);
 
@@ -1234,7 +1281,7 @@ function ouinpo_gate_admin_badge_options(): array {
 }
 
 function ouinpo_gate_admin_question_fields(array $q, string $name, bool $is_new = false): void {
-  $levels = ['seconde' => 'Seconde', 'premiere' => 'Premiere', 'terminale' => 'Terminale', 'transversal' => 'Transversal'];
+  $levels = ouinpo_gate_available_levels();
   ?>
   <tr>
     <td><input type="number" name="<?php echo esc_attr($name); ?>[order]" value="<?php echo esc_attr((int)($q['order'] ?? 0)); ?>" class="small-text"></td>

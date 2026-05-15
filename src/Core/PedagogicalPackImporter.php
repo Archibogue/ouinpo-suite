@@ -82,6 +82,8 @@ final class PedagogicalPackImporter
             'flashcards_inserted' => 0,
             'flashcards_updated' => 0,
             'flashcard_competency_links' => 0,
+            'transaction_started' => 0,
+            'rollback_performed' => 0,
             'warnings' => [],
         ];
 
@@ -128,17 +130,53 @@ final class PedagogicalPackImporter
 
         $p = $wpdb->prefix . 'ouin_exo_';
 
-        self::importSchoolLevels($p, $data['school_levels'], $details);
-        self::importDomains($p, $data['domains'], $details);
-        self::importDifficulties($p, $data['difficulties'], $details);
-        self::importCompetencies($p, $data['competencies'], $details);
-        self::importExercises($p, $data['exercises'], $details);
-        self::importFlashcards($data['flashcards'], $details);
-        return [
-            'ok' => true,
-            'message' => 'Pack importé.',
-            'details' => $details,
-        ];
+        $transaction = self::beginTransaction($details);
+
+        try {
+            self::importSchoolLevels($p, $data['school_levels'], $details);
+            self::importDomains($p, $data['domains'], $details);
+            self::importDifficulties($p, $data['difficulties'], $details);
+            self::importCompetencies($p, $data['competencies'], $details);
+            self::importExercises($p, $data['exercises'], $details);
+            self::importFlashcards($data['flashcards'], $details);
+
+            if ($transaction) {
+                $wpdb->query('COMMIT');
+            }
+
+            return [
+                'ok' => true,
+                'message' => 'Pack importé.',
+                'details' => $details,
+            ];
+        } catch (\Throwable $e) {
+            if ($transaction) {
+                $wpdb->query('ROLLBACK');
+                $details['rollback_performed'] = 1;
+            }
+
+            $details['warnings'][] = 'Import interrompu : ' . $e->getMessage();
+
+            return [
+                'ok' => false,
+                'message' => 'Import annulé.',
+                'details' => $details,
+            ];
+        }
+    }
+
+    private static function beginTransaction(array &$details): bool
+    {
+        global $wpdb;
+
+        $started = $wpdb->query('START TRANSACTION');
+        if ($started === false) {
+            $details['warnings'][] = 'Transaction SQL indisponible : import effectue sans rollback automatique.';
+            return false;
+        }
+
+        $details['transaction_started'] = 1;
+        return true;
     }
 
     private static function importSchoolLevels(string $p, array $rows, array &$details): void

@@ -63,8 +63,11 @@ final class Installer
             ip VARCHAR(45) NULL,
             ua TEXT NULL,
             date_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY  (id)
+            PRIMARY KEY  (id),
+            UNIQUE KEY user_page (user_id, page_slug)
         ) {$schema_suffix};");
+
+        self::ensureGateSignatureUniqueIndex($tSign);
 
         // SegFault / parcours prof
         $tPaths   = $wpdb->prefix . 'ouin_sf_paths';
@@ -234,6 +237,49 @@ private static function addForeignKeyIfMissing(string $table, string $name, stri
 
     if (!empty($wpdb->last_error)) {
         error_log('[ouinpo suite] SegFault FK failed: ' . $name . ' | ' . $wpdb->last_error);
+    }
+}
+
+private static function ensureGateSignatureUniqueIndex(string $table): void
+{
+    global $wpdb;
+
+    $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+    if ($tableExists !== $table) {
+        return;
+    }
+
+    $indexExists = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*)
+        FROM information_schema.statistics
+        WHERE table_schema = DATABASE()
+            AND table_name = %s
+            AND index_name = 'user_page'",
+        $table
+    ));
+
+    if ((int) $indexExists > 0) {
+        return;
+    }
+
+    /*
+     * Migration defensive : si une ancienne installation contient plusieurs
+     * signatures pour un meme utilisateur et une meme page, on conserve la
+     * plus ancienne (id minimal) et on retire les doublons avant d'ajouter
+     * l'unicite SQL.
+     */
+    $wpdb->query(
+        "DELETE s2 FROM {$table} s1
+         INNER JOIN {$table} s2
+            ON s1.user_id = s2.user_id
+           AND s1.page_slug = s2.page_slug
+           AND s1.id < s2.id"
+    );
+
+    $wpdb->query("ALTER TABLE {$table} ADD UNIQUE KEY user_page (user_id, page_slug)");
+
+    if (!empty($wpdb->last_error)) {
+        error_log('[ouinpo suite] Gate signatures unique index failed: ' . $wpdb->last_error);
     }
 }
 }

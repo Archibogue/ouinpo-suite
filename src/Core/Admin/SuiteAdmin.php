@@ -130,6 +130,15 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
+            'Premiere configuration',
+            'Premiere configuration',
+            Capabilities::MANAGE_SETTINGS,
+            'ouinpo-suite-first-setup',
+            [self::class, 'renderFirstSetup']
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
             'Contenus',
             'Contenus',
             Capabilities::MANAGE_EXERCISES,
@@ -220,6 +229,7 @@ final class SuiteAdmin
     {
         $tabs = [
             self::ROOT_SLUG         => 'Tableau de bord',
+            'ouinpo-suite-first-setup' => 'Premiere configuration',
             'ouinpo-suite-contents' => 'Contenus',
         ];
 
@@ -435,6 +445,61 @@ final class SuiteAdmin
             </p>
         </div>
         <?php
+    }
+
+    public static function renderFirstSetup(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
+            wp_die('Acces refuse.');
+        }
+
+        self::pageIntro('Premiere configuration', 'Checklist prudente pour preparer une installation OuInPo Suite avant usage avec des collegues ou des eleves.');
+        self::tabs(self::mainTabs(), 'ouinpo-suite-first-setup');
+
+        $modules = [
+            'exercises' => 'Exercices',
+            'flashcards' => 'Flashcards',
+            'gate' => 'Gate',
+            'segfault' => 'SegFault / IA',
+            'submissions' => 'Submissions',
+            'rechtext' => 'RechText',
+            'meta' => 'Meta',
+        ];
+        ?>
+        <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
+            <div class="card ouinpo-suite-card">
+                <h2 class="ouinpo-suite-card-title">Modules</h2>
+                <table class="widefat striped"><tbody>
+                    <?php foreach ($modules as $id => $label): ?>
+                        <tr>
+                            <th><?php echo esc_html($label); ?></th>
+                            <td><?php self::statusBadge(ModuleSettings::isEnabled($id), 'Actif', 'Inactif'); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody></table>
+            </div>
+            <div class="card ouinpo-suite-card">
+                <h2 class="ouinpo-suite-card-title">Checklist</h2>
+                <ul class="ouinpo-suite-disc-list">
+                    <li>Creer ou reparer les pages publiques necessaires.</li>
+                    <li>Importer le pack <code>demo-basic-nsi.json</code> sur une installation de test.</li>
+                    <li>Verifier que l'IA reste desactivee tant qu'aucun fournisseur n'est configure.</li>
+                    <li>Controler les roles enseignant et eleve avant de creer les comptes.</li>
+                    <li>Lancer le diagnostic final avant partage.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
+            <?php
+            self::quickAction('Pages & shortcodes', 'Creer les pages manquantes ou ajouter les shortcodes attendus.', admin_url('admin.php?page=ouinpo-suite-settings&tab=pages'));
+            self::quickAction('Import pedagogique', 'Importer le pack demo-basic-nsi.json ou un pack de competences.', admin_url('admin.php?page=ouinpo-suite-settings&tab=import'));
+            self::quickAction('Reglages IA', 'Verifier que l IA est desactivee ou configurer explicitement Albert/OpenAI.', admin_url('admin.php?page=ouinpo-suite-settings&tab=ai'));
+            self::quickAction('Roles et droits', 'Verifier les capacites attribuees aux enseignants et aux eleves.', admin_url('admin.php?page=ouinpo-suite-settings&tab=rights'));
+            self::quickAction('Diagnostic', 'Verifier les tables, options sensibles et donnees a ne pas exporter.', admin_url('admin.php?page=ouinpo-suite-settings&tab=diagnostic'));
+            ?>
+        </div>
+        <?php
+        self::endPage();
     }
 
     private static function dashboardStats(): array
@@ -2963,25 +3028,6 @@ final class SuiteAdmin
             $modules[$module->id()] = $module->name();
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ouinpo_suite_modules_nonce'])) {
-            check_admin_referer('ouinpo_suite_modules', 'ouinpo_suite_modules_nonce');
-
-            $posted = isset($_POST['ouinpo_suite_enabled_modules']) && is_array($_POST['ouinpo_suite_enabled_modules'])
-                ? array_map('sanitize_key', wp_unslash($_POST['ouinpo_suite_enabled_modules']))
-                : [];
-
-            ModuleSettings::saveEnabledModules($posted);
-
-            wp_safe_redirect(add_query_arg(
-                [
-                    'page'    => 'ouinpo-suite-settings',
-                    'tab'     => 'modules',
-                    'updated' => '1',
-                ],
-                admin_url('admin.php')
-            ));
-            exit;
-        }
 
         $enabled = ModuleSettings::getEnabledModules();
         $locked  = ModuleSettings::lockedModules();
@@ -3064,6 +3110,35 @@ final class SuiteAdmin
             </form>
         </div>
         <?php
+    }
+
+    private static function handleModulesSettingsPost(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['ouinpo_suite_modules_nonce'])) {
+            return;
+        }
+
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
+            wp_die('AccÃ¨s refusÃ©.');
+        }
+
+        check_admin_referer('ouinpo_suite_modules', 'ouinpo_suite_modules_nonce');
+
+        $posted = isset($_POST['ouinpo_suite_enabled_modules']) && is_array($_POST['ouinpo_suite_enabled_modules'])
+            ? array_map('sanitize_key', wp_unslash($_POST['ouinpo_suite_enabled_modules']))
+            : [];
+
+        ModuleSettings::saveEnabledModules($posted);
+
+        wp_safe_redirect(add_query_arg(
+            [
+                'page'    => 'ouinpo-suite-settings',
+                'tab'     => 'modules',
+                'updated' => '1',
+            ],
+            admin_url('admin.php')
+        ));
+        exit;
     }
 
     private static function renderPedagogicalImportHub(): void
@@ -3314,6 +3389,10 @@ final class SuiteAdmin
     public static function renderSettingsHub(): void
     {
         $tab = self::currentTab('modules');
+
+        if ($tab === 'modules') {
+            self::handleModulesSettingsPost();
+        }
 
         self::pageIntro('Réglages', 'Paramètres, diagnostic et maintenance légère de la suite.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-settings');
