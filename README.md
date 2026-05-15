@@ -130,6 +130,8 @@ packs/ouinpo-pack-nsi-complet.json
 
 Ce pack contient quatre niveaux, trois difficultes, dix domaines, vingt-et-une competences, dix-sept exercices dont deux sujets pratiques, ainsi que vingt flashcards. Il utilise des slugs stables pour limiter les doublons : un nouvel import met a jour les contenus portant les memes slugs lorsque l'importeur le permet.
 
+L'import pedagogique distingue maintenant explicitement trois etats : succes complet, import partiel avec avertissements, ou echec bloque. Le pack NSI complet peut etre reimporte pour mettre a jour les contenus identifies par slug ou par cle stable ; en cas d'erreur bloquante, l'importeur tente un rollback lorsque la base de donnees et les tables utilisees le permettent.
+
 ### Tester rapidement avec le pack NSI complet
 
 1. Installer le plugin depuis le zip.

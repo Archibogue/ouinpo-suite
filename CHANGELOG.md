@@ -19,6 +19,7 @@ Version bêta technique destinée à des tests contrôlés avant diffusion large
 - Documentation README complétée pour la bêta technique destinée à des tests contrôlés.
 - Niveaux Gate rendus dynamiques avec fallback compatible.
 - Import pédagogique renforcé avec statuts `success`, `partial` et `failed`.
+- Rapport d'import pedagogique enrichi : transaction, rollback, compteurs indices, solutions, exam_meta, sujets pratiques, decks et flashcards.
 - Schéma JSON des packs pédagogiques complété.
 
 ### Corrigé
@@ -28,6 +29,7 @@ Version bêta technique destinée à des tests contrôlés avant diffusion large
 - Suppression des anciens éléments codés en dur du Gate.
 - Ajout ou renforcement de l’unicité des signatures Gate.
 - Détection plus prudente de la page statique « Données personnelles, IA et usages pédagogiques ».
+- Les erreurs SQL bloquantes de l'import pedagogique declenchent maintenant un echec explicite et une tentative de rollback lorsque la transaction est disponible.
 
 ## [0.5.0] - 2026-05-14
 

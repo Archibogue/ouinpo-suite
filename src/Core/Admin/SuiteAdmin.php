@@ -23,6 +23,7 @@ final class SuiteAdmin
         }
 
         add_action('admin_menu', [self::class, 'registerRootMenu'], 5);
+        add_action('admin_init', [self::class, 'handleModulesSettingsPost']);
         add_action('admin_enqueue_scripts', [self::class, 'enqueueAdminStyles']);
         add_action('admin_head', [self::class, 'adminStyles']);
     }
@@ -3112,14 +3113,14 @@ final class SuiteAdmin
         <?php
     }
 
-    private static function handleModulesSettingsPost(): void
+    public static function handleModulesSettingsPost(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['ouinpo_suite_modules_nonce'])) {
             return;
         }
 
         if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
-            wp_die('AccÃ¨s refusÃ©.');
+            wp_die('Acces refuse.');
         }
 
         check_admin_referer('ouinpo_suite_modules', 'ouinpo_suite_modules_nonce');
@@ -3230,13 +3231,71 @@ final class SuiteAdmin
         }
 
         if ($result !== null) {
-            $class = !empty($result['ok']) ? 'notice notice-success' : 'notice notice-error';
+            $status = is_array($result['details'] ?? null) ? (string) ($result['details']['import_status'] ?? '') : '';
+            $class = $status === 'partial'
+                ? 'notice notice-warning'
+                : (!empty($result['ok']) ? 'notice notice-success' : 'notice notice-error');
+            $labels = [
+                'import_status' => 'Statut global',
+                'transaction_used' => 'Transaction utilisee',
+                'transaction_started' => 'Transaction demarree',
+                'rollback_performed' => 'Rollback effectue',
+                'school_levels_inserted' => 'Niveaux crees',
+                'school_levels_updated' => 'Niveaux mis a jour',
+                'difficulties_inserted' => 'Difficultes creees',
+                'difficulties_updated' => 'Difficultes mises a jour',
+                'domains_inserted' => 'Domaines crees',
+                'domains_updated' => 'Domaines mis a jour',
+                'competencies_inserted' => 'Competences creees',
+                'competencies_updated' => 'Competences mises a jour',
+                'exercises_inserted' => 'Exercices crees',
+                'exercises_updated' => 'Exercices mis a jour',
+                'exercise_school_level_links' => 'Liens exercices-niveaux',
+                'exercise_competency_links' => 'Liens exercices-competences',
+                'hints_inserted' => 'Indices crees',
+                'hints_updated' => 'Indices mis a jour',
+                'hints_unchanged' => 'Indices inchanges',
+                'hints_errors' => 'Erreurs sur indices',
+                'solutions_inserted' => 'Solutions creees',
+                'solutions_updated' => 'Solutions mises a jour',
+                'solutions_errors' => 'Erreurs sur solutions',
+                'exam_meta_inserted' => 'Exam meta crees',
+                'exam_meta_updated' => 'Exam meta mis a jour',
+                'exam_meta_errors' => 'Erreurs exam meta',
+                'practical_subjects_inserted' => 'Sujets pratiques crees',
+                'practical_subjects_updated' => 'Sujets pratiques mis a jour',
+                'practical_calls_inserted' => 'Appels pratiques crees',
+                'practical_calls_updated' => 'Appels pratiques mis a jour',
+                'practical_files_imported' => 'Fichiers pratiques importes',
+                'flashcard_decks_inserted' => 'Decks crees',
+                'flashcard_decks_updated' => 'Decks mis a jour',
+                'flashcards_inserted' => 'Flashcards creees',
+                'flashcards_updated' => 'Flashcards mises a jour',
+                'flashcard_competency_links' => 'Liens flashcards-competences',
+                'flashcard_competency_link_errors' => 'Erreurs liens flashcards-competences',
+            ];
             ?>
             <div class="<?php echo esc_attr($class); ?> is-dismissible">
                 <p><strong><?php echo esc_html((string) $result['message']); ?></strong></p>
 
                 <?php if (!empty($result['details']) && is_array($result['details'])): ?>
                     <ul class="ouinpo-suite-disc-list">
+                        <?php foreach ($labels as $key => $label): ?>
+                            <?php if (!array_key_exists($key, $result['details'])) { continue; } ?>
+                            <?php $value = $result['details'][$key]; ?>
+                            <?php if (!is_array($value)): ?>
+                                <li>
+                                    <strong><?php echo esc_html($label); ?> :</strong>
+                                    <?php
+                                    if (in_array($key, ['transaction_used', 'transaction_started', 'rollback_performed'], true)) {
+                                        echo !empty($value) ? 'oui' : 'non';
+                                    } else {
+                                        echo esc_html((string) $value);
+                                    }
+                                    ?>
+                                </li>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                         <?php foreach ($result['details'] as $key => $value): ?>
                             <?php if ($key === 'warnings' && is_array($value)): ?>
                                 <li>
@@ -3405,9 +3464,6 @@ final class SuiteAdmin
     {
         $tab = self::currentTab('modules');
 
-        if ($tab === 'modules') {
-            self::handleModulesSettingsPost();
-        }
 
         self::pageIntro('Réglages', 'Paramètres, diagnostic et maintenance légère de la suite.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-settings');

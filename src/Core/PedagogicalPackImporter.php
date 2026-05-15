@@ -20,6 +20,127 @@ final class PedagogicalPackImporter
         return (string) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column)) === $column;
     }
 
+    private static function cleanMessage(string $message): string
+    {
+        $message = wp_strip_all_tags($message);
+        $message = preg_replace('/\s+/', ' ', $message);
+        return trim((string) $message);
+    }
+
+    private static function contextLabel(array $context): string
+    {
+        $parts = [];
+        foreach (['step', 'object', 'slug', 'table'] as $key) {
+            if (!isset($context[$key]) || $context[$key] === '') {
+                continue;
+            }
+            $parts[] = $key . '=' . sanitize_text_field((string) $context[$key]);
+        }
+
+        return $parts ? ' (' . implode(', ', $parts) . ')' : '';
+    }
+
+    private static function recordWarning(array &$details, string $message, array $context = []): void
+    {
+        $details['warnings'][] = self::cleanMessage($message . self::contextLabel($context));
+    }
+
+    private static function recordError(array &$details, string $message, array $context = []): void
+    {
+        $details['errors'][] = self::cleanMessage($message . self::contextLabel($context));
+    }
+
+    private static function hasBlockingErrors(array $details): bool
+    {
+        return !empty($details['errors']);
+    }
+
+    private static function sqlWriteErrorMessage(string $action, string $table): string
+    {
+        global $wpdb;
+
+        $lastError = self::cleanMessage((string) $wpdb->last_error);
+        $message = "Erreur SQL lors de {$action} dans la table {$table}";
+
+        return $lastError !== '' ? $message . ' : ' . $lastError : $message . '.';
+    }
+
+    private static function insertOrFail(string $table, array $data, array $formats, array &$details, array $context = [], bool $blocking = true): bool
+    {
+        global $wpdb;
+
+        $result = $wpdb->insert($table, $data, $formats);
+        if ($result !== false) {
+            return true;
+        }
+
+        $message = self::sqlWriteErrorMessage('de l\'insertion', $table);
+        if ($blocking) {
+            self::recordError($details, $message, $context + ['table' => $table]);
+            throw new \RuntimeException('Insertion SQL indispensable impossible.');
+        }
+
+        self::recordWarning($details, $message, $context + ['table' => $table]);
+        return false;
+    }
+
+    private static function updateOrFail(string $table, array $data, array $where, array $formats, array $whereFormats, array &$details, array $context = [], bool $blocking = true): bool
+    {
+        global $wpdb;
+
+        $result = $wpdb->update($table, $data, $where, $formats, $whereFormats);
+        if ($result !== false) {
+            return true;
+        }
+
+        $message = self::sqlWriteErrorMessage('de la mise a jour', $table);
+        if ($blocking) {
+            self::recordError($details, $message, $context + ['table' => $table]);
+            throw new \RuntimeException('Mise a jour SQL indispensable impossible.');
+        }
+
+        self::recordWarning($details, $message, $context + ['table' => $table]);
+        return false;
+    }
+
+    private static function queryOrFail(string $query, array &$details, array $context = [], bool $blocking = true): bool
+    {
+        global $wpdb;
+
+        $result = $wpdb->query($query);
+        if ($result !== false) {
+            return true;
+        }
+
+        $message = self::sqlWriteErrorMessage('de la requete', (string) ($context['table'] ?? ''));
+        if ($blocking) {
+            self::recordError($details, $message, $context);
+            throw new \RuntimeException('Requete SQL indispensable impossible.');
+        }
+
+        self::recordWarning($details, $message, $context);
+        return false;
+    }
+
+    private static function deleteOrFail(string $table, array $where, array $whereFormats, array &$details, array $context = [], bool $blocking = true): bool
+    {
+        global $wpdb;
+
+        $result = $wpdb->delete($table, $where, $whereFormats);
+        if ($result !== false) {
+            return true;
+        }
+
+        $message = self::sqlWriteErrorMessage('de la suppression', $table);
+        if ($blocking) {
+            self::recordError($details, $message, $context + ['table' => $table]);
+            throw new \RuntimeException('Suppression SQL indispensable impossible.');
+        }
+
+        self::recordWarning($details, $message, $context + ['table' => $table]);
+        return false;
+    }
+
     public static function importFromFile(string $path): array
     {
         if (!is_readable($path)) {
@@ -40,11 +161,11 @@ final class PedagogicalPackImporter
         if ($raw === false || trim($raw) === '') {
             return [
                 'ok' => false,
-                'message' => 'Fichier vide ou impossible à lire.',
+                'message' => 'Fichier vide ou impossible a lire.',
                 'details' => [
                     'import_status' => 'failed',
                     'rollback_performed' => 0,
-                    'errors' => ['Fichier vide ou impossible à lire.'],
+                    'errors' => ['Fichier vide ou impossible a lire.'],
                     'warnings' => [],
                 ],
             ];
@@ -87,8 +208,20 @@ final class PedagogicalPackImporter
             'exercise_school_level_links' => 0,
             'exercise_competency_links' => 0,
             'hints_imported' => 0,
+            'hints_inserted' => 0,
+            'hints_updated' => 0,
+            'hints_unchanged' => 0,
+            'hints_errors' => 0,
             'solutions_imported' => 0,
+            'solutions_inserted' => 0,
+            'solutions_updated' => 0,
+            'solutions_errors' => 0,
             'exam_meta_imported' => 0,
+            'exam_meta_inserted' => 0,
+            'exam_meta_updated' => 0,
+            'exam_meta_errors' => 0,
+            'practical_subjects_inserted' => 0,
+            'practical_subjects_updated' => 0,
             'practical_calls_inserted' => 0,
             'practical_calls_updated' => 0,
             'practical_files_imported' => 0,
@@ -97,7 +230,9 @@ final class PedagogicalPackImporter
             'flashcards_inserted' => 0,
             'flashcards_updated' => 0,
             'flashcard_competency_links' => 0,
+            'flashcard_competency_link_errors' => 0,
             'transaction_started' => 0,
+            'transaction_used' => 0,
             'rollback_performed' => 0,
             'import_status' => 'pending',
             'warnings' => [],
@@ -108,20 +243,20 @@ final class PedagogicalPackImporter
 
         if ($schemaVersion !== '1.0') {
             $details['import_status'] = 'failed';
-            $details['errors'][] = 'Version de schéma non supportée.';
+            $details['errors'][] = 'Version de schema non supportee.';
             return [
                 'ok' => false,
-                'message' => 'Version de schéma non supportée : ' . ($schemaVersion !== '' ? $schemaVersion : 'absente'),
+                'message' => 'Version de schema non supportee : ' . ($schemaVersion !== '' ? $schemaVersion : 'absente'),
                 'details' => $details,
             ];
         }
 
         if (!isset($data['pack']) || !is_array($data['pack'])) {
             $details['import_status'] = 'failed';
-            $details['errors'][] = 'Métadonnées du pack absentes.';
+            $details['errors'][] = 'Metadonnees du pack absentes.';
             return [
                 'ok' => false,
-                'message' => 'Métadonnées du pack absentes.',
+                'message' => 'Metadonnees du pack absentes.',
                 'details' => $details,
             ];
         }
@@ -142,10 +277,10 @@ final class PedagogicalPackImporter
 
             if (!is_array($data[$key])) {
                 $details['import_status'] = 'failed';
-                $details['errors'][] = "Le champ {$key} doit être un tableau.";
+                $details['errors'][] = "Le champ {$key} doit etre un tableau.";
                 return [
                     'ok' => false,
-                    'message' => "Le champ {$key} doit être un tableau.",
+                    'message' => "Le champ {$key} doit etre un tableau.",
                     'details' => $details,
                 ];
             }
@@ -163,14 +298,12 @@ final class PedagogicalPackImporter
             self::importExercises($p, $data['exercises'], $details);
             self::importFlashcards($data['flashcards'], $details);
 
-            $blockingWarnings = self::blockingWarnings($details['warnings']);
-            if (!empty($blockingWarnings)) {
-                $details['errors'] = array_values(array_unique(array_merge($details['errors'], $blockingWarnings)));
+            if (self::hasBlockingErrors($details)) {
                 throw new \RuntimeException('Import interrompu par erreurs bloquantes.');
             }
 
             if ($transaction) {
-                $wpdb->query('COMMIT');
+                self::queryOrFail('COMMIT', $details, ['step' => 'transaction'], true);
             }
 
             $details['import_status'] = !empty($details['warnings']) ? 'partial' : 'success';
@@ -178,22 +311,23 @@ final class PedagogicalPackImporter
             return [
                 'ok' => true,
                 'message' => $details['import_status'] === 'partial'
-                    ? 'Pack importé avec avertissements.'
-                    : 'Pack importé.',
+                    ? 'Pack importe avec avertissements.'
+                    : 'Pack importe.',
                 'details' => $details,
             ];
         } catch (\Throwable $e) {
             if ($transaction) {
-                $wpdb->query('ROLLBACK');
-                $details['rollback_performed'] = 1;
+                if (self::queryOrFail('ROLLBACK', $details, ['step' => 'transaction', 'table' => 'transaction'], false)) {
+                    $details['rollback_performed'] = 1;
+                }
             }
 
             $details['import_status'] = 'failed';
-            $details['errors'][] = 'Import interrompu : ' . $e->getMessage();
+            self::recordError($details, 'Import interrompu : ' . $e->getMessage());
 
             return [
                 'ok' => false,
-                'message' => 'Import annulé.',
+                'message' => 'Import annule.',
                 'details' => $details,
             ];
         }
@@ -201,15 +335,13 @@ final class PedagogicalPackImporter
 
     private static function beginTransaction(array &$details): bool
     {
-        global $wpdb;
-
-        $started = $wpdb->query('START TRANSACTION');
-        if ($started === false) {
-            $details['warnings'][] = 'Transaction SQL indisponible : import effectue sans rollback automatique.';
+        if (!self::queryOrFail('START TRANSACTION', $details, ['step' => 'transaction', 'table' => 'transaction'], false)) {
+            self::recordWarning($details, 'Transaction SQL indisponible : import effectue sans rollback automatique.');
             return false;
         }
 
         $details['transaction_started'] = 1;
+        $details['transaction_used'] = 1;
         return true;
     }
 
@@ -246,7 +378,7 @@ final class PedagogicalPackImporter
 
         foreach ($rows as $row) {
             if (!is_array($row)) {
-                $details['warnings'][] = 'Niveau ignoré : entrée invalide.';
+                self::recordWarning($details, 'Niveau ignore : entree invalide.', ['step' => 'school_levels']);
                 continue;
             }
 
@@ -255,46 +387,18 @@ final class PedagogicalPackImporter
             $sortOrder = isset($row['sort_order']) ? (int) $row['sort_order'] : (isset($row['rank']) ? (int) $row['rank'] : 0);
 
             if ($slug === '' || $label === '') {
-                $details['warnings'][] = 'Niveau ignoré : slug ou label manquant.';
+                self::recordWarning($details, 'Niveau ignore : slug ou label manquant.', ['step' => 'school_levels']);
                 continue;
             }
 
-            $existingId = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$table} WHERE slug = %s",
-                $slug
-            ));
+            $existingId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE slug = %s", $slug));
 
             if ($existingId) {
-                $updated = $wpdb->update(
-                    $table,
-                    [
-                        'label' => $label,
-                        'sort_order' => max(0, $sortOrder),
-                    ],
-                    ['slug' => $slug],
-                    ['%s', '%d'],
-                    ['%s']
-                );
-
-                if ($updated === false) {
-                    $details['warnings'][] = 'Niveau ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::updateOrFail($table, ['label' => $label, 'sort_order' => max(0, $sortOrder)], ['slug' => $slug], ['%s', '%d'], ['%s'], $details, ['step' => 'school_levels', 'object' => 'niveau', 'slug' => $slug])) {
                     $details['school_levels_updated']++;
                 }
             } else {
-                $inserted = $wpdb->insert(
-                    $table,
-                    [
-                        'slug' => $slug,
-                        'label' => $label,
-                        'sort_order' => max(0, $sortOrder),
-                    ],
-                    ['%s', '%s', '%d']
-                );
-
-                if ($inserted === false) {
-                    $details['warnings'][] = 'Niveau ' . $slug . ' : création impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::insertOrFail($table, ['slug' => $slug, 'label' => $label, 'sort_order' => max(0, $sortOrder)], ['%s', '%s', '%d'], $details, ['step' => 'school_levels', 'object' => 'niveau', 'slug' => $slug])) {
                     $details['school_levels_inserted']++;
                 }
             }
@@ -307,13 +411,18 @@ final class PedagogicalPackImporter
 
         $table = $p . 'domains';
 
-        if (!self::tableExists($table)) {
+        if (!self::tableExists($table) && $rows === []) {
             return;
+        }
+
+        if (!self::tableExists($table)) {
+            self::recordError($details, 'Table des domaines indisponible.', ['step' => 'domains', 'table' => $table]);
+            throw new \RuntimeException('Table des domaines indisponible.');
         }
 
         foreach ($rows as $row) {
             if (!is_array($row)) {
-                $details['warnings'][] = 'Domaine ignoré : entrée invalide.';
+                self::recordWarning($details, 'Domaine ignore : entree invalide.', ['step' => 'domains']);
                 continue;
             }
 
@@ -325,7 +434,7 @@ final class PedagogicalPackImporter
             $active = isset($row['active']) ? ((int)$row['active'] === 1 ? 1 : 0) : 1;
 
             if ($slug === '' || $label === '') {
-                $details['warnings'][] = 'Domaine ignoré : slug ou libellé manquant.';
+                self::recordWarning($details, 'Domaine ignore : slug ou libelle manquant.', ['step' => 'domains']);
                 continue;
             }
 
@@ -338,36 +447,14 @@ final class PedagogicalPackImporter
                 'active' => $active,
             ];
 
-            $existingId = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$table} WHERE slug = %s AND track = %s",
-                $slug,
-                $track
-            ));
+            $existingId = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE slug = %s AND track = %s", $slug, $track));
 
             if ($existingId > 0) {
-                $updated = $wpdb->update(
-                    $table,
-                    $payload,
-                    ['id' => $existingId],
-                    ['%s', '%s', '%s', '%s', '%d', '%d'],
-                    ['%d']
-                );
-
-                if ($updated === false) {
-                    $details['warnings'][] = 'Domaine ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::updateOrFail($table, $payload, ['id' => $existingId], ['%s', '%s', '%s', '%s', '%d', '%d'], ['%d'], $details, ['step' => 'domains', 'object' => 'domaine', 'slug' => $slug])) {
                     $details['domains_updated']++;
                 }
             } else {
-                $inserted = $wpdb->insert(
-                    $table,
-                    $payload,
-                    ['%s', '%s', '%s', '%s', '%d', '%d']
-                );
-
-                if ($inserted === false) {
-                    $details['warnings'][] = 'Domaine ' . $slug . ' : création impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::insertOrFail($table, $payload, ['%s', '%s', '%s', '%s', '%d', '%d'], $details, ['step' => 'domains', 'object' => 'domaine', 'slug' => $slug])) {
                     $details['domains_inserted']++;
                 }
             }
@@ -384,44 +471,22 @@ final class PedagogicalPackImporter
             return null;
         }
 
-        $id = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$table} WHERE slug = %s AND track = %s",
-            $slug,
-            $track
-        ));
+        $id = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE slug = %s AND track = %s", $slug, $track));
 
         if ($id > 0) {
-            $wpdb->update(
-                $table,
-                ['label' => $label],
-                ['id' => $id],
-                ['%s'],
-                ['%d']
-            );
-
+            self::updateOrFail($table, ['label' => $label], ['id' => $id], ['%s'], ['%d'], $details, ['step' => 'domains', 'object' => 'domaine', 'slug' => $slug]);
             return $id;
         }
 
-        $inserted = $wpdb->insert(
+        self::insertOrFail(
             $table,
-            [
-                'slug' => $slug,
-                'label' => $label,
-                'track' => $track,
-                'description' => null,
-                'sort_order' => 0,
-                'active' => 1,
-            ],
-            ['%s', '%s', '%s', '%s', '%d', '%d']
+            ['slug' => $slug, 'label' => $label, 'track' => $track, 'description' => null, 'sort_order' => 0, 'active' => 1],
+            ['%s', '%s', '%s', '%s', '%d', '%d'],
+            $details,
+            ['step' => 'domains', 'object' => 'domaine', 'slug' => $slug]
         );
 
-        if ($inserted === false) {
-            $details['warnings'][] = 'Domaine ' . $slug . ' : création automatique impossible — ' . $wpdb->last_error;
-            return null;
-        }
-
         $details['domains_inserted']++;
-
         return (int) $wpdb->insert_id;
     }
 
@@ -433,7 +498,7 @@ final class PedagogicalPackImporter
 
         foreach ($rows as $row) {
             if (!is_array($row)) {
-                $details['warnings'][] = 'Difficulté ignorée : entrée invalide.';
+                self::recordWarning($details, 'Difficulte ignoree : entree invalide.', ['step' => 'difficulties']);
                 continue;
             }
 
@@ -441,42 +506,18 @@ final class PedagogicalPackImporter
             $label = sanitize_text_field((string)($row['label'] ?? ''));
 
             if ($slug === '' || $label === '') {
-                $details['warnings'][] = 'Difficulté ignorée : slug ou label manquant.';
+                self::recordWarning($details, 'Difficulte ignoree : slug ou label manquant.', ['step' => 'difficulties']);
                 continue;
             }
 
-            $existingId = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$table} WHERE slug = %s",
-                $slug
-            ));
+            $existingId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE slug = %s", $slug));
 
             if ($existingId) {
-                $updated = $wpdb->update(
-                    $table,
-                    ['label' => $label],
-                    ['slug' => $slug],
-                    ['%s'],
-                    ['%s']
-                );
-
-                if ($updated === false) {
-                    $details['warnings'][] = 'Difficulté ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::updateOrFail($table, ['label' => $label], ['slug' => $slug], ['%s'], ['%s'], $details, ['step' => 'difficulties', 'object' => 'difficulte', 'slug' => $slug])) {
                     $details['difficulties_updated']++;
                 }
             } else {
-                $inserted = $wpdb->insert(
-                    $table,
-                    [
-                        'slug' => $slug,
-                        'label' => $label,
-                    ],
-                    ['%s', '%s']
-                );
-
-                if ($inserted === false) {
-                    $details['warnings'][] = 'Difficulté ' . $slug . ' : création impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::insertOrFail($table, ['slug' => $slug, 'label' => $label], ['%s', '%s'], $details, ['step' => 'difficulties', 'object' => 'difficulte', 'slug' => $slug])) {
                     $details['difficulties_inserted']++;
                 }
             }
@@ -491,43 +532,42 @@ final class PedagogicalPackImporter
 
         foreach ($rows as $row) {
             if (!is_array($row)) {
-                $details['warnings'][] = 'Compétence ignorée : entrée invalide.';
+                self::recordWarning($details, 'Competence ignoree : entree invalide.', ['step' => 'competencies']);
                 continue;
             }
 
             $slug = sanitize_title((string)($row['slug'] ?? ''));
-
             if ($slug === '') {
-                $details['warnings'][] = 'Compétence ignorée : slug manquant.';
+                self::recordWarning($details, 'Competence ignoree : slug manquant.', ['step' => 'competencies']);
                 continue;
             }
 
             $track = strtoupper(sanitize_text_field((string)($row['track'] ?? 'NSI')));
             $track = $track !== '' ? substr($track, 0, 50) : 'NSI';
-
             $rawLevel = sanitize_text_field((string)($row['level'] ?? ''));
             $level = $rawLevel !== '' ? $rawLevel : self::displayLevelFromRow($p, $row);
-
             $domain = sanitize_text_field((string)($row['domain'] ?? ''));
             $domainSlug = sanitize_key((string)($row['domain_slug'] ?? ''));
-            $domainId = self::ensureDomain($p, $domainSlug, $domain, $track, $details);
-
             $competency = wp_kses_post((string)($row['competency'] ?? ''));
-            $capacity = wp_kses_post((string)($row['capacity'] ?? ''));
-            $example = wp_kses_post((string)($row['example'] ?? ''));
-
-            $referenceUrl = esc_url_raw((string)($row['reference_url'] ?? ''));
-            $active = isset($row['active']) ? (int)$row['active'] : 1;
-            $active = $active === 1 ? 1 : 0;
-
-            $cycle = sanitize_key((string)($row['cycle'] ?? ''));
 
             if ($domain === '' || $domainSlug === '' || trim($competency) === '') {
-                $details['warnings'][] = 'Compétence ignorée : domaine, domaine_slug ou compétence manquant pour ' . $slug . '.';
+                self::recordWarning($details, 'Competence ignoree : domaine, domaine_slug ou competence manquant.', ['step' => 'competencies', 'object' => 'competence', 'slug' => $slug]);
                 continue;
             }
 
-            $label = trim(wp_strip_all_tags($domain . ' — ' . $competency));
+            $domainId = self::ensureDomain($p, $domainSlug, $domain, $track, $details);
+            if ($domainId === null && self::tableExists($p . 'domains')) {
+                self::recordError($details, 'Domaine reference introuvable ou impossible a creer.', ['step' => 'competencies', 'object' => 'competence', 'slug' => $slug]);
+                throw new \RuntimeException('Domaine reference introuvable.');
+            }
+
+            $capacity = wp_kses_post((string)($row['capacity'] ?? ''));
+            $example = wp_kses_post((string)($row['example'] ?? ''));
+            $referenceUrl = esc_url_raw((string)($row['reference_url'] ?? ''));
+            $active = isset($row['active']) ? (int)$row['active'] : 1;
+            $active = $active === 1 ? 1 : 0;
+            $cycle = sanitize_key((string)($row['cycle'] ?? ''));
+            $label = trim(wp_strip_all_tags($domain . ' - ' . $competency));
 
             $payload = [
                 'domain' => $domain,
@@ -543,67 +583,34 @@ final class PedagogicalPackImporter
                 'label' => $label,
                 'cycle' => $cycle !== '' ? $cycle : null,
             ];
-
-            $formats = [
-                '%s', // domain
-                '%s', // domain_slug
-                '%s', // competency
-                '%s', // capacity
-                '%s', // example
-                '%s', // track
-                '%s', // level
-                '%s', // reference_url
-                '%s', // slug
-                '%d', // active
-                '%s', // label
-                '%s', // cycle
-            ];
+            $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s'];
 
             if ($domainId !== null && self::hasColumn($table, 'domain_id')) {
                 $payload = ['domain_id' => $domainId] + $payload;
                 array_unshift($formats, '%d');
             }
 
-            $existingId = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$table} WHERE slug = %s",
-                $slug
-            ));
-
+            $existingId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE slug = %s", $slug));
             $competencyId = 0;
 
             if ($existingId) {
-                $updated = $wpdb->update(
-                    $table,
-                    $payload,
-                    ['slug' => $slug],
-                    $formats,
-                    ['%s']
-                );
-
-                if ($updated === false) {
-                    $details['warnings'][] = 'Compétence ' . $slug . ' : mise à jour impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::updateOrFail($table, $payload, ['slug' => $slug], $formats, ['%s'], $details, ['step' => 'competencies', 'object' => 'competence', 'slug' => $slug])) {
                     $details['competencies_updated']++;
                     $competencyId = (int) $existingId;
                 }
             } else {
-                $inserted = $wpdb->insert(
-                    $table,
-                    $payload,
-                    $formats
-                );
-
-                if ($inserted === false) {
-                    $details['warnings'][] = 'Compétence ' . $slug . ' : création impossible — ' . $wpdb->last_error;
-                } else {
+                if (self::insertOrFail($table, $payload, $formats, $details, ['step' => 'competencies', 'object' => 'competence', 'slug' => $slug])) {
                     $details['competencies_inserted']++;
                     $competencyId = (int) $wpdb->insert_id;
                 }
             }
 
-            if (!empty($competencyId)) {
-                self::syncCompetencySchoolLevelLinks($p, $competencyId, $row, $level, $details);
+            if ($competencyId <= 0) {
+                self::recordError($details, 'Identifiant de competence introuvable apres import.', ['step' => 'competencies', 'object' => 'competence', 'slug' => $slug]);
+                throw new \RuntimeException('Identifiant de competence introuvable apres import.');
             }
+
+            self::syncCompetencySchoolLevelLinks($p, $competencyId, $row, $level, $details);
         }
     }
 
@@ -625,7 +632,8 @@ final class PedagogicalPackImporter
                 if ($levelId !== null) {
                     $levelIds[] = $levelId;
                 } elseif ($levelSlug !== '') {
-                    $details['warnings'][] = "Compétence {$competencyId} : niveau inconnu ({$levelSlug}).";
+                    self::recordError($details, 'Niveau reference inconnu.', ['step' => 'competency_school_levels', 'object' => 'competence', 'slug' => (string) $competencyId]);
+                    throw new \RuntimeException('Niveau reference inconnu.');
                 }
             }
         }
@@ -636,7 +644,8 @@ final class PedagogicalPackImporter
             if ($levelId !== null) {
                 $levelIds[] = $levelId;
             } elseif ($levelSlug !== '') {
-                $details['warnings'][] = "Compétence {$competencyId} : niveau inconnu ({$levelSlug}).";
+                self::recordError($details, 'Niveau reference inconnu.', ['step' => 'competency_school_levels', 'object' => 'competence', 'slug' => (string) $competencyId]);
+                throw new \RuntimeException('Niveau reference inconnu.');
             }
         }
 
@@ -654,157 +663,112 @@ final class PedagogicalPackImporter
         $levelIds = array_values(array_unique(array_filter(array_map('intval', $levelIds))));
 
         if (!$levelIds) {
-            $details['warnings'][] = "Compétence {$competencyId} : aucun niveau scolaire associé.";
+            self::recordWarning($details, 'Aucun niveau scolaire associe a la competence.', ['step' => 'competency_school_levels', 'object' => 'competence', 'slug' => (string) $competencyId]);
             return;
         }
 
-        $wpdb->delete($table, ['competency_id' => $competencyId], ['%d']);
+        self::deleteOrFail($table, ['competency_id' => $competencyId], ['%d'], $details, ['step' => 'competency_school_levels', 'object' => 'competence', 'slug' => (string) $competencyId]);
 
         foreach ($levelIds as $levelId) {
-            $wpdb->insert(
-                $table,
-                [
-                    'competency_id'   => $competencyId,
-                    'school_level_id' => $levelId,
-                ],
-                ['%d', '%d']
-            );
-
-            if (empty($wpdb->last_error)) {
+            if (self::insertOrFail($table, ['competency_id' => $competencyId, 'school_level_id' => $levelId], ['%d', '%d'], $details, ['step' => 'competency_school_levels', 'object' => 'competence', 'slug' => (string) $competencyId])) {
                 $details['competency_school_level_links']++;
-            } else {
-                $details['warnings'][] = "Compétence {$competencyId} : lien niveau impossible — " . $wpdb->last_error;
             }
         }
     }
 
-    private static function importExercises(string $p, array $rows, array &$details): void
-{
-    global $wpdb;
+        private static function importExercises(string $p, array $rows, array &$details): void
+    {
+        global $wpdb;
 
-    $tExercises = $p . 'exercises';
-    $tExerciseSchoolLevel = $p . 'exercise_school_level';
-    $tExerciseCompetency = $p . 'exercise_competency';
-    $tHints = $p . 'hints';
-    $tSolutions = $p . 'solutions';
-    $tExamMeta = $p . 'exam_meta';
-    $tPracticalFiles = $p . 'practical_files';
+        $tExercises = $p . 'exercises';
+        $tExerciseSchoolLevel = $p . 'exercise_school_level';
+        $tExerciseCompetency = $p . 'exercise_competency';
+        $tHints = $p . 'hints';
+        $tSolutions = $p . 'solutions';
+        $tExamMeta = $p . 'exam_meta';
+        $tPracticalFiles = $p . 'practical_files';
 
-    foreach ($rows as $row) {
-        if (!is_array($row)) {
-            $details['warnings'][] = 'Exercice ignoré : entrée invalide.';
-            continue;
-        }
-
-        $slug = sanitize_title((string)($row['slug'] ?? ''));
-        $title = sanitize_text_field((string)($row['title'] ?? ''));
-        $statement = wp_kses_post((string)($row['statement'] ?? ''));
-
-        if ($slug === '' || $title === '' || trim($statement) === '') {
-            $details['warnings'][] = 'Exercice ignoré : slug, titre ou énoncé manquant.';
-            continue;
-        }
-
-        $levelSlug = sanitize_key((string)($row['level_slug'] ?? ''));
-        $difficultySlug = sanitize_key((string)($row['difficulty_slug'] ?? ''));
-
-        $levelId = self::getSchoolLevelIdBySlug($p, $levelSlug);
-        $difficultyId = self::getDifficultyIdBySlug($p, $difficultySlug);
-
-        if ($levelId === null && $levelSlug !== '') {
-            $details['warnings'][] = "Exercice {$slug} : niveau inconnu ({$levelSlug}).";
-        }
-
-        if ($difficultyId === null) {
-            $details['warnings'][] = "Exercice {$slug} : difficulté inconnue ({$difficultySlug}).";
-        }
-
-        $isActive = isset($row['is_active']) ? (int)$row['is_active'] : 1;
-        $isActive = $isActive === 1 ? 1 : 0;
-
-        $payload = [
-            'level_id' => $levelId,
-            'difficulty_id' => $difficultyId,
-            'title' => $title,
-            'slug' => $slug,
-            'statement' => $statement,
-            'is_active' => $isActive,
-        ];
-
-        $formats = [
-            '%d',
-            '%d',
-            '%s',
-            '%s',
-            '%s',
-            '%d',
-        ];
-
-        $existingId = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$tExercises} WHERE slug = %s",
-            $slug
-        ));
-
-        if ($existingId) {
-            $exerciseId = (int)$existingId;
-
-            $updated = $wpdb->update(
-                $tExercises,
-                $payload,
-                ['id' => $exerciseId],
-                $formats,
-                ['%d']
-            );
-
-            if ($updated === false) {
-                $details['warnings'][] = "Exercice {$slug} : mise à jour impossible — " . $wpdb->last_error;
-            } else {
-                $details['exercises_updated']++;
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                self::recordWarning($details, 'Exercice ignore : entree invalide.', ['step' => 'exercises']);
+                continue;
             }
-        } else {
-            $payload['created_at'] = current_time('mysql');
 
-            $inserted = $wpdb->insert(
-                $tExercises,
-                $payload,
-                array_merge($formats, ['%s'])
-            );
+            $slug = sanitize_title((string)($row['slug'] ?? ''));
+            $title = sanitize_text_field((string)($row['title'] ?? ''));
+            $statement = wp_kses_post((string)($row['statement'] ?? ''));
 
-            if ($inserted === false) {
-                $details['warnings'][] = "Exercice {$slug} : création impossible — " . $wpdb->last_error;
-                $exerciseId = 0;
-            } else {
-                $exerciseId = (int)$wpdb->insert_id;
-                $details['exercises_inserted']++;
+            if ($slug === '' || $title === '' || trim($statement) === '') {
+                self::recordError($details, 'Exercice invalide : slug, titre ou enonce manquant.', ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug]);
+                throw new \RuntimeException('Exercice invalide dans le pack.');
             }
+
+            $levelSlug = sanitize_key((string)($row['level_slug'] ?? ''));
+            $difficultySlug = sanitize_key((string)($row['difficulty_slug'] ?? ''));
+            $levelId = self::getSchoolLevelIdBySlug($p, $levelSlug);
+            $difficultyId = self::getDifficultyIdBySlug($p, $difficultySlug);
+
+            if ($levelId === null && $levelSlug !== '') {
+                self::recordError($details, 'Niveau reference inexistant.', ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug]);
+                throw new \RuntimeException('Niveau reference inexistant.');
+            }
+
+            if ($difficultyId === null && $difficultySlug !== '') {
+                self::recordError($details, 'Difficulte referencee inexistante.', ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug]);
+                throw new \RuntimeException('Difficulte referencee inexistante.');
+            }
+
+            if ($difficultyId === null && $difficultySlug === '') {
+                self::recordWarning($details, 'Exercice sans difficulte associee.', ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug]);
+            }
+
+            $isActive = isset($row['is_active']) ? (int)$row['is_active'] : 1;
+            $isActive = $isActive === 1 ? 1 : 0;
+            $payload = ['level_id' => $levelId, 'difficulty_id' => $difficultyId, 'title' => $title, 'slug' => $slug, 'statement' => $statement, 'is_active' => $isActive];
+            $formats = ['%d', '%d', '%s', '%s', '%s', '%d'];
+
+            $existingId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$tExercises} WHERE slug = %s", $slug));
+
+            if ($existingId) {
+                $exerciseId = (int)$existingId;
+                if (self::updateOrFail($tExercises, $payload, ['id' => $exerciseId], $formats, ['%d'], $details, ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug])) {
+                    $details['exercises_updated']++;
+                }
+            } else {
+                $payload['created_at'] = current_time('mysql');
+                if (self::insertOrFail($tExercises, $payload, array_merge($formats, ['%s']), $details, ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug])) {
+                    $exerciseId = (int)$wpdb->insert_id;
+                    $details['exercises_inserted']++;
+                } else {
+                    $exerciseId = 0;
+                }
+            }
+
+            if ($exerciseId <= 0) {
+                self::recordError($details, 'Identifiant exercice introuvable apres import.', ['step' => 'exercises', 'object' => 'exercice', 'slug' => $slug]);
+                throw new \RuntimeException('Identifiant exercice introuvable apres import.');
+            }
+
+            $row['_ouinpo_existing_hints'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$tHints} WHERE exercise_id = %d", $exerciseId));
+            $row['_ouinpo_existing_solutions'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$tSolutions} WHERE exercise_id = %d", $exerciseId));
+            $row['_ouinpo_existing_exam_meta'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$tExamMeta} WHERE exercise_id = %d", $exerciseId));
+
+            self::deleteOrFail($tExerciseSchoolLevel, ['exercise_id' => $exerciseId], ['%d'], $details, ['step' => 'exercise_school_levels', 'object' => 'exercice', 'slug' => $slug]);
+            self::deleteOrFail($tExerciseCompetency, ['exercise_id' => $exerciseId], ['%d'], $details, ['step' => 'exercise_competencies', 'object' => 'exercice', 'slug' => $slug]);
+            self::deleteOrFail($tHints, ['exercise_id' => $exerciseId], ['%d'], $details, ['step' => 'hints', 'object' => 'exercice', 'slug' => $slug]);
+            self::deleteOrFail($tSolutions, ['exercise_id' => $exerciseId], ['%d'], $details, ['step' => 'solutions', 'object' => 'exercice', 'slug' => $slug]);
+            self::deleteOrFail($tExamMeta, ['exercise_id' => $exerciseId], ['%d'], $details, ['step' => 'exam_meta', 'object' => 'exercice', 'slug' => $slug]);
+            self::deleteOrFail($tPracticalFiles, ['exercise_id' => $exerciseId], ['%d'], $details, ['step' => 'practical_files', 'object' => 'exercice', 'slug' => $slug]);
+
+            self::importExerciseSchoolLevelLinks($p, $exerciseId, $levelId, $row, $details);
+            self::importExerciseCompetencyLinks($p, $exerciseId, $row, $details);
+            self::importExerciseHints($p, $exerciseId, $row, $details);
+            self::importExerciseSolutions($p, $exerciseId, $row, $details);
+            self::importExerciseExamMeta($p, $exerciseId, $row, $details);
+            self::importPracticalCalls($p, $exerciseId, $row, $details);
+            self::importPracticalFiles($p, $exerciseId, $row, $details);
         }
-
-        if ($exerciseId <= 0) {
-            $details['warnings'][] = "Exercice {$slug} : impossible de récupérer l’identifiant après import.";
-            continue;
-        }
-
-        /*
-         * Les éléments dépendants du contenu du pack sont remplacés.
-         * On ne touche pas aux données élèves : statuts, tentatives, badges, résultats.
-         */
-        $wpdb->delete($tExerciseSchoolLevel, ['exercise_id' => $exerciseId], ['%d']);
-        $wpdb->delete($tExerciseCompetency, ['exercise_id' => $exerciseId], ['%d']);
-        $wpdb->delete($tHints, ['exercise_id' => $exerciseId], ['%d']);
-        $wpdb->delete($tSolutions, ['exercise_id' => $exerciseId], ['%d']);
-        $wpdb->delete($tExamMeta, ['exercise_id' => $exerciseId], ['%d']);
-        $wpdb->delete($tPracticalFiles, ['exercise_id' => $exerciseId], ['%d']);
-
-        
-        self::importExerciseSchoolLevelLinks($p, $exerciseId, $levelId, $row, $details);
-        self::importExerciseCompetencyLinks($p, $exerciseId, $row, $details);
-        self::importExerciseHints($p, $exerciseId, $row, $details);
-        self::importExerciseSolutions($p, $exerciseId, $row, $details);
-        self::importExerciseExamMeta($p, $exerciseId, $row, $details);
-        self::importPracticalCalls($p, $exerciseId, $row, $details);
-        self::importPracticalFiles($p, $exerciseId, $row, $details);
     }
-}
 
 private static function getSchoolLevelIdBySlug(string $p, string $slug): ?int
 {
@@ -875,7 +839,6 @@ private static function getSchoolLevelIdByLegacyLabel(string $p, string $label):
 
     $slug = sanitize_title($label);
     $aliases = [
-        'Première' => 'premiere',
         'Premiere' => 'premiere',
     ];
 
@@ -930,41 +893,27 @@ private static function getCompetencyIdBySlug(string $p, string $slug): ?int
 
 private static function importExerciseCompetencyLinks(string $p, int $exerciseId, array $row, array &$details): void
 {
-    global $wpdb;
-
     $tExerciseCompetency = $p . 'exercise_competency';
-
     $slugs = $row['competency_slugs'] ?? [];
 
     if (!is_array($slugs)) {
-        $details['warnings'][] = "Exercice {$exerciseId} : competency_slugs doit être un tableau.";
-        return;
+        self::recordError($details, 'competency_slugs doit etre un tableau.', ['step' => 'exercise_competencies', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+        throw new \RuntimeException('competency_slugs invalide.');
     }
 
     foreach ($slugs as $rawSlug) {
         $competencySlug = sanitize_title((string)$rawSlug);
-
         if ($competencySlug === '') {
             continue;
         }
 
         $competencyId = self::getCompetencyIdBySlug($p, $competencySlug);
-
         if ($competencyId === null) {
-            $details['warnings'][] = "Exercice {$exerciseId} : compétence inconnue {$competencySlug}.";
-            continue;
+            self::recordError($details, 'Competence referencee inexistante.', ['step' => 'exercise_competencies', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Competence referencee inexistante.');
         }
 
-        $wpdb->insert(
-            $tExerciseCompetency,
-            [
-                'exercise_id' => $exerciseId,
-                'competency_id' => $competencyId,
-            ],
-            ['%d', '%d']
-        );
-
-        if (empty($wpdb->last_error)) {
+        if (self::insertOrFail($tExerciseCompetency, ['exercise_id' => $exerciseId, 'competency_id' => $competencyId], ['%d', '%d'], $details, ['step' => 'exercise_competencies', 'object' => 'exercice', 'slug' => (string) $exerciseId])) {
             $details['exercise_competency_links']++;
         }
     }
@@ -976,39 +925,36 @@ private static function importExerciseHints(string $p, int $exerciseId, array $r
 
     $tHints = $p . 'hints';
     $hints = $row['hints'] ?? [];
+    $hadExistingHints = !empty($row['_ouinpo_existing_hints']);
 
     if (!is_array($hints)) {
-        $details['warnings'][] = "Exercice {$exerciseId} : hints doit être un tableau.";
-        return;
+        $details['hints_errors']++;
+        self::recordError($details, 'hints doit etre un tableau.', ['step' => 'hints', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+        throw new \RuntimeException('hints invalide.');
     }
 
     foreach ($hints as $index => $hint) {
         if (!is_array($hint)) {
-            $details['warnings'][] = "Exercice {$exerciseId} : indice invalide.";
-            continue;
+            $details['hints_errors']++;
+            self::recordError($details, 'Indice invalide.', ['step' => 'hints', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Indice invalide.');
         }
 
         $order = isset($hint['order']) ? (int)$hint['order'] : ((int)$index + 1);
         $order = max(1, min(255, $order));
-
         $content = wp_kses_post((string)($hint['content'] ?? ''));
-
         if (trim($content) === '') {
             continue;
         }
 
-        $wpdb->insert(
-            $tHints,
-            [
-                'exercise_id' => $exerciseId,
-                'hint_order' => $order,
-                'content' => $content,
-            ],
-            ['%d', '%d', '%s']
-        );
-
-        if (empty($wpdb->last_error)) {
+        $existingId = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$tHints} WHERE exercise_id = %d AND hint_order = %d", $exerciseId, $order));
+        if (self::insertOrFail($tHints, ['exercise_id' => $exerciseId, 'hint_order' => $order, 'content' => $content], ['%d', '%d', '%s'], $details, ['step' => 'hints', 'object' => 'exercice', 'slug' => (string) $exerciseId])) {
             $details['hints_imported']++;
+            if ($existingId > 0 || $hadExistingHints) {
+                $details['hints_updated']++;
+            } else {
+                $details['hints_inserted']++;
+            }
         }
     }
 }
@@ -1019,46 +965,42 @@ private static function importExerciseSolutions(string $p, int $exerciseId, arra
 
     $tSolutions = $p . 'solutions';
     $solutions = $row['solutions'] ?? [];
+    $hadExistingSolutions = !empty($row['_ouinpo_existing_solutions']);
 
     if (!is_array($solutions)) {
-        $details['warnings'][] = "Exercice {$exerciseId} : solutions doit être un tableau.";
-        return;
+        $details['solutions_errors']++;
+        self::recordError($details, 'solutions doit etre un tableau.', ['step' => 'solutions', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+        throw new \RuntimeException('solutions invalide.');
     }
 
     foreach ($solutions as $index => $solution) {
         if (!is_array($solution)) {
-            $details['warnings'][] = "Exercice {$exerciseId} : solution invalide.";
-            continue;
+            $details['solutions_errors']++;
+            self::recordError($details, 'Solution invalide.', ['step' => 'solutions', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Solution invalide.');
         }
 
         $order = isset($solution['order']) ? (int)$solution['order'] : ((int)$index + 1);
         $order = max(1, min(255, $order));
-
         $title = sanitize_text_field((string)($solution['title'] ?? 'Solution'));
         $content = wp_kses_post((string)($solution['content'] ?? ''));
         $isOfficial = isset($solution['is_official']) ? (int)$solution['is_official'] : 0;
         $isOfficial = $isOfficial === 1 ? 1 : 0;
 
         if (trim($content) === '') {
-            continue;
+            $details['solutions_errors']++;
+            self::recordError($details, 'Solution obligatoire vide.', ['step' => 'solutions', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Solution obligatoire vide.');
         }
 
-        $wpdb->insert(
-            $tSolutions,
-            [
-                'exercise_id' => $exerciseId,
-                'title' => $title !== '' ? $title : 'Solution',
-                'content' => $content,
-                'solution_order' => $order,
-                'is_official' => $isOfficial,
-                'created_at' => current_time('mysql'),
-                'updated_at' => null,
-            ],
-            ['%d', '%s', '%s', '%d', '%d', '%s', '%s']
-        );
-
-        if (empty($wpdb->last_error)) {
+        $existingId = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM {$tSolutions} WHERE exercise_id = %d AND solution_order = %d", $exerciseId, $order));
+        if (self::insertOrFail($tSolutions, ['exercise_id' => $exerciseId, 'title' => $title !== '' ? $title : 'Solution', 'content' => $content, 'solution_order' => $order, 'is_official' => $isOfficial, 'created_at' => current_time('mysql'), 'updated_at' => null], ['%d', '%s', '%s', '%d', '%d', '%s', '%s'], $details, ['step' => 'solutions', 'object' => 'exercice', 'slug' => (string) $exerciseId])) {
             $details['solutions_imported']++;
+            if ($existingId > 0 || $hadExistingSolutions) {
+                $details['solutions_updated']++;
+            } else {
+                $details['solutions_inserted']++;
+            }
         }
     }
 }
@@ -1076,7 +1018,9 @@ private static function importExerciseSolutions(string $p, int $exerciseId, arra
 
         $examType = sanitize_key((string)($meta['exam_type'] ?? 'written'));
         if (!in_array($examType, ['written', 'practical_subject'], true)) {
-            $examType = 'written';
+            $details['exam_meta_errors']++;
+            self::recordError($details, 'exam_type invalide.', ['step' => 'exam_meta', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('exam_type invalide.');
         }
 
         $sourceType = sanitize_key((string)($meta['source_type'] ?? 'type_bac'));
@@ -1089,18 +1033,19 @@ private static function importExerciseSolutions(string $p, int $exerciseId, arra
             $bacFormat = null;
         }
 
-        $estimatedMinutes = isset($meta['estimated_minutes']) && $meta['estimated_minutes'] !== null
-            ? max(0, (int)$meta['estimated_minutes'])
-            : null;
-
-        $sortInSubject = isset($meta['sort_in_subject']) && $meta['sort_in_subject'] !== null
-            ? max(0, (int)$meta['sort_in_subject'])
-            : null;
-
+        $estimatedMinutes = isset($meta['estimated_minutes']) && $meta['estimated_minutes'] !== null ? max(0, (int)$meta['estimated_minutes']) : null;
+        $sortInSubject = isset($meta['sort_in_subject']) && $meta['sort_in_subject'] !== null ? max(0, (int)$meta['sort_in_subject']) : null;
         $isExamLike = isset($meta['is_exam_like']) ? (int)$meta['is_exam_like'] : 1;
         $isExamLike = $isExamLike === 1 ? 1 : 0;
 
-        $wpdb->insert(
+        if ($examType === 'practical_subject' && empty($row['practical_calls'])) {
+            $details['exam_meta_errors']++;
+            self::recordError($details, 'Sujet pratique sans appel pratique.', ['step' => 'exam_meta', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Sujet pratique incomplet.');
+        }
+
+        $existed = !empty($row['_ouinpo_existing_exam_meta']) ? 1 : 0;
+        if (self::insertOrFail(
             $tExamMeta,
             [
                 'exercise_id' => $exerciseId,
@@ -1118,26 +1063,23 @@ private static function importExerciseSolutions(string $p, int $exerciseId, arra
                 'created_at' => current_time('mysql'),
                 'updated_at' => current_time('mysql'),
             ],
-            [
-                '%d',
-                '%s',
-                '%s',
-                '%s',
-                '%s',
-                '%s',
-                '%s',
-                '%s',
-                '%d',
-                '%d',
-                '%s',
-                '%d',
-                '%s',
-                '%s',
-            ]
-        );
-
-        if (empty($wpdb->last_error)) {
+            ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%d', '%s', '%s'],
+            $details,
+            ['step' => 'exam_meta', 'object' => 'exercice', 'slug' => (string) $exerciseId]
+        )) {
             $details['exam_meta_imported']++;
+            if ($existed > 0) {
+                $details['exam_meta_updated']++;
+            } else {
+                $details['exam_meta_inserted']++;
+            }
+            if ($examType === 'practical_subject') {
+                if ($existed > 0) {
+                    $details['practical_subjects_updated']++;
+                } else {
+                    $details['practical_subjects_inserted']++;
+                }
+            }
         }
     }
 
@@ -1164,58 +1106,35 @@ private static function importExerciseSolutions(string $p, int $exerciseId, arra
     array $row,
     array &$details
 ): void {
-    global $wpdb;
-
     $table = $p . 'exercise_school_level';
-
     $levelIds = [];
 
-    /*
-     * Cas avancé : un exercice peut être associé à plusieurs niveaux.
-     * Exemple JSON :
-     * "level_slugs": ["premiere", "terminale"]
-     */
     if (!empty($row['level_slugs']) && is_array($row['level_slugs'])) {
         foreach ($row['level_slugs'] as $rawSlug) {
             $levelSlug = sanitize_key((string) $rawSlug);
             $levelId = self::getSchoolLevelIdBySlug($p, $levelSlug);
-
             if ($levelId !== null) {
                 $levelIds[] = $levelId;
             } elseif ($levelSlug !== '') {
-                $details['warnings'][] = "Exercice {$exerciseId} : niveau inconnu ({$levelSlug}).";
+                self::recordError($details, 'Niveau reference inexistant.', ['step' => 'exercise_school_levels', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+                throw new \RuntimeException('Niveau reference inexistant.');
             }
         }
     }
 
-    /*
-     * Cas standard : on utilise level_slug.
-     */
     if ($defaultLevelId !== null) {
         $levelIds[] = $defaultLevelId;
     }
 
     $levelIds = array_values(array_unique(array_filter($levelIds)));
-
     if (!$levelIds) {
-        $details['warnings'][] = "Exercice {$exerciseId} : aucun niveau scolaire associé.";
+        self::recordWarning($details, 'Aucun niveau scolaire associe.', ['step' => 'exercise_school_levels', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
         return;
     }
 
     foreach ($levelIds as $levelId) {
-        $wpdb->insert(
-            $table,
-            [
-                'exercise_id' => $exerciseId,
-                'school_level_id' => $levelId,
-            ],
-            ['%d', '%d']
-        );
-
-        if (empty($wpdb->last_error)) {
+        if (self::insertOrFail($table, ['exercise_id' => $exerciseId, 'school_level_id' => $levelId], ['%d', '%d'], $details, ['step' => 'exercise_school_levels', 'object' => 'exercice', 'slug' => (string) $exerciseId])) {
             $details['exercise_school_level_links']++;
-        } else {
-            $details['warnings'][] = "Exercice {$exerciseId} : lien niveau impossible — " . $wpdb->last_error;
         }
     }
 }
@@ -1225,30 +1144,27 @@ private static function importFlashcards(array $groups, array &$details): void
     global $wpdb;
 
     $pFc = $wpdb->prefix . 'ouin_fc_';
-
     $tDecks = $pFc . 'decks';
     $tCards = $pFc . 'cards';
     $tCardCompetency = $pFc . 'card_competency';
 
     foreach ($groups as $group) {
         if (!is_array($group)) {
-            $details['warnings'][] = 'Groupe de flashcards ignoré : entrée invalide.';
+            self::recordWarning($details, 'Groupe de flashcards ignore : entree invalide.', ['step' => 'flashcards']);
             continue;
         }
 
         $deck = $group['deck'] ?? null;
-
         if (!is_array($deck)) {
-            $details['warnings'][] = 'Groupe de flashcards ignoré : deck manquant.';
+            self::recordWarning($details, 'Groupe de flashcards ignore : deck manquant.', ['step' => 'flashcards']);
             continue;
         }
 
         $deckSlug = sanitize_title((string)($deck['slug'] ?? ''));
         $deckTitle = sanitize_text_field((string)($deck['title'] ?? ''));
-
         if ($deckSlug === '' || $deckTitle === '') {
-            $details['warnings'][] = 'Deck ignoré : slug ou titre manquant.';
-            continue;
+            self::recordError($details, 'Deck invalide : slug ou titre manquant.', ['step' => 'flashcard_decks', 'object' => 'deck', 'slug' => $deckSlug]);
+            throw new \RuntimeException('Deck flashcards invalide.');
         }
 
         $track = strtoupper(sanitize_text_field((string)($deck['track'] ?? 'NSI')));
@@ -1257,10 +1173,16 @@ private static function importFlashcards(array $groups, array &$details): void
         }
 
         $level = sanitize_text_field((string)($deck['level'] ?? ''));
+        $premiereLabel = 'Premi' . "\xC3\xA8" . 're';
+        if (!in_array($level, ['Seconde', 'Premiere', $premiereLabel, 'Terminale', 'Transversal'], true)) {
+            $level = 'Transversal';
+        }
+        if ($level === 'Premiere') {
+            $level = $premiereLabel;
+        }
 
         $isActive = isset($deck['is_active']) ? (int)$deck['is_active'] : 1;
         $isActive = $isActive === 1 ? 1 : 0;
-
         $deckPayload = [
             'title' => $deckTitle,
             'slug' => $deckSlug,
@@ -1271,58 +1193,33 @@ private static function importFlashcards(array $groups, array &$details): void
             'is_active' => $isActive,
             'updated_at' => current_time('mysql'),
         ];
-
-        $deckFormats = [
-            '%s',
-            '%s',
-            '%s',
-            '%s',
-            '%s',
-            '%d',
-            '%d',
-            '%s',
-        ];
-
-        $existingDeckId = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$tDecks} WHERE slug = %s",
-            $deckSlug
-        ));
+        $deckFormats = ['%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s'];
+        $existingDeckId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$tDecks} WHERE slug = %s", $deckSlug));
 
         if ($existingDeckId) {
             $deckId = (int)$existingDeckId;
-
-            $wpdb->update(
-                $tDecks,
-                $deckPayload,
-                ['id' => $deckId],
-                $deckFormats,
-                ['%d']
-            );
-
-            $details['flashcard_decks_updated']++;
+            if (self::updateOrFail($tDecks, $deckPayload, ['id' => $deckId], $deckFormats, ['%d'], $details, ['step' => 'flashcard_decks', 'object' => 'deck', 'slug' => $deckSlug])) {
+                $details['flashcard_decks_updated']++;
+            }
         } else {
             $deckPayload['created_at'] = current_time('mysql');
-
-            $wpdb->insert(
-                $tDecks,
-                $deckPayload,
-                array_merge($deckFormats, ['%s'])
-            );
-
-            $deckId = (int)$wpdb->insert_id;
-            $details['flashcard_decks_inserted']++;
+            if (self::insertOrFail($tDecks, $deckPayload, array_merge($deckFormats, ['%s']), $details, ['step' => 'flashcard_decks', 'object' => 'deck', 'slug' => $deckSlug])) {
+                $deckId = (int)$wpdb->insert_id;
+                $details['flashcard_decks_inserted']++;
+            } else {
+                $deckId = 0;
+            }
         }
 
         if ($deckId <= 0) {
-            $details['warnings'][] = "Deck {$deckSlug} : impossible de récupérer l’identifiant.";
-            continue;
+            self::recordError($details, 'Identifiant du deck introuvable apres import.', ['step' => 'flashcard_decks', 'object' => 'deck', 'slug' => $deckSlug]);
+            throw new \RuntimeException('Identifiant du deck introuvable apres import.');
         }
 
         $cards = $group['cards'] ?? [];
-
         if (!is_array($cards)) {
-            $details['warnings'][] = "Deck {$deckSlug} : cards doit être un tableau.";
-            continue;
+            self::recordError($details, 'cards doit etre un tableau.', ['step' => 'flashcards', 'object' => 'deck', 'slug' => $deckSlug]);
+            throw new \RuntimeException('Cartes flashcards invalides.');
         }
 
         foreach ($cards as $index => $card) {
@@ -1343,124 +1240,72 @@ private static function importFlashcard(
     global $wpdb;
 
     if (!is_array($card)) {
-        $details['warnings'][] = "Deck {$deckSlug} : carte invalide.";
-        return;
+        self::recordError($details, 'Carte invalide.', ['step' => 'flashcards', 'object' => 'deck', 'slug' => $deckSlug]);
+        throw new \RuntimeException('Carte flashcard invalide.');
     }
 
     $frontHtml = wp_kses_post((string)($card['front_html'] ?? ''));
     $backHtml = wp_kses_post((string)($card['back_html'] ?? ''));
-
     if (trim($frontHtml) === '' || trim($backHtml) === '') {
-        $details['warnings'][] = "Deck {$deckSlug} : carte ignorée, recto ou verso manquant.";
-        return;
+        self::recordError($details, 'Carte ignoree : recto ou verso manquant.', ['step' => 'flashcards', 'object' => 'deck', 'slug' => $deckSlug]);
+        throw new \RuntimeException('Carte flashcard incomplete.');
     }
 
     $cardType = sanitize_key((string)($card['card_type'] ?? 'definition'));
     if (!in_array($cardType, ['definition', 'distinction', 'repere', 'syntaxe', 'vocabulaire'], true)) {
         $cardType = 'definition';
     }
-
     $sortOrder = isset($card['sort_order']) ? (int)$card['sort_order'] : ($index + 1);
     $isActive = isset($card['is_active']) ? (int)$card['is_active'] : 1;
     $isActive = $isActive === 1 ? 1 : 0;
 
-    /*
-     * Les cartes n’ont pas encore de slug en base.
-     * On utilise donc un identifiant stable par deck + sort_order.
-     * Si tu modifies l’ordre d’une carte dans un pack, cela créera une autre carte.
-     * C’est acceptable pour la v1.
-     */
-    $existingCardId = $wpdb->get_var($wpdb->prepare(
-        "SELECT id FROM {$tCards}
-         WHERE deck_id = %d
-           AND sort_order = %d",
-        $deckId,
-        $sortOrder
-    ));
-
-    $payload = [
-        'deck_id' => $deckId,
-        'card_type' => $cardType,
-        'front_html' => $frontHtml,
-        'back_html' => $backHtml,
-        'note_teacher' => wp_kses_post((string)($card['note_teacher'] ?? '')),
-        'sort_order' => $sortOrder,
-        'is_active' => $isActive,
-        'updated_at' => current_time('mysql'),
-    ];
-
-    $formats = [
-        '%d',
-        '%s',
-        '%s',
-        '%s',
-        '%s',
-        '%d',
-        '%d',
-        '%s',
-    ];
+    $existingCardId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$tCards} WHERE deck_id = %d AND sort_order = %d", $deckId, $sortOrder));
+    $payload = ['deck_id' => $deckId, 'card_type' => $cardType, 'front_html' => $frontHtml, 'back_html' => $backHtml, 'note_teacher' => wp_kses_post((string)($card['note_teacher'] ?? '')), 'sort_order' => $sortOrder, 'is_active' => $isActive, 'updated_at' => current_time('mysql')];
+    $formats = ['%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s'];
 
     if ($existingCardId) {
         $cardId = (int)$existingCardId;
-
-        $wpdb->update(
-            $tCards,
-            $payload,
-            ['id' => $cardId],
-            $formats,
-            ['%d']
-        );
-
-        $details['flashcards_updated']++;
+        if (self::updateOrFail($tCards, $payload, ['id' => $cardId], $formats, ['%d'], $details, ['step' => 'flashcards', 'object' => 'deck', 'slug' => $deckSlug])) {
+            $details['flashcards_updated']++;
+        }
     } else {
         $payload['created_at'] = current_time('mysql');
-
-        $wpdb->insert(
-            $tCards,
-            $payload,
-            array_merge($formats, ['%s'])
-        );
-
-        $cardId = (int)$wpdb->insert_id;
-        $details['flashcards_inserted']++;
+        if (self::insertOrFail($tCards, $payload, array_merge($formats, ['%s']), $details, ['step' => 'flashcards', 'object' => 'deck', 'slug' => $deckSlug])) {
+            $cardId = (int)$wpdb->insert_id;
+            $details['flashcards_inserted']++;
+        } else {
+            $cardId = 0;
+        }
     }
 
     if ($cardId <= 0) {
-        $details['warnings'][] = "Deck {$deckSlug} : impossible de récupérer l’identifiant d’une carte.";
-        return;
+        self::recordError($details, 'Identifiant de carte introuvable apres import.', ['step' => 'flashcards', 'object' => 'deck', 'slug' => $deckSlug]);
+        throw new \RuntimeException('Identifiant de carte introuvable apres import.');
     }
 
-    $wpdb->delete($tCardCompetency, ['card_id' => $cardId], ['%d']);
+    self::deleteOrFail($tCardCompetency, ['card_id' => $cardId], ['%d'], $details, ['step' => 'flashcard_competencies', 'object' => 'deck', 'slug' => $deckSlug]);
 
     $competencySlugs = $card['competency_slugs'] ?? [];
-
     if (!is_array($competencySlugs)) {
-        $details['warnings'][] = "Carte {$cardId} : competency_slugs doit être un tableau.";
+        self::recordWarning($details, 'competency_slugs doit etre un tableau.', ['step' => 'flashcard_competencies', 'object' => 'deck', 'slug' => $deckSlug]);
         return;
     }
 
     foreach ($competencySlugs as $rawSlug) {
         $competencySlug = sanitize_title((string)$rawSlug);
+        if ($competencySlug === '') {
+            continue;
+        }
         $competencyId = self::getCompetencyIdBySlug($wpdb->prefix . 'ouin_exo_', $competencySlug);
-
         if ($competencyId === null) {
-            $details['warnings'][] = "Carte {$cardId} : compétence inconnue {$competencySlug}.";
+            self::recordWarning($details, 'Competence de flashcard inconnue.', ['step' => 'flashcard_competencies', 'object' => 'deck', 'slug' => $deckSlug]);
             continue;
         }
 
-        $wpdb->insert(
-            $tCardCompetency,
-            [
-                'card_id' => $cardId,
-                'competency_id' => $competencyId,
-            ],
-            ['%d', '%d']
-        );
-
-        if (empty($wpdb->last_error)) {
+        if (self::insertOrFail($tCardCompetency, ['card_id' => $cardId, 'competency_id' => $competencyId], ['%d', '%d'], $details, ['step' => 'flashcard_competencies', 'object' => 'deck', 'slug' => $deckSlug], false)) {
             $details['flashcard_competency_links']++;
         } else {
-            $details['warnings'][] = "Carte {$cardId} : lien compétence impossible — " . $wpdb->last_error;
+            $details['flashcard_competency_link_errors']++;
         }
     }
 }
@@ -1470,107 +1315,54 @@ private static function importPracticalCalls(string $p, int $exerciseId, array $
     global $wpdb;
 
     $calls = $row['practical_calls'] ?? [];
-
     if ($calls === []) {
         return;
     }
-
     if (!is_array($calls)) {
-        $details['warnings'][] = "Exercice {$exerciseId} : practical_calls doit être un tableau.";
-        return;
+        self::recordError($details, 'practical_calls doit etre un tableau.', ['step' => 'practical_calls', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+        throw new \RuntimeException('practical_calls invalide.');
     }
 
     $table = $p . 'practical_calls';
 
     foreach ($calls as $index => $call) {
         if (!is_array($call)) {
-            $details['warnings'][] = "Exercice {$exerciseId} : appel pratique invalide.";
-            continue;
+            self::recordError($details, 'Appel pratique invalide.', ['step' => 'practical_calls', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Appel pratique invalide.');
         }
 
         $callOrder = isset($call['call_order']) ? (int) $call['call_order'] : ((int) $index + 1);
         $callOrder = max(1, min(255, $callOrder));
-
         $title = sanitize_text_field((string)($call['title'] ?? ''));
         $promptHtml = wp_kses_post((string)($call['prompt_html'] ?? ''));
 
         if (trim($promptHtml) === '') {
-            $details['warnings'][] = "Exercice {$exerciseId} : appel {$callOrder} ignoré, prompt_html manquant.";
-            continue;
+            self::recordError($details, 'Appel pratique sans prompt_html.', ['step' => 'practical_calls', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
+            throw new \RuntimeException('Appel pratique incomplet.');
         }
 
         $answerMode = sanitize_key((string)($call['answer_mode'] ?? 'code'));
         if (!in_array($answerMode, ['text', 'code', 'mixed'], true)) {
             $answerMode = 'code';
         }
-
         $maxPoints = null;
         if (isset($call['max_points']) && $call['max_points'] !== null && $call['max_points'] !== '') {
             $maxPoints = (float) $call['max_points'];
         }
-
         $isActive = isset($call['is_active']) ? (int) $call['is_active'] : 1;
         $isActive = $isActive === 1 ? 1 : 0;
-
-        $payload = [
-            'exercise_id' => $exerciseId,
-            'call_order' => $callOrder,
-            'title' => $title !== '' ? $title : null,
-            'prompt_html' => $promptHtml,
-            'ai_rubric' => wp_kses_post((string)($call['ai_rubric'] ?? '')),
-            'answer_mode' => $answerMode,
-            'max_points' => $maxPoints,
-            'is_active' => $isActive,
-            'updated_at' => current_time('mysql'),
-        ];
-
-        $formats = [
-            '%d',
-            '%d',
-            '%s',
-            '%s',
-            '%s',
-            '%s',
-            '%f',
-            '%d',
-            '%s',
-        ];
-
-        $existingId = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$table}
-             WHERE exercise_id = %d
-               AND call_order = %d",
-            $exerciseId,
-            $callOrder
-        ));
+        $payload = ['exercise_id' => $exerciseId, 'call_order' => $callOrder, 'title' => $title !== '' ? $title : null, 'prompt_html' => $promptHtml, 'ai_rubric' => wp_kses_post((string)($call['ai_rubric'] ?? '')), 'answer_mode' => $answerMode, 'max_points' => $maxPoints, 'is_active' => $isActive, 'updated_at' => current_time('mysql')];
+        $formats = ['%d', '%d', '%s', '%s', '%s', '%s', '%f', '%d', '%s'];
+        $existingId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE exercise_id = %d AND call_order = %d", $exerciseId, $callOrder));
 
         if ($existingId) {
-            $wpdb->update(
-                $table,
-                $payload,
-                ['id' => (int) $existingId],
-                $formats,
-                ['%d']
-            );
-
-            if (empty($wpdb->last_error)) {
+            if (self::updateOrFail($table, $payload, ['id' => (int) $existingId], $formats, ['%d'], $details, ['step' => 'practical_calls', 'object' => 'exercice', 'slug' => (string) $exerciseId])) {
                 $details['practical_calls_updated']++;
-            } else {
-                $details['warnings'][] = "Exercice {$exerciseId} : mise à jour appel {$callOrder} impossible — " . $wpdb->last_error;
             }
         } else {
             $payload['created_at'] = current_time('mysql');
-
-            $wpdb->insert(
-                $table,
-                $payload,
-                array_merge($formats, ['%s'])
-            );
-
-            if (empty($wpdb->last_error)) {
+            if (self::insertOrFail($table, $payload, array_merge($formats, ['%s']), $details, ['step' => 'practical_calls', 'object' => 'exercice', 'slug' => (string) $exerciseId])) {
                 $details['practical_calls_inserted']++;
-            } else {
-                $details['warnings'][] = "Exercice {$exerciseId} : création appel {$callOrder} impossible — " . $wpdb->last_error;
             }
         }
     }
@@ -1581,13 +1373,11 @@ private static function importPracticalFiles(string $p, int $exerciseId, array $
     global $wpdb;
 
     $files = $row['practical_files'] ?? [];
-
     if ($files === []) {
         return;
     }
-
     if (!is_array($files)) {
-        $details['warnings'][] = "Exercice {$exerciseId} : practical_files doit être un tableau.";
+        self::recordWarning($details, 'practical_files doit etre un tableau.', ['step' => 'practical_files', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
         return;
     }
 
@@ -1596,14 +1386,13 @@ private static function importPracticalFiles(string $p, int $exerciseId, array $
 
     foreach ($files as $index => $file) {
         if (!is_array($file)) {
-            $details['warnings'][] = "Exercice {$exerciseId} : fichier pratique invalide.";
+            self::recordWarning($details, 'Fichier pratique invalide.', ['step' => 'practical_files', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
             continue;
         }
 
         $label = sanitize_text_field((string)($file['label'] ?? ''));
-
         if ($label === '') {
-            $details['warnings'][] = "Exercice {$exerciseId} : fichier pratique ignoré, label manquant.";
+            self::recordWarning($details, 'Fichier pratique ignore : label manquant.', ['step' => 'practical_files', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
             continue;
         }
 
@@ -1611,59 +1400,23 @@ private static function importPracticalFiles(string $p, int $exerciseId, array $
         if (!in_array($fileKind, ['starter', 'resource', 'subject'], true)) {
             $fileKind = 'starter';
         }
-
         $fileOrder = isset($file['file_order']) ? (int) $file['file_order'] : ((int) $index + 1);
         $fileOrder = max(1, min(255, $fileOrder));
-
         $fileUrl = esc_url_raw((string)($file['file_url'] ?? ''));
-
         $callId = null;
+
         if (isset($file['practical_call_order']) && $file['practical_call_order'] !== null && $file['practical_call_order'] !== '') {
             $callOrder = (int) $file['practical_call_order'];
-
-            $foundCallId = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$tCalls}
-                 WHERE exercise_id = %d
-                   AND call_order = %d",
-                $exerciseId,
-                $callOrder
-            ));
-
+            $foundCallId = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$tCalls} WHERE exercise_id = %d AND call_order = %d", $exerciseId, $callOrder));
             if ($foundCallId) {
                 $callId = (int) $foundCallId;
             } else {
-                $details['warnings'][] = "Exercice {$exerciseId} : fichier {$label}, appel {$callOrder} introuvable.";
+                self::recordWarning($details, 'Fichier pratique lie a un appel introuvable.', ['step' => 'practical_files', 'object' => 'exercice', 'slug' => (string) $exerciseId]);
             }
         }
 
-        $wpdb->insert(
-            $tFiles,
-            [
-                'exercise_id' => $exerciseId,
-                'practical_call_id' => $callId,
-                'wp_attachment_id' => null,
-                'label' => $label,
-                'file_url' => $fileUrl !== '' ? $fileUrl : null,
-                'file_kind' => $fileKind,
-                'file_order' => $fileOrder,
-                'created_at' => current_time('mysql'),
-            ],
-            [
-                '%d',
-                '%d',
-                '%d',
-                '%s',
-                '%s',
-                '%s',
-                '%d',
-                '%s',
-            ]
-        );
-
-        if (empty($wpdb->last_error)) {
+        if (self::insertOrFail($tFiles, ['exercise_id' => $exerciseId, 'practical_call_id' => $callId, 'wp_attachment_id' => null, 'label' => $label, 'file_url' => $fileUrl !== '' ? $fileUrl : null, 'file_kind' => $fileKind, 'file_order' => $fileOrder, 'created_at' => current_time('mysql')], ['%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s'], $details, ['step' => 'practical_files', 'object' => 'exercice', 'slug' => (string) $exerciseId], false)) {
             $details['practical_files_imported']++;
-        } else {
-            $details['warnings'][] = "Exercice {$exerciseId} : fichier {$label} impossible — " . $wpdb->last_error;
         }
     }
 }

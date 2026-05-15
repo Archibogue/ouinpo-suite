@@ -27,6 +27,8 @@ Les contenus sont relies par des slugs stables, jamais par les identifiants nume
 
 L'importeur met a jour les niveaux, domaines, difficultes, competences, exercices, decks et cartes lorsqu'il retrouve les memes slugs ou les memes cles stables. Un second import du meme pack doit donc servir de mise a jour plutot que creer volontairement des doublons.
 
+Le rapport d'import indique desormais clairement `success`, `partial` ou `failed`. Les erreurs SQL sur les contenus indispensables annulent l'import ; si une transaction SQL a pu etre ouverte, l'importeur tente un rollback. Sur une base ou un moteur ne garantissant pas les transactions, le rapport l'indique et ne presente pas l'import comme totalement garanti.
+
 Les donnees eleves, progressions, soumissions et signatures ne sont pas importees ni supprimees par les packs.
 
 ## Schema
