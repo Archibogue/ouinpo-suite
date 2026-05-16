@@ -72,6 +72,7 @@ Write-Host "Copie des fichiers..."
 $excludedRootItems = @(
     "vendor",
     "dist",
+    "scripts",
     "tools",
     ".git",
     ".github",
@@ -82,6 +83,7 @@ $excludedRootItems = @(
     "tmp",
     "temp",
     "logs",
+    "dumps",
     "notes-privees",
     "ouinpo-suite-prod",
     "CSS_additionnels"
@@ -112,6 +114,7 @@ $forbiddenPatterns = @(
     "*.tmp",
     "*.zip",
     "*.tar",
+    "*.tgz",
     "*.tar.gz",
     "*.rar",
     "*.7z",
@@ -150,10 +153,12 @@ $forbiddenDirs = @(
     "tmp",
     "temp",
     "logs",
+    "dumps",
     "notes-privees",
     "ouinpo-suite-prod",
     "CSS_additionnels",
     "tools",
+    "scripts",
     "__MACOSX"
 )
 
@@ -169,6 +174,7 @@ foreach ($dirName in $forbiddenDirs) {
 Remove-Item (Join-Path $packageDir ".distignore") -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $packageDir "packs\ouinpo-pack-test-*.json") -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $packageDir "tools") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $packageDir "scripts") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $packageDir "dist") -Recurse -Force -ErrorAction SilentlyContinue
 
 # ============================================================
@@ -200,7 +206,7 @@ if (!(Test-Path (Join-Path $packageDir "src"))) {
 Write-Host "Contrôle anti-fuite..."
 
 $remainingForbidden = Get-ChildItem -Path $packageDir -Recurse -Force -File | Where-Object {
-    $_.Name -match "\.(sql|sqlite|db|log|bak|backup|old|tmp|zip|rar|7z|wxr|xml)$" -or
+    $_.Name -match "\.(sql|sqlite|db|log|bak|backup|old|tmp|zip|tar|tgz|rar|7z|wxr|xml)$" -or
     $_.Name -in @(".distignore", ".env", "wp-config.php", "config.php", "secrets.php", "auth.json") -or
     $_.Name -like "ouinpo-pack-test-*.json"
 }
