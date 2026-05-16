@@ -11,6 +11,17 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Cooldown serveur anti-spam et fallback exact normalise.
 - Migration douce depuis le corpus historique sans ecraser une configuration existante ni supprimer les progressions.
 - Niveaux Gate alignes sur les niveaux admin dynamiques quand ils existent.
+Version beta technique partageable pour test encadre, non stable pour diffusion large.
+
+### Securite et distribution
+
+- Ajout de `SECURITY.md` avec consignes beta, cles API, donnees eleves et signalement.
+- Ajout d'une CI GitHub Actions minimale : fichiers interdits, syntaxe PHP, JSON des packs et motifs de secrets.
+- Ajout de `scripts/test-dist.ps1` pour verifier localement le zip genere.
+- Verification et durcissement du packaging de distribution.
+- Documentation courte pour demarrage, mise a jour, acces publics/prives, roles/droits, donnees personnelles/IA et limites du plugin.
+- Clarification des packs pedagogiques distribues et des packs de test exclus du zip.
+- Nettoyage des branches distantes obsoletes `droits-capacites-ouinpo` et `niveaux-admin-dynamiques`.
 
 ## [0.5.0] - 2026-05-14
 
