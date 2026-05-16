@@ -2,6 +2,8 @@
 
 Les packs pédagogiques permettent d’importer des contenus dans OuInPo Suite sans utiliser de dump SQL.
 
+Les fichiers presents dans ce dossier doivent etre des packs importables ou le schema JSON de reference. Les anciens exports intermediaires issus de dumps SQL ne doivent pas etre distribues ici.
+
 Un pack peut contenir :
 
 - des compétences du BO ;
