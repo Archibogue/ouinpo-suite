@@ -4,6 +4,13 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 
 ## [0.5.1-beta] - 2026-05-16
 
+### Gate
+
+- Conservation et consolidation des modifications Gate configurables.
+- Validation IA Gate optionnelle via l'usage dedie `gate_validation`.
+- Cooldown serveur anti-spam et fallback exact normalise.
+- Migration douce depuis le corpus historique sans ecraser une configuration existante ni supprimer les progressions.
+- Niveaux Gate alignes sur les niveaux admin dynamiques quand ils existent.
 Version beta technique partageable pour test encadre, non stable pour diffusion large.
 
 ### Securite et distribution
