@@ -45,9 +45,15 @@ temp
 logs
 dist
 dist/*
+scripts
+scripts/*
+scripts/**
 tools
 tools/*
 tools/**
+dumps
+dumps/*
+dumps/**
 
 # Système
 .DS_Store

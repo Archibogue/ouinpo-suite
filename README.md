@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.5.0 : beta technique pour test controle. Le plugin est partageable pour evaluation, installation pilote ou usage encadre, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
+Version 0.5.1-beta : beta technique partageable pour test encadre. Le plugin peut etre evalue par des enseignants volontaires, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
 
@@ -52,6 +52,15 @@ Le depot GitHub de developpement peut contenir des outils de maintenance, par ex
 Le zip installable WordPress doit contenir le dossier du plugin, son code, ses assets, sa documentation publique et les packs pedagogiques prevus. Il ne doit pas contenir le dossier `dist/`, d'anciennes archives, de dumps SQL, d'exports WordPress personnels, de secrets ou de fichiers locaux.
 
 Le zip de distribution est l'archive partagee aux enseignants. Il peut etre produit depuis le depot de developpement, mais il doit rester directement installable dans WordPress comme une extension classique.
+
+Commandes utiles depuis le depot de developpement :
+
+```powershell
+.\tools\build-dist.ps1
+.\scripts\test-dist.ps1
+```
+
+Le script de test reconstruit le zip, verifie la presence de `ouinpo-suite/ouinpo-suite.php`, les chemins internes et l'absence de fichiers interdits.
 
 ## Test sur WordPress vierge
 
@@ -125,6 +134,8 @@ Pour tester les niveaux personnalisés, importer :
 ```text
 packs/ouinpo-pack-demo-niveaux-dynamiques.json
 ```
+
+Les fichiers `packs/ouinpo-pack-test-*.json` sont des packs de test technique du depot. Ils sont exclus du zip de distribution par le script de build.
 
 Après import, vérifier dans l’administration que les exercices, sujets pratiques et flashcards apparaissent bien.
 
@@ -355,7 +366,7 @@ Les différences restantes sont non bloquantes :
 - contraintes étrangères Flashcards présentes sur installation neuve, car les tables sont créées en InnoDB.
 ## Securite, IA et acces publics
 
-OuInPo Suite 0.5.0 ajoute une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas et consignes systeme. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
+OuInPo Suite 0.5.1-beta contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas et consignes systeme. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
 
 Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
 
