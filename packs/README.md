@@ -27,6 +27,10 @@ Un pack ne doit jamais contenir :
 - exports WordPress complets ;
 - dumps SQL.
 
+Avant de partager un pack avec des collegues, verifier aussi qu'il ne contient pas de chemins locaux, d'URL privees, de traces de test nominatives, de captures d'eleves ou de consignes contenant une cle API.
+
+Le pack de demonstration distribue avec la beta sert a tester une installation controlee. Il ne constitue pas un programme officiel complet et doit etre adapte localement avant un usage plus large.
+
 ## Principe général
 
 Les contenus sont reliés par des slugs stables, jamais par les identifiants numériques de la base.

@@ -12,3 +12,14 @@ Avant une mise a jour :
 Pour une installation existante, les acces publics deja ouverts avant `0.5.0` peuvent etre conserves par migration douce. Sur une installation neuve, les acces publics sensibles sont fermes par defaut.
 
 Apres mise a jour, tester au minimum les pages d'exercices, de progression, de flashcards et les modules optionnels utilises par la classe.
+
+## Verification apres mise a jour
+
+- Les tables principales sont presentes dans le diagnostic.
+- Les pages publiques existent encore et contiennent les shortcodes attendus.
+- Les roles `ouinpo_teacher` et `ouinpo_student` existent, ainsi que les roles historiques necessaires aux sites existants.
+- Les options IA restent desactivees ou configurees selon le choix local.
+- Les cles API ne sont pas exportees dans un zip, un dump ou une capture partagee.
+- Les donnees eleves restent sur l'installation WordPress de l'etablissement ou du testeur.
+
+Un retour arriere fiable necessite generalement une restauration de la sauvegarde fichiers et base. Le plugin ne promet pas de downgrade automatique.
