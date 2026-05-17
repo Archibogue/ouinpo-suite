@@ -2,6 +2,12 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.5.2-beta] - 2026-05-17
+
+- Importeur de packs v2 avec prevalidation, erreurs bloquantes, warnings et transaction best-effort.
+- Packs distribues nettoyes.
+- Pack demo minimal rendu autonome.
+
 ## [0.5.1-beta] - 2026-05-16
 
 ### Gate
