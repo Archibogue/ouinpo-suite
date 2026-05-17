@@ -151,6 +151,42 @@
   display: none;
 }
 
+/* Onglets du suivi eleves/prof : le module prof ne charge pas exercises.css. */
+.ouinpo-competences .ouinpo-me-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+  padding-bottom: 8px;
+  position: relative;
+  z-index: 3;
+}
+
+.ouinpo-competences .ouinpo-me-tab {
+  appearance: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 16px;
+  position: relative;
+  pointer-events: auto;
+}
+
+.ouinpo-competences .ouinpo-me-tab::before,
+.ouinpo-competences .ouinpo-me-tab::after {
+  pointer-events: none;
+}
+
+.ouinpo-competences .ouinpo-me-panel {
+  display: none;
+  position: relative;
+  z-index: 1;
+}
+
+.ouinpo-competences .ouinpo-me-panel.is-active {
+  display: block;
+}
+
 /* Boutons d’état */
 .ouinpo-exo .exo-actions .mark-attempt {
   background: #f59e0b;

@@ -87,6 +87,11 @@
     return host && host.dataset ? (host.dataset.nonce || '') : '';
   }
 
+  function getTeacherWrap() {
+    return document.querySelector('.ouinpo-teacher.ouinpo-competences')
+      || document.querySelector('.ouinpo-teacher');
+  }
+
   function fetchJSON(url) {
     const headers = {
       Accept: 'application/json'
@@ -334,7 +339,11 @@ function buildExercisesQuery(params) {
 
   function getActiveTab() {
 
-    const btn = document.querySelector('.ouinpo-me-tab.is-active');
+    const wrap = getTeacherWrap();
+
+    const btn = wrap
+      ? wrap.querySelector('.ouinpo-me-tab.is-active')
+      : document.querySelector('.ouinpo-me-tab.is-active');
 
     return btn ? btn.getAttribute('data-tab') : 'global';
 
@@ -472,9 +481,13 @@ function updateViewFieldVisibility() {
 
     function activateTab(name) {
 
-      const tabs = document.querySelectorAll('.ouinpo-me-tab');
+      const wrap = getTeacherWrap();
 
-      const panels = document.querySelectorAll('.ouinpo-me-panel');
+      if (!wrap) return;
+
+      const tabs = wrap.querySelectorAll('.ouinpo-me-tab');
+
+      const panels = wrap.querySelectorAll('.ouinpo-me-panel');
 
     
 
@@ -506,7 +519,11 @@ function updateViewFieldVisibility() {
 
   function bindTabs() {
 
-    const tabs = document.querySelectorAll('.ouinpo-me-tab');
+    const wrap = getTeacherWrap();
+
+    if (!wrap) return;
+
+    const tabs = wrap.querySelectorAll('.ouinpo-me-tab');
 
     if (!tabs.length) return;
 
