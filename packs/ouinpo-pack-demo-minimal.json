@@ -23,6 +23,11 @@
             "slug": "terminale",
             "label": "Terminale",
             "sort_order": 30
+        },
+        {
+            "slug": "transversal",
+            "label": "Transversal",
+            "sort_order": 40
         }
     ],
     "domains": [
@@ -32,6 +37,30 @@
             "track": "SNT",
             "description": "",
             "sort_order": 10,
+            "active": 1
+        },
+        {
+            "slug": "langages-et-programmation",
+            "label": "Langages et programmation",
+            "track": "NSI",
+            "description": "",
+            "sort_order": 20,
+            "active": 1
+        },
+        {
+            "slug": "algorithmique",
+            "label": "Algorithmique",
+            "track": "NSI",
+            "description": "",
+            "sort_order": 30,
+            "active": 1
+        },
+        {
+            "slug": "autonomie-et-initiative",
+            "label": "Autonomie et initiative",
+            "track": "NSI",
+            "description": "",
+            "sort_order": 40,
             "active": 1
         }
     ],
@@ -85,6 +114,71 @@
             "domain_slug": "programmation-transversale",
             "competency": "Boucles bornées et non bornées",
             "capacity": "Écrire et développer des programmes pour répondre à des problèmes et modéliser des phénomènes physiques, économiques et sociaux.",
+            "example": "",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "NSI-premiere-lang-001",
+            "track": "NSI",
+            "level": "Premi?re",
+            "cycle": null,
+            "domain": "Langages et programmation",
+            "domain_slug": "langages-et-programmation",
+            "competency": "Constructions ?l?mentaires",
+            "capacity": "Mettre en ?vidence un corpus de constructions ?l?mentaires.",
+            "example": "S?quences, affectation, conditionnelles, boucles born?es, boucles non born?es, appels de fonction.",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "NSI-premiere-algo-001",
+            "track": "NSI",
+            "level": "Premi?re",
+            "cycle": null,
+            "domain": "Algorithmique",
+            "domain_slug": "algorithmique",
+            "competency": "Parcours s?quentiel d?un tableau",
+            "capacity": "?crire un algorithme de recherche d?une occurrence sur des valeurs de type quelconque.\r\n?crire un algorithme de recherche d?un extremum, de calcul d?une moyenne.",
+            "example": "On montre que le co?t est lin?aire.",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "Transversal-transversal-autonomie-001",
+            "track": "NSI",
+            "level": "Transversal",
+            "cycle": null,
+            "domain": "Autonomie et initiative",
+            "domain_slug": "autonomie-et-initiative",
+            "competency": "Organise son travail de mani?re autonome et rigoureuse.",
+            "capacity": "",
+            "example": "",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "Transversal-transversal-autonomie-002",
+            "track": "NSI",
+            "level": "Transversal",
+            "cycle": null,
+            "domain": "Autonomie et initiative",
+            "domain_slug": "autonomie-et-initiative",
+            "competency": "Recherche des solutions avant de solliciter de l?aide.",
+            "capacity": "",
+            "example": "",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "Transversal-transversal-autonomie-003",
+            "track": "NSI",
+            "level": "Transversal",
+            "cycle": null,
+            "domain": "Autonomie et initiative",
+            "domain_slug": "autonomie-et-initiative",
+            "competency": "Fait preuve de pers?v?rance face ? une difficult?.",
+            "capacity": "",
             "example": "",
             "reference_url": "",
             "active": 1
