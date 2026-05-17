@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "pack-flashcard-incomplete",
+    "title": "Pack flashcard incomplete",
+    "description": "Fixture technique: deck correct contenant des cartes incompletes.",
+    "author": "OuInPo",
+    "license": "Contenu de test non destine a la diffusion",
+    "created_at": "2026-05-17"
+  },
+  "school_levels": [
+    {
+      "slug": "premiere",
+      "label": "Premiere"
+    }
+  ],
+  "difficulties": [],
+  "competencies": [
+    {
+      "slug": "fixture-nsi-booleens-001",
+      "track": "NSI",
+      "level": "Premiere",
+      "cycle": "premiere",
+      "domain": "Representation des donnees",
+      "domain_slug": "representation-donnees",
+      "competency": "Manipuler des expressions booleennes.",
+      "capacity": "Evaluer une expression booleenne simple.",
+      "example": "Tester une condition composee.",
+      "reference_url": "",
+      "active": 1
+    }
+  ],
+  "exercises": [],
+  "flashcards": [
+    {
+      "deck": {
+        "title": "Fixture - Booleens",
+        "slug": "fixture-booleens-incomplete",
+        "description": "Deck de test contenant une carte incomplete.",
+        "track": "NSI",
+        "level": "Premiere",
+        "is_active": 1
+      },
+      "cards": [
+        {
+          "card_type": "definition",
+          "front_html": "<p>Qu'est-ce qu'un booleen ?</p>",
+          "back_html": "<p>Une valeur logique vraie ou fausse.</p>",
+          "note_teacher": "",
+          "sort_order": 1,
+          "is_active": 1,
+          "competency_slugs": [
+            "fixture-nsi-booleens-001"
+          ]
+        },
+        {
+          "card_type": "definition",
+          "front_html": "",
+          "back_html": "<p>Cette carte n'a pas de recto.</p>",
+          "note_teacher": "Carte volontairement incomplete.",
+          "sort_order": 2,
+          "is_active": 1,
+          "competency_slugs": [
+            "fixture-nsi-booleens-001"
+          ]
+        }
+      ]
+    }
+  ],
+  "badges": []
+}

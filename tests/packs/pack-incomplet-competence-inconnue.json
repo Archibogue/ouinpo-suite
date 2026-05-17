@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "pack-incomplet-competence-inconnue",
+    "title": "Pack incomplet - competence inconnue",
+    "description": "Fixture technique: exercice referencant une competence absente du pack.",
+    "author": "OuInPo",
+    "license": "Contenu de test non destine a la diffusion",
+    "created_at": "2026-05-17"
+  },
+  "school_levels": [
+    {
+      "slug": "premiere",
+      "label": "Premiere"
+    }
+  ],
+  "difficulties": [
+    {
+      "slug": "confirme",
+      "label": "Confirme"
+    }
+  ],
+  "competencies": [],
+  "exercises": [
+    {
+      "title": "Recherche lineaire avec competence manquante",
+      "slug": "fixture-competence-inconnue-recherche-lineaire",
+      "level_slug": "premiere",
+      "difficulty_slug": "confirme",
+      "statement": "<p>Ecrire une fonction de recherche lineaire.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "competence-absente-du-pack"
+      ],
+      "hints": [],
+      "solutions": [],
+      "exam_meta": {
+        "exam_type": "written",
+        "source_type": "fixture",
+        "session_label": "",
+        "year_label": "2026",
+        "center_label": "",
+        "theme_bac": "algorithmique",
+        "bac_format": "ecriture_complete",
+        "estimated_minutes": 10,
+        "is_exam_like": 0,
+        "subject_group": "",
+        "sort_in_subject": null
+      }
+    }
+  ],
+  "flashcards": [],
+  "badges": []
+}
