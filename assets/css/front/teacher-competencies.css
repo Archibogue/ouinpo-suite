@@ -7,6 +7,42 @@
 
 }
 
+/* Onglets : structure commune, independante du theme actif. */
+.ouinpo-teacher .ouinpo-me-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+  padding-bottom: 8px;
+  position: relative;
+  z-index: 3;
+}
+
+.ouinpo-teacher .ouinpo-me-tab {
+  appearance: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 16px;
+  position: relative;
+  pointer-events: auto;
+}
+
+.ouinpo-teacher .ouinpo-me-tab::before,
+.ouinpo-teacher .ouinpo-me-tab::after {
+  pointer-events: none;
+}
+
+.ouinpo-teacher .ouinpo-me-panel {
+  display: none;
+  position: relative;
+  z-index: 1;
+}
+
+.ouinpo-teacher .ouinpo-me-panel.is-active {
+  display: block;
+}
+
 /* =========================
    TOOLBAR
    5 filtres + bouton
