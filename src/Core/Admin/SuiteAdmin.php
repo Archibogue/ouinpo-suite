@@ -3256,6 +3256,11 @@ final class SuiteAdmin
                                     <strong>Avertissements :</strong>
                                     <?php echo esc_html((string) count($value)); ?>
                                 </li>
+                            <?php elseif ($key === 'errors' && is_array($value)): ?>
+                                <li>
+                                    <strong>Erreurs :</strong>
+                                    <?php echo esc_html((string) count($value)); ?>
+                                </li>
                             <?php elseif (!is_array($value)): ?>
                                 <li>
                                     <?php echo esc_html((string) $key); ?> :
@@ -3271,6 +3276,17 @@ final class SuiteAdmin
                             <ul class="ouinpo-suite-disc-list">
                                 <?php foreach ($result['details']['warnings'] as $warning): ?>
                                     <li><?php echo esc_html((string) $warning); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </details>
+                    <?php endif; ?>
+
+                    <?php if (!empty($result['details']['errors']) && is_array($result['details']['errors'])): ?>
+                        <details open>
+                            <summary>Voir les erreurs</summary>
+                            <ul class="ouinpo-suite-disc-list">
+                                <?php foreach ($result['details']['errors'] as $error): ?>
+                                    <li><?php echo esc_html((string) $error); ?></li>
                                 <?php endforeach; ?>
                             </ul>
                         </details>
