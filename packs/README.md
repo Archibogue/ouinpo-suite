@@ -1,10 +1,10 @@
-# Packs pedagogiques OuInPo Suite
+# Packs pédagogiques OuInPo Suite
 
 Ce dossier contient uniquement les packs JSON distribues avec OuInPo Suite `0.5.1-beta`, plus le schema de reference `ouinpo-pack.schema.json`.
 
-Les packs sont construits a partir des donnees du site d'origine, puis nettoyes pour ne conserver que des donnees pedagogiques importables. Les anciens packs de test et packs intermediaires ont ete deplaces dans `tests/packs/` et ne sont pas distribues dans le zip.
+Les packs sont construits a partir des données du site d'origine, puis nettoyes pour ne conserver que des données pedagogiques importables. Les anciens packs de test et packs intermediaires ont ete deplaces dans `tests/packs/` et ne sont pas distribués dans le zip.
 
-## Packs distribues
+## Packs distribués
 
 | Pack | Role | Contenu |
 |---|---|---|
@@ -23,7 +23,7 @@ Le pack `ouinpo-pack-demo-minimal.json` est reserve aux tests d'installation et 
 
 Le pack demo minimal peut etre importe seul sur une installation de test. Il n'est pas necessaire si le referentiel complet est importe.
 
-## Sujet pratiques
+## Sujets pratiques
 
 `ouinpo-pack-exercices-site-origine.json` exclut explicitement les sujets pratiques :
 
