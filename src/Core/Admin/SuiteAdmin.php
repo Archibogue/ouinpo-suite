@@ -130,6 +130,15 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
+            'Première configuration',
+            'Première configuration',
+            Capabilities::MANAGE_SETTINGS,
+            'ouinpo-suite-first-setup',
+            [self::class, 'renderFirstSetup']
+        );
+
+        add_submenu_page(
+            self::ROOT_SLUG,
             'Contenus',
             'Contenus',
             Capabilities::MANAGE_EXERCISES,
@@ -219,8 +228,9 @@ final class SuiteAdmin
     private static function mainTabs(): array
     {
         $tabs = [
-            self::ROOT_SLUG         => 'Tableau de bord',
-            'ouinpo-suite-contents' => 'Contenus',
+            self::ROOT_SLUG              => 'Tableau de bord',
+            'ouinpo-suite-first-setup'   => 'Première configuration',
+            'ouinpo-suite-contents'      => 'Contenus',
         ];
 
         if (ModuleSettings::isEnabled('flashcards')) {
@@ -435,6 +445,84 @@ final class SuiteAdmin
             </p>
         </div>
         <?php
+    }
+
+    public static function renderFirstSetup(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
+            wp_die('Accès refusé.');
+        }
+
+        self::pageIntro(
+            'Première configuration',
+            'Checklist prudente pour préparer une installation OuInPo Suite avant usage avec des collègues ou des élèves.'
+        );
+        self::tabs(self::mainTabs(), 'ouinpo-suite-first-setup');
+
+        $modules = [
+            'exercises' => 'Exercices',
+            'flashcards' => 'Flashcards',
+            'gate' => 'Gate',
+            'segfault' => 'SegFault / IA',
+            'submissions' => 'Submissions',
+            'rechtext' => 'RechText',
+            'meta' => 'Meta',
+        ];
+        ?>
+        <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
+            <div class="card ouinpo-suite-card">
+                <h2 class="ouinpo-suite-card-title">Modules principaux</h2>
+                <table class="widefat striped"><tbody>
+                    <?php foreach ($modules as $id => $label): ?>
+                        <tr>
+                            <th><?php echo esc_html($label); ?></th>
+                            <td><?php self::statusBadge(ModuleSettings::isEnabled($id), 'Actif', 'Inactif'); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody></table>
+            </div>
+            <div class="card ouinpo-suite-card">
+                <h2 class="ouinpo-suite-card-title">Checklist de première installation</h2>
+                <ul class="ouinpo-suite-disc-list">
+                    <li>Créer ou réparer les pages publiques nécessaires.</li>
+                    <li>Importer le pack <code>ouinpo-pack-nsi-complet.json</code> sur une installation de test.</li>
+                    <li>Vérifier que l'IA reste désactivée tant qu'aucun fournisseur n'est configuré.</li>
+                    <li>Contrôler les rôles enseignant et élève avant de créer les comptes.</li>
+                    <li>Lancer le diagnostic final avant partage.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
+            <?php
+            self::quickAction(
+                'Pages & shortcodes',
+                'Créer les pages manquantes ou ajouter les shortcodes attendus.',
+                admin_url('admin.php?page=ouinpo-suite-settings&tab=pages')
+            );
+            self::quickAction(
+                'Import pédagogique',
+                'Importer le pack ouinpo-pack-nsi-complet.json ou un pack de compétences.',
+                admin_url('admin.php?page=ouinpo-suite-settings&tab=import')
+            );
+            self::quickAction(
+                'Réglages IA',
+                'Vérifier que l\'IA est désactivée ou configurer explicitement Albert/OpenAI.',
+                admin_url('admin.php?page=ouinpo-suite-settings&tab=ai')
+            );
+            self::quickAction(
+                'Rôles et droits',
+                'Vérifier les capacités attribuées aux enseignants et aux élèves.',
+                admin_url('admin.php?page=ouinpo-suite-settings&tab=rights')
+            );
+            self::quickAction(
+                'Diagnostic',
+                'Vérifier les tables, options sensibles et données à ne pas exporter.',
+                admin_url('admin.php?page=ouinpo-suite-settings&tab=diagnostic')
+            );
+            ?>
+        </div>
+        <?php
+        self::endPage();
     }
 
     private static function dashboardStats(): array
