@@ -51,6 +51,9 @@ scripts/**
 tools
 tools/*
 tools/**
+tests
+tests/*
+tests/**
 dumps
 dumps/*
 dumps/**

@@ -1,272 +1,73 @@
-# Packs pédagogiques OuInPo Suite
+# Packs pedagogiques OuInPo Suite
 
-Les packs pédagogiques permettent d’importer des contenus dans OuInPo Suite sans utiliser de dump SQL.
+Ce dossier contient uniquement les packs JSON distribues avec OuInPo Suite `0.5.1-beta`, plus le schema de reference `ouinpo-pack.schema.json`.
 
-Les fichiers presents dans ce dossier doivent etre des packs importables ou le schema JSON de reference. Les anciens exports intermediaires issus de dumps SQL ne doivent pas etre distribues ici.
+Les packs sont construits a partir des donnees du site d'origine, puis nettoyes pour ne conserver que des donnees pedagogiques importables. Les anciens packs de test et packs intermediaires ont ete deplaces dans `tests/packs/` et ne sont pas distribues dans le zip.
 
-Un pack peut contenir :
+## Packs distribues
 
-- des compétences du BO ;
-- des exercices ;
-- des indices ;
-- des solutions ;
-- des métadonnées bac ;
-- des flashcards ;
-- plus tard : des sujets pratiques.
+| Pack | Role | Contenu |
+|---|---|---|
+| `ouinpo-pack-demo-minimal.json` | Test rapide de l'import | Quelques niveaux, difficultes, domaines, competences, exercices simples et flashcards de demonstration. |
+| `ouinpo-pack-referentiel-snt-nsi.json` | Base de travail professeur | Niveaux `seconde`, `premiere`, `terminale`, difficultes, domaines et competences SNT/NSI avec slugs stables. Aucun exercice, aucune flashcard. |
+| `ouinpo-pack-flashcards-nsi.json` | Revision active NSI | Decks et flashcards NSI rattaches aux competences quand le lien existe. A importer apres le referentiel. |
+| `ouinpo-pack-exercices-site-origine.json` | Exercices du site d'origine | Exercices non pratiques avec enonces, indices, solutions, niveaux, difficultes, domaines, competences et metadonnees bac disponibles. |
 
-Un pack ne doit jamais contenir :
+Le pack `ouinpo-pack-demo-minimal.json` est reserve aux tests d'installation et de validation rapide. Pour une installation professeur, utiliser plutot le referentiel, puis les flashcards et/ou les exercices.
 
-- comptes élèves ;
-- groupes ou classes réels ;
-- résultats d’élèves ;
-- statuts d’exercices ;
-- historiques de révision ;
-- devoirs rendus ;
+## Ordre d'import recommande
+
+1. `ouinpo-pack-referentiel-snt-nsi.json`
+2. `ouinpo-pack-flashcards-nsi.json`
+3. `ouinpo-pack-exercices-site-origine.json`
+
+Le pack demo minimal peut etre importe seul sur une installation de test. Il n'est pas necessaire si le referentiel complet est importe.
+
+## Sujet pratiques
+
+`ouinpo-pack-exercices-site-origine.json` exclut explicitement les sujets pratiques :
+
+- aucun `exam_meta.exam_type = "practical_subject"` ;
+- aucun `practical_calls` ;
+- aucun `practical_files`.
+
+Les sujets pratiques pourront faire l'objet d'un pack separe dans une version ulterieure, apres validation de l'importeur et du schema attendu.
+
+## Donnees interdites
+
+Un pack distribue ne doit jamais contenir :
+
+- comptes eleves ;
+- noms, prenoms, emails ou identifiants personnels ;
+- groupes ou classes reels ;
+- resultats, tentatives, progressions ou statuts eleves ;
+- badges attribues ;
 - logs ;
-- clés API ;
-- exports WordPress complets ;
-- dumps SQL.
+- adresses IP, user-agents ou traces techniques nominatives ;
+- cles API, tokens ou secrets ;
+- chemins locaux ;
+- exports SQL, exports WordPress complets ou dumps de base.
 
-Avant de partager un pack avec des collegues, verifier aussi qu'il ne contient pas de chemins locaux, d'URL privees, de traces de test nominatives, de captures d'eleves ou de consignes contenant une cle API.
+Les packs de ce dossier doivent rester des fichiers JSON pedagogiques autonomes. Les exports SQL et exports intermediaires ne doivent pas etre ajoutes a `packs/`.
 
-Le pack de demonstration distribue avec la beta sert a tester une installation controlee. Il ne constitue pas un programme officiel complet et doit etre adapte localement avant un usage plus large.
+## Schema
 
-## Principe général
+Le champ `schema_version` reste `"1.0"` pour la version `0.5.1-beta`.
 
-Les contenus sont reliés par des slugs stables, jamais par les identifiants numériques de la base.
+Le fichier `ouinpo-pack.schema.json` documente la structure generale acceptee par l'importeur actuel :
 
-Exemple :
+- `school_levels`
+- `domains`
+- `difficulties`
+- `competencies`
+- `exercises`
+- `flashcards`
+- `badges`
 
-```json
-{
-  "exercise_slug": "recherche-bibliotheque-babel",
-  "competency_slugs": [
-    "nsi-premiere-algorithmique-test-001"
-  ]
-}
-```
+Le champ `badges` reste reserve : les packs distribues ne contiennent pas de badges attribues.
 
-Les niveaux et les difficultés sont créés automatiquement par l’installateur du plugin. Les packs pédagogiques peuvent donc généralement laisser ces tableaux vides :
+## Reimport
 
-```json
-"school_levels": [],
-"difficulties": []
-```
+Les contenus sont relies par des slugs stables, jamais par les identifiants numeriques du site d'origine. Un reimport peut mettre a jour des contenus portant les memes slugs selon le comportement de l'importeur.
 
-## Structure générale d’un pack
-
-```json
-{
-  "schema_version": "1.0",
-  "pack": {
-    "slug": "ouinpo-pack-exemple",
-    "title": "Pack exemple",
-    "description": "Description du pack.",
-    "author": "OuInPo",
-    "license": "Voir CONTENT-LICENSE.md",
-    "created_at": "2026-05-01"
-  },
-  "school_levels": [],
-  "difficulties": [],
-  "competencies": [],
-  "exercises": [],
-  "flashcards": [],
-  "badges": []
-}
-```
-
-## Compétences BO
-
-Format :
-
-```json
-{
-  "slug": "nsi-premiere-algorithmique-001",
-  "track": "NSI",
-  "level": "Première",
-  "cycle": "premiere",
-  "domain": "Algorithmique",
-  "domain_slug": "algorithmique",
-  "competency": "Écrire, mettre au point et exécuter un programme.",
-  "capacity": "Comprendre et mettre en œuvre un algorithme simple.",
-  "example": "Recherche dans un tableau.",
-  "reference_url": "",
-  "active": 1
-}
-```
-
-Champs importants :
-
-- `slug` : identifiant stable de la compétence ;
-- `track` : `SNT` ou `NSI` ;
-- `level` : `Seconde`, `Première`, `Terminale` ou `Transversal` ;
-- `domain_slug` : slug stable du domaine ;
-- `active` : `1` pour visible, `0` pour masquée.
-
-## Exercices
-
-Format :
-
-```json
-{
-  "title": "La recherche dans la bibliothèque de Babel",
-  "slug": "recherche-bibliotheque-babel",
-  "level_slug": "premiere",
-  "difficulty_slug": "confirme",
-  "statement": "<p>Énoncé HTML de l’exercice.</p>",
-  "is_active": 1,
-  "competency_slugs": [
-    "nsi-premiere-algorithmique-001"
-  ],
-  "hints": [
-    {
-      "order": 1,
-      "content": "<p>Premier indice.</p>"
-    }
-  ],
-  "solutions": [
-    {
-      "order": 1,
-      "title": "Solution possible",
-      "content": "<pre><code>def exemple():\\n    return True</code></pre>",
-      "is_official": 1
-    }
-  ],
-  "exam_meta": {
-    "exam_type": "written",
-    "source_type": "type_bac",
-    "session_label": "",
-    "year_label": "",
-    "center_label": "",
-    "theme_bac": "algorithmique",
-    "bac_format": "ecriture_complete",
-    "estimated_minutes": 12,
-    "is_exam_like": 1,
-    "subject_group": "",
-    "sort_in_subject": null
-  }
-}
-```
-
-Champs importants :
-
-- `slug` : identifiant stable de l’exercice ;
-- `level_slug` : niveau principal, par exemple `premiere` ;
-- `level_slugs` : optionnel, pour associer un exercice à plusieurs niveaux ;
-- `difficulty_slug` : `debutant`, `confirme`, `expert` ;
-- `competency_slugs` : compétences associées ;
-- `hints` : indices importés dans l’ordre ;
-- `solutions` : solutions importées dans l’ordre ;
-- `exam_meta` : métadonnées bac.
-
-Lors d’un réimport, l’exercice est mis à jour à partir de son `slug`. Les liens compétences, niveaux, indices, solutions et métadonnées bac sont remplacés par ceux du pack. Les données élèves ne sont pas modifiées.
-
-## Métadonnées bac
-
-Valeurs prévues pour `exam_type` :
-
-```text
-written
-practical_subject
-```
-
-Valeurs prévues pour `source_type` :
-
-```text
-annale
-inspired
-type_bac
-classic
-```
-
-Valeurs prévues pour `bac_format` :
-
-```text
-question_courte
-lecture_code
-code_a_completer
-ecriture_complete
-raisonnement
-```
-
-Exemple :
-
-```json
-"exam_meta": {
-  "exam_type": "written",
-  "source_type": "type_bac",
-  "theme_bac": "algorithmique",
-  "bac_format": "ecriture_complete",
-  "estimated_minutes": 12,
-  "is_exam_like": 1
-}
-```
-
-## Flashcards
-
-Format :
-
-```json
-{
-  "deck": {
-    "title": "NSI Première — Algorithmique",
-    "slug": "nsi-premiere-algorithmique",
-    "description": "Cartes de révision sur l’algorithmique en Première NSI.",
-    "track": "NSI",
-    "level": "Première",
-    "is_active": 1
-  },
-  "cards": [
-    {
-      "card_type": "definition",
-      "front_html": "<p>Qu’est-ce qu’un parcours de tableau ?</p>",
-      "back_html": "<p>C’est le fait de visiter successivement les éléments d’un tableau.</p>",
-      "note_teacher": "",
-      "sort_order": 1,
-      "is_active": 1,
-      "competency_slugs": [
-        "nsi-premiere-algorithmique-001"
-      ]
-    }
-  ]
-}
-```
-
-Valeurs prévues pour `card_type` :
-
-```text
-definition
-distinction
-repere
-syntaxe
-vocabulaire
-```
-
-Les decks sont identifiés par `deck.slug`.
-
-Dans la version actuelle, les cartes sont mises à jour par :
-
-```text
-deck_id + sort_order
-```
-
-Donc il faut conserver un ordre stable dans les packs.
-
-## Import idempotent
-
-Un pack peut être importé plusieurs fois.
-
-Résultat attendu :
-
-- premier import : création ;
-- imports suivants : mise à jour ;
-- pas de doublons ;
-- pas de suppression de données élèves.
-
-## Licence
-
-Chaque pack doit préciser sa licence dans le champ `license`.
-
-Les contenus pédagogiques OuInPo redistribuables sont placés sous la licence indiquée dans `CONTENT-LICENSE.md`.
-
-Les ressources officielles, sujets d’examen, extraits de programmes ou ressources tierces doivent être vérifiés avant redistribution.
+Avant de reimporter sur un site deja utilise avec des enseignants ou des eleves, faire une sauvegarde et tester sur une copie.
