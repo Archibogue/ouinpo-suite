@@ -485,7 +485,7 @@ final class SuiteAdmin
                 <h2 class="ouinpo-suite-card-title">Checklist de première installation</h2>
                 <ul class="ouinpo-suite-disc-list">
                     <li>Créer ou réparer les pages publiques nécessaires.</li>
-                    <li>Importer le pack <code>ouinpo-pack-nsi-complet.json</code> sur une installation de test.</li>
+                    <li>Importer le pack démo minimal <code>packs/ouinpo-pack-demo-minimal.json</code> pour un test rapide, ou importer <code>packs/ouinpo-pack-referentiel-snt-nsi.json</code>, puis <code>packs/ouinpo-pack-flashcards-nsi.json</code> et <code>packs/ouinpo-pack-exercices-site-origine.json</code> pour une installation professeur.</li>
                     <li>Vérifier que l'IA reste désactivée tant qu'aucun fournisseur n'est configuré.</li>
                     <li>Contrôler les rôles enseignant et élève avant de créer les comptes.</li>
                     <li>Lancer le diagnostic final avant partage.</li>
@@ -501,7 +501,7 @@ final class SuiteAdmin
             );
             self::quickAction(
                 'Import pédagogique',
-                'Importer le pack ouinpo-pack-nsi-complet.json ou un pack de compétences.',
+                'Importer le pack démo minimal pour un test rapide, ou le référentiel, puis les flashcards et les exercices pour une installation professeur.',
                 admin_url('admin.php?page=ouinpo-suite-settings&tab=import')
             );
             self::quickAction(

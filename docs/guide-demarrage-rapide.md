@@ -1,6 +1,6 @@
 # Guide de demarrage rapide
 
-Ce guide vise une installation de test encadree de OuInPo Suite `0.5.1-beta`.
+Ce guide vise une installation de test encadree de OuInPo Suite `0.5.2-beta`.
 
 1. Installer WordPress 6.4 ou plus avec PHP 8.1 ou plus.
 2. Installer le zip du plugin depuis **Extensions > Ajouter une extension > Televerser une extension**.

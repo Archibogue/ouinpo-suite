@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.5.1-beta : beta technique partageable pour test encadre. Le plugin peut etre evalue par des enseignants volontaires, mais il ne doit pas etre presente comme stable pour une diffusion large sans validation sur le site cible.
+Version 0.5.2-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics et cadre IA/donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
 
@@ -133,21 +133,23 @@ Un pack peut déclarer ses propres niveaux dans `school_levels`, avec un `slug`,
 
 Un pack peut aussi déclarer ses domaines dans `domains`, avec `slug`, `label`, `track`, `description`, `sort_order` et `active`. Si un pack ancien ne déclare pas `domains`, l'import crée ou met à jour le domaine à partir des champs de compatibilité de chaque compétence.
 
-Pour une installation de démonstration, importer par exemple :
+Pour un test rapide, importer :
 
 ```text
-packs/ouinpo-pack-demo.json
+packs/ouinpo-pack-demo-minimal.json
 ```
 
-Pour tester les niveaux personnalisés, importer :
+Pour une installation professeur, importer dans cet ordre :
 
 ```text
-packs/ouinpo-pack-demo-niveaux-dynamiques.json
+packs/ouinpo-pack-referentiel-snt-nsi.json
+packs/ouinpo-pack-flashcards-nsi.json
+packs/ouinpo-pack-exercices-site-origine.json
 ```
 
-Les fichiers `packs/ouinpo-pack-test-*.json` sont des packs de test technique du depot. Ils sont exclus du zip de distribution par le script de build.
+Les sujets pratiques ne sont pas encore distribues dans ces packs. Les fichiers `packs/ouinpo-pack-test-*.json`, lorsqu'ils existent dans le depot de travail, sont des packs de test technique exclus du zip de distribution par le script de build.
 
-Après import, vérifier dans l’administration que les exercices, sujets pratiques et flashcards apparaissent bien.
+Après import, vérifier dans l’administration que les exercices et flashcards apparaissent bien.
 
 ## Pages WordPress et shortcodes
 
@@ -385,7 +387,7 @@ Les différences restantes sont non bloquantes :
 - contraintes étrangères Flashcards présentes sur installation neuve, car les tables sont créées en InnoDB.
 ## Securite, IA et acces publics
 
-OuInPo Suite 0.5.1-beta contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas et consignes systeme. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
+OuInPo Suite 0.5.2-beta contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas et consignes systeme. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
 
 Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
 
