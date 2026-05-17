@@ -18,3 +18,11 @@ Capacites importantes :
 - `ouinpo_view_student_data` : consultation des donnees eleves.
 
 Les roles historiques `prof` et `eleve` peuvent recevoir les capacites utiles pour compatibilite. Les eleves ne doivent pas recevoir `upload_files` pour les depots OuInPo.
+
+## Points de verification
+
+- Verifier quels modules sont actifs avant de distribuer des liens aux eleves.
+- Verifier les pages publiques et les shortcodes presents.
+- Verifier les options d'acces public des exercices, solutions, sujets pratiques et IA.
+- Ne pas donner les capacites d'administration globale a un compte qui ne doit gerer que des contenus pedagogiques.
+- Tester avec un compte enseignant et un compte eleve distincts avant une utilisation en classe.

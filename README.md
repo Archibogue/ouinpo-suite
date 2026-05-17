@@ -10,6 +10,16 @@ Version 0.5.1-beta : beta technique partageable pour test encadre. Le plugin peu
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
 
+## Pour commencer
+
+- Guide de demarrage rapide : [`docs/guide-demarrage-rapide.md`](docs/guide-demarrage-rapide.md).
+- Ce que le plugin fait ou ne fait pas encore : [`docs/ce-que-fait-le-plugin.md`](docs/ce-que-fait-le-plugin.md).
+- Mise a jour d'une installation existante : [`docs/mise-a-jour.md`](docs/mise-a-jour.md).
+- Roles et droits : [`docs/roles-et-droits.md`](docs/roles-et-droits.md).
+- Acces publics et prives : [`docs/acces-publics-prives.md`](docs/acces-publics-prives.md).
+- Donnees personnelles et IA : [`docs/modele-donnees-personnelles-ia.md`](docs/modele-donnees-personnelles-ia.md).
+- Politique de securite : [`SECURITY.md`](SECURITY.md).
+
 ## Fonctionnalités principales
 
 - Banque d’exercices NSI / SNT
@@ -257,7 +267,7 @@ Le lien "En savoir plus" des notices IA est vide par defaut. L'enseignant peut r
 
 ### Page recommandee : donnees personnelles, IA et usages pedagogiques
 
-Il est recommande de creer une page locale expliquant les usages pedagogiques de l'IA, les donnees a ne pas saisir, les limites des reponses automatiques, les personnes a contacter et le cadre applicable dans l'etablissement. Aucun modele de page complet n'est fourni dans cette version.
+Il est recommande de creer une page locale expliquant les usages pedagogiques de l'IA, les donnees a ne pas saisir, les limites des reponses automatiques, les personnes a contacter et le cadre applicable dans l'etablissement. Un modele adaptable est fourni dans `docs/modele-donnees-personnelles-ia.md`.
 
 Avant toute utilisation avec des élèves, il est recommandé de :
 
@@ -288,6 +298,15 @@ Avant de partager une archive du plugin, ne jamais inclure :
 ## Roles et capacites
 
 Les roles actuels sont `ouinpo_teacher` et `ouinpo_student`. Les anciens roles `prof` et `eleve` restent supportes pour compatibilite avec les installations existantes et certains modules historiques. Les deux familles peuvent donc coexister volontairement.
+
+| Profil | Role attendu |
+|---|---|
+| Administrateur WordPress | Installe le plugin, active les modules, configure les pages, configure l'IA, gere les reglages globaux, les roles et les capacites. |
+| Enseignant OuInPo | Gere les exercices, competences, classes/groupes si le module le permet, soumissions, evaluations et badges selon les capacites attribuees. |
+| Eleve OuInPo | Consulte les exercices autorises, repond, suit sa progression, utilise les flashcards, accede eventuellement aux badges et au Gate. |
+| Visiteur | Accede uniquement aux pages publiques. L'IA publique n'est disponible que si l'administrateur l'active explicitement. |
+
+Les droits reels dependent des modules actives, des options du plugin, des roles/capacites WordPress et des reglages de visibilite des pages. Voir aussi `docs/roles-et-droits.md` et `docs/acces-publics-prives.md`.
 
 ## Diagnostic
 

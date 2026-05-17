@@ -22,6 +22,7 @@ Version beta technique partageable pour test encadre, non stable pour diffusion 
 - Documentation courte pour demarrage, mise a jour, acces publics/prives, roles/droits, donnees personnelles/IA et limites du plugin.
 - Clarification des packs pedagogiques distribues et des packs de test exclus du zip.
 - Nettoyage des branches distantes obsoletes `droits-capacites-ouinpo` et `niveaux-admin-dynamiques`.
+- Documentation beta completee : parcours de demarrage, prudence sur les donnees eleves, cles API, exports SQL, acces publics et verification des roles.
 
 ## [0.5.0] - 2026-05-14
 

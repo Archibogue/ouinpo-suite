@@ -17,5 +17,8 @@ Il ne fait pas automatiquement :
 - publication controlee par defaut de toutes les solutions ;
 - verification parfaite des reponses IA ;
 - sauvegarde complete du site WordPress.
+- conformite RGPD automatique ;
+- remplacement d'un ENT ou LMS complet ;
+- compatibilite certifiee avec tous les themes et extensions.
 
-Pour une beta, tester sur une installation pilote avant un usage large.
+Pour une beta, tester sur une installation pilote avant un usage large. Creer au minimum un compte enseignant et un compte eleve de test, verifier les pages publiques, puis controler les donnees visibles avant tout usage avec une classe.
