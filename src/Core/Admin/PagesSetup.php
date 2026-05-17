@@ -62,7 +62,7 @@ final class PagesSetup
                                         type="checkbox"
                                         name="pages[]"
                                         value="<?php echo esc_attr($key); ?>"
-                                        <?php checked($status !== 'ok'); ?>
+                                        <?php checked(self::shouldRepair($status)); ?>
                                     >
                                 </td>
                                 <td>
@@ -79,11 +79,26 @@ final class PagesSetup
                                         Slug : <code><?php echo esc_html((string) $page['slug']); ?></code>
                                     </p>
                                 </td>
-                                <td><code><?php echo esc_html((string) $page['shortcode']); ?></code></td>
+                                <td>
+                                    <?php if (!empty($page['shortcode'])): ?>
+                                        <code><?php echo esc_html((string) $page['shortcode']); ?></code>
+                                    <?php else: ?>
+                                        <span class="ouinpo-suite-muted">Contenu statique</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php if ($existing): ?>
                                         <?php if ($status === 'ok'): ?>
                                             <span class="ouinpo-suite-status ouinpo-suite-status--success">Correcte</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php elseif ($status === 'content_custom'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Contenu personnalisé à vérifier</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php elseif ($status === 'content_empty'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Contenu vide</span>
+                                            <span class="ouinpo-suite-muted"> - </span>
+                                        <?php elseif ($status === 'content_short'): ?>
+                                            <span class="ouinpo-suite-status ouinpo-suite-status--warning">Contenu trop court</span>
                                             <span class="ouinpo-suite-muted"> - </span>
                                         <?php else: ?>
                                             <span class="ouinpo-suite-status ouinpo-suite-status--warning">Shortcode manquant</span>
@@ -141,7 +156,7 @@ final class PagesSetup
             }
 
             $existing = self::findPage((string) $page['slug']);
-            $content = (string) $page['shortcode'];
+            $content = (string) ($page['content'] ?? $page['shortcode']);
 
             if ($existing) {
                 $update = [
@@ -149,9 +164,15 @@ final class PagesSetup
                     'post_title' => $title,
                 ];
 
-                if (!self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])) {
+                if (!empty($page['shortcode']) && !self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])) {
                     $update['post_content'] = self::appendShortcode((string) $existing->post_content, (string) $page['shortcode']);
                     $repaired++;
+                } elseif (empty($page['shortcode'])) {
+                    $status = self::pageStatus($page, $existing);
+                    if ($status === 'content_empty' || $status === 'content_short') {
+                        $update['post_content'] = $content;
+                        $repaired++;
+                    }
                 }
 
                 $result = wp_update_post($update, true);
@@ -180,7 +201,7 @@ final class PagesSetup
             add_settings_error(
                 'ouinpo_suite_pages',
                 'pages_saved',
-                sprintf('%d page(s) creee(s), %d page(s) mise(s) a jour, %d shortcode(s) ajoute(s).', $created, $updated, $repaired),
+                sprintf('%d page(s) créée(s), %d page(s) mise(s) à jour, %d contenu(s) réparé(s).', $created, $updated, $repaired),
                 'updated'
             );
         } else {
@@ -235,6 +256,12 @@ final class PagesSetup
                 'title' => 'Carte du site',
                 'slug' => 'carte-du-site',
                 'shortcode' => '[ouinpo_site_map]',
+            ],
+            'privacy_ai' => [
+                'title' => 'Données personnelles, IA et usages pédagogiques',
+                'slug' => 'donnees-personnelles-ia',
+                'shortcode' => '',
+                'content' => self::privacyAiPageContent(),
             ],
         ];
 
@@ -308,15 +335,56 @@ final class PagesSetup
         return $page instanceof \WP_Post ? $page : null;
     }
 
+    private static function privacyAiPageContent(): string
+    {
+        return "<!-- ouinpo-privacy-ai-template -->\n"
+            . "<h2>Données personnelles, IA et usages pédagogiques</h2>\n\n"
+            . "<p>Cette page est un modèle à adapter par l'établissement. Elle explique les usages pédagogiques du site et ne suffit pas, à elle seule, à garantir une conformité juridique complète.</p>\n\n"
+            . "<h3>Données possibles</h3>\n"
+            . "<p>Selon les modules activés, le site peut stocker des progressions d'exercices, compétences, badges, révisions de flashcards, devoirs, soumissions, progression Gate, signatures Gate, dates, messages et traces techniques limitées.</p>\n\n"
+            . "<h3>IA optionnelle</h3>\n"
+            . "<p>Les fonctions IA sont désactivées par défaut. Un administrateur doit les activer et configurer explicitement un fournisseur. Il est recommandé de ne pas saisir de données personnelles dans les prompts IA et de relire les réponses produites.</p>\n\n"
+            . "<h3>Adaptation locale</h3>\n"
+            . "<p>Chaque établissement doit adapter cette page à ses outils, ses durées de conservation, ses contacts et ses procédures internes.</p>";
+    }
+
     private static function pageStatus(array $page, ?\WP_Post $existing): string
     {
         if (!$existing) {
             return 'missing';
         }
 
+        if (empty($page['shortcode'])) {
+            return self::staticPageStatus((string) $existing->post_content);
+        }
+
         return self::containsShortcode((string) $existing->post_content, (string) $page['shortcode'])
             ? 'ok'
             : 'shortcode_missing';
+    }
+
+    private static function staticPageStatus(string $content): string
+    {
+        $text = trim(wp_strip_all_tags($content));
+
+        if ($text === '') {
+            return 'content_empty';
+        }
+
+        if (str_contains($content, 'ouinpo-privacy-ai-template')) {
+            return 'ok';
+        }
+
+        if (strlen($text) < 220) {
+            return 'content_short';
+        }
+
+        return 'content_custom';
+    }
+
+    private static function shouldRepair(string $status): bool
+    {
+        return in_array($status, ['missing', 'shortcode_missing', 'content_empty', 'content_short'], true);
     }
 
     private static function containsShortcode(string $content, string $shortcode): bool
