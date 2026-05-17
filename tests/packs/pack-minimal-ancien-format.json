@@ -1,0 +1,16 @@
+{
+  "version": "0.1",
+  "slug": "pack-minimal-ancien-format",
+  "title": "Pack minimal ancien format",
+  "description": "Fixture technique: pack volontairement au format historique, sans enveloppe pack v1.",
+  "items": [
+    {
+      "type": "competency",
+      "slug": "legacy-nsi-algorithmique-001",
+      "track": "NSI",
+      "level": "Premiere",
+      "domain": "Algorithmique",
+      "label": "Comprendre un algorithme simple"
+    }
+  ]
+}

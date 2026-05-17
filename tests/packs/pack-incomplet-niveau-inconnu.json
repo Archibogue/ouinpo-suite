@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "pack-incomplet-niveau-inconnu",
+    "title": "Pack incomplet - niveau inconnu",
+    "description": "Fixture technique: exercice referencant un niveau absent du pack.",
+    "author": "OuInPo",
+    "license": "Contenu de test non destine a la diffusion",
+    "created_at": "2026-05-17"
+  },
+  "school_levels": [
+    {
+      "slug": "premiere",
+      "label": "Premiere"
+    }
+  ],
+  "difficulties": [
+    {
+      "slug": "debutant",
+      "label": "Debutant"
+    }
+  ],
+  "competencies": [
+    {
+      "slug": "fixture-nsi-structures-donnees-001",
+      "track": "NSI",
+      "level": "Premiere",
+      "cycle": "premiere",
+      "domain": "Structures de donnees",
+      "domain_slug": "structures-donnees",
+      "competency": "Manipuler une structure de donnees simple.",
+      "capacity": "Choisir une liste pour representer une collection ordonnee.",
+      "example": "Stocker une suite de mesures.",
+      "reference_url": "",
+      "active": 1
+    }
+  ],
+  "exercises": [
+    {
+      "title": "Niveau inconnu dans un exercice",
+      "slug": "fixture-niveau-inconnu-exercice",
+      "level_slug": "niveau-fantome",
+      "difficulty_slug": "debutant",
+      "statement": "<p>Identifier le niveau cible avant import.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "fixture-nsi-structures-donnees-001"
+      ],
+      "hints": [],
+      "solutions": [],
+      "exam_meta": {
+        "exam_type": "training",
+        "source_type": "fixture",
+        "session_label": "",
+        "year_label": "2026",
+        "center_label": "",
+        "theme_bac": "structures-donnees",
+        "bac_format": "",
+        "estimated_minutes": 5,
+        "is_exam_like": 0,
+        "subject_group": "",
+        "sort_in_subject": null
+      }
+    }
+  ],
+  "flashcards": [],
+  "badges": []
+}
