@@ -1,0 +1,242 @@
+{
+    "schema_version": "1.0",
+    "pack": {
+        "slug": "ouinpo-pack-demo-minimal",
+        "title": "Pack démo minimal OuInPo",
+        "description": "Pack très court extrait du site d'origine pour tester l'import : quelques niveaux, difficultés, domaines, compétences, exercices simples et flashcards de démonstration. Aucune donnée élève.",
+        "author": "OuInPo",
+        "license": "CC BY-NC-SA 4.0",
+        "created_at": "2026-05-17"
+    },
+    "school_levels": [
+        {
+            "slug": "seconde",
+            "label": "Seconde",
+            "sort_order": 10
+        },
+        {
+            "slug": "premiere",
+            "label": "Première",
+            "sort_order": 20
+        },
+        {
+            "slug": "terminale",
+            "label": "Terminale",
+            "sort_order": 30
+        }
+    ],
+    "domains": [
+        {
+            "slug": "programmation-transversale",
+            "label": "Programmation (transversale)",
+            "track": "SNT",
+            "description": "",
+            "sort_order": 10,
+            "active": 1
+        }
+    ],
+    "difficulties": [
+        {
+            "slug": "debutant",
+            "label": "Débutant"
+        },
+        {
+            "slug": "confirme",
+            "label": "Confirmé"
+        },
+        {
+            "slug": "expert",
+            "label": "Expert"
+        }
+    ],
+    "competencies": [
+        {
+            "slug": "SNT-seconde-programmation-001",
+            "track": "SNT",
+            "level": "Seconde",
+            "cycle": null,
+            "domain": "Programmation (transversale)",
+            "domain_slug": "programmation-transversale",
+            "competency": "Affectations, variables\r\nSéquences",
+            "capacity": "Écrire et développer des programmes pour répondre à des problèmes et modéliser des phénomènes physiques, économiques et sociaux.",
+            "example": "",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "SNT-seconde-programmation-002",
+            "track": "SNT",
+            "level": "Seconde",
+            "cycle": null,
+            "domain": "Programmation (transversale)",
+            "domain_slug": "programmation-transversale",
+            "competency": "Instructions conditionnelles",
+            "capacity": "Écrire et développer des programmes pour répondre à des problèmes et modéliser des phénomènes physiques, économiques et sociaux.",
+            "example": "",
+            "reference_url": "",
+            "active": 1
+        },
+        {
+            "slug": "SNT-seconde-programmation-003",
+            "track": "SNT",
+            "level": "Seconde",
+            "cycle": null,
+            "domain": "Programmation (transversale)",
+            "domain_slug": "programmation-transversale",
+            "competency": "Boucles bornées et non bornées",
+            "capacity": "Écrire et développer des programmes pour répondre à des problèmes et modéliser des phénomènes physiques, économiques et sociaux.",
+            "example": "",
+            "reference_url": "",
+            "active": 1
+        }
+    ],
+    "exercises": [
+        {
+            "title": "Mélange d’élixir d’Archibogue (variables, entrées/sorties, conversions)",
+            "slug": "melange-elixir-archibogue",
+            "level_slug": "premiere",
+            "difficulty_slug": "debutant",
+            "statement": "<p>Dans son laboratoire du <em>Collège de ’Pataphysique Appliquée</em>, le Professeur Archibald Bogue expérimente un nouvel élixir censé rendre les ordinateurs plus poétiques.</p>\r\n<p>La recette indique : <strong>40&nbsp;%</strong> d’essence de «&nbsp;Ou&nbsp;», <strong>35&nbsp;%</strong> d’essence de «&nbsp;In&nbsp;» et le reste en eau pure de Fontaine du Code.</p>\r\n<ol>\r\n  <li>Demande à l’utilisateur le <strong>volume total</strong> à préparer (en millilitres).</li>\r\n  <li>Calcule la quantité de chaque composant en millilitres.</li>\r\n  <li><strong>Arrondis</strong> chaque valeur à l’entier le plus proche et affiche un récapitulatif clair et harmonieux.</li>\r\n</ol>\r\n<p>Un exercice pour manier les <strong>variables</strong>, les <strong>calculs</strong> et les <strong>entrées utilisateur</strong> sans renverser la fiole du compilateur.</p>\r\n",
+            "is_active": 1,
+            "competency_slugs": [
+                "NSI-premiere-lang-001"
+            ],
+            "hints": [
+                {
+                    "order": 1,
+                    "content": "<p><strong>Indice 1 :</strong> commence par <code>total = int(input(...))</code>.</p>\r\n"
+                },
+                {
+                    "order": 2,
+                    "content": "<p><strong>Indice 2 :</strong> utilise les pourcentages via <code>total * 0.40</code> et <code>total * 0.35</code>.</p>\r\n"
+                },
+                {
+                    "order": 3,
+                    "content": "<p><strong>Indice 3 :</strong> arrondis avec <code>round()</code>, puis calcule l’eau avec <code>total - ou - iin</code>.</p>\r\n"
+                }
+            ],
+            "solutions": [
+                {
+                    "order": 1,
+                    "title": "Soluce",
+                    "content": "<pre><code>total = int(input(\\\"Volume total (mL) : \\\"))\r\nou = round(total * 0.40)\r\niin = round(total * 0.35)\r\neau = total - ou - iin\r\nprint(f\\\"Élixir d’Archibogue ({total} mL) :\\\")\r\nprint(f\\\"- Essence de Ou  : {ou} mL\\\")\r\nprint(f\\\"- Essence de In  : {iin} mL\\\")\r\nprint(f\\\"- Eau            : {eau} mL\\\")</code></pre>\r\n",
+                    "is_official": 1
+                }
+            ],
+            "exam_meta": {
+                "exam_type": "written",
+                "source_type": "classic",
+                "session_label": "",
+                "year_label": "",
+                "center_label": "",
+                "theme_bac": "",
+                "bac_format": "",
+                "estimated_minutes": 10,
+                "is_exam_like": 0,
+                "subject_group": "",
+                "sort_in_subject": null
+            }
+        },
+        {
+            "title": "Kayak à R’lyeh (palindromes)",
+            "slug": "kayak-a-rlyeh",
+            "level_slug": "premiere",
+            "difficulty_slug": "confirme",
+            "statement": "<p>Lors d’une expédition dans les bibliothèques englouties de <strong>R’lyeh</strong>, Archibogue découvre que certaines inscriptions se lisent aussi bien à l’endroit qu’à l’envers… des <em>palindromes</em> Lovecraftiens&nbsp;!</p>\r\n<p>Un mot est un <strong>palindrome</strong> s’il se lit pareil dans les deux sens (ex.&nbsp;: <code>kayak</code>, <code>level</code>, ou <code>radar</code>).</p>\r\n<ol>\r\n  <li>Écris un programme qui lit un mot et affiche <code>PALINDROME</code> s’il en est un, <code>PAS PALINDROME</code> sinon.</li>\r\n  <li>Résous le problème <strong>sans utiliser de tranchage</strong>, en parcourant la chaîne et en comparant des caractères placés symétriquement.</li>\r\n  <li><strong>Bonus :</strong> propose ensuite une autre écriture plus courte si tu connais déjà un autre procédé.</li>\r\n</ol>\r\n<p>Un exercice pour apprivoiser les <strong>chaînes de caractères</strong> et les <strong>conditions</strong>, sans sombrer dans les abysses de R’lyeh.</p>\r\n",
+            "is_active": 1,
+            "competency_slugs": [
+                "NSI-premiere-algo-001",
+                "NSI-premiere-lang-001"
+            ],
+            "hints": [
+                {
+                    "order": 1,
+                    "content": "<p><strong>Indice 1 :</strong> compare la première lettre avec la dernière, puis la deuxième avec l’avant-dernière, etc.</p>"
+                },
+                {
+                    "order": 2,
+                    "content": "<p><strong>Indice 2 :</strong> pour un indice <code>i</code>, compare <code>s[i]</code> et <code>s[len(s)-1-i]</code> ; il suffit d’aller jusqu’à la moitié de la chaîne.</p>"
+                },
+                {
+                    "order": 3,
+                    "content": "<p><strong>Indice 3 :</strong> normalise l’entrée avec <code>.strip().lower()</code>.</p>"
+                }
+            ],
+            "solutions": [
+                {
+                    "order": 1,
+                    "title": "Soluce",
+                    "content": "<pre><code>s = input(\\\"Mot : \\\").strip().lower()\r\n\r\nest_pal = True\r\nfor i in range(len(s) // 2):\r\n    if s[i] != s[len(s) - 1 - i]:\r\n        est_pal = False\r\n        break\r\n\r\nif est_pal:\r\n    print(\\\"PALINDROME\\\")\r\nelse:\r\n    print(\\\"PAS PALINDROME\\\")</code></pre>\r\n\r\n<p><strong>Bonus possible :</strong> si tu connais déjà le tranchage de chaîne, tu peux aussi comparer <code>s</code> à son renversé, mais ce n’est pas la méthode attendue ici.</p>",
+                    "is_official": 1
+                }
+            ],
+            "exam_meta": {
+                "exam_type": "written",
+                "source_type": "classic",
+                "session_label": "",
+                "year_label": "",
+                "center_label": "",
+                "theme_bac": "",
+                "bac_format": "",
+                "estimated_minutes": 25,
+                "is_exam_like": 0,
+                "subject_group": "",
+                "sort_in_subject": null
+            }
+        }
+    ],
+    "flashcards": [
+        {
+            "deck": {
+                "title": "Lire un sujet pratique",
+                "slug": "mnemo-lire-un-sujet-pratique",
+                "description": "Révision active du cours « Lire un sujet pratique » : cartes de connaissance centrées sur les notions à mémoriser, les définitions, les distinctions utiles et les points de compréhension.",
+                "track": "NSI",
+                "level": "Transversal",
+                "is_active": 1
+            },
+            "cards": [
+                {
+                    "card_type": "definition",
+                    "front_html": "<p>Pourquoi faut-il lire les exemples avant d’écrire la fonction ?</p>",
+                    "back_html": "<p>Les exemples montrent le comportement attendu. Ils permettent de comprendre le format des entrées, la forme du résultat et parfois les cas particuliers que la fonction doit gérer.</p>",
+                    "note_teacher": "",
+                    "sort_order": 10,
+                    "is_active": 1,
+                    "competency_slugs": [
+                        "Transversal-transversal-autonomie-001",
+                        "Transversal-transversal-autonomie-002",
+                        "Transversal-transversal-autonomie-003"
+                    ]
+                },
+                {
+                    "card_type": "syntaxe",
+                    "front_html": "<p>Pourquoi le test avec des nombres négatifs est-il utile pour une fonction maximum ?</p>",
+                    "back_html": "<p>Il permet de vérifier que la fonction ne suppose pas à tort que le maximum est positif ou égal à 0. C’est un cas qui révèle souvent une mauvaise initialisation.</p>",
+                    "note_teacher": "",
+                    "sort_order": 20,
+                    "is_active": 1,
+                    "competency_slugs": [
+                        "Transversal-transversal-autonomie-001",
+                        "Transversal-transversal-autonomie-002",
+                        "Transversal-transversal-autonomie-003"
+                    ]
+                },
+                {
+                    "card_type": "definition",
+                    "front_html": "<p>À quoi servent les exemples dans un sujet pratique ?</p>",
+                    "back_html": "<p>Les exemples du sujet sont les premiers tests.</p>",
+                    "note_teacher": "",
+                    "sort_order": 30,
+                    "is_active": 1,
+                    "competency_slugs": [
+                        "Transversal-transversal-autonomie-001",
+                        "Transversal-transversal-autonomie-002",
+                        "Transversal-transversal-autonomie-003"
+                    ]
+                }
+            ]
+        }
+    ],
+    "badges": []
+}
