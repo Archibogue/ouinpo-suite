@@ -1991,6 +1991,7 @@ public static function render_practical_subject($atts = array(), $content = '') 
 
 
   $table_exam_meta = $wpdb->prefix . 'ouin_exo_exam_meta';
+  $table_exercises = $wpdb->prefix . 'ouin_exo_exercises';
 
   $is_practical = (int) $wpdb->get_var($wpdb->prepare(
 
@@ -2014,11 +2015,37 @@ public static function render_practical_subject($atts = array(), $content = '') 
 
   }
 
+  $is_active = (int) $wpdb->get_var($wpdb->prepare(
+
+    "SELECT is_active
+
+     FROM {$table_exercises}
+
+     WHERE id = %d
+
+     LIMIT 1",
+
+    $id
+
+  ));
+
+  $can_preview_hidden = Capabilities::can(Capabilities::MANAGE_PRACTICAL_SUBJECTS);
+
+  if ($is_active !== 1 && !$can_preview_hidden) {
+
+    return '<p>Ce sujet pratique n’est pas disponible.</p>';
+
+  }
+
 
 
   $is_logged = is_user_logged_in();
 
   $ai_notice = self::render_ai_notice('practical');
+
+  $preview_notice = $is_active !== 1
+    ? '<div class="ouinpo-alert ouinpo-practical-hidden-notice">Ce sujet est masqué côté élèves.</div>'
+    : '';
 
 
 
@@ -2035,6 +2062,8 @@ return '
     </div>
 
 
+
+    ' . $preview_notice . '
 
     <div class="ouinpo-practical-statement"></div>
 

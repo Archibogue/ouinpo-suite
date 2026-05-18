@@ -974,7 +974,8 @@ final class PedagogicalPackImporter
             $details['warnings'][] = "Exercice {$slug} : difficulté inconnue ({$difficultySlug}).";
         }
 
-        $isActive = isset($row['is_active']) ? (int)$row['is_active'] : 1;
+        $hasExplicitIsActive = array_key_exists('is_active', $row);
+        $isActive = $hasExplicitIsActive ? (int)$row['is_active'] : 1;
         $isActive = $isActive === 1 ? 1 : 0;
 
         $payload = [
@@ -999,6 +1000,15 @@ final class PedagogicalPackImporter
             "SELECT id FROM {$tExercises} WHERE slug = %s",
             $slug
         ));
+
+        if (!$hasExplicitIsActive && $existingId) {
+            $existingIsActive = $wpdb->get_var($wpdb->prepare(
+                "SELECT is_active FROM {$tExercises} WHERE id = %d",
+                (int) $existingId
+            ));
+            $isActive = (int) $existingIsActive === 1 ? 1 : 0;
+            $payload['is_active'] = $isActive;
+        }
 
         if ($existingId) {
             $exerciseId = (int)$existingId;

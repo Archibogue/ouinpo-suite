@@ -103,7 +103,8 @@ if (is_admin()) {
     add_action('admin_menu', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'register_menu']);
     add_action('admin_enqueue_scripts', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'enqueue_admin_styles']);
     add_action('admin_post_ouinpo_export_exercises_csv', ['\\Ouinpo\\Exercises\\Admin\\AdminMenu', 'handle_export_exercises_csv']);
-    add_action('admin_post_ouinpo_save_practical_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_save']);
+    add_action('admin_post_ouinpo_save_practical_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_save']);
+    add_action('admin_post_ouinpo_toggle_practical_subject_visibility', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_toggle_visibility']);
     
     add_action('admin_notices', function () {
         if (!class_exists('\\Ouinpo\\Exercises\\Admin\\AdminMenu')) {

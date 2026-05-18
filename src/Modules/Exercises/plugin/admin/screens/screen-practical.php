@@ -124,6 +124,10 @@ final class ScreenPractical
         echo '<div class="wrap">';
         echo '<h1>Sujets pratiques</h1>';
 
+        if (isset($_GET['visibility_updated']) && $_GET['visibility_updated'] === '1') {
+            echo '<div class="notice notice-success is-dismissible"><p>VisibilitÃ© du sujet pratique mise Ã  jour.</p></div>';
+        }
+
         if (isset($_GET['saved']) && $_GET['saved'] === '1') {
             echo '<div class="notice notice-success is-dismissible"><p>Sujet pratique enregistré.</p></div>';
         }
@@ -138,18 +142,34 @@ final class ScreenPractical
         } else {
             echo '<table class="widefat striped">';
             echo '<thead><tr>';
-            echo '<th>ID</th><th>Titre</th><th>Session</th><th>Thème</th><th>Dossier</th><th></th>';
+            echo '<th>ID</th><th>Titre</th><th>Session</th><th>Thème</th><th>Dossier</th><th>Statut</th><th></th>';
             echo '</tr></thead><tbody>';
 
             foreach ($subjects as $row) {
                 $edit_url = esc_url(self::redirect_url(['subject_id' => (int) $row['id']]));
+                $is_visible = (int) $row['is_active'] === 1;
+                $toggle_action = $is_visible ? 'hide' : 'show';
+                $toggle_label = $is_visible ? 'Masquer' : 'Afficher';
+                $toggle_url = wp_nonce_url(
+                    add_query_arg(
+                        [
+                            'action'     => 'ouinpo_toggle_practical_subject_visibility',
+                            'subject_id' => (int) $row['id'],
+                            'visibility' => $toggle_action,
+                        ],
+                        admin_url('admin-post.php')
+                    ),
+                    'ouinpo_toggle_practical_subject_visibility_' . (int) $row['id']
+                );
                 echo '<tr>';
                 echo '<td>' . (int) $row['id'] . '</td>';
                 echo '<td>' . esc_html($row['title']) . '</td>';
                 echo '<td>' . esc_html((string) $row['session_label']) . ' ' . esc_html((string) $row['year_label']) . '</td>';
                 echo '<td>' . esc_html((string) $row['theme_bac']) . '</td>';
                 echo '<td><code>' . esc_html((string) $row['subject_group']) . '</code></td>';
-                echo '<td><a class="button button-small" href="' . $edit_url . '">Éditer</a></td>';
+                echo '<td>' . ($is_visible ? 'Visible' : 'Masqué') . '</td>';
+                echo '<td><a class="button button-small" href="' . $edit_url . '">Éditer</a> ';
+                echo '<a class="button button-small" href="' . esc_url($toggle_url) . '">' . esc_html($toggle_label) . '</a></td>';
                 echo '</tr>';
             }
 
@@ -179,6 +199,12 @@ final class ScreenPractical
         echo '<tr><th scope="row"><label for="practical-slug">Slug</label></th><td>';
         echo '<input name="slug" id="practical-slug" type="text" class="regular-text" value="' . esc_attr((string) ($subject['slug'] ?? '')) . '">';
         echo '<p class="description">Laisse vide pour le générer automatiquement.</p>';
+        echo '</td></tr>';
+
+        $subject_visible = $subject ? ((int) ($subject['is_active'] ?? 1) === 1) : true;
+        echo '<tr><th scope="row">Visibilité</th><td>';
+        echo '<label><input type="checkbox" name="is_active" value="1" ' . checked($subject_visible, true, false) . '> Sujet visible côté élèves</label>';
+        echo '<p class="description">Un sujet masqué reste accessible ici pour les professeurs et administrateurs.</p>';
         echo '</td></tr>';
 
         echo '<tr><th scope="row">Niveaux</th><td>';
@@ -387,9 +413,25 @@ final class ScreenPractical
         $school_levels = isset($_POST['school_levels']) && is_array($_POST['school_levels'])
             ? array_map('intval', wp_unslash($_POST['school_levels']))
             : [];
+        $is_active = isset($_POST['is_active']) ? 1 : 0;
         if ($title === '') {
             wp_safe_redirect(self::redirect_url(['subject_id' => $subject_id]));
             exit;
+        }
+
+        if ($subject_id > 0) {
+            $is_practical_subject = (int) $wpdb->get_var($wpdb->prepare("
+                SELECT COUNT(*)
+                FROM {$tExo} e
+                INNER JOIN {$tExam} em ON em.exercise_id = e.id
+                WHERE e.id = %d
+                  AND em.exam_type = 'practical_subject'
+            ", $subject_id));
+
+            if ($is_practical_subject <= 0) {
+                wp_safe_redirect(self::redirect_url());
+                exit;
+            }
         }
 
         if ($subject_id > 0) {
@@ -400,7 +442,7 @@ final class ScreenPractical
                     'slug'          => $slug,
                     'statement'     => $statement,
                     'difficulty_id' => $difficulty_id,
-                    'is_active'     => 1,
+                    'is_active'     => $is_active,
                 ],
                 ['id' => $subject_id],
                 ['%s', '%s', '%s', '%d', '%d'],
@@ -415,7 +457,7 @@ final class ScreenPractical
                     'title'          => $title,
                     'slug'           => $slug,
                     'statement'      => $statement,
-                    'is_active'      => 1,
+                    'is_active'      => $is_active,
                     'created_at'     => current_time('mysql'),
                 ],
                 ['%d', '%d', '%s', '%s', '%s', '%d', '%s']
@@ -568,6 +610,51 @@ final class ScreenPractical
         wp_safe_redirect(self::redirect_url([
             'subject_id' => $subject_id,
             'saved'      => 1,
+        ]));
+        exit;
+    }
+
+    public static function handle_toggle_visibility(): void {
+        if (!Capabilities::can(Capabilities::MANAGE_PRACTICAL_SUBJECTS)) {
+            wp_die('Accès refusé.');
+        }
+
+        global $wpdb;
+
+        $subject_id = isset($_GET['subject_id']) ? (int) $_GET['subject_id'] : 0;
+        $visibility = isset($_GET['visibility']) ? sanitize_key(wp_unslash((string) $_GET['visibility'])) : '';
+
+        if ($subject_id <= 0 || !in_array($visibility, ['hide', 'show'], true)) {
+            wp_safe_redirect(self::redirect_url());
+            exit;
+        }
+
+        check_admin_referer('ouinpo_toggle_practical_subject_visibility_' . $subject_id);
+
+        $tExo = self::table('exercises');
+        $tExam = self::table('exam_meta');
+
+        $exists = (int) $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$tExo} e
+            INNER JOIN {$tExam} em ON em.exercise_id = e.id
+            WHERE e.id = %d
+              AND em.exam_type = 'practical_subject'
+        ", $subject_id));
+
+        if ($exists > 0) {
+            $wpdb->update(
+                $tExo,
+                ['is_active' => $visibility === 'show' ? 1 : 0],
+                ['id' => $subject_id],
+                ['%d'],
+                ['%d']
+            );
+        }
+
+        wp_safe_redirect(self::redirect_url([
+            'subject_id'         => $subject_id,
+            'visibility_updated' => 1,
         ]));
         exit;
     }

@@ -123,6 +123,7 @@ class Screen_Import_Exercises {
                                     $difficulty_id = $difficulty_map[$difficulty_slug];
                                 }
 
+                                $has_active_col = self::has_any_column($cols, ['is_active', 'active']);
                                 $is_active_raw = self::csv_value($row, $cols, ['is_active', 'active']);
                                 $is_active     = self::normalize_bool($is_active_raw, 1);
 
@@ -181,8 +182,11 @@ class Screen_Import_Exercises {
                                     'title'     => $title,
                                     'slug'      => $slug,
                                     'statement' => $statement_html,
-                                    'is_active' => $is_active,
                                 ];
+
+                                if ($has_active_col || $existing_id === 0) {
+                                    $exercise_data['is_active'] = $is_active;
+                                }
 
                                 if ($difficulty_id !== null) {
                                     $exercise_data['difficulty_id'] = $difficulty_id;

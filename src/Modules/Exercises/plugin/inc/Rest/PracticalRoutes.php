@@ -178,7 +178,11 @@ class PracticalRoutes {
         return in_array($raw, $allowed, true) ? $raw : '';
     }
 
-    private static function get_subject_row(int $exercise_id): ?array {
+    private static function can_preview_hidden_subjects(): bool {
+        return \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_PRACTICAL_SUBJECTS);
+    }
+
+    private static function get_subject_row(int $exercise_id, bool $include_hidden = false): ?array {
         global $wpdb;
 
         $tExo   = self::table('exercises');
@@ -210,7 +214,7 @@ class PracticalRoutes {
             LEFT JOIN {$tDiff} d
                 ON d.id = e.difficulty_id
             WHERE e.id = %d
-              AND e.is_active = 1
+              " . ($include_hidden ? '' : 'AND e.is_active = 1') . "
               AND em.exam_type = 'practical_subject'
             LIMIT 1
         ", $exercise_id), ARRAY_A);
@@ -325,13 +329,17 @@ class PracticalRoutes {
             return new \WP_Error('invalid_id', 'Identifiant invalide', ['status' => 400]);
         }
 
-        $row = self::get_subject_row($id);
+        $row = self::get_subject_row($id, self::can_preview_hidden_subjects());
 
         if (!$row) {
             return new \WP_Error('not_found', 'Sujet pratique introuvable', ['status' => 404]);
         }
 
-        return rest_ensure_response($row);
+        if ((int) ($row['is_active'] ?? 0) !== 1) {
+            $row['_preview_notice'] = 'Ce sujet est masqué côté élèves.';
+        }
+
+        return rest_ensure_response($row);
     }
 
     public static function calls(\WP_REST_Request $r) {
@@ -343,7 +351,7 @@ class PracticalRoutes {
             return new \WP_Error('invalid_id', 'Identifiant invalide', ['status' => 400]);
         }
 
-        if (!self::get_subject_row($exercise_id)) {
+        if (!self::get_subject_row($exercise_id, self::can_preview_hidden_subjects())) {
             return new \WP_Error('not_found', 'Sujet pratique introuvable', ['status' => 404]);
         }
 
@@ -375,7 +383,7 @@ public static function files(\WP_REST_Request $r) {
         return new \WP_Error('invalid_id', 'Identifiant invalide', ['status' => 400]);
     }
 
-    if (!self::get_subject_row($exercise_id)) {
+    if (!self::get_subject_row($exercise_id, self::can_preview_hidden_subjects())) {
         return new \WP_Error('not_found', 'Sujet pratique introuvable', ['status' => 404]);
     }
 

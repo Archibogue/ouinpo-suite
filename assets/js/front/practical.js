@@ -900,7 +900,7 @@ function themeBacLabel(theme) {
 
 
 
-  function createCallCard(subjectId, call, currentStatus, isLogged) {
+  function createCallCard(subjectId, call, currentStatus, isLogged, previewOnly) {
 
     const card = document.createElement('article');
 
@@ -949,6 +949,15 @@ function themeBacLabel(theme) {
     }
 
 
+
+    if (previewOnly) {
+      html += '<div class="exo-answer-box ouinpo-practical-answer-box">';
+      html += '  <p class="exo-answer-help">Ce sujet est masqué côté élèves. La correction IA est désactivée en prévisualisation.</p>';
+      html += '</div>';
+      card.innerHTML = html;
+      setCallStatus(card, currentStatus);
+      return card;
+    }
 
     html += '<div class="exo-answer-box ouinpo-practical-answer-box">';
 
@@ -1281,6 +1290,7 @@ function themeBacLabel(theme) {
       if (subject.center_label) chips.push('<span class="ouinpo-badge">' + escapeHtml(subject.center_label) + '</span>');
 
       if (subject.estimated_minutes) chips.push('<span class="ouinpo-badge">~ ' + escapeHtml(String(subject.estimated_minutes)) + ' min</span>');
+      if (subject._preview_notice) chips.push('<span class="ouinpo-badge">' + escapeHtml(subject._preview_notice) + '</span>');
 
 
 
@@ -1358,7 +1368,7 @@ function themeBacLabel(theme) {
 
           const status = progressMap[String(call.id)] || 'none';
 
-          callsBlock.appendChild(createCallCard(subjectId, call, status, isLogged));
+          callsBlock.appendChild(createCallCard(subjectId, call, status, isLogged, subject && Number(subject.is_active) !== 1));
 
         });
 
