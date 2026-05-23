@@ -1,6 +1,7 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Exercises\PracticalFiles;
 use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
@@ -17,6 +18,128 @@ final class ScreenPractical
             array_merge(['page' => 'ouinpo-practical-subjects'], $args),
             admin_url('admin.php')
         );
+    }
+
+    private static function is_practical_subject(int $subject_id): bool {
+        if ($subject_id <= 0) {
+            return false;
+        }
+
+        global $wpdb;
+
+        $tExo = self::table('exercises');
+        $tExam = self::table('exam_meta');
+
+        return (int) $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$tExo} e
+            INNER JOIN {$tExam} em ON em.exercise_id = e.id
+            WHERE e.id = %d
+              AND em.exam_type = 'practical_subject'
+        ", $subject_id)) > 0;
+    }
+
+    private static function practical_file_kind(string $filename): string {
+        $name = strtolower($filename);
+        $ext = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+
+        if (str_contains($name, 'sujet') || $ext === 'pdf') {
+            return 'subject';
+        }
+
+        if ($ext === 'py') {
+            return 'starter';
+        }
+
+        return 'resource';
+    }
+
+    private static function practical_file_kind_label(string $kind): string {
+        return [
+            'subject'  => 'Sujet',
+            'starter'  => 'Starter',
+            'resource' => 'Ressource',
+        ][$kind] ?? 'Ressource';
+    }
+
+    private static function list_subject_files(int $subject_id): array {
+        if ($subject_id <= 0) {
+            return ['files' => [], 'blocked_count' => 0];
+        }
+
+        $dir = PracticalFiles::get_subject_dir($subject_id);
+        $base_path = (string) ($dir['path'] ?? '');
+        $base_url = (string) ($dir['url'] ?? '');
+
+        if ($base_path === '' || !is_dir($base_path) || !is_readable($base_path)) {
+            return ['files' => [], 'blocked_count' => 0];
+        }
+
+        $base_real = realpath($base_path);
+        if (!is_string($base_real)) {
+            return ['files' => [], 'blocked_count' => 0];
+        }
+
+        $entries = @scandir($base_path);
+        if (!is_array($entries)) {
+            return ['files' => [], 'blocked_count' => 0];
+        }
+
+        $files = [];
+        $blocked_count = 0;
+
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..' || $entry === 'index.html' || $entry === '.htaccess' || $entry === 'index.php') {
+                continue;
+            }
+
+            if ($entry === '' || $entry[0] === '.') {
+                continue;
+            }
+
+            $full_path = trailingslashit($base_path) . $entry;
+            $real_path = realpath($full_path);
+            if (!is_string($real_path) || !str_starts_with($real_path, trailingslashit($base_real)) || !is_file($real_path)) {
+                continue;
+            }
+
+            if (!PracticalFiles::is_allowed_file_name($entry)) {
+                $blocked_count++;
+                continue;
+            }
+
+            $files[] = [
+                'filename' => $entry,
+                'kind'     => self::practical_file_kind($entry),
+                'url'      => trailingslashit($base_url) . rawurlencode($entry),
+            ];
+        }
+
+        usort($files, static function (array $a, array $b): int {
+            return strnatcasecmp((string) $a['filename'], (string) $b['filename']);
+        });
+
+        return ['files' => $files, 'blocked_count' => $blocked_count];
+    }
+
+    private static function normalize_uploaded_files(array $files): array {
+        $names = $files['name'] ?? [];
+        if (!is_array($names)) {
+            return [$files];
+        }
+
+        $normalized = [];
+        foreach ($names as $index => $name) {
+            $normalized[] = [
+                'name'     => $name,
+                'type'     => $files['type'][$index] ?? '',
+                'tmp_name' => $files['tmp_name'][$index] ?? '',
+                'error'    => $files['error'][$index] ?? UPLOAD_ERR_NO_FILE,
+                'size'     => $files['size'][$index] ?? 0,
+            ];
+        }
+
+        return $normalized;
     }
 
     public static function render(): void {
@@ -132,6 +255,24 @@ final class ScreenPractical
             echo '<div class="notice notice-success is-dismissible"><p>Sujet pratique enregistré.</p></div>';
         }
 
+        if (isset($_GET['practical_files_added'])) {
+            $added = max(0, (int) $_GET['practical_files_added']);
+            if ($added > 0) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(sprintf('%d fichier(s) ajouté(s).', $added)) . '</p></div>';
+            }
+        }
+
+        if (isset($_GET['practical_file_deleted']) && $_GET['practical_file_deleted'] === '1') {
+            echo '<div class="notice notice-success is-dismissible"><p>Fichier supprimé.</p></div>';
+        }
+
+        if (isset($_GET['practical_file_error'])) {
+            $message = sanitize_text_field(wp_unslash((string) $_GET['practical_file_error']));
+            if ($message !== '') {
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($message) . '</p></div>';
+            }
+        }
+
     echo '<div class="ouinpo-admin-practical-layout">';
 
     echo '<div class="postbox ouinpo-admin-postbox">';
@@ -185,7 +326,7 @@ final class ScreenPractical
     echo '<div class="postbox ouinpo-admin-postbox">';
     echo '<h2 class="ouinpo-admin-heading-topless">' . ($subject ? 'Éditer le sujet #' . (int) $subject['id'] : 'Créer un sujet pratique') . '</h2>';
 
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+        echo '<form method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field('ouinpo_save_practical_subject');
         echo '<input type="hidden" name="action" value="ouinpo_save_practical_subject">';
         echo '<input type="hidden" name="subject_id" value="' . (int) ($subject['id'] ?? 0) . '">';
@@ -284,6 +425,55 @@ final class ScreenPractical
         echo '</td></tr>';
 
         echo '</tbody></table>';
+
+        echo '<hr>';
+        echo '<h2>Fichiers du sujet pratique</h2>';
+
+        if (!$subject) {
+            echo '<p>Enregistre d’abord le sujet pour pouvoir ajouter des fichiers.</p>';
+        } else {
+            $subject_files = self::list_subject_files((int) $subject['id']);
+            $files = $subject_files['files'];
+            $blocked_count = (int) $subject_files['blocked_count'];
+
+            if ($blocked_count > 0) {
+                echo '<p class="notice notice-warning inline"><span>' . esc_html(sprintf('%d fichier(s) du dossier sont masqués par sécurité.', $blocked_count)) . '</span></p>';
+            }
+
+            if (empty($files)) {
+                echo '<p>Aucun fichier associé pour le moment.</p>';
+            } else {
+                echo '<table class="widefat striped">';
+                echo '<thead><tr><th>Nom</th><th>Type présumé</th><th>Actions</th></tr></thead><tbody>';
+                foreach ($files as $file) {
+                    $filename = (string) $file['filename'];
+                    $delete_url = wp_nonce_url(
+                        add_query_arg(
+                            [
+                                'action'     => 'ouinpo_delete_practical_file',
+                                'subject_id' => (int) $subject['id'],
+                                'filename'   => $filename,
+                            ],
+                            admin_url('admin-post.php')
+                        ),
+                        'ouinpo_delete_practical_file_' . (int) $subject['id'] . '_' . $filename
+                    );
+
+                    echo '<tr>';
+                    echo '<td><code>' . esc_html($filename) . '</code></td>';
+                    echo '<td>' . esc_html(self::practical_file_kind_label((string) $file['kind'])) . '</td>';
+                    echo '<td><a class="button button-small" target="_blank" rel="noopener" href="' . esc_url((string) $file['url']) . '">Ouvrir</a> ';
+                    echo '<a class="button button-small" href="' . esc_url($delete_url) . '" onclick="return confirm(\'Supprimer ce fichier ?\');">Supprimer</a></td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table>';
+            }
+
+            $accepted_extensions = array_map(static fn($ext) => '.' . $ext, array_keys(PracticalFiles::allowed_mimes()));
+            echo '<p><label for="practical-files">Ajouter des fichiers</label><br>';
+            echo '<input type="file" name="practical_files[]" id="practical-files" multiple accept="' . esc_attr(implode(',', $accepted_extensions)) . '"></p>';
+            echo '<p class="description">Les fichiers sont validés par la liste autorisée des sujets pratiques. Un nom déjà pris crée un nouveau fichier, sans remplacement silencieux.</p>';
+        }
 
         echo '<hr>';
         echo '<h2>Appels évalués</h2>';
@@ -607,10 +797,47 @@ final class ScreenPractical
             }
         }
 
-        wp_safe_redirect(self::redirect_url([
+        $uploaded_count = 0;
+        $file_errors = [];
+
+        if ($subject_id > 0 && !empty($_FILES['practical_files']) && is_array($_FILES['practical_files'])) {
+            foreach (self::normalize_uploaded_files($_FILES['practical_files']) as $file) {
+                $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+                if ($error === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+
+                if ($error !== UPLOAD_ERR_OK) {
+                    $file_errors[] = 'Upload impossible pour un fichier.';
+                    continue;
+                }
+
+                $stored = PracticalFiles::store_uploaded_file($file, $subject_id);
+                if (is_wp_error($stored)) {
+                    $file_errors[] = $stored->get_error_message();
+                    continue;
+                }
+
+                $uploaded_count++;
+            }
+        } elseif (!empty($_FILES['practical_files'])) {
+            $file_errors[] = 'Enregistrement du sujet requis avant upload.';
+        }
+
+        $redirect_args = [
             'subject_id' => $subject_id,
             'saved'      => 1,
-        ]));
+        ];
+
+        if ($uploaded_count > 0) {
+            $redirect_args['practical_files_added'] = $uploaded_count;
+        }
+
+        if (!empty($file_errors)) {
+            $redirect_args['practical_file_error'] = implode(' ', array_unique($file_errors));
+        }
+
+        wp_safe_redirect(self::redirect_url($redirect_args));
         exit;
     }
 
@@ -655,6 +882,69 @@ final class ScreenPractical
         wp_safe_redirect(self::redirect_url([
             'subject_id'         => $subject_id,
             'visibility_updated' => 1,
+        ]));
+        exit;
+    }
+
+    public static function handle_delete_file(): void {
+        if (!Capabilities::can(Capabilities::MANAGE_PRACTICAL_SUBJECTS)) {
+            wp_die('Accès refusé.');
+        }
+
+        $subject_id = isset($_REQUEST['subject_id']) ? (int) $_REQUEST['subject_id'] : 0;
+        $raw_filename = isset($_REQUEST['filename'])
+            ? rawurldecode(wp_unslash((string) $_REQUEST['filename']))
+            : '';
+        $filename = sanitize_file_name(wp_basename($raw_filename));
+
+        if ($subject_id <= 0 || $filename === '' || $filename !== $raw_filename) {
+            wp_safe_redirect(self::redirect_url([
+                'subject_id' => $subject_id,
+                'practical_file_error' => 'Fichier invalide.',
+            ]));
+            exit;
+        }
+
+        check_admin_referer('ouinpo_delete_practical_file_' . $subject_id . '_' . $filename);
+
+        if (!self::is_practical_subject($subject_id) || !PracticalFiles::is_allowed_file_name($filename)) {
+            wp_safe_redirect(self::redirect_url([
+                'subject_id' => $subject_id,
+                'practical_file_error' => 'Fichier refusé.',
+            ]));
+            exit;
+        }
+
+        $dir = PracticalFiles::get_subject_dir($subject_id);
+        $base_path = (string) ($dir['path'] ?? '');
+        $base_real = $base_path !== '' ? realpath($base_path) : false;
+        $target = $base_path !== '' ? trailingslashit($base_path) . $filename : '';
+        $target_real = $target !== '' ? realpath($target) : false;
+
+        if (
+            !is_string($base_real)
+            || !is_string($target_real)
+            || !str_starts_with($target_real, trailingslashit($base_real))
+            || !is_file($target_real)
+        ) {
+            wp_safe_redirect(self::redirect_url([
+                'subject_id' => $subject_id,
+                'practical_file_error' => 'Fichier introuvable.',
+            ]));
+            exit;
+        }
+
+        if (!@unlink($target_real)) {
+            wp_safe_redirect(self::redirect_url([
+                'subject_id' => $subject_id,
+                'practical_file_error' => 'Suppression impossible.',
+            ]));
+            exit;
+        }
+
+        wp_safe_redirect(self::redirect_url([
+            'subject_id' => $subject_id,
+            'practical_file_deleted' => 1,
         ]));
         exit;
     }
