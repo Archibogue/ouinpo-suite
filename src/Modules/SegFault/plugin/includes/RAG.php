@@ -962,9 +962,37 @@ return $count;
 }
   /* ========= /Indexation différentielle & cron ========= */
 
-private static function embedding_provider(): string {
+private static function configured_embedding_provider(): string {
   $provider = strtolower(trim((string) get_option('ouinpo_sf_rag_embedding_provider', 'openai')));
   return in_array($provider, ['openai', 'albert'], true) ? $provider : 'openai';
+}
+
+private static function is_public_rest_request(): bool {
+  return defined('REST_REQUEST')
+    && REST_REQUEST
+    && function_exists('is_user_logged_in')
+    && !is_user_logged_in();
+}
+
+private static function embedding_provider(): string {
+  $provider = self::configured_embedding_provider();
+
+  if (!self::is_public_rest_request()) {
+    return $provider;
+  }
+
+  // Le chat public anonyme ne doit jamais consommer les cles globales OpenAI.
+  // Il utilise uniquement Albert public, sinon le RAG public est ignore.
+  if (
+    $provider === 'albert'
+    && class_exists('\\OuInPo\\SegFault\\Albert')
+    && method_exists('\\OuInPo\\SegFault\\Albert', 'public_available')
+    && Albert::public_available()
+  ) {
+    return 'albert';
+  }
+
+  return 'none';
 }
 
 private static function reranker_enabled(): bool {
@@ -1030,8 +1058,14 @@ private static function rerank_results(string $query, array $scored, int $k): ar
   }
 }
 private static function embedding_model(): string {
-  if (self::embedding_provider() === 'albert') {
+  $provider = self::embedding_provider();
+
+  if ($provider === 'albert') {
     return Albert::embedding_model();
+  }
+
+  if ($provider !== 'openai') {
+    return '';
   }
 
   $m = trim((string) get_option('ouinpo_sf_embed_model', 'text-embedding-3-large'));
@@ -1039,11 +1073,17 @@ private static function embedding_model(): string {
 }
 
 private static function embed_text(string $text): array {
-  if (self::embedding_provider() === 'albert') {
+  $provider = self::embedding_provider();
+
+  if ($provider === 'albert') {
     return Albert::embed($text);
   }
 
-  return OpenAI::embed($text);
+  if ($provider === 'openai') {
+    return OpenAI::embed($text);
+  }
+
+  return [];
 }
 
 private static function visibility_for(string $origin, string $ptype = null, string $title = ''): string {

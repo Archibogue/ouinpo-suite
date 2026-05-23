@@ -102,29 +102,10 @@ Get-ChildItem -Path $root -Force | Where-Object {
 
 Write-Host "Nettoyage des fichiers interdits..."
 
-$forbiddenPatterns = @(
+$forbiddenExactNames = @(
     ".distignore",
-    "ouinpo-pack-test-*.json",
-    "*.sql",
-    "*.sqlite",
-    "*.db",
-    "*.log",
-    "*.bak",
-    "*.backup",
-    "*.old",
-    "*.tmp",
-    "*.zip",
-    "*.tar",
-    "*.tgz",
-    "*.tar.gz",
-    "*.rar",
-    "*.7z",
-    "*.wxr",
-    "*.xml",
     ".env",
-    ".env.*",
     "wp-config.php",
-    "config.php",
     "secrets.php",
     "auth.json",
     "site-segfault-clean.xml",
@@ -137,10 +118,29 @@ $forbiddenPatterns = @(
     "Thumbs.db"
 )
 
-foreach ($pattern in $forbiddenPatterns) {
-    Get-ChildItem -Path $packageDir -Recurse -Force -Filter $pattern -ErrorAction SilentlyContinue | ForEach-Object {
-        Remove-Item $_.FullName -Recurse -Force
+$forbiddenNamePatterns = @(
+    ".env.*",
+    "ouinpo-pack-test-*.json"
+)
+
+$forbiddenFiles = @(Get-ChildItem -Path $packageDir -Recurse -Force -File -ErrorAction SilentlyContinue | Where-Object {
+    $name = $_.Name
+    $matchesForbiddenPattern = $false
+
+    foreach ($pattern in $forbiddenNamePatterns) {
+        if ($name -clike $pattern) {
+            $matchesForbiddenPattern = $true
+            break
+        }
     }
+
+    ($forbiddenExactNames -ccontains $name) -or
+    $matchesForbiddenPattern -or
+    ($name -match "\.(sql|sqlite|db|log|bak|backup|old|tmp|dump|export|zip|tar|tar\.gz|tgz|rar|7z|wxr|xml)$")
+})
+
+$forbiddenFiles | ForEach-Object {
+    Remove-Item $_.FullName -Force
 }
 
 $forbiddenDirs = @(
@@ -166,7 +166,7 @@ $forbiddenDirs = @(
 
 foreach ($dirName in $forbiddenDirs) {
     Get-ChildItem -Path $packageDir -Recurse -Force -Directory -ErrorAction SilentlyContinue | Where-Object {
-        $_.Name -eq $dirName
+        $_.Name -ceq $dirName
     } | ForEach-Object {
         Remove-Item $_.FullName -Recurse -Force
     }
@@ -178,6 +178,15 @@ Remove-Item (Join-Path $packageDir "packs\ouinpo-pack-test-*.json") -Force -Erro
 Remove-Item (Join-Path $packageDir "tools") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $packageDir "scripts") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $packageDir "dist") -Recurse -Force -ErrorAction SilentlyContinue
+
+# Le nettoyage ne doit jamais supprimer les fichiers Config.php legitimes des
+# librairies embarquees. Smalot PdfParser en a besoin pour le fallback PDF RAG.
+$sourcePdfParserConfig = Join-Path $root "src\Modules\SegFault\plugin\libs\pdfparser\src\Smalot\PdfParser\Config.php"
+$packagedPdfParserConfig = Join-Path $packageDir "src\Modules\SegFault\plugin\libs\pdfparser\src\Smalot\PdfParser\Config.php"
+
+if ((Test-Path $sourcePdfParserConfig) -and !(Test-Path $packagedPdfParserConfig)) {
+    throw "Paquet refuse : Smalot PdfParser Config.php a ete supprime du build."
+}
 
 # ============================================================
 # Contrôle structure WordPress
@@ -207,11 +216,21 @@ if (!(Test-Path (Join-Path $packageDir "src"))) {
 
 Write-Host "Contrôle anti-fuite..."
 
-$remainingForbidden = Get-ChildItem -Path $packageDir -Recurse -Force -File | Where-Object {
-    $_.Name -match "\.(sql|sqlite|db|log|bak|backup|old|tmp|zip|tar|tgz|rar|7z|wxr|xml)$" -or
-    $_.Name -in @(".distignore", ".env", "wp-config.php", "config.php", "secrets.php", "auth.json") -or
-    $_.Name -like "ouinpo-pack-test-*.json"
-}
+$remainingForbidden = @(Get-ChildItem -Path $packageDir -Recurse -Force -File | Where-Object {
+    $name = $_.Name
+    $matchesForbiddenPattern = $false
+
+    foreach ($pattern in $forbiddenNamePatterns) {
+        if ($name -clike $pattern) {
+            $matchesForbiddenPattern = $true
+            break
+        }
+    }
+
+    ($name -match "\.(sql|sqlite|db|log|bak|backup|old|tmp|dump|export|zip|tar|tar\.gz|tgz|rar|7z|wxr|xml)$") -or
+    ($forbiddenExactNames -ccontains $name) -or
+    $matchesForbiddenPattern
+})
 
 if ($remainingForbidden.Count -gt 0) {
     Write-Host ""

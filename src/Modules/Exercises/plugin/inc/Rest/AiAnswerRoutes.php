@@ -27,17 +27,9 @@ public static function can_evaluate_ai() {
       'Connexion requise pour utiliser cette correction IA.',
       ['status' => 401]
     );
-  }
-
-  if (!self::public_ai_quota_available()) {
-    return new \WP_Error(
-      'ouinpo_ai_public_quota_exceeded',
-      'Le quota de corrections IA publiques est atteint pour aujourd’hui.',
-      ['status' => 429]
-    );
-  }
-
-  return true;
+  }
+
+  return true;
 }
 
 private static function public_ai_enabled(): bool {
@@ -47,47 +39,34 @@ private static function public_ai_enabled(): bool {
     && \OuInPo\SegFault\Albert::public_available();
 }
 
-private static function public_ai_quota_limit(): int {
-  $limit = (int) apply_filters(
-    'ouinpo_ai_public_daily_limit',
-    (int) get_option('ouinpo_ai_public_daily_limit', 10)
-  );
-
-  return max(1, min(200, $limit));
-}
-
-private static function public_ai_quota_key(): string {
-  $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-  $ip = preg_replace('/[^0-9a-fA-F:\\.]/', '', $ip) ?: 'unknown';
-
-  return 'ouinpo_ai_pub_' . md5($ip . '|' . gmdate('Y-m-d'));
-}
-
-private static function public_ai_quota_available(): bool {
+private static function public_ai_quota_limit(): int {
 
-  return true;
+  $limit = (int) apply_filters(
+
+    'ouinpo_ai_public_daily_limit',
+
+    (int) get_option('ouinpo_ai_public_daily_limit', 10)
+
+  );
+
+
+
+  return max(1, min(200, $limit));
 
 }
 
-private static function legacy_public_ai_quota_available(): bool {
-  $used = (int) get_transient(self::public_ai_quota_key());
-
-  return $used < self::public_ai_quota_limit();
-}
-
-private static function consume_public_ai_quota() {
-  if (is_user_logged_in()) {
-    return true;
-  }
-
-  if (!self::public_ai_quota_available()) {
-    return new \WP_Error(
-      'ouinpo_ai_public_quota_exceeded',
-      'Le quota de corrections IA publiques est atteint pour aujourd’hui.',
-      ['status' => 429]
-    );
-  }
-
+
+
+private static function consume_public_ai_quota() {
+
+  if (is_user_logged_in()) {
+
+    return true;
+
+  }
+
+
+
   return \Ouinpo\Suite\Core\AiSettings::consumePublicRateLimit(
     'exercise_ai',
     (int) apply_filters('ouinpo_ai_public_hourly_limit', 5, 'exercise_ai'),
@@ -95,14 +74,9 @@ private static function consume_public_ai_quota() {
     (int) apply_filters('ouinpo_ai_public_global_daily_limit', 0, 'exercise_ai')
   );
 
-  $key  = self::public_ai_quota_key();
-  $used = (int) get_transient($key);
-
-  set_transient($key, $used + 1, DAY_IN_SECONDS);
-
-  return true;
-}
-
+}
+
+
   public static function evaluate_answer(WP_REST_Request $request): WP_REST_Response {
     global $wpdb;
 

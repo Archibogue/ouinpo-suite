@@ -78,7 +78,7 @@ class BadgesRoutes {
 
         $p = $wpdb->prefix . 'ouin_exo_';
 
-        $rows = $wpdb->get_results("SELECT * FROM {$p}badges ORDER BY title");
+        $rows = $wpdb->get_results("SELECT id, slug, title, description, theme, image_url FROM {$p}badges ORDER BY title");
 
         return new WP_REST_Response($rows, 200);
 
