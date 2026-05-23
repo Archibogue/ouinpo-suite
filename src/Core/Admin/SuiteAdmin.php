@@ -2711,6 +2711,9 @@ final class SuiteAdmin
         $upload_ok = empty($upload['error']) && !empty($upload['basedir']) && is_writable((string) $upload['basedir']);
         $fkFailures = get_option('ouinpo_suite_fk_failures', []);
         $fkFailureCount = is_array($fkFailures) ? count($fkFailures) : 0;
+        $blockedPracticalFiles = class_exists(\Ouinpo\Exercises\PracticalFiles::class)
+            ? \Ouinpo\Exercises\PracticalFiles::count_blocked_existing_files()
+            : 0;
 
         $environment = [
             'Version OuInPo Suite' => defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '—',
@@ -2744,6 +2747,7 @@ final class SuiteAdmin
             <?php
             self::renderKeyValueCard('Environnement', $environment);
             $options['Contraintes SQL SegFault'] = $fkFailureCount === 0 ? 'OK' : $fkFailureCount . ' échec(s) à vérifier';
+            $options['Fichiers pratiques bloqués'] = $blockedPracticalFiles === 0 ? 'OK' : $blockedPracticalFiles . ' fichier(s) masqué(s) par sécurité';
             self::renderKeyValueCard('Options principales', $options);
             ?>
         </div>

@@ -125,7 +125,7 @@ final class ScreenPractical
         echo '<h1>Sujets pratiques</h1>';
 
         if (isset($_GET['visibility_updated']) && $_GET['visibility_updated'] === '1') {
-            echo '<div class="notice notice-success is-dismissible"><p>VisibilitÃ© du sujet pratique mise Ã  jour.</p></div>';
+            echo '<div class="notice notice-success is-dismissible"><p>Visibilité du sujet pratique mise à jour.</p></div>';
         }
 
         if (isset($_GET['saved']) && $_GET['saved'] === '1') {

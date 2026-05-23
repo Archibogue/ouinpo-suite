@@ -1576,7 +1576,7 @@ class Ouinpo_Submissions_Plugin {
 
         if ( ! current_user_can(\Ouinpo\Suite\Core\Capabilities::SUBMIT_WORK) || ! current_user_can(\Ouinpo\Suite\Core\Capabilities::UPLOAD_SUBMISSION) ) {
 
-            return '<div class="ouinpo-box">Votre rÃ´le ne permet pas le dÃ©pÃ´t de travaux.</div>';
+            return '<div class="ouinpo-box">Votre rôle ne permet pas le dépôt de travaux.</div>';
 
         }
 

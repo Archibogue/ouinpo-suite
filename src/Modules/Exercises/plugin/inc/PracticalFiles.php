@@ -134,6 +134,46 @@ final class PracticalFiles
         return self::ALLOWED_MIMES;
     }
 
+    public static function count_blocked_existing_files(): int
+    {
+        $uploads = wp_upload_dir();
+        if (!empty($uploads['error']) || empty($uploads['basedir'])) {
+            return 0;
+        }
+
+        $root = trailingslashit((string) $uploads['basedir']) . 'ouinpo/practical';
+        if (!is_dir($root)) {
+            return 0;
+        }
+
+        $blocked = 0;
+
+        try {
+            $items = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($items as $item) {
+                if (!$item instanceof \SplFileInfo || !$item->isFile()) {
+                    continue;
+                }
+
+                $filename = $item->getFilename();
+                if (in_array($filename, ['index.html', '.htaccess'], true)) {
+                    continue;
+                }
+
+                if (!self::is_allowed_file_name($filename)) {
+                    $blocked++;
+                }
+            }
+        } catch (\Throwable $e) {
+            return 0;
+        }
+
+        return $blocked;
+    }
+
     private static function validate_file_name(string $filename): string|\WP_Error
     {
         $filename = sanitize_file_name(wp_basename($filename));

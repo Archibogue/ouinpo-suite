@@ -1719,15 +1719,6 @@ function ouinpo_sf_public_chat_allowed(): bool {
 
 
 
-function ouinpo_sf_public_client_hash(): string {
-
-  $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
-
-  $salt = defined('AUTH_SALT') ? AUTH_SALT : wp_salt('auth');
-
-  return substr(hash('sha256', $ip . '|' . $salt), 0, 24);
-
-}
 
 
 
@@ -1748,45 +1739,6 @@ function ouinpo_sf_public_quota_check() {
     $global_daily
   );
 
-  $daily  = max(1, (int) get_option('ouinpo_sf_public_daily_limit', 100));
-
-  $hash   = ouinpo_sf_public_client_hash();
-
-
-
-  $hour_key = 'ouinpo_sf_pub_ai_h_' . gmdate('YmdH') . '_' . $hash;
-
-  $day_key  = 'ouinpo_sf_pub_ai_d_' . gmdate('Ymd');
-
-
-
-  $h = (int) get_transient($hour_key);
-
-  if ($h >= $hourly) {
-
-    return new \WP_Error('quota_hour', 'Limite atteinte pour cette heure. Réessaie un peu plus tard.', ['status' => 429]);
-
-  }
-
-
-
-  $d = (int) get_transient($day_key);
-
-  if ($d >= $daily) {
-
-    return new \WP_Error('quota_day', 'Limite quotidienne du chat public atteinte.', ['status' => 429]);
-
-  }
-
-
-
-  set_transient($hour_key, $h + 1, HOUR_IN_SECONDS + 120);
-
-  set_transient($day_key,  $d + 1, DAY_IN_SECONDS + 120);
-
-
-
-  return true;
 
 }
 

@@ -163,19 +163,19 @@ class OpenAI {
 
   static function respond_with_context(string $session, string $user_prompt, array $rag_chunks, array $extra_system = []): string {
 
+    $is_logged_in = function_exists('is_user_logged_in') && is_user_logged_in();
+
     $has_albert =
 
       class_exists('\\OuInPo\\SegFault\\Albert')
 
-      && \OuInPo\SegFault\Albert::available();
+      && ($is_logged_in ? \OuInPo\SegFault\Albert::available() : \OuInPo\SegFault\Albert::public_available());
 
     
 
     $has_openai =
 
-      function_exists('is_user_logged_in')
-
-      && is_user_logged_in()
+      $is_logged_in
 
       && trim((string) self::api_key()) !== '';
 
