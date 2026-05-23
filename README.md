@@ -72,6 +72,14 @@ Commandes utiles depuis le depot de developpement :
 
 Le script de test reconstruit le zip, verifie la presence de `ouinpo-suite/ouinpo-suite.php`, les chemins internes et l'absence de fichiers interdits.
 
+## Choix de securite a verifier
+
+- La suppression du plugin conserve volontairement les tables, options et fichiers OuInPo. `uninstall.php` evite une perte accidentelle de donnees pedagogiques.
+- Les acces publics aux exercices, indices, solutions, fichiers pratiques et fonctions IA sont opt-in. Ils doivent etre actives volontairement par l'administrateur.
+- Les quotas publics IA utilisent un hash de l'adresse IP. Des eleves derriere un meme NAT ou proxy peuvent donc partager un quota.
+- Les fichiers pratiques publics exposent les ressources placees dans `uploads/ouinpo/practical/` si l'administrateur active l'acces public correspondant.
+- L'extraction PDF SegFault peut utiliser `pdftotext` via `shell_exec` lorsque l'hebergement l'autorise. Sinon le plugin utilise son parseur PHP de secours.
+
 ## Test sur WordPress vierge
 
 Pour valider une archive avant partage :

@@ -19,6 +19,7 @@ final class AiSettings
 
         self::$initialized = true;
         add_action('admin_init', [self::class, 'register_settings']);
+        add_action('admin_notices', [self::class, 'render_public_access_migration_notice']);
     }
 
     public static function defaults(): array
@@ -157,6 +158,18 @@ final class AiSettings
             return;
         }
 
+        $legacyPublicOptions = [
+            'ouinpo_sf_public_albert_enabled',
+        ];
+
+        $legacyExplicitOptIn = false;
+        foreach ($legacyPublicOptions as $legacyOption) {
+            if ((int) get_option($legacyOption, 0) === 1) {
+                $legacyExplicitOptIn = true;
+                break;
+            }
+        }
+
         foreach ([
             'ouinpo_public_exercises_enabled',
             'ouinpo_public_hints_enabled',
@@ -165,9 +178,119 @@ final class AiSettings
             'ouinpo_public_practical_files_enabled',
         ] as $option) {
             if (get_option($option, null) === null) {
-                update_option($option, 1, false);
+                update_option($option, $legacyExplicitOptIn ? 1 : 0, false);
             }
         }
+
+        if (get_option('ouinpo_ai_public_enabled', null) === null) {
+            update_option('ouinpo_ai_public_enabled', $legacyExplicitOptIn ? 1 : 0, false);
+        }
+
+        update_option('ouinpo_public_access_migration_notice', 1, false);
+    }
+
+    public static function consumePublicRateLimit(
+        string $scope,
+        int $hourlyLimit,
+        int $dailyLimit,
+        int $globalDailyLimit = 0
+    ) {
+        if (is_user_logged_in()) {
+            return true;
+        }
+
+        $scope = sanitize_key($scope);
+        if ($scope === '') {
+            $scope = 'public_ai';
+        }
+
+        $hash = self::publicClientHash();
+        $hourlyLimit = max(1, min(10000, $hourlyLimit));
+        $dailyLimit = max(1, min(10000, $dailyLimit));
+        $globalDailyLimit = max(0, min(100000, $globalDailyLimit));
+
+        $hourKey = 'ouinpo_rl_' . $scope . '_h_' . gmdate('YmdH') . '_' . $hash;
+        $dayKey = 'ouinpo_rl_' . $scope . '_d_' . gmdate('Ymd') . '_' . $hash;
+        $globalDayKey = 'ouinpo_rl_' . $scope . '_gd_' . gmdate('Ymd');
+
+        $hourUsed = (int) get_transient($hourKey);
+        if ($hourUsed >= $hourlyLimit) {
+            return new \WP_Error(
+                'ouinpo_public_quota_hour',
+                'Limite atteinte pour cette heure. Réessaie un peu plus tard.',
+                ['status' => 429]
+            );
+        }
+
+        $dayUsed = (int) get_transient($dayKey);
+        if ($dayUsed >= $dailyLimit) {
+            return new \WP_Error(
+                'ouinpo_public_quota_day',
+                'Limite quotidienne atteinte pour cet accès public.',
+                ['status' => 429]
+            );
+        }
+
+        if ($globalDailyLimit > 0) {
+            $globalDayUsed = (int) get_transient($globalDayKey);
+            if ($globalDayUsed >= $globalDailyLimit) {
+                return new \WP_Error(
+                    'ouinpo_public_quota_global_day',
+                    'Limite quotidienne globale atteinte pour ce service public.',
+                    ['status' => 429]
+                );
+            }
+        }
+
+        set_transient($hourKey, $hourUsed + 1, HOUR_IN_SECONDS + 120);
+        set_transient($dayKey, $dayUsed + 1, DAY_IN_SECONDS + 120);
+
+        if ($globalDailyLimit > 0) {
+            set_transient($globalDayKey, ((int) get_transient($globalDayKey)) + 1, DAY_IN_SECONDS + 120);
+        }
+
+        return true;
+    }
+
+    public static function publicClientHash(): string
+    {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : 'unknown';
+        $ip = preg_replace('/[^0-9a-fA-F:\.]/', '', $ip) ?: 'unknown';
+        $salt = function_exists('wp_salt') ? wp_salt('auth') : (defined('AUTH_SALT') ? AUTH_SALT : 'ouinpo');
+
+        return substr(hash('sha256', $ip . '|' . $salt), 0, 24);
+    }
+
+    public static function render_public_access_migration_notice(): void
+    {
+        if ((int) get_option('ouinpo_public_access_migration_notice', 0) !== 1) {
+            return;
+        }
+
+        if (!current_user_can(Capabilities::MANAGE_SETTINGS) && !current_user_can('manage_options')) {
+            return;
+        }
+
+        if (isset($_GET['ouinpo_dismiss_public_access_notice'])) {
+            delete_option('ouinpo_public_access_migration_notice');
+            return;
+        }
+
+        $dismissUrl = add_query_arg(
+            ['ouinpo_dismiss_public_access_notice' => '1'],
+            admin_url('admin.php?page=ouinpo-suite-settings&tab=ai')
+        );
+
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p>
+                <strong>OuInPo Suite :</strong>
+                les accès publics aux exercices, indices, solutions, fichiers pratiques et à l'IA restent désactivés par défaut après migration.
+                Vérifiez volontairement ces réglages avant d'ouvrir le site à des visiteurs anonymes.
+                <a href="<?php echo esc_url($dismissUrl); ?>">Masquer cet avis</a>
+            </p>
+        </div>
+        <?php
     }
 
     private static function schema(): array

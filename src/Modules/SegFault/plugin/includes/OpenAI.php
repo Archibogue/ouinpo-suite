@@ -408,11 +408,19 @@ if ($out_of_program_notice !== '') {
 
   static function respond(array $messages, array $options = []): string {
 
-    $albert_available =
+    $is_logged = function_exists('is_user_logged_in') && is_user_logged_in();
 
-      class_exists('\\OuInPo\\SegFault\\Albert')
+    $albert_available = class_exists('\\OuInPo\\SegFault\\Albert')
 
-      && \OuInPo\SegFault\Albert::available();
+      && (
+
+        $is_logged
+
+          ? \OuInPo\SegFault\Albert::available()
+
+          : \OuInPo\SegFault\Albert::public_available()
+
+      );
 
 
 
@@ -448,7 +456,7 @@ if ($out_of_program_notice !== '') {
 
     // Les visiteurs anonymes ne doivent pas consommer l'ancien fournisseur.
 
-    if (function_exists('is_user_logged_in') && is_user_logged_in()) {
+    if ($is_logged) {
 
       return self::respond_openai($messages, $options);
 

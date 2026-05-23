@@ -85,7 +85,7 @@ final class SettingsPage
                     <tbody>
                     <tr>
                         <th scope="row">
-                            Style de l’interface
+                            Style de l'interface
                         </th>
                         <td>
                             <fieldset>
@@ -129,8 +129,8 @@ final class SettingsPage
                                 </label>
 
                                 <p class="description">
-                                    Le style sobre est recommandé pour une installation par d’autres enseignants.
-                                    Le style OuInPo conserve l’apparence actuelle de ton site.
+                                    Le style sobre est recommandé pour une installation par d'autres enseignants.
+                                    Le style OuInPo conserve l'apparence actuelle de ton site.
                                 </p>
                             </fieldset>
                         </td>

@@ -233,7 +233,21 @@ private static function addForeignKeyIfMissing(string $table, string $name, stri
     $wpdb->query($sql);
 
     if (!empty($wpdb->last_error)) {
-        error_log('[ouinpo suite] SegFault FK failed: ' . $name . ' | ' . $wpdb->last_error);
+        $message = '[ouinpo suite] SegFault FK failed: ' . $name . ' | ' . $wpdb->last_error;
+        error_log($message);
+
+        $failures = get_option('ouinpo_suite_fk_failures', []);
+        if (!is_array($failures)) {
+            $failures = [];
+        }
+
+        $failures[$name] = [
+            'table' => $table,
+            'error' => sanitize_text_field($wpdb->last_error),
+            'date' => current_time('mysql'),
+        ];
+
+        update_option('ouinpo_suite_fk_failures', $failures, false);
     }
 }
 }

@@ -2709,6 +2709,8 @@ final class SuiteAdmin
 
         $upload = wp_upload_dir();
         $upload_ok = empty($upload['error']) && !empty($upload['basedir']) && is_writable((string) $upload['basedir']);
+        $fkFailures = get_option('ouinpo_suite_fk_failures', []);
+        $fkFailureCount = is_array($fkFailures) ? count($fkFailures) : 0;
 
         $environment = [
             'Version OuInPo Suite' => defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '—',
@@ -2741,6 +2743,7 @@ final class SuiteAdmin
         <div class="ouinpo-suite-grid ouinpo-suite-grid-spaced">
             <?php
             self::renderKeyValueCard('Environnement', $environment);
+            $options['Contraintes SQL SegFault'] = $fkFailureCount === 0 ? 'OK' : $fkFailureCount . ' échec(s) à vérifier';
             self::renderKeyValueCard('Options principales', $options);
             ?>
         </div>

@@ -92,7 +92,7 @@ if (!function_exists('ouinpo_sf_markdown_to_html')) {
 
     $html = str_replace('<pre><code>', '<pre><code class="ouinpo-code">', $html);
 
-    return $html;
+    return wp_kses_post($html);
 
   }
 
@@ -1707,6 +1707,16 @@ function ouinpo_sf_public_albert_enabled(): bool {
 
 }
 
+function ouinpo_sf_public_chat_allowed(): bool {
+
+  return !is_user_logged_in()
+
+    && !((int) get_option('ouinpo_sf_members_only', 0))
+
+    && ouinpo_sf_public_albert_enabled();
+
+}
+
 
 
 function ouinpo_sf_public_client_hash(): string {
@@ -1724,6 +1734,19 @@ function ouinpo_sf_public_client_hash(): string {
 function ouinpo_sf_public_quota_check() {
 
   $hourly = max(1, (int) get_option('ouinpo_sf_public_hourly_limit', 5));
+
+  $daily  = max(1, (int) get_option('ouinpo_sf_public_daily_limit', 20));
+
+  $global_daily = (int) apply_filters('ouinpo_sf_public_global_daily_limit', 0);
+
+  // Les quotas publics reposent sur un hash de l'IP. Les réseaux NAT/proxy
+  // peuvent donc partager un même quota entre plusieurs élèves.
+  return \Ouinpo\Suite\Core\AiSettings::consumePublicRateLimit(
+    'segfault_chat',
+    $hourly,
+    $daily,
+    $global_daily
+  );
 
   $daily  = max(1, (int) get_option('ouinpo_sf_public_daily_limit', 100));
 
@@ -3029,6 +3052,36 @@ add_action('rest_api_init', function () {
             'message' => 'Chat réservé aux membres connectés.'
 
           ], 403);
+
+        }
+
+        if (!is_user_logged_in()) {
+
+          if (!ouinpo_sf_public_chat_allowed()) {
+
+            return new \WP_REST_Response([
+
+              'error'   => 'public_ai_disabled',
+
+              'message' => 'Le chat IA public doit être activé explicitement.'
+
+            ], 403);
+
+          }
+
+          $quota = ouinpo_sf_public_quota_check();
+
+          if (is_wp_error($quota)) {
+
+            return new \WP_REST_Response([
+
+              'error'   => $quota->get_error_code(),
+
+              'message' => $quota->get_error_message(),
+
+            ], (int) ($quota->get_error_data()['status'] ?? 429));
+
+          }
 
         }
 
