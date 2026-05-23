@@ -70,7 +70,7 @@ final class StudentFileUploadService
             return new \WP_Error('mime_not_allowed', 'MIME non autorisÃ© ou incohÃ©rent.');
         }
 
-        $dir = CopyUploadService::batch_dir($batch_id);
+        $dir = self::batch_dir($batch_id);
         $stored_name = wp_unique_filename($dir['path'], wp_generate_uuid4() . '-upload');
         $target = trailingslashit($dir['path']) . $stored_name;
         if (!@move_uploaded_file((string) $file['tmp_name'], $target)) {
@@ -147,6 +147,20 @@ final class StudentFileUploadService
         return true;
     }
 
+    public static function batch_dir(int $batch_id): array
+    {
+        $base = defined('WP_CONTENT_DIR')
+            ? WP_CONTENT_DIR
+            : dirname((string) ABSPATH) . '/wp-content';
+        $path = trailingslashit($base) . 'ouinpo-private/corrections-file/batch-' . $batch_id;
+
+        self::ensure_dir(trailingslashit($base) . 'ouinpo-private');
+        self::ensure_dir(trailingslashit($base) . 'ouinpo-private/corrections-file');
+        self::ensure_dir($path);
+
+        return ['path' => $path, 'url' => '', 'subdir' => 'ouinpo-private/corrections-file/batch-' . $batch_id];
+    }
+
     private static function student_ref(string $requested, int $index): string
     {
         $requested = sanitize_text_field($requested);
@@ -154,6 +168,22 @@ final class StudentFileUploadService
             return $requested;
         }
         return 'anonyme-' . str_pad((string) $index, 3, '0', STR_PAD_LEFT);
+    }
+
+    private static function ensure_dir(string $path): void
+    {
+        if (!is_dir($path)) {
+            wp_mkdir_p($path);
+        }
+        if (!is_dir($path) || !is_writable($path)) {
+            return;
+        }
+        if (!file_exists(trailingslashit($path) . 'index.html')) {
+            @file_put_contents(trailingslashit($path) . 'index.html', '');
+        }
+        if (!file_exists(trailingslashit($path) . '.htaccess')) {
+            @file_put_contents(trailingslashit($path) . '.htaccess', "Options -Indexes\nRequire all denied\nDeny from all\n");
+        }
     }
 
     private static function mime_is_acceptable(string $ext, string $detected, string $declared): bool

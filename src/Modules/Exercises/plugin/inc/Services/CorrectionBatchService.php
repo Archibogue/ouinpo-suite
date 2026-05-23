@@ -176,7 +176,9 @@ final class CorrectionBatchService
         $wpdb->delete(self::table('correction_copies'), ['batch_id' => $batch_id], ['%d']);
         $wpdb->delete(self::table('correction_batches'), ['id' => $batch_id], ['%d']);
 
-        $dir = CopyUploadService::batch_dir($batch_id);
+        $dir = ((string) ($batch['source_type'] ?? 'scan') === 'file' && class_exists(StudentFileUploadService::class))
+            ? StudentFileUploadService::batch_dir($batch_id)
+            : CopyUploadService::batch_dir($batch_id);
         if (!empty($dir['path']) && is_dir($dir['path'])) {
             foreach (glob(trailingslashit($dir['path']) . '*') ?: [] as $file) {
                 if (is_file($file)) {

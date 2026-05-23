@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.5.2-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics et cadre IA/donnees personnelles.
+Version 0.6.0-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
 
@@ -409,7 +409,7 @@ Les différences restantes sont non bloquantes :
 - contraintes étrangères Flashcards présentes sur installation neuve, car les tables sont créées en InnoDB.
 ## Securite, IA et acces publics
 
-OuInPo Suite 0.5.2-beta contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas et consignes systeme. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
+OuInPo Suite 0.6.0-beta contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas, consignes systeme et workflows de correction IA. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
 
 Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
 

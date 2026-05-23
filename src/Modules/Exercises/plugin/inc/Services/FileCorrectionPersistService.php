@@ -55,7 +55,7 @@ final class FileCorrectionPersistService
             ], ['%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s']);
         }
 
-        if ((int) AiSettings::get('ouinpo_ai_file_correction_keep_files') !== 1 && !empty($copy['file_path']) && is_file((string) $copy['file_path'])) {
+        if ((int) AiSettings::get('ouinpo_ai_file_correction_keep_files') !== 1 && self::can_delete_source_file($copy) && is_file((string) $copy['file_path'])) {
             @unlink((string) $copy['file_path']);
         }
 
@@ -66,5 +66,26 @@ final class FileCorrectionPersistService
     {
         global $wpdb;
         return false !== $wpdb->update(self::table('correction_copies'), ['status' => 'rejected'], ['id' => $copy_id], ['%s'], ['%d']);
+    }
+
+    private static function can_delete_source_file(array $copy): bool
+    {
+        global $wpdb;
+        $path = (string) ($copy['file_path'] ?? '');
+        if ($path === '') {
+            return false;
+        }
+
+        $open = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+             FROM " . self::table('correction_copies') . "
+             WHERE file_path = %s
+               AND id <> %d
+               AND status NOT IN ('validated','rejected')",
+            $path,
+            (int) ($copy['id'] ?? 0)
+        ));
+
+        return $open <= 0;
     }
 }

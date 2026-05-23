@@ -1,6 +1,6 @@
 # Packs pédagogiques OuInPo Suite
 
-Ce dossier contient uniquement les packs JSON distribues avec OuInPo Suite `0.5.2-beta`, plus le schema de reference `ouinpo-pack.schema.json`.
+Ce dossier contient uniquement les packs JSON distribues avec OuInPo Suite `0.6.0-beta`, plus le schema de reference `ouinpo-pack.schema.json`.
 
 Les packs sont construits a partir des données du site d'origine, puis nettoyes pour ne conserver que des données pedagogiques importables. Les anciens packs de test et packs intermediaires ont ete deplaces dans `tests/packs/` et ne sont pas distribués dans le zip.
 
@@ -52,7 +52,7 @@ Les packs de ce dossier doivent rester des fichiers JSON pedagogiques autonomes.
 
 ## Schema
 
-Le champ `schema_version` reste `"1.0"` pour la version `0.5.2-beta`.
+Le champ `schema_version` reste `"1.0"` pour la version `0.6.0-beta`.
 
 Le fichier `ouinpo-pack.schema.json` documente la structure generale acceptee par l'importeur actuel :
 

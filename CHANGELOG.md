@@ -2,6 +2,14 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.6.0-beta] - 2026-05-23
+
+- Ajout des workflows IA admin pour generer des exercices, composer des devoirs et assister la correction.
+- Ajout de la correction IA a partir de scans/OCR et de fichiers numeriques eleves.
+- Ajout de la gestion admin des fichiers de sujets pratiques.
+- Durcissement des acces publics SegFault, exercices et fichiers pratiques.
+- Ajout de tables et colonnes de correction via migration Exercises 2.6.9.
+
 ## [0.5.2-beta] - 2026-05-17
 
 - Importeur de packs v2 avec prevalidation, erreurs bloquantes, warnings et transaction best-effort.
