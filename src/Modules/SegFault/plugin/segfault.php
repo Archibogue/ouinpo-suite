@@ -1724,21 +1724,43 @@ function ouinpo_sf_public_chat_allowed(): bool {
 
 function ouinpo_sf_public_quota_check() {
 
-  $hourly = max(1, (int) get_option('ouinpo_sf_public_hourly_limit', 5));
+  $per_minute = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_ip_per_minute');
 
-  $daily  = max(1, (int) get_option('ouinpo_sf_public_daily_limit', 20));
+  $per_day = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_ip_per_day');
 
-  $global_daily = (int) apply_filters('ouinpo_sf_public_global_daily_limit', 0);
+  $global_minute = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_global_per_minute');
+
+  $global_day = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_global_per_day');
 
   // Les quotas publics reposent sur un hash de l'IP. Les réseaux NAT/proxy
   // peuvent donc partager un même quota entre plusieurs élèves.
   return \Ouinpo\Suite\Core\AiSettings::consumePublicRateLimit(
     'segfault_chat',
-    $hourly,
-    $daily,
-    $global_daily
+    $per_minute,
+    $per_day,
+    $global_day,
+    $global_minute
   );
 
+
+}
+
+
+
+function ouinpo_sf_student_quota_check() {
+
+  if (!is_user_logged_in()) {
+    return true;
+  }
+
+  $teacher_quota = \Ouinpo\Suite\Core\AiSettings::currentUserUsesTeacherAiQuota();
+
+  return \Ouinpo\Suite\Core\AiSettings::consumeUserRateLimit(
+    $teacher_quota ? 'teacher_ai' : 'student_chat',
+    get_current_user_id(),
+    \Ouinpo\Suite\Core\AiSettings::quota($teacher_quota ? 'ouinpo_ai_teacher_per_minute' : 'ouinpo_ai_student_per_minute'),
+    \Ouinpo\Suite\Core\AiSettings::quota($teacher_quota ? 'ouinpo_ai_teacher_per_day' : 'ouinpo_ai_student_per_day')
+  );
 
 }
 
@@ -2805,7 +2827,10 @@ add_action('rest_api_init', function () {
 
 
 
-        $context_text = \OuInPo\SegFault\RAG::format_context($chunks_context);
+        $context_text = \OuInPo\SegFault\RAG::format_context(
+          $chunks_context,
+          \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_public_rag_max_tokens')
+        );
 
 
 
@@ -2861,7 +2886,7 @@ add_action('rest_api_init', function () {
 
           'top_p'       => (float) get_option('ouinpo_ai_top_p', 1.0),
 
-          'max_tokens'  => (int) get_option('ouinpo_ai_max_tokens', 700),
+          'max_tokens'  => \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_public_chat_max_tokens'),
 
         ]);
 
@@ -3022,6 +3047,22 @@ add_action('rest_api_init', function () {
           }
 
           $quota = ouinpo_sf_public_quota_check();
+
+          if (is_wp_error($quota)) {
+
+            return new \WP_REST_Response([
+
+              'error'   => $quota->get_error_code(),
+
+              'message' => $quota->get_error_message(),
+
+            ], (int) ($quota->get_error_data()['status'] ?? 429));
+
+          }
+
+        } else {
+
+          $quota = ouinpo_sf_student_quota_check();
 
           if (is_wp_error($quota)) {
 
@@ -3313,7 +3354,10 @@ add_action('rest_api_init', function () {
 
 
 
-$context_text = \OuInPo\SegFault\RAG::format_context($chunks_context);
+$context_text = \OuInPo\SegFault\RAG::format_context(
+  $chunks_context,
+  is_user_logged_in() ? 0 : \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_public_rag_max_tokens')
+);
 
 
 
@@ -3479,7 +3523,13 @@ $messages = [
 
 
 
-        $answer = \OuInPo\SegFault\OpenAI::respond($messages);
+        $answer = \OuInPo\SegFault\OpenAI::respond($messages, [
+
+          'max_tokens' => is_user_logged_in()
+            ? \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_max_tokens')
+            : \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_public_chat_max_tokens'),
+
+        ]);
 
         $answer = preg_replace('/\s*\(\[\d+\]\)/u', '', $answer);
 

@@ -50,6 +50,22 @@ final class AiSettings
             'ouinpo_ai_presence_penalty' => 0.0,
             'ouinpo_ai_user_daily_limit' => 200,
             'ouinpo_ai_public_daily_limit' => 10,
+            'ouinpo_ai_public_ip_per_minute' => 5,
+            'ouinpo_ai_public_ip_per_day' => 100,
+            'ouinpo_ai_public_global_per_minute' => 40,
+            'ouinpo_ai_public_global_per_day' => 4000,
+            'ouinpo_ai_student_per_minute' => 15,
+            'ouinpo_ai_student_per_day' => 300,
+            'ouinpo_ai_exercise_ai_per_minute' => 5,
+            'ouinpo_ai_exercise_ai_per_day' => 120,
+            'ouinpo_ai_practical_ai_per_minute' => 5,
+            'ouinpo_ai_practical_ai_per_day' => 80,
+            'ouinpo_ai_teacher_per_minute' => 30,
+            'ouinpo_ai_teacher_per_day' => 1000,
+            'ouinpo_ai_public_chat_max_tokens' => 900,
+            'ouinpo_ai_exercise_ai_max_tokens' => 800,
+            'ouinpo_ai_practical_ai_max_tokens' => 1200,
+            'ouinpo_ai_public_rag_max_tokens' => 1200,
             'ouinpo_ai_disabled_message' => 'L\'assistant IA est desactive pour le moment.',
             'ouinpo_ai_privacy_notice' => 'IA pedagogique : n\'ecris pas de donnees personnelles. Les reponses peuvent contenir des erreurs et doivent etre verifiees.',
             'ouinpo_ai_persona_general' => self::default_general_persona(),
@@ -191,9 +207,10 @@ final class AiSettings
 
     public static function consumePublicRateLimit(
         string $scope,
-        int $hourlyLimit,
+        int $minuteLimit,
         int $dailyLimit,
-        int $globalDailyLimit = 0
+        int $globalDailyLimit = 0,
+        int $globalMinuteLimit = 0
     ) {
         if (is_user_logged_in()) {
             return true;
@@ -205,19 +222,21 @@ final class AiSettings
         }
 
         $hash = self::publicClientHash();
-        $hourlyLimit = max(1, min(10000, $hourlyLimit));
+        $minuteLimit = max(1, min(10000, $minuteLimit));
         $dailyLimit = max(1, min(10000, $dailyLimit));
         $globalDailyLimit = max(0, min(100000, $globalDailyLimit));
+        $globalMinuteLimit = max(0, min(100000, $globalMinuteLimit));
 
-        $hourKey = 'ouinpo_rl_' . $scope . '_h_' . gmdate('YmdH') . '_' . $hash;
+        $minuteKey = 'ouinpo_rl_' . $scope . '_m_' . gmdate('YmdHi') . '_' . $hash;
         $dayKey = 'ouinpo_rl_' . $scope . '_d_' . gmdate('Ymd') . '_' . $hash;
-        $globalDayKey = 'ouinpo_rl_' . $scope . '_gd_' . gmdate('Ymd');
+        $globalMinuteKey = 'ouinpo_rl_public_ai_gm_' . gmdate('YmdHi');
+        $globalDayKey = 'ouinpo_rl_public_ai_gd_' . gmdate('Ymd');
 
-        $hourUsed = (int) get_transient($hourKey);
-        if ($hourUsed >= $hourlyLimit) {
+        $minuteUsed = (int) get_transient($minuteKey);
+        if ($minuteUsed >= $minuteLimit) {
             return new \WP_Error(
-                'ouinpo_public_quota_hour',
-                'Limite atteinte pour cette heure. Réessaie un peu plus tard.',
+                'ouinpo_public_quota_minute',
+                'Limite atteinte pour cette minute. Réessaie un peu plus tard.',
                 ['status' => 429]
             );
         }
@@ -231,6 +250,17 @@ final class AiSettings
             );
         }
 
+        if ($globalMinuteLimit > 0) {
+            $globalMinuteUsed = (int) get_transient($globalMinuteKey);
+            if ($globalMinuteUsed >= $globalMinuteLimit) {
+                return new \WP_Error(
+                    'ouinpo_public_quota_global_minute',
+                    'Limite globale atteinte pour cette minute.',
+                    ['status' => 429]
+                );
+            }
+        }
+
         if ($globalDailyLimit > 0) {
             $globalDayUsed = (int) get_transient($globalDayKey);
             if ($globalDayUsed >= $globalDailyLimit) {
@@ -242,8 +272,12 @@ final class AiSettings
             }
         }
 
-        set_transient($hourKey, $hourUsed + 1, HOUR_IN_SECONDS + 120);
+        set_transient($minuteKey, $minuteUsed + 1, MINUTE_IN_SECONDS + 30);
         set_transient($dayKey, $dayUsed + 1, DAY_IN_SECONDS + 120);
+
+        if ($globalMinuteLimit > 0) {
+            set_transient($globalMinuteKey, ((int) get_transient($globalMinuteKey)) + 1, MINUTE_IN_SECONDS + 30);
+        }
 
         if ($globalDailyLimit > 0) {
             set_transient($globalDayKey, ((int) get_transient($globalDayKey)) + 1, DAY_IN_SECONDS + 120);
@@ -259,6 +293,73 @@ final class AiSettings
         $salt = function_exists('wp_salt') ? wp_salt('auth') : (defined('AUTH_SALT') ? AUTH_SALT : 'ouinpo');
 
         return substr(hash('sha256', $ip . '|' . $salt), 0, 24);
+    }
+
+    public static function consumeUserRateLimit(
+        string $scope,
+        int $userId,
+        int $minuteLimit,
+        int $dailyLimit
+    ) {
+        if ($userId <= 0) {
+            return true;
+        }
+
+        $scope = sanitize_key($scope);
+        if ($scope === '') {
+            $scope = 'student_ai';
+        }
+
+        $minuteLimit = max(1, min(10000, $minuteLimit));
+        $dailyLimit = max(1, min(10000, $dailyLimit));
+        $salt = function_exists('wp_salt') ? wp_salt('auth') : (defined('AUTH_SALT') ? AUTH_SALT : 'ouinpo');
+        $userHash = substr(hash('sha256', (string) $userId . '|' . $salt), 0, 24);
+
+        $minuteKey = 'ouinpo_rl_' . $scope . '_um_' . gmdate('YmdHi') . '_' . $userHash;
+        $dayKey = 'ouinpo_rl_' . $scope . '_ud_' . gmdate('Ymd') . '_' . $userHash;
+
+        $minuteUsed = (int) get_transient($minuteKey);
+        if ($minuteUsed >= $minuteLimit) {
+            return new \WP_Error(
+                'ouinpo_user_quota_minute',
+                'Limite atteinte pour cette minute. Réessaie un peu plus tard.',
+                ['status' => 429]
+            );
+        }
+
+        $dayUsed = (int) get_transient($dayKey);
+        if ($dayUsed >= $dailyLimit) {
+            return new \WP_Error(
+                'ouinpo_user_quota_day',
+                'Limite quotidienne atteinte pour cet usage IA.',
+                ['status' => 429]
+            );
+        }
+
+        set_transient($minuteKey, $minuteUsed + 1, MINUTE_IN_SECONDS + 30);
+        set_transient($dayKey, $dayUsed + 1, DAY_IN_SECONDS + 120);
+
+        return true;
+    }
+
+    public static function quota(string $option): int
+    {
+        $defaults = self::defaults();
+        return self::sanitize_quota(get_option($option, $defaults[$option] ?? 0));
+    }
+
+    public static function maxTokens(string $option): int
+    {
+        $defaults = self::defaults();
+        return self::sanitize_max_tokens(get_option($option, $defaults[$option] ?? 800));
+    }
+
+    public static function currentUserUsesTeacherAiQuota(): bool
+    {
+        return current_user_can('manage_options')
+            || Capabilities::can(Capabilities::MANAGE_AI)
+            || Capabilities::can(Capabilities::MANAGE_EXERCISES)
+            || Capabilities::can(Capabilities::MANAGE_PRACTICAL_SUBJECTS);
     }
 
     public static function render_public_access_migration_notice(): void
@@ -321,6 +422,22 @@ final class AiSettings
             'ouinpo_ai_presence_penalty' => 'penalty',
             'ouinpo_ai_user_daily_limit' => 'quota',
             'ouinpo_ai_public_daily_limit' => 'quota',
+            'ouinpo_ai_public_ip_per_minute' => 'quota',
+            'ouinpo_ai_public_ip_per_day' => 'quota',
+            'ouinpo_ai_public_global_per_minute' => 'quota',
+            'ouinpo_ai_public_global_per_day' => 'quota',
+            'ouinpo_ai_student_per_minute' => 'quota',
+            'ouinpo_ai_student_per_day' => 'quota',
+            'ouinpo_ai_exercise_ai_per_minute' => 'quota',
+            'ouinpo_ai_exercise_ai_per_day' => 'quota',
+            'ouinpo_ai_practical_ai_per_minute' => 'quota',
+            'ouinpo_ai_practical_ai_per_day' => 'quota',
+            'ouinpo_ai_teacher_per_minute' => 'quota',
+            'ouinpo_ai_teacher_per_day' => 'quota',
+            'ouinpo_ai_public_chat_max_tokens' => 'max_tokens',
+            'ouinpo_ai_exercise_ai_max_tokens' => 'max_tokens',
+            'ouinpo_ai_practical_ai_max_tokens' => 'max_tokens',
+            'ouinpo_ai_public_rag_max_tokens' => 'max_tokens',
             'ouinpo_ai_disabled_message' => 'text',
             'ouinpo_ai_privacy_notice' => 'long_text',
             'ouinpo_ai_persona_general' => 'long_text',

@@ -146,7 +146,7 @@ TXT;
                 ['role' => 'user',   'content' => $user_prompt],
             ], [
                 'temperature' => (float) get_option('ouinpo_ai_temperature', 0.0),
-                'max_tokens'  => min((int) get_option('ouinpo_ai_max_tokens', 900), 900),
+                'max_tokens'  => \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens'),
                 'albert_purpose' => 'code',
                 'response_format' => [
                     'type' => 'json_object',

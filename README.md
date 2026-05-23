@@ -299,7 +299,7 @@ Avant toute utilisation avec des élèves, il est recommandé de :
 - informer les élèves des usages prévus ;
 - éviter l’envoi de données personnelles ;
 - désactiver les fonctions IA publiques si elles ne sont pas nécessaires ;
-- vérifier les quotas et les coûts éventuels.
+- vérifier les quotas, la disponibilite et le risque d'epuisement des quotas quotidiens.
 
 ## Données élèves
 
@@ -422,6 +422,19 @@ Les routes REST publiques des exercices et sujets pratiques sont maintenant gouv
 Sur une nouvelle installation, ces acces anonymes sont fermes par defaut pour une distribution prudente. Lors d'une mise a jour depuis une version anterieure a 0.5.0, une migration douce conserve les acces publics existants afin de ne pas casser un site deja configure.
 
 Les logs IA/RAG detailles sont desactives par defaut. Les logs synthetiques ne sont emis que si `WP_DEBUG` est actif et si l'option de debug IA/RAG OuInPo est activee. Ils ne doivent pas contenir de cle API, prompt complet, reponse complete de l'IA ou donnee personnelle.
+
+### Quotas IA / Albert
+
+Les quotas internes du plugin doivent rester inferieurs aux quotas Albert disponibles afin d'eviter la saturation, les indisponibilites temporaires, les abus publics et l'epuisement du quota quotidien. Les reglages par defaut sont adaptes a un usage pedagogique encadre :
+
+- visiteurs anonymes : 5 requetes par IP hashee et par minute, 100 par IP hashee et par jour ;
+- plafond public global du site : 40 requetes par minute, 4000 par jour ;
+- eleves connectes : 15 requetes par minute, 300 par jour ;
+- corrections d'exercices : 5 requetes par minute, 120 par jour ;
+- corrections de sujets pratiques : 5 requetes par minute, 80 par jour ;
+- enseignants : 30 requetes par minute, 1000 par jour.
+
+Les quotas publics restent volontairement limites, meme si Albert propose des plafonds eleves. Un NAT ou un proxy d'etablissement peut faire partager le meme quota IP a plusieurs eleves ; dans ce cas, il faut ajuster avec prudence les limites anonymes et privilegier les comptes connectes.
 
 ## Dependances systeme optionnelles
 

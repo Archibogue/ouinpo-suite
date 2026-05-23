@@ -3546,8 +3546,9 @@ private static function student_competency_context(int $user_id, string $level =
 
   return implode("\n", $out);
 }
-public static function format_context(array $chunks): string {
+public static function format_context(array $chunks, int $max_tokens = 0): string {
   $out = [];
+  $used_tokens = 0;
 
   foreach ($chunks as $i => $c) {
     $title = trim((string)($c['title'] ?? ''));
@@ -3563,7 +3564,27 @@ public static function format_context(array $chunks): string {
       $head .= " — " . $c['url'];
     }
 
-    $out[] = $head . "\n" . self::trim((string)($c['chunk'] ?? ''), 900);
+    $chunk = self::trim((string)($c['chunk'] ?? ''), 900);
+    $entry = $head . "\n" . $chunk;
+
+    if ($max_tokens > 0) {
+      $entry_tokens = self::estimate_tokens($entry);
+      $remaining = $max_tokens - $used_tokens;
+
+      if ($remaining <= 0) {
+        break;
+      }
+
+      if ($entry_tokens > $remaining) {
+        $chunk = self::trim($chunk, max(120, $remaining * 4));
+        $entry = $head . "\n" . $chunk;
+        $entry_tokens = self::estimate_tokens($entry);
+      }
+
+      $used_tokens += $entry_tokens;
+    }
+
+    $out[] = $entry;
   }
 
   return implode("\n\n", $out);

@@ -3,6 +3,7 @@
 namespace Ouinpo\Suite\Core\Admin;
 
 use Ouinpo\Suite\Core\Bootstrap;
+use Ouinpo\Suite\Core\AiSettings;
 use Ouinpo\Suite\Core\Capabilities;
 use Ouinpo\Suite\Core\ModuleSettings;
 use Ouinpo\Suite\Core\PedagogicalPackImporter;
@@ -2749,9 +2750,11 @@ final class SuiteAdmin
             $options['Contraintes SQL SegFault'] = $fkFailureCount === 0 ? 'OK' : $fkFailureCount . ' échec(s) à vérifier';
             $options['Fichiers pratiques bloqués'] = $blockedPracticalFiles === 0 ? 'OK' : $blockedPracticalFiles . ' fichier(s) masqué(s) par sécurité';
             self::renderKeyValueCard('Options principales', $options);
+            self::renderKeyValueCard('Quotas IA / Albert', self::aiQuotaDiagnosticRows());
             ?>
         </div>
         <?php
+        self::renderAiQuotaWarnings();
         self::renderTablesDiagnostic();
         self::renderDistributionWarnings();
     }
@@ -2771,6 +2774,73 @@ final class SuiteAdmin
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+        <?php
+    }
+
+    private static function aiQuotaDiagnosticRows(): array
+    {
+        return [
+            'Public anonyme / IP / minute' => AiSettings::quota('ouinpo_ai_public_ip_per_minute'),
+            'Public anonyme / IP / jour' => AiSettings::quota('ouinpo_ai_public_ip_per_day'),
+            'Public global / minute' => AiSettings::quota('ouinpo_ai_public_global_per_minute'),
+            'Public global / jour' => AiSettings::quota('ouinpo_ai_public_global_per_day'),
+            'Eleve connecte / minute' => AiSettings::quota('ouinpo_ai_student_per_minute'),
+            'Eleve connecte / jour' => AiSettings::quota('ouinpo_ai_student_per_day'),
+            'Correction exercice / minute' => AiSettings::quota('ouinpo_ai_exercise_ai_per_minute'),
+            'Correction exercice / jour' => AiSettings::quota('ouinpo_ai_exercise_ai_per_day'),
+            'Sujet pratique / minute' => AiSettings::quota('ouinpo_ai_practical_ai_per_minute'),
+            'Sujet pratique / jour' => AiSettings::quota('ouinpo_ai_practical_ai_per_day'),
+            'Enseignant / minute' => AiSettings::quota('ouinpo_ai_teacher_per_minute'),
+            'Enseignant / jour' => AiSettings::quota('ouinpo_ai_teacher_per_day'),
+            'Reference Albert indicative' => 'openai/gpt-oss-120b : 50 RPM / 5000 RPD',
+        ];
+    }
+
+    private static function aiQuotaWarnings(): array
+    {
+        $known_rpm = 50;
+        $known_rpd = 5000;
+        $warnings = [];
+
+        foreach ([
+            'Public anonyme / IP / minute' => ['ouinpo_ai_public_ip_per_minute', $known_rpm],
+            'Public global / minute' => ['ouinpo_ai_public_global_per_minute', $known_rpm],
+            'Eleve connecte / minute' => ['ouinpo_ai_student_per_minute', $known_rpm],
+            'Correction exercice / minute' => ['ouinpo_ai_exercise_ai_per_minute', $known_rpm],
+            'Sujet pratique / minute' => ['ouinpo_ai_practical_ai_per_minute', $known_rpm],
+            'Enseignant / minute' => ['ouinpo_ai_teacher_per_minute', $known_rpm],
+            'Public anonyme / IP / jour' => ['ouinpo_ai_public_ip_per_day', $known_rpd],
+            'Public global / jour' => ['ouinpo_ai_public_global_per_day', $known_rpd],
+            'Eleve connecte / jour' => ['ouinpo_ai_student_per_day', $known_rpd],
+            'Correction exercice / jour' => ['ouinpo_ai_exercise_ai_per_day', $known_rpd],
+            'Sujet pratique / jour' => ['ouinpo_ai_practical_ai_per_day', $known_rpd],
+            'Enseignant / jour' => ['ouinpo_ai_teacher_per_day', $known_rpd],
+        ] as $label => [$option, $limit]) {
+            $value = AiSettings::quota($option);
+            if ($value > $limit) {
+                $warnings[] = sprintf('%s configure a %d, au-dessus de la reference Albert %d.', $label, $value, $limit);
+            }
+        }
+
+        return $warnings;
+    }
+
+    private static function renderAiQuotaWarnings(): void
+    {
+        $warnings = self::aiQuotaWarnings();
+
+        if (empty($warnings)) {
+            return;
+        }
+        ?>
+        <div class="notice notice-warning ouinpo-suite-notice">
+            <p><strong>Quotas IA / Albert :</strong> certains quotas internes depassent les limites Albert connues. Cela peut provoquer une saturation, une indisponibilite temporaire ou un epuisement du quota quotidien.</p>
+            <ul>
+                <?php foreach ($warnings as $warning): ?>
+                    <li><?php echo esc_html($warning); ?></li>
+                <?php endforeach; ?>
+            </ul>
         </div>
         <?php
     }

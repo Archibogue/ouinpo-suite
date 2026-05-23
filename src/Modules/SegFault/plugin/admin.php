@@ -4144,8 +4144,54 @@ try {
               <label>Top p <input type="number" min="0" max="1" step="0.05" name="ouinpo_ai_top_p" value="<?php echo esc_attr((float)get_option('ouinpo_ai_top_p', 1)); ?>" class="ouinpo-sf-input-small" /></label><br>
               <label>Frequency penalty <input type="number" min="-2" max="2" step="0.1" name="ouinpo_ai_frequency_penalty" value="<?php echo esc_attr((float)get_option('ouinpo_ai_frequency_penalty', 0)); ?>" class="ouinpo-sf-input-small" /></label>
               <label>Presence penalty <input type="number" min="-2" max="2" step="0.1" name="ouinpo_ai_presence_penalty" value="<?php echo esc_attr((float)get_option('ouinpo_ai_presence_penalty', 0)); ?>" class="ouinpo-sf-input-small" /></label><br>
-              <label>Limite connectes / jour <input type="number" min="0" max="10000" name="ouinpo_ai_user_daily_limit" value="<?php echo esc_attr((int)get_option('ouinpo_ai_user_daily_limit', 200)); ?>" class="ouinpo-sf-input-medium" /></label>
-              <label>Limite anonymes / jour <input type="number" min="0" max="10000" name="ouinpo_ai_public_daily_limit" value="<?php echo esc_attr((int)get_option('ouinpo_ai_public_daily_limit', 10)); ?>" class="ouinpo-sf-input-medium" /></label>
+            </td>
+          </tr>
+
+          <tr>
+            <th colspan="2">
+              <h2>Quotas IA / Albert</h2>
+            </th>
+          </tr>
+
+          <tr>
+            <th>Requetes IA</th>
+            <td>
+              <?php foreach ([
+                'ouinpo_ai_public_ip_per_minute' => 'Public anonyme par IP / minute',
+                'ouinpo_ai_public_ip_per_day' => 'Public anonyme par IP / jour',
+                'ouinpo_ai_public_global_per_minute' => 'Public global site / minute',
+                'ouinpo_ai_public_global_per_day' => 'Public global site / jour',
+                'ouinpo_ai_student_per_minute' => 'Eleve connecte / minute',
+                'ouinpo_ai_student_per_day' => 'Eleve connecte / jour',
+                'ouinpo_ai_exercise_ai_per_minute' => 'Correction exercice / minute',
+                'ouinpo_ai_exercise_ai_per_day' => 'Correction exercice / jour',
+                'ouinpo_ai_practical_ai_per_minute' => 'Sujet pratique / minute',
+                'ouinpo_ai_practical_ai_per_day' => 'Sujet pratique / jour',
+                'ouinpo_ai_teacher_per_minute' => 'Enseignant / minute',
+                'ouinpo_ai_teacher_per_day' => 'Enseignant / jour',
+              ] as $option => $label): ?>
+                <label><?php echo esc_html($label); ?>
+                  <input type="number" min="0" max="10000" name="<?php echo esc_attr($option); ?>" value="<?php echo esc_attr((int)get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? 0)); ?>" class="ouinpo-sf-input-small" />
+                </label><br>
+              <?php endforeach; ?>
+              <p class="description">Les quotas publics restent volontairement prudents. Les visiteurs anonymes sont limites par IP hashee et par plafond global du site.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Max tokens par contexte</th>
+            <td>
+              <?php foreach ([
+                'ouinpo_ai_public_chat_max_tokens' => 'Chat public',
+                'ouinpo_ai_exercise_ai_max_tokens' => 'Correction exercice',
+                'ouinpo_ai_practical_ai_max_tokens' => 'Correction sujet pratique',
+                'ouinpo_ai_public_rag_max_tokens' => 'Contexte RAG public',
+              ] as $option => $label): ?>
+                <label><?php echo esc_html($label); ?>
+                  <input type="number" min="128" max="8000" name="<?php echo esc_attr($option); ?>" value="<?php echo esc_attr((int)get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? 800)); ?>" class="ouinpo-sf-input-small" />
+                </label><br>
+              <?php endforeach; ?>
+              <p class="description">Reference indicative Albert : openai/gpt-oss-120b = 50 RPM / 5000 RPD. Garder les limites internes nettement en dessous, surtout pour les acces anonymes.</p>
             </td>
           </tr>
 
@@ -4365,44 +4411,6 @@ try {
           </td>
 
         </tr>
-
-        
-
-          <tr>
-
-            <th>Quota public</th>
-
-            <td>
-
-              <label>Par IP / heure
-
-                <input type="number" min="1" name="ouinpo_sf_public_hourly_limit"
-
-                  value="<?php echo esc_attr((int)get_option('ouinpo_sf_public_hourly_limit', 5)); ?>" class="ouinpo-sf-input-small" />
-
-              </label>
-
-              &nbsp;
-
-              <label>Global / jour
-
-                <input type="number" min="1" name="ouinpo_sf_public_daily_limit"
-
-                  value="<?php echo esc_attr((int)get_option('ouinpo_sf_public_daily_limit', 100)); ?>" class="ouinpo-sf-input-small" />
-
-              </label>
-
-              <p class="description">
-
-                Limites appliquées aux visiteurs non connectés afin d’éviter les abus.
-
-                Les élèves connectés ne sont pas censés être limités par ces quotas publics.
-
-              </p>
-
-            </td>
-
-          </tr>
 
         
 

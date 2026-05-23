@@ -39,29 +39,22 @@ private static function public_ai_enabled(): bool {
     && \OuInPo\SegFault\Albert::public_available();
 }
 
-private static function public_ai_quota_limit(): int {
-
-  $limit = (int) apply_filters(
-
-    'ouinpo_ai_public_daily_limit',
-
-    (int) get_option('ouinpo_ai_public_daily_limit', 10)
-
-  );
-
-
-
-  return max(1, min(200, $limit));
-
-}
-
-
-
 private static function consume_public_ai_quota() {
+
+  $minute = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_exercise_ai_per_minute');
+
+  $day = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_exercise_ai_per_day');
 
   if (is_user_logged_in()) {
 
-    return true;
+    $teacher_quota = \Ouinpo\Suite\Core\AiSettings::currentUserUsesTeacherAiQuota();
+
+    return \Ouinpo\Suite\Core\AiSettings::consumeUserRateLimit(
+      $teacher_quota ? 'teacher_ai' : 'exercise_ai',
+      get_current_user_id(),
+      $teacher_quota ? \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_teacher_per_minute') : $minute,
+      $teacher_quota ? \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_teacher_per_day') : $day
+    );
 
   }
 
@@ -69,9 +62,10 @@ private static function consume_public_ai_quota() {
 
   return \Ouinpo\Suite\Core\AiSettings::consumePublicRateLimit(
     'exercise_ai',
-    (int) apply_filters('ouinpo_ai_public_hourly_limit', 5, 'exercise_ai'),
-    self::public_ai_quota_limit(),
-    (int) apply_filters('ouinpo_ai_public_global_daily_limit', 0, 'exercise_ai')
+    min($minute, \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_ip_per_minute')),
+    min($day, \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_ip_per_day')),
+    \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_global_per_day'),
+    \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_global_per_minute')
   );
 
 }
@@ -387,7 +381,7 @@ TXT;
     try {
     $options = [
       'temperature' => (float) get_option('ouinpo_ai_temperature', 0.0),
-      'max_tokens'  => min((int) get_option('ouinpo_ai_max_tokens', $parts['has_code'] ? 900 : 700), $parts['has_code'] ? 900 : 700),
+      'max_tokens'  => \Ouinpo\Suite\Core\AiSettings::maxTokens('ouinpo_ai_exercise_ai_max_tokens'),
       'response_format' => [
         'type' => 'json_object',
       ],
