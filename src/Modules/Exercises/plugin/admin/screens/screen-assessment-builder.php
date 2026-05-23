@@ -79,6 +79,16 @@ class Screen_Assessment_Builder {
             </div>
         <?php endif; ?>
 
+        <?php
+        if (class_exists('\\Ouinpo\\Exercises\\Admin\\AiAssessmentBuilderPage')) {
+            \Ouinpo\Exercises\Admin\AiAssessmentBuilderPage::render_panel([
+                'filters'      => $filters,
+                'exercises'    => $exercises,
+                'difficulties' => $difficulties,
+            ]);
+        }
+        ?>
+
         <div class="ouinpo-builder-layout">
             <div class="ouinpo-builder-card">
                 <h2>1. Filtrer les exercices</h2>

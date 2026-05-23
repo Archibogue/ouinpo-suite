@@ -38,7 +38,8 @@ add_action('rest_api_init', function () {
     \Ouinpo\Exercises\Rest\MeRoutes::register();
     \Ouinpo\Exercises\Rest\PracticalRoutes::register();
     \Ouinpo\Exercises\Rest\AiExerciseBuilderRoutes::register();
-}, 99);
+    \Ouinpo\Exercises\Rest\AiAssessmentBuilderRoutes::register();
+}, 99);
 
 // ==========================================================
 // 3) Front : shortcodes & assets
