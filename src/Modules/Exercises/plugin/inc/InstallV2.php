@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.7';
+    const DB_VERSION = '2.6.8';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -763,7 +763,64 @@ class InstallV2 {
 
             KEY is_absent (is_absent)
 
-        ) $charset_innodb;";       
+        ) $charset_innodb;";
+
+        $sql_correction_batches = "CREATE TABLE {$p}correction_batches (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            assessment_id BIGINT UNSIGNED NOT NULL,
+            group_id INT UNSIGNED NULL,
+            teacher_id BIGINT UNSIGNED NOT NULL,
+            status ENUM('draft','analyzing','review','validated','error') NOT NULL DEFAULT 'draft',
+            title VARCHAR(200) NULL,
+            notes TEXT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY assessment_id (assessment_id),
+            KEY group_id (group_id),
+            KEY teacher_id (teacher_id),
+            KEY status (status)
+        ) $charset_innodb;";
+
+        $sql_correction_copies = "CREATE TABLE {$p}correction_copies (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            batch_id BIGINT UNSIGNED NOT NULL,
+            student_user_id BIGINT UNSIGNED NULL,
+            student_ref VARCHAR(120) NOT NULL,
+            file_name VARCHAR(255) NULL,
+            file_path TEXT NULL,
+            file_url TEXT NULL,
+            mime_type VARCHAR(120) NULL,
+            file_size BIGINT UNSIGNED NULL,
+            pages_count SMALLINT UNSIGNED NULL,
+            ocr_text LONGTEXT NULL,
+            status ENUM('uploaded','ocr_needed','ready','analyzing','proposal','validated','rejected','error') NOT NULL DEFAULT 'uploaded',
+            ai_proposal LONGTEXT NULL,
+            validated_correction LONGTEXT NULL,
+            error_message TEXT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY batch_id (batch_id),
+            KEY student_user_id (student_user_id),
+            KEY status (status)
+        ) $charset_innodb;";
+
+        $sql_correction_items = "CREATE TABLE {$p}correction_items (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            copy_id BIGINT UNSIGNED NOT NULL,
+            exercise_id BIGINT UNSIGNED NOT NULL,
+            suggested_points DECIMAL(6,2) NULL,
+            max_points DECIMAL(6,2) NULL,
+            confidence DECIMAL(4,3) NULL,
+            feedback LONGTEXT NULL,
+            competencies LONGTEXT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY copy_id (copy_id),
+            KEY exercise_id (exercise_id)
+        ) $charset_innodb;";
 
         
 
@@ -855,6 +912,12 @@ class InstallV2 {
         dbDelta($sql_assessment_results);
 
         dbDelta($sql_assessment_attendance);
+
+        dbDelta($sql_correction_batches);
+
+        dbDelta($sql_correction_copies);
+
+        dbDelta($sql_correction_items);
 
 
 
