@@ -99,7 +99,10 @@ class PracticalRoutes {
             return true;
         }
 
-        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_practical_files_enabled')
+        return (
+            \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_practical_subjects_enabled')
+            && \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_practical_files_enabled')
+        )
             ? true
             : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les fichiers des sujets pratiques.', ['status' => 401]);
     }

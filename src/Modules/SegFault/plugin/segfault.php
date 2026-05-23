@@ -784,9 +784,20 @@ function ouinpo_sf_build_current_page_chunk(string $url): ?array {
 
   if (!empty($qs['exo'])) {
 
+    // Le parametre page ne doit jamais contourner les droits REST des exercices.
+    if (!is_user_logged_in()) {
+      if (
+        !class_exists('\Ouinpo\Suite\Core\AiSettings')
+        || !\Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_exercises_enabled')
+      ) {
+        return null;
+      }
+    }
+
     $exo_raw = $qs['exo'];
 
     $table_exo = $wpdb->prefix.'ouin_exo_exercises';
+    $table_exam = $wpdb->prefix.'ouin_exo_exam_meta';
 
 
 
@@ -796,7 +807,13 @@ function ouinpo_sf_build_current_page_chunk(string $url): ?array {
 
       $row = $wpdb->get_row($wpdb->prepare(
 
-        "SELECT id, title, statement FROM {$table_exo} WHERE id = %d LIMIT 1", (int)$exo_raw
+        "SELECT e.id, e.title, e.statement
+         FROM {$table_exo} e
+         LEFT JOIN {$table_exam} em ON em.exercise_id = e.id
+         WHERE e.id = %d
+           AND e.is_active = 1
+           AND (em.exam_type IS NULL OR em.exam_type <> 'practical_subject')
+         LIMIT 1", (int)$exo_raw
 
       ));
 
@@ -804,7 +821,13 @@ function ouinpo_sf_build_current_page_chunk(string $url): ?array {
 
       $row = $wpdb->get_row($wpdb->prepare(
 
-        "SELECT id, title, statement FROM {$table_exo} WHERE slug = %s LIMIT 1", $exo_raw
+        "SELECT e.id, e.title, e.statement
+         FROM {$table_exo} e
+         LEFT JOIN {$table_exam} em ON em.exercise_id = e.id
+         WHERE e.slug = %s
+           AND e.is_active = 1
+           AND (em.exam_type IS NULL OR em.exam_type <> 'practical_subject')
+         LIMIT 1", $exo_raw
 
       ));
 
