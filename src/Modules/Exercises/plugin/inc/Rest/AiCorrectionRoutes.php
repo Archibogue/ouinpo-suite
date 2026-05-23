@@ -65,17 +65,27 @@ final class AiCorrectionRoutes
     public static function batch(\WP_REST_Request $request)
     {
         $batch = CorrectionBatchService::get_batch((int) $request['id']);
-        return $batch ? rest_ensure_response(['batch' => $batch]) : new \WP_Error('batch_not_found', 'Lot introuvable.', ['status' => 404]);
+        return $batch && (string) ($batch['source_type'] ?? 'scan') === 'scan'
+            ? rest_ensure_response(['batch' => $batch])
+            : new \WP_Error('batch_not_found', 'Lot introuvable.', ['status' => 404]);
     }
 
     public static function delete_batch(\WP_REST_Request $request)
     {
+        $batch = CorrectionBatchService::get_batch((int) $request['id']);
+        if (!$batch || (string) ($batch['source_type'] ?? 'scan') !== 'scan') {
+            return new \WP_Error('batch_not_found', 'Lot introuvable.', ['status' => 404]);
+        }
         return rest_ensure_response(['ok' => CorrectionBatchService::delete_batch((int) $request['id'])]);
     }
 
     public static function upload_copy(\WP_REST_Request $request)
     {
         $batch_id = (int) $request['id'];
+        $batch = CorrectionBatchService::get_batch($batch_id);
+        if (!$batch || (string) ($batch['source_type'] ?? 'scan') !== 'scan') {
+            return new \WP_Error('batch_not_found', 'Lot introuvable.', ['status' => 404]);
+        }
         $files = $request->get_file_params();
         $file = $files['copy_file'] ?? null;
         if (!is_array($file)) {

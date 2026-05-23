@@ -6,7 +6,7 @@ use Ouinpo\Suite\Core\AiSettings;
 
 defined('ABSPATH') || exit;
 
-final class CorrectionPersistService
+final class FileCorrectionPersistService
 {
     private static function table(string $suffix): string
     {
@@ -18,23 +18,19 @@ final class CorrectionPersistService
     {
         global $wpdb;
         $copy = CorrectionBatchService::get_copy($copy_id);
-        if (!$copy) {
-            return new \WP_Error('copy_not_found', 'Copie introuvable.');
+        if (!$copy || (string) ($copy['source_type'] ?? '') !== 'file') {
+            return new \WP_Error('copy_not_found', 'Rendu fichier introuvable.');
         }
-        if ((string) ($copy['source_type'] ?? 'scan') !== 'scan') {
-            return new \WP_Error('invalid_correction_source', 'Ce rendu relÃ¨ve du workflow fichiers.');
-        }
-        $batch = CorrectionBatchService::get_batch((int) $copy['batch_id']);
+        $batch = FileCorrectionBatchService::get_batch((int) $copy['batch_id']);
         if (!$batch) {
-            return new \WP_Error('batch_not_found', 'Lot introuvable.');
+            return new \WP_Error('batch_not_found', 'Lot fichiers introuvable.');
         }
-        $context = CorrectionBatchService::assessment_context((int) $batch['assessment_id']);
+        $context = FileCorrectionBatchService::context_for_batch($batch);
         if (is_wp_error($context)) {
             return $context;
         }
 
-        $service = new AiCorrectionService();
-        $validated = $service->validate($correction, $context, (string) $copy['student_ref']);
+        $validated = (new AiFileCorrectionService())->validate($correction, $context, (string) $copy['student_ref']);
         if (is_wp_error($validated)) {
             return $validated;
         }
@@ -59,7 +55,7 @@ final class CorrectionPersistService
             ], ['%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s']);
         }
 
-        if ((int) AiSettings::get('ouinpo_ai_correction_keep_scans') !== 1 && !empty($copy['file_path']) && is_file((string) $copy['file_path'])) {
+        if ((int) AiSettings::get('ouinpo_ai_file_correction_keep_files') !== 1 && !empty($copy['file_path']) && is_file((string) $copy['file_path'])) {
             @unlink((string) $copy['file_path']);
         }
 

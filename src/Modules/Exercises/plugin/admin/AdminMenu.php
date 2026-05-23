@@ -21,6 +21,10 @@ class AdminMenu {
                 'handle' => 'ouinpo-assessment-builder-admin',
                 'file'   => 'assets/css/admin/assessment-builder.css',
             ],
+            'ouinpo-ai-file-corrections' => [
+                'handle' => 'ouinpo-assessment-builder-admin',
+                'file'   => 'assets/css/admin/assessment-builder.css',
+            ],
             'ouinpo-assessments' => [
                 'handle' => 'ouinpo-assessments-admin',
                 'file'   => 'assets/css/admin/assessments.css',
@@ -220,6 +224,15 @@ class AdminMenu {
             Capabilities::MANAGE_ASSESSMENTS,
             'ouinpo-ai-corrections',
             ['\\Ouinpo\\Exercises\\Admin\\AiCorrectionPage', 'render']
+        );
+
+        add_submenu_page(
+            $parent,
+            'Correction IA - fichiers Ã©lÃ¨ves',
+            'Correction IA fichiers',
+            Capabilities::MANAGE_ASSESSMENTS,
+            'ouinpo-ai-file-corrections',
+            ['\\Ouinpo\\Exercises\\Admin\\AiFileCorrectionPage', 'render']
         );
     
         add_submenu_page(

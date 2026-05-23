@@ -40,6 +40,7 @@ add_action('rest_api_init', function () {
     \Ouinpo\Exercises\Rest\AiExerciseBuilderRoutes::register();
     \Ouinpo\Exercises\Rest\AiAssessmentBuilderRoutes::register();
     \Ouinpo\Exercises\Rest\AiCorrectionRoutes::register();
+    \Ouinpo\Exercises\Rest\AiFileCorrectionRoutes::register();
 }, 99);
 
 // ==========================================================

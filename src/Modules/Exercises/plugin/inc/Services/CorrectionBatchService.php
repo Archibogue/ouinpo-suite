@@ -107,11 +107,14 @@ final class CorrectionBatchService
             'assessment_id' => $assessment_id,
             'group_id' => $group_id ?: null,
             'teacher_id' => get_current_user_id(),
+            'source_type' => 'scan',
+            'context_type' => 'assessment',
+            'context_id' => $assessment_id,
             'status' => 'draft',
             'title' => sanitize_text_field($title),
             'created_at' => current_time('mysql'),
             'updated_at' => current_time('mysql'),
-        ], ['%d', '%d', '%d', '%s', '%s', '%s', '%s']);
+        ], ['%d', '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s']);
 
         return $ok ? (int) $wpdb->insert_id : new \WP_Error('batch_create_failed', 'Impossible de créer le lot.');
     }
@@ -145,7 +148,8 @@ final class CorrectionBatchService
     {
         global $wpdb;
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT id, batch_id, student_user_id, student_ref, file_name, file_path, file_url, mime_type, file_size, pages_count, ocr_text,
+            "SELECT id, batch_id, student_user_id, student_ref, source_type, file_name, file_path, file_url, mime_type, file_size, pages_count, ocr_text,
+                    extraction_type, file_manifest, extracted_content, extraction_warnings,
                     status, error_message, ai_proposal, validated_correction, created_at, updated_at
              FROM " . self::table('correction_copies') . "
              WHERE batch_id = %d

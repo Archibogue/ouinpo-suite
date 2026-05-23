@@ -6,7 +6,7 @@ use Ouinpo\Suite\Core\AiSettings;
 
 defined('ABSPATH') || exit;
 
-final class AiCorrectionService
+final class AiFileCorrectionService
 {
     private const COMPETENCY_STATUSES = ['acquis', 'à renforcer', 'non acquis', 'non évalué'];
 
@@ -14,25 +14,22 @@ final class AiCorrectionService
     {
         global $wpdb;
         $copy = CorrectionBatchService::get_copy($copy_id);
-        if (!$copy) {
-            return new \WP_Error('copy_not_found', 'Copie introuvable.');
-        }
-        if ((string) ($copy['source_type'] ?? 'scan') !== 'scan') {
-            return new \WP_Error('invalid_correction_source', 'Ce rendu relÃ¨ve du workflow fichiers.');
+        if (!$copy || (string) ($copy['source_type'] ?? '') !== 'file') {
+            return new \WP_Error('copy_not_found', 'Rendu fichier introuvable.');
         }
 
-        $batch = CorrectionBatchService::get_batch((int) $copy['batch_id']);
+        $batch = FileCorrectionBatchService::get_batch((int) $copy['batch_id']);
         if (!$batch) {
-            return new \WP_Error('batch_not_found', 'Lot introuvable.');
+            return new \WP_Error('batch_not_found', 'Lot fichiers introuvable.');
         }
 
-        $text = trim((string) ($copy['ocr_text'] ?? ''));
-        if ($text === '') {
-            return new \WP_Error('ocr_missing', CopyOcrService::unavailable_message());
+        $content = trim((string) (($copy['extracted_content'] ?? '') ?: ($copy['ocr_text'] ?? '')));
+        if ($content === '') {
+            return new \WP_Error('content_missing', 'Aucun contenu extrait pour ce rendu.');
         }
 
-        if (!AiSettings::enabled_for_usage('pedagogical_suggestions') || (int) AiSettings::get('ouinpo_ai_correction_scans_enabled') !== 1) {
-            return new \WP_Error('ai_correction_disabled', 'Correction de scans par IA désactivée.');
+        if (!AiSettings::enabled_for_usage('pedagogical_suggestions') || (int) AiSettings::get('ouinpo_ai_file_correction_enabled') !== 1) {
+            return new \WP_Error('ai_file_correction_disabled', 'Correction de fichiers par IA dÃ©sactivÃ©e.');
         }
 
         $quota = AiSettings::consumeUserRateLimit(
@@ -45,7 +42,7 @@ final class AiCorrectionService
             return $quota;
         }
 
-        $context = CorrectionBatchService::assessment_context((int) $batch['assessment_id']);
+        $context = FileCorrectionBatchService::context_for_batch($batch);
         if (is_wp_error($context)) {
             return $context;
         }
@@ -57,9 +54,9 @@ final class AiCorrectionService
         $wpdb->update($this->table('correction_copies'), ['status' => 'analyzing', 'error_message' => null], ['id' => $copy_id], ['%s', '%s'], ['%d']);
         CorrectionBatchService::update_batch_status((int) $copy['batch_id'], 'analyzing');
 
-        $answer = \OuInPo\SegFault\OpenAI::respond($this->messages($context, $copy, $text), [
-            'temperature' => 0.15,
-            'max_tokens' => max(1800, AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens')),
+        $answer = \OuInPo\SegFault\OpenAI::respond($this->messages($context, $copy, $content), [
+            'temperature' => 0.1,
+            'max_tokens' => max(2200, AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens')),
             'response_format' => ['type' => 'json_object'],
             'albert_purpose' => 'chat',
         ]);
@@ -71,7 +68,7 @@ final class AiCorrectionService
             return $json;
         }
 
-        $proposal = $this->validate($json, $context, (string) $copy['student_ref']);
+        $proposal = $this->validate($json, $context, self::ai_student_ref($copy));
         if (is_wp_error($proposal)) {
             $wpdb->update($this->table('correction_copies'), ['status' => 'error', 'error_message' => $proposal->get_error_message()], ['id' => $copy_id], ['%s', '%s'], ['%d']);
             CorrectionBatchService::update_batch_status((int) $copy['batch_id'], 'error');
@@ -88,55 +85,10 @@ final class AiCorrectionService
         return $proposal;
     }
 
-    private function messages(array $context, array $copy, string $copy_text): array
-    {
-        $items = array_map(static function (array $item): array {
-            return [
-                'exercise_id' => (int) $item['exercise_id'],
-                'title' => (string) $item['title'],
-                'max_points' => (float) ($item['points'] ?? 0),
-                'statement' => wp_strip_all_tags((string) ($item['statement'] ?? '')),
-                'solution' => wp_strip_all_tags((string) ($item['solution_html'] ?? '')),
-                'competencies' => $item['competencies'] ?? [],
-            ];
-        }, $context['items']);
-
-        $schema = [
-            'student_ref' => (string) $copy['student_ref'],
-            'copy_quality' => ['readable' => true, 'confidence' => 0.8, 'warnings' => []],
-            'total' => ['suggested_points' => 0, 'max_points' => (float) $context['max_points'], 'confidence' => 0.7],
-            'items' => [],
-            'global_feedback' => '...',
-            'teacher_review_required' => true,
-        ];
-
-        return [
-            ['role' => 'system', 'content' => "Tu aides un enseignant à corriger une copie. Tu proposes seulement une correction : l’enseignant valide. Réponds uniquement avec un JSON strict. N’invente pas ce qui est illisible : baisse la confiance et signale les passages à vérifier."],
-            ['role' => 'user', 'content' =>
-                "Devoir : " . (string) ($context['assessment']['title'] ?? '') . "\n"
-                . "Barème et exercices :\n" . wp_json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
-                . "Référence anonymisée de la copie : " . (string) $copy['student_ref'] . "\n"
-                . "Texte OCR ou saisi manuellement :\n" . $copy_text . "\n\n"
-                . "Statuts compétences autorisés : acquis, à renforcer, non acquis, non évalué.\n"
-                . "Format JSON attendu :\n" . wp_json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-            ],
-        ];
-    }
-
-    private function decode_json(string $answer): array|\WP_Error
-    {
-        $answer = trim($answer);
-        $data = $answer !== '' ? json_decode($answer, true) : null;
-        if (!is_array($data) && preg_match('/\{.*\}/s', $answer, $m)) {
-            $data = json_decode($m[0], true);
-        }
-        return is_array($data) ? $data : new \WP_Error('invalid_json', 'Réponse IA JSON invalide.');
-    }
-
     public function validate(array $data, array $context, string $student_ref): array|\WP_Error
     {
         $exercise_max = [];
-        foreach ($context['items'] as $item) {
+        foreach ((array) ($context['items'] ?? []) as $item) {
             $exercise_max[(int) $item['exercise_id']] = max(0.0, (float) ($item['points'] ?? 0));
         }
 
@@ -153,12 +105,13 @@ final class AiCorrectionService
             $max = $exercise_max[$exercise_id];
             $points = min($max, max(0.0, (float) ($item['suggested_points'] ?? 0)));
             $sum += $points;
+
             $competencies = [];
             foreach ((array) ($item['competencies'] ?? []) as $comp) {
                 if (!is_array($comp)) {
                     continue;
                 }
-                $status = (string) ($comp['status'] ?? 'non évalué');
+                $status = sanitize_text_field((string) ($comp['status'] ?? 'non évalué'));
                 if (!in_array($status, self::COMPETENCY_STATUSES, true)) {
                     $status = 'non évalué';
                 }
@@ -169,6 +122,7 @@ final class AiCorrectionService
                     'comment' => sanitize_textarea_field((string) ($comp['comment'] ?? '')),
                 ];
             }
+
             $items[] = [
                 'exercise_id' => $exercise_id,
                 'exercise_title' => sanitize_text_field((string) ($item['exercise_title'] ?? '')),
@@ -186,7 +140,7 @@ final class AiCorrectionService
             return new \WP_Error('empty_correction', 'Aucun item de correction valide.');
         }
 
-        $max_total = max(0.0, (float) $context['max_points']);
+        $max_total = max(0.0, (float) ($context['max_points'] ?? 0));
         $declared_total = min($max_total, max(0.0, (float) ($data['total']['suggested_points'] ?? $sum)));
         if (abs($declared_total - $sum) > 0.25) {
             $declared_total = $sum;
@@ -194,10 +148,11 @@ final class AiCorrectionService
 
         return [
             'student_ref' => sanitize_text_field($student_ref),
-            'copy_quality' => [
-                'readable' => !empty($data['copy_quality']['readable']),
-                'confidence' => max(0.0, min(1.0, (float) ($data['copy_quality']['confidence'] ?? 0))),
-                'warnings' => array_values(array_map('sanitize_text_field', (array) ($data['copy_quality']['warnings'] ?? []))),
+            'submission_quality' => [
+                'readable' => !empty($data['submission_quality']['readable']),
+                'complete' => !empty($data['submission_quality']['complete']),
+                'confidence' => max(0.0, min(1.0, (float) ($data['submission_quality']['confidence'] ?? 0))),
+                'warnings' => array_values(array_map('sanitize_text_field', (array) ($data['submission_quality']['warnings'] ?? []))),
             ],
             'total' => [
                 'suggested_points' => round($declared_total, 2),
@@ -210,9 +165,68 @@ final class AiCorrectionService
         ];
     }
 
+    private function messages(array $context, array $copy, string $content): array
+    {
+        $items = array_map(static function (array $item): array {
+            return [
+                'exercise_id' => (int) $item['exercise_id'],
+                'title' => (string) $item['title'],
+                'max_points' => (float) ($item['points'] ?? 0),
+                'statement' => wp_strip_all_tags((string) ($item['statement'] ?? '')),
+                'solution' => wp_strip_all_tags((string) ($item['solution_html'] ?? '')),
+                'competencies' => $item['competencies'] ?? [],
+            ];
+        }, (array) ($context['items'] ?? []));
+
+        $student_ref = self::ai_student_ref($copy);
+
+        $schema = [
+            'student_ref' => $student_ref,
+            'submission_quality' => ['readable' => true, 'complete' => true, 'confidence' => 0.8, 'warnings' => []],
+            'total' => ['suggested_points' => 0, 'max_points' => (float) ($context['max_points'] ?? 0), 'confidence' => 0.7],
+            'items' => [],
+            'global_feedback' => '...',
+            'teacher_review_required' => true,
+        ];
+
+        $warnings = json_decode((string) ($copy['extraction_warnings'] ?? '[]'), true);
+        $manifest = json_decode((string) ($copy['file_manifest'] ?? '[]'), true);
+
+        return [
+            ['role' => 'system', 'content' => "Tu aides un enseignant Ã  corriger un rendu numÃ©rique. Tu proposes seulement une correction : lâ€™enseignant valide. RÃ©ponds uniquement avec un JSON strict. Analyse statique uniquement : ne prÃ©tends jamais avoir exÃ©cutÃ© le code, nâ€™invente pas de tests ni de fichiers absents."],
+            ['role' => 'user', 'content' =>
+                "Contexte : " . (string) ($context['title'] ?? '') . "\n"
+                . "BarÃ¨me, Ã©noncÃ©s, solutions et compÃ©tences :\n" . wp_json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+                . "Avertissements de contexte :\n" . wp_json_encode((array) ($context['warnings'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+                . "RÃ©fÃ©rence anonymisÃ©e du rendu : " . $student_ref . "\n"
+                . "Manifeste fichiers :\n" . wp_json_encode(is_array($manifest) ? $manifest : [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n"
+                . "Avertissements extraction :\n" . wp_json_encode(is_array($warnings) ? $warnings : [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+                . "Contenu extrait des fichiers :\n" . $content . "\n\n"
+                . "Consignes : signale les fichiers manquants ou incomplets, les incertitudes et les troncatures. Si une exÃ©cution de tests serait nÃ©cessaire, indique-le comme suggestion sans inventer le rÃ©sultat. Statuts compÃ©tences autorisÃ©s : acquis, Ã  renforcer, non acquis, non Ã©valuÃ©.\n"
+                . "Format JSON attendu :\n" . wp_json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            ],
+        ];
+    }
+
+    private function decode_json(string $answer): array|\WP_Error
+    {
+        $answer = trim($answer);
+        $data = $answer !== '' ? json_decode($answer, true) : null;
+        if (!is_array($data) && preg_match('/\{.*\}/s', $answer, $m)) {
+            $data = json_decode($m[0], true);
+        }
+        return is_array($data) ? $data : new \WP_Error('invalid_json', 'RÃ©ponse IA JSON invalide.');
+    }
+
     private function table(string $suffix): string
     {
         global $wpdb;
         return $wpdb->prefix . 'ouin_exo_' . $suffix;
+    }
+
+    private static function ai_student_ref(array $copy): string
+    {
+        $id = max(1, (int) ($copy['id'] ?? 1));
+        return 'anonyme-' . str_pad((string) $id, 3, '0', STR_PAD_LEFT);
     }
 }

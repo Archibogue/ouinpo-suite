@@ -4116,6 +4116,26 @@ try {
           </tr>
 
           <tr>
+            <th>Correction IA admin</th>
+            <td>
+              <label><input type="checkbox" name="ouinpo_ai_correction_scans_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_ai_correction_scans_enabled', 0)); ?> /> Activer la correction assistee par IA a partir de scans/OCR.</label><br>
+              <label><input type="checkbox" name="ouinpo_ai_file_correction_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_ai_file_correction_enabled', 0)); ?> /> Activer la correction assistee par IA a partir de fichiers eleves.</label><br>
+              <label><input type="checkbox" name="ouinpo_ai_correction_keep_scans" value="1" <?php checked(1, (int)get_option('ouinpo_ai_correction_keep_scans', 1)); ?> /> Conserver les scans apres validation professeur.</label><br>
+              <label><input type="checkbox" name="ouinpo_ai_file_correction_keep_files" value="1" <?php checked(1, (int)get_option('ouinpo_ai_file_correction_keep_files', 1)); ?> /> Conserver les fichiers eleves apres validation professeur.</label><br>
+              <label>Taille max scan/PDF (Mo)
+                <input type="number" min="1" max="100" name="ouinpo_ai_correction_max_file_mb" value="<?php echo esc_attr((int)get_option('ouinpo_ai_correction_max_file_mb', 12)); ?>" class="ouinpo-sf-input-small" />
+              </label>
+              <label>Taille max fichier eleve (Mo)
+                <input type="number" min="1" max="100" name="ouinpo_ai_file_correction_max_file_mb" value="<?php echo esc_attr((int)get_option('ouinpo_ai_file_correction_max_file_mb', 8)); ?>" class="ouinpo-sf-input-small" />
+              </label>
+              <label>Conservation fichiers (jours)
+                <input type="number" min="1" max="3650" name="ouinpo_ai_file_correction_retention_days" value="<?php echo esc_attr((int)get_option('ouinpo_ai_file_correction_retention_days', 30)); ?>" class="ouinpo-sf-input-small" />
+              </label>
+              <p class="description">Ces workflows restent admin uniquement. Ils necessitent aussi l'activation IA globale et l'usage "Suggestions pedagogiques".</p>
+            </td>
+          </tr>
+
+          <tr>
             <th>Fournisseurs</th>
             <td>
               <?php foreach (['ouinpo_ai_default_provider' => 'Defaut', 'ouinpo_ai_public_provider' => 'Anonymes', 'ouinpo_ai_logged_provider' => 'Connectes'] as $option => $label): ?>
