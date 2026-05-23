@@ -33,6 +33,10 @@ class AdminMenu {
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
             ],
+            'ouinpo-ai-exercise-builder' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
             'ouinpo-competencies' => [
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
@@ -212,6 +216,15 @@ class AdminMenu {
             Capabilities::MANAGE_EXERCISES,
             'ouinpo-import-exercises',
             [self::class, 'render_import_exercises']
+        );
+
+        add_submenu_page(
+            $parent,
+            'Créer avec l’IA',
+            'Créer avec l’IA',
+            Capabilities::MANAGE_EXERCISES,
+            'ouinpo-ai-exercise-builder',
+            ['\\Ouinpo\\Exercises\\Admin\\AiExerciseBuilderPage', 'render']
         );
     
         add_submenu_page(
