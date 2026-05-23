@@ -275,6 +275,20 @@ Aucune clé API n’est fournie avec le plugin. Chaque enseignant doit configure
 
 Le lien "En savoir plus" des notices IA est vide par defaut. L'enseignant peut renseigner une URL complete ou un chemin relatif dans les reglages SegFault.
 
+### Prudence sur les contenus indexés par le RAG
+
+Le module SegFault peut utiliser un index documentaire pour répondre aux questions des élèves ou des visiteurs, selon les réglages activés par l’administrateur.
+
+Avant d’activer un accès public au RAG ou au chat IA, il est recommandé de vérifier les contenus indexés afin d’exclure :
+- les pages privées ;
+- les contenus réservés aux enseignants ;
+- les corrections non destinées aux élèves ;
+- les données personnelles ;
+- les exports techniques ;
+- les pages d’administration ou de test.
+
+L’activation d’un accès IA public doit donc être faite volontairement, après vérification du périmètre documentaire exposé.
+
 ### Page recommandee : donnees personnelles, IA et usages pedagogiques
 
 Il est recommande de creer une page locale expliquant les usages pedagogiques de l'IA, les donnees a ne pas saisir, les limites des reponses automatiques, les personnes a contacter et le cadre applicable dans l'etablissement. Un modele adaptable est fourni dans `docs/modele-donnees-personnelles-ia.md`.
