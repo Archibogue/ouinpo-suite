@@ -160,21 +160,24 @@ final class AiAssessmentBuilderPage
             function renderProposal(nextProposal) {
                 proposal = nextProposal;
                 const rows = (proposal.items || []).map(function(item, index){
-                    const isNew = item.kind === 'new_ai_exercise';
-                    const title = isNew ? item.exercise_draft?.title : item.title;
-                    const domains = isNew ? (item.exercise_draft?.domains || []).map(function(d){ return d.label || ''; }) : (item.domain_labels || []);
-                    const comps = isNew ? (item.exercise_draft?.competencies || []).map(function(c){ return c.label || ''; }) : (item.competency_labels || []);
+                    const isNew = item.kind === 'new_ai_exercise_request';
+                    const req = item.exercise_request || {};
+                    const draft = item.exercise_draft || null;
+                    const title = isNew ? (draft?.title || req.title_hint || 'Nouvel exercice IA') : item.title;
+                    const domains = isNew ? (draft ? (draft.domains || []).map(function(d){ return d.label || ''; }) : (req.domain_slugs || [])) : (item.domain_labels || []);
+                    const comps = isNew ? (draft ? (draft.competencies || []).map(function(c){ return c.label || ''; }) : (req.competency_ids || []).map(function(id){ return '#' + id; })) : (item.competency_labels || []);
+                    const preview = draft ? '<details><summary>Prévisualiser</summary><p><strong>Énoncé</strong></p><div>' + esc(draft.statement_html || '') + '</div><p><strong>Solution</strong></p><div>' + esc(draft.solution_html || '') + '</div></details>' : '<small>' + esc(req.teacher_prompt || '') + '</small>';
                     return '<tr data-index="' + index + '">'
                         + '<td><input type="number" class="ouinpo-ai-order" min="1" value="' + (index + 1) + '"></td>'
-                        + '<td><strong>' + esc(title) + '</strong><br><small>' + esc(item.rationale || '') + '</small></td>'
+                        + '<td><strong>' + esc(title) + '</strong><br><small>' + esc(item.rationale || req.rationale || '') + '</small>' + (isNew ? '<br>' + preview : '') + '</td>'
                         + '<td>' + esc(domains.join(', ')) + '</td>'
                         + '<td>' + esc(comps.join(', ')) + '</td>'
-                        + '<td>' + esc(item.difficulty || item.exercise_draft?.difficulty || '') + '</td>'
-                        + '<td><input type="number" class="ouinpo-ai-minutes" min="1" value="' + parseInt(item.estimated_minutes || item.exercise_draft?.estimated_minutes || 20, 10) + '"></td>'
+                        + '<td>' + esc(item.difficulty || draft?.difficulty || req.difficulty || '') + '</td>'
+                        + '<td><input type="number" class="ouinpo-ai-minutes" min="1" value="' + parseInt(item.estimated_minutes || draft?.estimated_minutes || req.estimated_minutes || 20, 10) + '"></td>'
                         + '<td><input type="number" class="ouinpo-ai-points" min="0" step="0.25" value="' + Number(item.suggested_points || 5) + '"></td>'
-                        + '<td>' + (isNew ? 'Généré IA' : 'Existant #' + parseInt(item.exercise_id, 10)) + '</td>'
+                        + '<td>' + (isNew ? (draft ? 'Brouillon IA à valider' : 'À générer') : 'Existant #' + parseInt(item.exercise_id, 10)) + '</td>'
                         + '<td><div class="ouinpo-ai-row-actions">'
-                        + (isNew ? '<button type="button" class="button button-small" data-create-draft="' + index + '">Créer l’exercice</button><button type="button" class="button button-small" data-regenerate-draft="' + index + '">Régénérer</button>' : '')
+                        + (isNew ? '<button type="button" class="button button-small" data-generate-draft="' + index + '">' + (draft ? 'Regénérer' : 'Générer') + '</button>' + (draft ? '<button type="button" class="button button-small button-primary" data-create-draft="' + index + '">Créer après validation</button>' : '') : '')
                         + '<select data-replace="' + index + '"><option value="">Remplacer...</option>' + cfg.exercises.map(function(ex){ return '<option value="' + ex.id + '">#' + ex.id + ' ' + esc(ex.title) + '</option>'; }).join('') + '</select>'
                         + '<button type="button" class="button button-small" data-remove="' + index + '">Supprimer</button>'
                         + '</div></td>'
@@ -197,7 +200,7 @@ final class AiAssessmentBuilderPage
                     renderKpi(data.kpi);
                     $('ouinpo-ai-assessment-status').innerHTML = '';
                 } catch (error) {
-                    notice($('ouinpo-ai-assessment-status'), 'error', error.message);
+                    $('ouinpo-ai-assessment-status').innerHTML = '<div class="notice notice-error inline"><p>' + esc(error.message) + '</p><p><button type="button" class="button" id="ouinpo-ai-retry-assessment">Relancer</button></p></div>';
                 }
             }
 
@@ -219,7 +222,7 @@ final class AiAssessmentBuilderPage
 
             async function createDraft(index) {
                 const item = proposal?.items?.[index];
-                if (!item || item.kind !== 'new_ai_exercise') {
+                if (!item || item.kind !== 'new_ai_exercise_request' || !item.exercise_draft) {
                     return;
                 }
                 try {
@@ -237,26 +240,27 @@ final class AiAssessmentBuilderPage
 
             async function regenerateDraft(index) {
                 const item = proposal?.items?.[index];
-                if (!item || item.kind !== 'new_ai_exercise') {
+                if (!item || item.kind !== 'new_ai_exercise_request') {
                     return;
                 }
                 try {
                     const body = payload();
+                    const req = item.exercise_request || {};
                     const data = await postJson(cfg.rest.generateExerciseUrl, {
-                        level_id: body.level_id,
-                        domain_slug: body.domain_slugs[0] || '',
-                        competency_ids: body.competency_ids,
-                        difficulty_slug: body.difficulty_slug,
+                        level_id: req.level_id || body.level_id,
+                        domain_slug: (req.domain_slugs || [])[0] || body.domain_slugs[0] || '',
+                        competency_ids: req.competency_ids || body.competency_ids,
+                        difficulty_slug: req.difficulty_slug || body.difficulty_slug,
                         exercise_type: 'classic',
-                        estimated_minutes: item.exercise_draft?.estimated_minutes || 20,
-                        free_prompt: body.free_constraints,
-                        action: 'variant',
+                        estimated_minutes: item.exercise_draft?.estimated_minutes || req.estimated_minutes || 20,
+                        free_prompt: req.teacher_prompt || body.free_constraints,
+                        action: item.exercise_draft ? 'variant' : 'generate',
                         previous: item.exercise_draft || {}
                     });
                     item.exercise_draft = data.proposal;
                     item.suggested_points = item.suggested_points || 5;
                     renderProposal(proposal);
-                    notice($('ouinpo-ai-assessment-status'), 'success', 'Brouillon régénéré.');
+                    notice($('ouinpo-ai-assessment-status'), 'success', 'Brouillon généré. Relis la prévisualisation avant de créer l’exercice.');
                 } catch (error) {
                     notice($('ouinpo-ai-assessment-status'), 'error', error.message);
                 }
@@ -326,7 +330,7 @@ final class AiAssessmentBuilderPage
             $('ouinpo-ai-generate-assessment').addEventListener('click', generate);
             $('ouinpo-ai-assessment-proposal').addEventListener('click', function(event){
                 const createIndex = event.target.getAttribute('data-create-draft');
-                const regenerateIndex = event.target.getAttribute('data-regenerate-draft');
+                const regenerateIndex = event.target.getAttribute('data-generate-draft');
                 const removeIndex = event.target.getAttribute('data-remove');
                 if (createIndex !== null) createDraft(parseInt(createIndex, 10));
                 if (regenerateIndex !== null) regenerateDraft(parseInt(regenerateIndex, 10));
@@ -353,6 +357,11 @@ final class AiAssessmentBuilderPage
                         rationale: 'Remplacé manuellement.'
                     };
                     renderProposal(proposal);
+                }
+            });
+            $('ouinpo-ai-assessment-status').addEventListener('click', function(event){
+                if (event.target.id === 'ouinpo-ai-retry-assessment') {
+                    generate();
                 }
             });
         })();

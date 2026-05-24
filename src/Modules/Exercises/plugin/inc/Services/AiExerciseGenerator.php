@@ -43,16 +43,27 @@ final class AiExerciseGenerator
         }
 
         $messages = $this->build_messages($context);
-        $answer = \OuInPo\SegFault\OpenAI::respond($messages, [
+        $answer = $this->call_ai($messages, [
             'temperature' => 0.35,
-            'max_tokens' => max(1600, AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens')),
+            'max_tokens' => max(2600, AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens')),
             'response_format' => ['type' => 'json_object'],
             'albert_purpose' => 'chat',
-        ]);
+        ], 'exercise_generation');
 
         $json = $this->decode_json_answer($answer);
         if (is_wp_error($json)) {
-            return $json;
+            AiSettings::debug_log('AI JSON parse failed', [
+                'stage' => 'exercise_generation',
+                'provider' => (string) AiSettings::get('ouinpo_ai_logged_provider'),
+                'raw_length' => strlen($answer),
+                'truncated' => $this->looks_truncated($answer) ? 'yes' : 'no',
+                'json_error' => $json->get_error_message(),
+                'excerpt' => AiJsonResponseParser::excerpt($answer, 1000),
+            ]);
+            $json = $this->repair_json($answer, 'exercise_generation');
+            if (is_wp_error($json)) {
+                return $json;
+            }
         }
 
         return $this->validate_ai_json($json, $context);
@@ -174,7 +185,7 @@ final class AiExerciseGenerator
             'program_guardrails' => ['in_program' => true, 'warnings' => []],
         ];
 
-        $system = "Tu aides un enseignant NSI à créer un exercice. Réponds uniquement avec un objet JSON strict valide, sans Markdown ni texte autour. N'invente pas d'ID : réutilise seulement les IDs fournis. Ne demande ni n'utilise aucune donnée personnelle d'élève. Le contenu doit rester dans le programme du niveau choisi.";
+        $system = "Tu aides un enseignant NSI à créer un exercice. Réponds uniquement avec un objet JSON valide. Aucun Markdown. Aucun bloc ```json. Aucune explication hors JSON. N'invente pas d'ID : réutilise seulement les IDs fournis. Ne demande ni n'utilise aucune donnée personnelle d'élève. Le contenu doit rester dans le programme du niveau choisi. Toutes les chaînes HTML et tout code doivent être des chaînes JSON valides avec guillemets correctement échappés.";
 
         $user = "Action demandée : " . self::ACTION_INSTRUCTIONS[$context['action']] . "\n"
             . "Niveau : {$context['level']['label']} ({$context['level']['slug']})\n"
@@ -184,7 +195,8 @@ final class AiExerciseGenerator
             . "Type d'exercice : {$context['exercise_type']}\n"
             . "Durée estimée : {$context['estimated_minutes']} minutes\n"
             . "Consigne libre de l'enseignant : " . ($context['free_prompt'] !== '' ? $context['free_prompt'] : 'Aucune') . "\n"
-            . "Contraintes : produire un énoncé HTML clair, trois indices progressifs, une solution détaillée HTML, et une justification pédagogique courte. Les notions hors programme doivent être signalées dans program_guardrails.warnings et in_program doit être false si nécessaire.\n"
+            . "Contraintes : produire un énoncé HTML clair, trois indices progressifs, une solution détaillée HTML, et une justification pédagogique courte. Les notions hors programme doivent être signalées dans program_guardrails.warnings et in_program doit être false si nécessaire. Interdiction de retourner une liste Markdown, du texte avant/après le JSON, ou plusieurs objets JSON.\n"
+            . "Réponds uniquement avec un objet JSON valide. Aucun Markdown. Aucun bloc ```json. Aucune explication hors JSON.\n"
             . "Format JSON attendu :\n"
             . wp_json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
             . $previous;
@@ -197,23 +209,81 @@ final class AiExerciseGenerator
 
     private function decode_json_answer(string $answer): array|\WP_Error
     {
-        $answer = trim($answer);
-        if ($answer === '') {
-            return new \WP_Error('empty_ai_response', 'Réponse IA vide.');
+        return AiJsonResponseParser::parse($answer, 'object');
+    }
+
+    private function repair_json(string $raw_answer, string $stage): array|\WP_Error
+    {
+        AiSettings::debug_log('AI JSON repair requested', [
+            'stage' => $stage,
+            'provider' => (string) AiSettings::get('ouinpo_ai_logged_provider'),
+            'raw_length' => strlen($raw_answer),
+            'truncated' => $this->looks_truncated($raw_answer) ? 'yes' : 'no',
+        ]);
+
+        $schema = [
+            'title' => '...',
+            'slug' => '...',
+            'level' => '...',
+            'difficulty' => '...',
+            'estimated_minutes' => 20,
+            'domains' => [['id' => 0, 'label' => '...']],
+            'competencies' => [['id' => 0, 'label' => '...']],
+            'statement_html' => '<p>...</p>',
+            'hints' => [
+                ['rank' => 1, 'html' => '<p>...</p>'],
+                ['rank' => 2, 'html' => '<p>...</p>'],
+                ['rank' => 3, 'html' => '<p>...</p>'],
+            ],
+            'solution_html' => '<p>...</p>',
+            'pedagogical_rationale' => '...',
+            'program_guardrails' => ['in_program' => true, 'warnings' => []],
+        ];
+
+        $repaired = $this->call_ai([
+            ['role' => 'system', 'content' => 'Répare ce contenu en JSON strict conforme au schéma. Ne renvoie aucun texte autour. Aucun Markdown. Aucun bloc ```json.'],
+            ['role' => 'user', 'content' => "Schéma attendu :\n" . wp_json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\nContenu invalide :\n" . $raw_answer],
+        ], [
+            'temperature' => 0,
+            'max_tokens' => max(2600, AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens')),
+            'response_format' => ['type' => 'json_object'],
+            'albert_purpose' => 'chat',
+        ], 'json_repair');
+
+        $json = $this->decode_json_answer($repaired);
+        if (is_wp_error($json)) {
+            AiSettings::debug_log('AI JSON repair failed', [
+                'stage' => 'json_repair',
+                'provider' => (string) AiSettings::get('ouinpo_ai_logged_provider'),
+                'raw_length' => strlen($raw_answer),
+                'truncated' => $this->looks_truncated($raw_answer) ? 'yes' : 'no',
+                'json_error' => $json->get_error_message(),
+                'excerpt' => AiJsonResponseParser::excerpt($raw_answer, 1000),
+            ]);
+
+            return new \WP_Error('invalid_json', 'La réponse IA n’a pas pu être interprétée. Une tentative de réparation automatique a été effectuée. La génération a échoué. Essayez de réduire le nombre d’exercices générés ou de générer les nouveaux exercices un par un.');
         }
 
-        $data = json_decode($answer, true);
-        if (!is_array($data)) {
-            if (preg_match('/\{.*\}/s', $answer, $m)) {
-                $data = json_decode($m[0], true);
-            }
-        }
+        return $json;
+    }
 
-        if (!is_array($data)) {
-            return new \WP_Error('invalid_json', 'La réponse IA ne contient pas de JSON valide.');
-        }
+    private function call_ai(array $messages, array $options, string $stage): string
+    {
+        $answer = \OuInPo\SegFault\OpenAI::respond($messages, $options);
+        AiSettings::debug_log('AI response received', [
+            'stage' => $stage,
+            'provider' => (string) AiSettings::get('ouinpo_ai_logged_provider'),
+            'raw_length' => strlen($answer),
+            'truncated' => $this->looks_truncated($answer) ? 'yes' : 'no',
+        ]);
 
-        return $data;
+        return $answer;
+    }
+
+    private function looks_truncated(string $answer): bool
+    {
+        $trimmed = rtrim($answer);
+        return $trimmed !== '' && !str_ends_with($trimmed, '}') && !str_ends_with($trimmed, ']') && strlen($trimmed) > 1000;
     }
 
     private function validate_ai_json(array $data, array $context): array|\WP_Error
