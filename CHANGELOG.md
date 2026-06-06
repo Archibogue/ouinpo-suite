@@ -10,6 +10,10 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Ajout des shortcodes `[ouinpo_project_deliverables]`, `[ouinpo_project_evidence]` et `[ouinpo_project_sheet]`.
 - Enrichissement de la vue enseignant avec avancement taches/livrables, derniere trace et alertes simples.
 - Extension REST `ouinpo-projects/v1` pour livrables, traces et liens competences.
+- Durcissement lot 2.1 des acces indirects REST, des actions Kanban en lecture seule et des validations de livrables.
+- Lot 3 Projects : upload securise de fichiers de traces, fiche portfolio enrichie, fiche situation BTS SIO, exports HTML/Markdown et CSS d'impression.
+- Stabilisation lot 3.1 des uploads Projects : refus `.env`, verrouillage de `attachment_id` au chemin upload, robustesse copie Markdown et URLs longues.
+- Lot 3.2 Projects : stockage prive des nouveaux fichiers de traces sous `uploads/ouinpo/projects/` et telechargement protege par nonce REST et droits projet.
 - Aucun appel IA, export PDF, badge projet, integration depot Git ni notification dans ce lot.
 
 ## [0.6.1-beta] - 2026-06-06

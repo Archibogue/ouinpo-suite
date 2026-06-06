@@ -24,6 +24,7 @@ final class Shortcodes
         add_shortcode('ouinpo_project_deliverables', [self::class, 'deliverables']);
         add_shortcode('ouinpo_project_evidence', [self::class, 'evidence']);
         add_shortcode('ouinpo_project_sheet', [self::class, 'sheet']);
+        add_shortcode('ouinpo_project_bts_situation', [self::class, 'btsSituation']);
         add_shortcode('ouinpo_teacher_projects', [self::class, 'teacherProjects']);
     }
 
@@ -58,6 +59,7 @@ final class Shortcodes
                         $deliverablesUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'deliverables']);
                         $evidenceUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'evidence']);
                         $sheetUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'sheet']);
+                        $btsUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'bts']);
                         ?>
                         <article class="ouinpo-projects-project-card">
                             <h3><?php echo esc_html((string) $project['title']); ?></h3>
@@ -72,6 +74,7 @@ final class Shortcodes
                                 <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($deliverablesUrl); ?>">Livrables</a>
                                 <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($evidenceUrl); ?>">Traces</a>
                                 <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($sheetUrl); ?>">Fiche</a>
+                                <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($btsUrl); ?>">Situation BTS</a>
                             </p>
                         </article>
                     <?php endforeach; ?>
@@ -89,6 +92,8 @@ final class Shortcodes
                 echo self::evidence(['id' => $selectedId]);
             } elseif ($selectedView === 'sheet') {
                 echo self::sheet(['id' => $selectedId]);
+            } elseif ($selectedView === 'bts') {
+                echo self::btsSituation(['id' => $selectedId]);
             } else {
                 echo self::kanban(['id' => $selectedId]);
             }
@@ -142,6 +147,7 @@ final class Shortcodes
                             $summary = $repository->getProjectSummary((int) $project['id']) ?: $project;
                             $kanbanUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'kanban']);
                             $sheetUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'sheet']);
+                            $btsUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'bts']);
                             $alerts = $repository->projectAlerts($summary);
                             ?>
                             <tr>
@@ -156,6 +162,7 @@ final class Shortcodes
                                 <td>
                                     <a class="ouinpo-projects-button" href="<?php echo esc_url($kanbanUrl); ?>">Kanban</a>
                                     <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($sheetUrl); ?>">Fiche</a>
+                                    <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($btsUrl); ?>">BTS</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -169,7 +176,9 @@ final class Shortcodes
         $selectedId = isset($_GET['ouinpo_project_id']) ? absint(wp_unslash($_GET['ouinpo_project_id'])) : 0;
         if ($selectedId > 0 && $repository->userCanViewProject($selectedId, get_current_user_id())) {
             $selectedView = isset($_GET['ouinpo_project_view']) ? sanitize_key(wp_unslash((string) $_GET['ouinpo_project_view'])) : '';
-            echo $selectedView === 'sheet' ? self::sheet(['id' => $selectedId]) : self::kanban(['id' => $selectedId]);
+            echo $selectedView === 'sheet'
+                ? self::sheet(['id' => $selectedId])
+                : ($selectedView === 'bts' ? self::btsSituation(['id' => $selectedId]) : self::kanban(['id' => $selectedId]));
         }
 
         return (string) ob_get_clean();
@@ -421,6 +430,7 @@ final class Shortcodes
                                     <td class="ouinpo-projects-actions">
                                         <button type="button" data-ouinpo-projects-deliverable-status="validated">Valider</button>
                                         <button type="button" data-ouinpo-projects-deliverable-status="needs_revision">A reprendre</button>
+                                        <button type="button" data-ouinpo-projects-deliverable-status="rejected">Rejeter</button>
                                         <button type="button" data-ouinpo-projects-deliverable-delete>Supprimer</button>
                                     </td>
                                 <?php endif; ?>
@@ -485,6 +495,10 @@ final class Shortcodes
                     </label>
                     <label><span>URL</span><input type="url" name="url"></label>
                     <label>
+                        <span>Fichier</span>
+                        <input type="file" name="file" accept=".pdf,.txt,.md,.csv,.json,.sql,.py,.html.txt,.css.txt,.js.txt,.png,.jpg,.jpeg,.webp,.zip">
+                    </label>
+                    <label>
                         <span>Livrable</span>
                         <select name="deliverable_id">
                             <option value="">Aucun</option>
@@ -503,6 +517,7 @@ final class Shortcodes
                         </select>
                     </label>
                     <label class="ouinpo-projects-form-wide"><span>Description</span><textarea name="description" rows="2"></textarea></label>
+                    <p class="ouinpo-projects-form-wide ouinpo-projects-help">Fichiers acceptes : pdf, txt, md, csv, json, sql, py, images, zip, et fichiers web neutralises en .html.txt, .css.txt ou .js.txt. Taille maximale : 10 Mo. Les attachments WordPress peuvent rester accessibles par URL directe.</p>
                     <button type="submit" class="ouinpo-projects-button">Ajouter une trace</button>
                 </form>
             <?php endif; ?>
@@ -519,6 +534,24 @@ final class Shortcodes
                         <?php if (!empty($item['deliverable_title'])): ?><p>Livrable : <?php echo esc_html((string) $item['deliverable_title']); ?></p><?php endif; ?>
                         <?php if (!empty($item['task_title'])): ?><p>Tache : <?php echo esc_html((string) $item['task_title']); ?></p><?php endif; ?>
                         <?php if (!empty($item['description'])): ?><div><?php echo wp_kses_post(wpautop((string) $item['description'])); ?></div><?php endif; ?>
+                        <?php if (!empty($item['attachment_id'])): ?>
+                            <?php if (!empty($item['attachment_url'])): ?>
+                                <p>
+                                    Fichier :
+                                    <a href="<?php echo esc_url((string) $item['attachment_url']); ?>" rel="nofollow noopener">
+                                        <?php echo esc_html((string) ($item['attachment_filename'] ?: 'attachment #' . (int) $item['attachment_id'])); ?>
+                                    </a>
+                                    <?php if (!empty($item['attachment_mime'])): ?>
+                                        <span><?php echo esc_html((string) $item['attachment_mime']); ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($item['attachment_size'])): ?>
+                                        <span><?php echo esc_html(size_format((int) $item['attachment_size'])); ?></span>
+                                    <?php endif; ?>
+                                </p>
+                            <?php else: ?>
+                                <p>Fichier attache indisponible ou supprime.</p>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <?php if (!empty($item['url'])): ?><p><a href="<?php echo esc_url((string) $item['url']); ?>" rel="nofollow noopener">Ouvrir la trace</a></p><?php endif; ?>
                         <?php if ($repository->userCanManageEvidenceItem($item, get_current_user_id())): ?>
                             <button type="button" data-ouinpo-projects-evidence-delete>Supprimer</button>
@@ -556,6 +589,8 @@ final class Shortcodes
         if (!$project) {
             return self::notice('Projet introuvable.');
         }
+
+        return ProjectExporter::renderProjectSheet($projectId);
 
         $members = $repository->getMembers($projectId);
         $deliverables = $repository->getDeliverables($projectId);
@@ -611,9 +646,34 @@ final class Shortcodes
         return (string) ob_get_clean();
     }
 
+    public static function btsSituation($atts = []): string
+    {
+        if (!is_user_logged_in()) {
+            return self::notice('Connexion requise pour consulter la situation BTS.');
+        }
+
+        $atts = shortcode_atts(['id' => 0], (array) $atts, 'ouinpo_project_bts_situation');
+        $projectId = absint($atts['id'] ?: (isset($_GET['ouinpo_project_id']) ? wp_unslash($_GET['ouinpo_project_id']) : 0));
+
+        if ($projectId <= 0) {
+            return self::notice('Projet non precise.');
+        }
+
+        $repository = new Repository();
+        if (!$repository->userCanViewProject($projectId, get_current_user_id())) {
+            return self::notice('Acces refuse a cette situation BTS.');
+        }
+
+        Assets::enqueueFront();
+
+        return ProjectExporter::renderBtsSituation($projectId);
+    }
+
     public static function renderColumns(array $columns, bool $canEdit): string
     {
         ob_start();
+        $repository = new Repository();
+        $userId = get_current_user_id();
 
         foreach ($columns as $index => $column) {
             $tasks = is_array($column['tasks'] ?? null) ? $column['tasks'] : [];
@@ -638,7 +698,7 @@ final class Shortcodes
                             <?php if (!empty($task['due_date'])): ?>
                                 <p class="ouinpo-projects-due">Echeance : <?php echo esc_html((string) $task['due_date']); ?></p>
                             <?php endif; ?>
-                            <?php if ($canEdit): ?>
+                            <?php if ($canEdit && $repository->userCanEditTask($task, $userId)): ?>
                                 <div class="ouinpo-projects-task-actions">
                                     <button type="button" data-ouinpo-projects-move="-1" <?php disabled($index === 0); ?>>&larr;</button>
                                     <button type="button" data-ouinpo-projects-edit>Modifier</button>

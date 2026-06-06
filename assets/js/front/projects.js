@@ -4,7 +4,17 @@
   const cfg = window.OuinpoProjects || {};
 
   function request(path, options) {
-    const url = String(cfg.restUrl || cfg.root || '').replace(/\/$/, '') + path;
+    if (!cfg.nonce) {
+      return Promise.reject(new Error('Session WordPress expiree ou nonce REST absent.'));
+    }
+
+    const root = String(cfg.restUrl || cfg.root || '').replace(/\/$/, '');
+    if (!root) {
+      return Promise.reject(new Error('Endpoint REST Projects indisponible.'));
+    }
+
+    const url = root + path;
+    const isFormData = options && options.body && window.FormData && options.body instanceof FormData;
     const opts = Object.assign({
       credentials: 'same-origin',
       headers: {
@@ -12,6 +22,12 @@
         'X-WP-Nonce': cfg.nonce || ''
       }
     }, options || {});
+
+    if (isFormData) {
+      opts.headers = {
+        'X-WP-Nonce': cfg.nonce || ''
+      };
+    }
 
     return fetch(url, opts).then(function (response) {
       return response.json().catch(function () {
@@ -59,7 +75,7 @@
       card.appendChild(el('p', 'ouinpo-projects-due', 'Echeance : ' + text(task.due_date)));
     }
 
-    if (!canEdit) {
+    if (!canEdit || task.can_edit === false) {
       return card;
     }
 
@@ -295,10 +311,15 @@
     if (form) {
       form.addEventListener('submit', function (event) {
         event.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
-        request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/evidence', {
+        const formData = new FormData(form);
+        const file = form.querySelector('input[type="file"][name="file"]');
+        const hasFile = file && file.files && file.files.length > 0;
+        const path = '/projects/' + encodeURIComponent(root.dataset.projectId) + (hasFile ? '/evidence/upload' : '/evidence');
+        const payload = hasFile ? formData : JSON.stringify(Object.fromEntries(formData.entries()));
+
+        request(path, {
           method: 'POST',
-          body: JSON.stringify(data)
+          body: payload
         }).then(function () {
           window.location.reload();
         }).catch(function (error) {
@@ -328,11 +349,46 @@
     });
   }
 
+  function bindExports(root) {
+    const button = root.querySelector('[data-ouinpo-projects-copy-markdown]');
+    const output = root.querySelector('[data-ouinpo-projects-export-output]');
+    if (!button || !output) {
+      return;
+    }
+
+    button.addEventListener('click', function () {
+      const kind = root.dataset.exportKind === 'bts-situation' ? 'bts-situation/markdown' : 'export/markdown';
+      request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/' + kind)
+        .then(function (payload) {
+          output.hidden = false;
+          output.value = text(payload.content);
+          output.focus();
+          output.select();
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(output.value).catch(function () {
+              document.execCommand('copy');
+            });
+          } else {
+            try {
+              document.execCommand('copy');
+            } catch (error) {
+              window.alert('Markdown affiche : copie manuelle possible.');
+            }
+          }
+        })
+        .catch(function (error) {
+          window.alert(error.message);
+        });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-ouinpo-projects-board]').forEach(bindBoard);
     document.querySelectorAll('[data-ouinpo-projects-journal]').forEach(bindJournal);
     document.querySelectorAll('[data-ouinpo-projects-deliverables]').forEach(bindDeliverables);
     document.querySelectorAll('[data-ouinpo-projects-evidence]').forEach(bindEvidence);
+    document.querySelectorAll('[data-ouinpo-projects-export]').forEach(bindExports);
     document.querySelectorAll('[data-ouinpo-projects-print]').forEach(function (button) {
       button.addEventListener('click', function () {
         window.print();

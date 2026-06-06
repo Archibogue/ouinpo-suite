@@ -224,7 +224,7 @@ Ces pages correspondent a des modules avances desactives par defaut sur une inst
 
 ### SPOPI Projects
 
-Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO, sans appel IA. Il fournit une gestion simple des projets, des membres, d'un tableau Kanban, d'un journal de bord projet, de livrables, de traces/preuves, de liens vers les competences BO existantes et d'une fiche projet HTML imprimable.
+Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO, sans appel IA. Il fournit une gestion simple des projets, des membres, d'un tableau Kanban, d'un journal de bord projet, de livrables, de traces/preuves avec fichiers, de liens vers les competences BO existantes, d'une fiche projet portfolio imprimable et d'une fiche de situation professionnelle BTS SIO.
 
 Shortcodes disponibles :
 
@@ -234,8 +234,9 @@ Shortcodes disponibles :
 | `[ouinpo_project_kanban id="..."]` | Tableau Kanban d'un projet autorise |
 | `[ouinpo_project_journal id="..."]` | Journal de bord d'un projet autorise |
 | `[ouinpo_project_deliverables id="..."]` | Livrables attendus, statuts et validation enseignant |
-| `[ouinpo_project_evidence id="..."]` | Traces/preuves deposees par les membres du projet |
-| `[ouinpo_project_sheet id="..."]` | Fiche projet HTML imprimable |
+| `[ouinpo_project_evidence id="..."]` | Traces/preuves deposees par les membres du projet : texte, lien ou fichier |
+| `[ouinpo_project_sheet id="..."]` | Fiche projet portfolio HTML imprimable avec export Markdown |
+| `[ouinpo_project_bts_situation id="..."]` | Fiche situation professionnelle BTS SIO imprimable avec export Markdown |
 | `[ouinpo_teacher_projects]` | Vue enseignant avec statut, membres, taches, livrables, traces, alertes et acces Kanban/fiche |
 
 Capacites ajoutees :
@@ -267,23 +268,45 @@ wp_ouinpo_project_competency_links
 
 Les routes REST utilisent le namespace `ouinpo-projects/v1` et exigent un utilisateur connecte, un nonce REST et les capacites/appartenances adaptees. Les eleves ne voient que les projets dont ils sont membres. Les livrables sont geres/valides par les enseignants du projet ; les membres peuvent deposer des traces si leurs capacites Projects le permettent.
 
-Routes REST principales ajoutees au lot 2 :
+Routes REST principales Projects :
 
 ```text
 GET/POST /projects/{id}/deliverables
 PATCH/DELETE /deliverables/{id}
 PATCH /deliverables/{id}/status
 GET/POST /projects/{id}/evidence
+POST /projects/{id}/evidence/upload
 PATCH/DELETE /evidence/{id}
+GET /evidence/{id}/download
 GET/POST /projects/{id}/competencies
 GET/POST /tasks/{id}/competencies
 GET/POST /deliverables/{id}/competencies
 DELETE /competency-links/{id}
+GET /projects/{id}/export/html
+GET /projects/{id}/export/markdown
+GET /projects/{id}/bts-situation/markdown
 ```
 
 Les liens de competences utilisent la table existante `ouin_exo_competencies`. Le module ne cree pas un second referentiel : si aucune competence BO n'est importee ou creee, les panneaux de liaison restent vides.
 
-Limites actuelles : pas d'IA, pas d'export PDF portfolio, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email. La fiche projet est un HTML imprimable, pas un export documentaire avance.
+Uploads de traces fichier :
+
+- taille maximale par fichier : 10 Mo ;
+- extensions autorisees : `pdf`, `txt`, `md`, `csv`, `json`, `sql`, `py`, `html.txt`, `css.txt`, `js.txt`, `png`, `jpg`, `jpeg`, `webp`, `zip` ;
+- extensions refusees directement : `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `html`, `js`, `css`, `htaccess` ;
+- les fichiers web doivent etre neutralises avant depot, par exemple `index.html.txt`, `style.css.txt`, `script.js.txt` ;
+- les nouveaux fichiers sont stockes dans `wp-content/uploads/ouinpo/projects/`, avec `index.php` et `.htaccess` de refus d'acces direct ;
+- les fichiers sont crees comme attachments WordPress, rattaches a la table `ouinpo_project_evidence` via `attachment_id`, puis servis par `GET /evidence/{id}/download` avec nonce REST et droits de vue projet.
+
+Compatibilite : les fichiers Projects uploades avant le stockage prive ne sont pas migres physiquement. Ils restent affiches via leur URL historique et peuvent rester accessibles directement selon la configuration du site. Pour Nginx ou un serveur qui ignore `.htaccess`, il faut ajouter une regle serveur refusant l'acces web a `uploads/ouinpo/projects/`.
+
+Exports :
+
+- `[ouinpo_project_sheet]` et `[ouinpo_project_bts_situation]` proposent un bouton `Imprimer / Enregistrer en PDF` qui appelle simplement l'impression du navigateur ;
+- les routes Markdown retournent un Markdown serveur nettoye, sans generation PDF serveur et sans dependance externe ;
+- l'export HTML retourne un fragment HTML echappe avec classes prefixees `ouinpo-projects-`.
+
+Limites actuelles : pas d'IA, pas d'export PDF serveur, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email.
 
 #### Recette manuelle recommandee
 
@@ -302,7 +325,58 @@ Limites actuelles : pas d'IA, pas d'export PDF portfolio, pas de badge projet, p
 13. Deposer une trace avec un eleve membre.
 14. Lier une competence BO au projet ou a un livrable.
 15. Verifier la fiche `[ouinpo_project_sheet]`.
-16. Verifier la vue `[ouinpo_teacher_projects]` avec un compte professeur.
+16. Verifier la fiche `[ouinpo_project_bts_situation]`.
+17. Verifier la vue `[ouinpo_teacher_projects]` avec un compte professeur.
+
+#### Recette securite lot 2.1
+
+1. Avec un eleve membre, verifier l'acces a `[ouinpo_my_projects]`, au Kanban, aux livrables, aux traces et a la fiche projet.
+2. Avec le meme eleve membre, verifier qu'il peut ajouter une trace et supprimer uniquement sa propre trace.
+3. Avec un eleve non membre, verifier qu'il ne voit pas le projet dans `[ouinpo_my_projects]`.
+4. Avec un eleve non membre, appeler directement une route REST de livrable connue : `GET /projects/{id}/deliverables` doit renvoyer `403`.
+5. Avec un eleve non membre, appeler directement une route REST de trace connue : `PATCH /evidence/{id}` ou `DELETE /evidence/{id}` doit renvoyer `403` ou `404`.
+6. Avec un eleve non membre, appeler directement une route REST de competence liee : `DELETE /competency-links/{id}` doit renvoyer `403` ou `404`.
+7. Avec un eleve membre, verifier que `PATCH /deliverables/{id}/status` ne permet pas de valider un livrable.
+8. Avec un professeur, verifier la validation, le rejet et la demande de reprise d'un livrable.
+9. Avec un professeur, verifier que la fiche `[ouinpo_project_sheet]` reste imprimable sans livrable, sans trace et sans competence liee.
+10. Retirer un eleve du projet, puis verifier que les anciens liens directs vers Kanban, livrables, traces et fiche ne donnent plus acces au projet.
+
+#### Recette securite lot 3
+
+1. Avec un eleve membre, deposer une trace texte, une trace lien et une trace fichier autorisee.
+2. Verifier qu'un fichier `index.html` est refuse et que `index.html.txt` est accepte.
+3. Verifier que `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `js`, `css`, `html` et `.htaccess` sont refuses.
+4. Verifier qu'un fichier de plus de 10 Mo est refuse.
+5. Avec un eleve non membre, appeler directement `POST /projects/{id}/evidence/upload` : la route doit renvoyer `403`.
+6. Avec un eleve membre, fournir un `deliverable_id` ou `task_id` d'un autre projet : la route doit refuser la demande.
+7. Supprimer un attachment WordPress deja rattache et verifier que `[ouinpo_project_evidence]`, `[ouinpo_project_sheet]` et `[ouinpo_project_bts_situation]` ne cassent pas.
+8. Verifier `GET /projects/{id}/export/markdown`, `GET /projects/{id}/export/html` et `GET /projects/{id}/bts-situation/markdown` avec membre, professeur et non membre.
+9. Verifier que les boutons `Copier Markdown` et `Imprimer / Enregistrer en PDF` fonctionnent dans les deux fiches.
+10. Confirmer qu'aucune route Projects n'utilise `__return_true` et qu'aucun fichier `dist/` n'est modifie.
+
+#### Recette stabilisation lot 3.1
+
+1. Avec un eleve membre, verifier `POST /projects/{id}/evidence/upload` avec un fichier autorise.
+2. Avec un eleve non membre, verifier que le meme upload renvoie `403`.
+3. Retirer un ancien membre du projet, puis verifier que l'upload et la suppression de ses anciennes traces sont refuses.
+4. Verifier que `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `html`, `js`, `css`, `htaccess` et `.env` sont refuses.
+5. Verifier qu'un fichier sans extension, un fichier commencant par un point et une double extension dangereuse sont refuses.
+6. Verifier que `index.html.txt`, `style.css.txt` et `script.js.txt` sont acceptes, mais pas `.html`, `.css` ou `.js`.
+7. Verifier qu'un fichier vide, un fichier de plus de 10 Mo et un MIME incoherent sont refuses.
+8. Supprimer manuellement un attachment WordPress lie a une trace, puis verifier que les shortcodes de traces, fiche projet et fiche BTS affichent un message propre.
+9. Tester les exports Markdown/HTML avec un professeur, un eleve membre, un eleve non membre et un ancien membre retire.
+10. Imprimer la fiche BTS et verifier que les boutons sont masques et que les longues URLs ne debordent pas.
+
+#### Recette securite lot 3.2
+
+1. Avec un eleve membre, deposer une trace fichier autorisee.
+2. Verifier que le fichier physique est cree sous `wp-content/uploads/ouinpo/projects/`.
+3. Verifier que `index.php` et `.htaccess` existent dans `uploads/ouinpo/` et `uploads/ouinpo/projects/`.
+4. Verifier que la trace affiche un lien `GET /ouinpo-projects/v1/evidence/{id}/download` avec nonce REST, et pas l'URL directe du fichier upload.
+5. Avec l'eleve membre ou le professeur autorise, ouvrir ce lien et verifier le telechargement avec `Content-Disposition: attachment` et `X-Content-Type-Options: nosniff`.
+6. Avec un eleve non membre et avec un ancien membre retire du projet, appeler le meme lien : la route doit renvoyer `403` ou `401`.
+7. Supprimer ou alterer la meta `_ouinpo_project_evidence_id` d'un attachment de test, puis verifier que le telechargement est refuse.
+8. Verifier qu'une ancienne trace fichier creee avant le lot 3.2 reste visible via son URL historique, sans migration physique.
 
 
 ### Gate configurable

@@ -12,7 +12,8 @@
 .ouinpo-projects-journal,
 .ouinpo-projects-deliverables,
 .ouinpo-projects-evidence,
-.ouinpo-projects-sheet {
+.ouinpo-projects-sheet,
+.ouinpo-projects-bts-situation {
   margin: 1.5rem 0;
   color: #24313a;
 }
@@ -49,6 +50,7 @@
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 8px 18px rgba(31, 42, 51, 0.08);
+  overflow-wrap: anywhere;
 }
 
 .ouinpo-projects-project-card h3 {
@@ -228,6 +230,12 @@
   grid-column: 1 / -1;
 }
 
+.ouinpo-projects-help {
+  margin: 0;
+  color: #5f6d76;
+  font-size: 0.92rem;
+}
+
 .ouinpo-projects-table-wrap {
   overflow-x: auto;
 }
@@ -279,6 +287,7 @@
 .ouinpo-projects-simple-list {
   margin: 0;
   padding-left: 1.2rem;
+  overflow-wrap: anywhere;
 }
 
 .ouinpo-projects-sheet {
@@ -318,6 +327,41 @@
   padding: 0.85rem;
 }
 
+.ouinpo-projects-sheet-section {
+  margin-top: 1.1rem;
+}
+
+.ouinpo-projects-student-fields {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.ouinpo-projects-student-fields dt {
+  font-weight: 700;
+}
+
+.ouinpo-projects-student-fields dd {
+  margin: 0;
+  min-height: 2rem;
+  border-bottom: 1px dashed #bdc7d0;
+}
+
+.ouinpo-projects-export-output {
+  width: 100%;
+  min-height: 16rem;
+  margin-top: 1rem;
+  box-sizing: border-box;
+  border: 1px solid #bdc7d0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 760px) {
   .ouinpo-projects-heading,
   .ouinpo-projects-log header {
@@ -337,13 +381,58 @@
 }
 
 @media print {
-  .ouinpo-projects-sheet-toolbar {
-    display: none;
+  .ouinpo-projects-button,
+  .ouinpo-projects-sheet-toolbar,
+  .ouinpo-projects-task-form,
+  .ouinpo-projects-journal-form,
+  .ouinpo-projects-deliverable-form,
+  .ouinpo-projects-evidence-form,
+  .ouinpo-projects-task-actions,
+  .ouinpo-projects-actions,
+  .ouinpo-projects-export-output {
+    display: none !important;
   }
 
-  .ouinpo-projects-sheet {
+  .ouinpo-projects-sheet,
+  .ouinpo-projects-bts-situation {
     border: 0;
     box-shadow: none;
     padding: 0;
+    color: #111;
+  }
+
+  .ouinpo-projects-sheet-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .ouinpo-projects-sheet-grid section,
+  .ouinpo-projects-project-card,
+  .ouinpo-projects-log,
+  .ouinpo-projects-task,
+  .ouinpo-projects-evidence-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .ouinpo-projects-sheet-section,
+  .ouinpo-projects-table,
+  .ouinpo-projects-simple-list {
+    break-inside: avoid;
+  }
+
+  .ouinpo-projects-table {
+    font-size: 0.9rem;
+  }
+
+  .ouinpo-projects-table th,
+  .ouinpo-projects-table td {
+    padding: 0.4rem;
+    overflow-wrap: anywhere;
+  }
+
+  .ouinpo-projects-board {
+    display: block;
+    overflow: visible;
   }
 }

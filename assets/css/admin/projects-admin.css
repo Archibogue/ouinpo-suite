@@ -35,6 +35,13 @@
   margin-right: 0.5rem;
 }
 
+.ouinpo-projects-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 @media (max-width: 960px) {
   .ouinpo-projects-admin-grid {
     grid-template-columns: 1fr;

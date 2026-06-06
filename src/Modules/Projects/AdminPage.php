@@ -79,6 +79,10 @@ final class AdminPage
                         <h2>Competences</h2>
                         <?php self::competenciesPanel($repository, (int) $project['id']); ?>
                     </div>
+                    <div class="ouinpo-projects-admin-card">
+                        <h2>Traces et exports</h2>
+                        <?php self::evidencePanel($repository, (int) $project['id']); ?>
+                    </div>
                 <?php endif; ?>
             </div>
 
@@ -164,6 +168,9 @@ final class AdminPage
                 wp_die('Acces refuse.');
             }
             $status = isset($_POST['status']) ? sanitize_key(wp_unslash((string) $_POST['status'])) : 'expected';
+            if ($status === 'validated' && !current_user_can(Capabilities::PROJECTS_VALIDATE) && !current_user_can('manage_options')) {
+                wp_die('Validation refusee.');
+            }
             $repository->updateDeliverableStatus($deliverableId, $status, get_current_user_id());
             echo '<div class="notice notice-success is-dismissible"><p>Statut du livrable mis a jour.</p></div>';
         } elseif ($action === 'delete_deliverable') {
@@ -262,6 +269,7 @@ final class AdminPage
                 <code>[ouinpo_project_deliverables id="<?php echo esc_html((string) $projectId); ?>"]</code>
                 <code>[ouinpo_project_evidence id="<?php echo esc_html((string) $projectId); ?>"]</code>
                 <code>[ouinpo_project_sheet id="<?php echo esc_html((string) $projectId); ?>"]</code>
+                <code>[ouinpo_project_bts_situation id="<?php echo esc_html((string) $projectId); ?>"]</code>
             </p>
         <?php endif; ?>
         <?php
@@ -365,6 +373,13 @@ final class AdminPage
                             </form>
                             <form method="post" class="ouinpo-projects-admin-inline">
                                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
+                                <input type="hidden" name="ouinpo_projects_action" value="set_deliverable_status">
+                                <input type="hidden" name="deliverable_id" value="<?php echo esc_attr((string) $deliverable['id']); ?>">
+                                <input type="hidden" name="status" value="rejected">
+                                <button class="button-link" type="submit">Rejeter</button>
+                            </form>
+                            <form method="post" class="ouinpo-projects-admin-inline">
+                                <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
                                 <input type="hidden" name="ouinpo_projects_action" value="delete_deliverable">
                                 <input type="hidden" name="deliverable_id" value="<?php echo esc_attr((string) $deliverable['id']); ?>">
                                 <button class="button-link-delete" type="submit">Supprimer</button>
@@ -434,6 +449,46 @@ final class AdminPage
                                 <button class="button-link-delete" type="submit">Supprimer</button>
                             </form>
                         </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+        <?php
+    }
+
+    private static function evidencePanel(Repository $repository, int $projectId): void
+    {
+        $evidence = array_slice($repository->getEvidence($projectId), 0, 10);
+        $frontUrl = add_query_arg(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'sheet'], home_url('/'));
+        $btsUrl = add_query_arg(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'bts'], home_url('/'));
+        ?>
+        <p class="ouinpo-projects-admin-actions">
+            <a class="button" href="<?php echo esc_url($frontUrl); ?>">Fiche projet</a>
+            <a class="button" href="<?php echo esc_url($btsUrl); ?>">Situation BTS</a>
+            <code><?php echo esc_html(rest_url('ouinpo-projects/v1/projects/' . $projectId . '/export/markdown')); ?></code>
+        </p>
+        <?php if (!$evidence): ?>
+            <p>Aucune trace.</p>
+        <?php else: ?>
+            <table class="widefat striped">
+                <thead><tr><th>Trace</th><th>Type</th><th>Fichier/lien</th><th>Date</th></tr></thead>
+                <tbody>
+                <?php foreach ($evidence as $item): ?>
+                    <?php $url = !empty($item['attachment_url']) ? (string) $item['attachment_url'] : (string) ($item['url'] ?? ''); ?>
+                    <tr>
+                        <td><?php echo esc_html((string) $item['title']); ?></td>
+                        <td><?php echo esc_html((string) $item['evidence_type']); ?></td>
+                        <td>
+                            <?php if ($url !== ''): ?>
+                                <a href="<?php echo esc_url($url); ?>"><?php echo esc_html((string) ($item['attachment_filename'] ?: 'ouvrir')); ?></a>
+                            <?php elseif (!empty($item['attachment_id'])): ?>
+                                <?php echo esc_html('Attachment indisponible #' . (int) $item['attachment_id']); ?>
+                            <?php else: ?>
+                                -
+                            <?php endif; ?>
+                        </td>
+                        <td><?php echo esc_html((string) $item['created_at']); ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

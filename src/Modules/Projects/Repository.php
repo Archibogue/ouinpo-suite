@@ -28,6 +28,17 @@ final class Repository
     public const DELIVERABLE_STATUS = ['expected', 'submitted', 'needs_revision', 'validated', 'rejected'];
     public const EVIDENCE_TYPES = ['link', 'attachment', 'text', 'repository', 'screenshot', 'document', 'other'];
     public const COMPETENCY_OBJECT_TYPES = ['project', 'task', 'deliverable', 'evidence'];
+    public const EVIDENCE_UPLOAD_MAX_BYTES = 10485760;
+    public const EVIDENCE_UPLOAD_ALLOWED_EXTENSIONS = [
+        'pdf', 'txt', 'md', 'csv', 'json', 'sql', 'py',
+        'html.txt', 'css.txt', 'js.txt',
+        'png', 'jpg', 'jpeg', 'webp', 'zip',
+    ];
+    public const EVIDENCE_UPLOAD_BLOCKED_EXTENSIONS = [
+        'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
+        'exe', 'bat', 'cmd', 'sh', 'com', 'msi',
+        'svg', 'html', 'htm', 'js', 'mjs', 'css', 'htaccess', 'env',
+    ];
 
     public static function defaultColumns(): array
     {
@@ -652,7 +663,7 @@ final class Repository
             return false;
         }
 
-        return $this->isProjectMember((int) $task['project_id'], $userId)
+        return $this->userCanViewProject((int) $task['project_id'], $userId)
             && (
                 (int) ($task['created_by'] ?? 0) === $userId
                 || (int) ($task['assigned_user_id'] ?? 0) === $userId
@@ -1058,7 +1069,7 @@ final class Repository
     {
         global $wpdb;
 
-        return $wpdb->get_results($wpdb->prepare(
+        $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT e.*, u.display_name, d.title AS deliverable_title, t.title AS task_title
              FROM {$this->table('evidence')} e
              LEFT JOIN {$wpdb->users} u ON u.ID = e.user_id
@@ -1068,6 +1079,8 @@ final class Repository
              ORDER BY e.created_at DESC, e.id DESC",
             $projectId
         ), ARRAY_A) ?: [];
+
+        return array_map([self::class, 'decorateEvidenceAttachment'], $rows);
     }
 
     public function getEvidenceItem(int $evidenceId): ?array
@@ -1079,7 +1092,7 @@ final class Repository
             $evidenceId
         ), ARRAY_A);
 
-        return is_array($row) ? $row : null;
+        return is_array($row) ? self::decorateEvidenceAttachment($row) : null;
     }
 
     public function createEvidence(int $projectId, array $data, int $userId): int
@@ -1105,7 +1118,7 @@ final class Repository
                 'description' => self::cleanLongText($data['description'] ?? ''),
                 'evidence_type' => self::cleanEvidenceType($data['evidence_type'] ?? 'link'),
                 'url' => self::cleanUrl($data['url'] ?? ''),
-                'attachment_id' => self::cleanNullableId($data['attachment_id'] ?? null),
+                'attachment_id' => !empty($data['_allow_attachment']) ? self::cleanNullableId($data['attachment_id'] ?? null) : null,
                 'created_at' => current_time('mysql'),
                 'updated_at' => null,
             ],
@@ -1151,11 +1164,6 @@ final class Repository
             $formats[] = '%s';
         }
 
-        if (array_key_exists('attachment_id', $data)) {
-            $updates['attachment_id'] = self::cleanNullableId($data['attachment_id']);
-            $formats[] = '%d';
-        }
-
         if (array_key_exists('deliverable_id', $data)) {
             $updates['deliverable_id'] = $this->validDeliverableId($projectId, $data['deliverable_id']);
             $formats[] = '%d';
@@ -1193,6 +1201,20 @@ final class Repository
         );
 
         return false !== $wpdb->delete($this->table('evidence'), ['id' => $evidenceId], ['%d']);
+    }
+
+    public function deliverableBelongsToProject(int $deliverableId, int $projectId): bool
+    {
+        $deliverable = $this->getDeliverable($deliverableId);
+
+        return $deliverable && (int) $deliverable['project_id'] === $projectId;
+    }
+
+    public function taskBelongsToProject(int $taskId, int $projectId): bool
+    {
+        $task = $this->getTask($taskId);
+
+        return $task && (int) $task['project_id'] === $projectId;
     }
 
     public function getCompetencyLinks(int $projectId, string $objectType = '', int $objectId = 0): array
@@ -1366,7 +1388,7 @@ final class Repository
         }
 
         return $this->userHasCap($userId, Capabilities::PROJECTS_COMMENT)
-            && $this->isProjectMember($projectId, $userId);
+            && $this->userCanViewProject($projectId, $userId);
     }
 
     public function userCanManageEvidenceItem(array $evidence, int $userId): bool
@@ -1431,6 +1453,149 @@ final class Repository
         $task = $this->getTask($id);
 
         return $task && (int) $task['project_id'] === $projectId ? $id : null;
+    }
+
+    public static function evidenceUploadMimes(): array
+    {
+        return [
+            'pdf' => 'application/pdf',
+            'txt' => 'text/plain',
+            'md' => 'text/markdown',
+            'csv' => 'text/csv',
+            'json' => 'application/json',
+            'sql' => 'text/plain',
+            'py' => 'text/plain',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            'zip' => 'application/zip',
+        ];
+    }
+
+    public static function normalizedEvidenceUploadExtension(string $filename): string
+    {
+        $filename = strtolower(sanitize_file_name(wp_basename($filename)));
+        $parts = array_values(array_filter(explode('.', $filename), static fn($part) => $part !== ''));
+        $count = count($parts);
+
+        if ($count >= 3 && $parts[$count - 1] === 'txt' && in_array($parts[$count - 2], ['html', 'css', 'js'], true)) {
+            return $parts[$count - 2] . '.txt';
+        }
+
+        return $count > 0 ? (string) $parts[$count - 1] : '';
+    }
+
+    public static function validateEvidenceUploadFile(array $file)
+    {
+        $rawName = isset($file['name']) ? (string) $file['name'] : '';
+        $rawBaseName = wp_basename($rawName);
+        $rawBaseLower = strtolower((string) $rawBaseName);
+
+        if ($rawBaseName === '' || $rawBaseName[0] === '.' || $rawBaseLower === '.env') {
+            return new \WP_Error('ouinpo_projects_bad_filename', 'Nom de fichier invalide.');
+        }
+
+        $name = sanitize_file_name(wp_basename($rawName));
+
+        if ($name === '' || $name === '.' || $name === '..' || $name[0] === '.') {
+            return new \WP_Error('ouinpo_projects_bad_filename', 'Nom de fichier invalide.');
+        }
+
+        if (!empty($file['error'])) {
+            return new \WP_Error('ouinpo_projects_upload_error', 'Transfert de fichier incomplet.');
+        }
+
+        $size = isset($file['size']) ? (int) $file['size'] : 0;
+        if ($size <= 0 || $size > self::EVIDENCE_UPLOAD_MAX_BYTES) {
+            return new \WP_Error('ouinpo_projects_upload_size', 'Fichier vide ou trop volumineux.');
+        }
+
+        $extension = self::normalizedEvidenceUploadExtension($name);
+        if ($extension === '' || !in_array($extension, self::EVIDENCE_UPLOAD_ALLOWED_EXTENSIONS, true)) {
+            return new \WP_Error('ouinpo_projects_upload_type', 'Extension de fichier non autorisee.');
+        }
+
+        $parts = array_values(array_filter(explode('.', strtolower($name)), static fn($part) => $part !== ''));
+        $count = count($parts);
+        foreach ($parts as $index => $part) {
+            if (!in_array($part, self::EVIDENCE_UPLOAD_BLOCKED_EXTENSIONS, true)) {
+                continue;
+            }
+
+            $neutralizedWebFile = in_array($extension, ['html.txt', 'css.txt', 'js.txt'], true)
+                && $index === $count - 2
+                && in_array($part, ['html', 'css', 'js'], true);
+
+            if (!$neutralizedWebFile) {
+                return new \WP_Error('ouinpo_projects_upload_dangerous', 'Extension dangereuse refusee.');
+            }
+        }
+
+        if (!isset($file['tmp_name']) || !is_uploaded_file((string) $file['tmp_name'])) {
+            return new \WP_Error('ouinpo_projects_upload_missing', 'Fichier temporaire manquant.');
+        }
+
+        $finalExtension = pathinfo($name, PATHINFO_EXTENSION);
+        $mimes = self::evidenceUploadMimes();
+        $check = wp_check_filetype_and_ext((string) $file['tmp_name'], $name, $mimes);
+        if (!empty($check['ext']) && strtolower((string) $check['ext']) !== strtolower((string) $finalExtension)) {
+            return new \WP_Error('ouinpo_projects_upload_mime', 'Le type du fichier ne correspond pas a son extension.');
+        }
+
+        if (!empty($check['type'])) {
+            return $name;
+        }
+
+        $declared = isset($file['type']) ? strtolower((string) $file['type']) : '';
+        $textLike = ['txt', 'md', 'csv', 'json', 'sql', 'py', 'html.txt', 'css.txt', 'js.txt'];
+        if (in_array($extension, $textLike, true) && in_array($declared, ['', 'text/plain', 'application/octet-stream', 'text/csv', 'application/json', 'text/markdown', 'application/sql', 'text/x-python'], true)) {
+            return $name;
+        }
+
+        return new \WP_Error('ouinpo_projects_upload_mime', 'Type MIME non autorise.');
+    }
+
+    public static function decorateEvidenceAttachment(array $row): array
+    {
+        $attachmentId = (int) ($row['attachment_id'] ?? 0);
+        $row['attachment_id'] = $attachmentId > 0 ? $attachmentId : null;
+        $row['attachment_filename'] = '';
+        $row['attachment_mime'] = '';
+        $row['attachment_size'] = null;
+        $row['attachment_url'] = '';
+        $row['attachment_exists'] = false;
+        $row['attachment_is_private'] = false;
+
+        if ($attachmentId <= 0) {
+            return $row;
+        }
+
+        $post = get_post($attachmentId);
+        if (!$post || $post->post_type !== 'attachment') {
+            return $row;
+        }
+
+        $file = get_attached_file($attachmentId);
+        $isPrivate = PrivateFiles::isPrivateAttachment($attachmentId);
+        $privatePath = $isPrivate ? PrivateFiles::absolutePath(PrivateFiles::attachmentRelativePath($attachmentId)) : null;
+        $url = $isPrivate ? PrivateFiles::downloadUrl((int) ($row['id'] ?? 0)) : wp_get_attachment_url($attachmentId);
+
+        $row['attachment_exists'] = true;
+        $row['attachment_is_private'] = $isPrivate;
+        $row['attachment_filename'] = is_string($privatePath)
+            ? wp_basename($privatePath)
+            : ($file ? wp_basename((string) $file) : sanitize_file_name((string) $post->post_title));
+        $row['attachment_mime'] = (string) get_post_mime_type($attachmentId);
+        $row['attachment_url'] = $url ? (string) $url : (string) ($row['url'] ?? '');
+
+        if (is_string($privatePath) && file_exists($privatePath)) {
+            $row['attachment_size'] = (int) filesize($privatePath);
+        } elseif ($file && file_exists((string) $file)) {
+            $row['attachment_size'] = (int) filesize((string) $file);
+        }
+
+        return $row;
     }
 
     private function competencyExists(int $competencyId): bool

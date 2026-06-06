@@ -207,6 +207,14 @@ final class RestController
             ],
         ]);
 
+        register_rest_route(self::NS, '/projects/(?P<id>\d+)/evidence/upload', [
+            [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => [self::class, 'uploadEvidence'],
+                'permission_callback' => [self::class, 'canCreateEvidence'],
+            ],
+        ]);
+
         register_rest_route(self::NS, '/evidence/(?P<id>\d+)', [
             [
                 'methods' => 'PATCH',
@@ -217,6 +225,14 @@ final class RestController
                 'methods' => WP_REST_Server::DELETABLE,
                 'callback' => [self::class, 'deleteEvidence'],
                 'permission_callback' => [self::class, 'canManageEvidence'],
+            ],
+        ]);
+
+        register_rest_route(self::NS, '/evidence/(?P<id>\d+)/download', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'downloadEvidence'],
+                'permission_callback' => [self::class, 'canDownloadEvidence'],
             ],
         ]);
 
@@ -264,6 +280,30 @@ final class RestController
                 'methods' => WP_REST_Server::DELETABLE,
                 'callback' => [self::class, 'deleteCompetencyLink'],
                 'permission_callback' => [self::class, 'canDeleteCompetencyLink'],
+            ],
+        ]);
+
+        register_rest_route(self::NS, '/projects/(?P<id>\d+)/export/html', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'exportProjectHtml'],
+                'permission_callback' => [self::class, 'canViewProject'],
+            ],
+        ]);
+
+        register_rest_route(self::NS, '/projects/(?P<id>\d+)/export/markdown', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'exportProjectMarkdown'],
+                'permission_callback' => [self::class, 'canViewProject'],
+            ],
+        ]);
+
+        register_rest_route(self::NS, '/projects/(?P<id>\d+)/bts-situation/markdown', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'exportBtsSituationMarkdown'],
+                'permission_callback' => [self::class, 'canViewProject'],
             ],
         ]);
     }
@@ -337,9 +377,21 @@ final class RestController
 
     public static function getBoard(WP_REST_Request $request): WP_REST_Response
     {
+        $repository = new Repository();
+        $columns = $repository->getBoard(self::id($request));
+        $userId = get_current_user_id();
+
+        foreach ($columns as &$column) {
+            foreach ($column['tasks'] as &$task) {
+                $task['can_edit'] = $repository->userCanEditTask($task, $userId);
+            }
+            unset($task);
+        }
+        unset($column);
+
         return rest_ensure_response([
-            'project' => (new Repository())->getProjectSummary(self::id($request)),
-            'columns' => (new Repository())->getBoard(self::id($request)),
+            'project' => $repository->getProjectSummary(self::id($request)),
+            'columns' => $columns,
         ]);
     }
 
@@ -469,10 +521,6 @@ final class RestController
         $repository = new Repository();
         $body = self::body($request);
 
-        if (!$repository->userCanManageProject(self::id($request), get_current_user_id())) {
-            $body['status'] = 'submitted';
-        }
-
         $deliverableId = $repository->createDeliverable(self::id($request), $body, get_current_user_id());
         if ($deliverableId <= 0) {
             return new WP_Error('ouinpo_projects_deliverable_failed', 'Livrable invalide.', ['status' => 400]);
@@ -530,6 +578,114 @@ final class RestController
         }
 
         return rest_ensure_response($repository->getEvidenceItem($evidenceId));
+    }
+
+    public static function uploadEvidence(WP_REST_Request $request)
+    {
+        $projectId = self::id($request);
+        $repository = new Repository();
+        $files = $request->get_file_params();
+        $file = is_array($files['file'] ?? null) ? $files['file'] : null;
+
+        if (!$file) {
+            return new WP_Error('ouinpo_projects_upload_missing', 'Aucun fichier recu.', ['status' => 400]);
+        }
+
+        $deliverableId = absint($request->get_param('deliverable_id'));
+        if ($deliverableId > 0 && !$repository->deliverableBelongsToProject($deliverableId, $projectId)) {
+            return new WP_Error('ouinpo_projects_bad_deliverable', 'Livrable invalide pour ce projet.', ['status' => 400]);
+        }
+
+        $taskId = absint($request->get_param('task_id'));
+        if ($taskId > 0 && !$repository->taskBelongsToProject($taskId, $projectId)) {
+            return new WP_Error('ouinpo_projects_bad_task', 'Tache invalide pour ce projet.', ['status' => 400]);
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        $uploaded = PrivateFiles::storeUploadedFile($file);
+        if (is_wp_error($uploaded)) {
+            return new WP_Error($uploaded->get_error_code(), $uploaded->get_error_message(), ['status' => 400]);
+        }
+
+        $title = Repository::cleanTitle($request->get_param('title') ?: preg_replace('/\.[^.]+$/', '', wp_basename((string) $uploaded['file'])));
+        $description = Repository::cleanLongText($request->get_param('description') ?? '');
+
+        $attachmentId = wp_insert_attachment([
+            'post_mime_type' => (string) ($uploaded['type'] ?? 'application/octet-stream'),
+            'post_title' => $title,
+            'post_content' => $description,
+            'post_status' => 'inherit',
+            'guid' => (string) ($uploaded['url'] ?? ''),
+        ], (string) $uploaded['file'], 0, true);
+
+        if (is_wp_error($attachmentId)) {
+            return new WP_Error($attachmentId->get_error_code(), $attachmentId->get_error_message(), ['status' => 400]);
+        }
+
+        $metadata = wp_generate_attachment_metadata((int) $attachmentId, (string) $uploaded['file']);
+        if (is_array($metadata)) {
+            wp_update_attachment_metadata((int) $attachmentId, $metadata);
+        }
+
+        $evidenceId = $repository->createEvidence($projectId, [
+            'title' => $title,
+            'description' => $description,
+            'evidence_type' => 'attachment',
+            'url' => '',
+            'attachment_id' => (int) $attachmentId,
+            '_allow_attachment' => true,
+            'deliverable_id' => $deliverableId ?: null,
+            'task_id' => $taskId ?: null,
+        ], get_current_user_id());
+
+        if ($evidenceId <= 0) {
+            return new WP_Error('ouinpo_projects_evidence_failed', 'Trace fichier invalide.', ['status' => 400]);
+        }
+
+        PrivateFiles::markAttachmentPrivate(
+            (int) $attachmentId,
+            $projectId,
+            $evidenceId,
+            (string) ($uploaded['private_relative_path'] ?? '')
+        );
+
+        return rest_ensure_response($repository->getEvidenceItem($evidenceId));
+    }
+
+    public static function downloadEvidence(WP_REST_Request $request)
+    {
+        $repository = new Repository();
+        $evidence = $repository->getEvidenceItem(self::id($request));
+
+        if (!$evidence) {
+            return new WP_Error('ouinpo_projects_evidence_not_found', 'Trace introuvable.', ['status' => 404]);
+        }
+
+        $attachmentId = (int) ($evidence['attachment_id'] ?? 0);
+        if ($attachmentId <= 0 || !PrivateFiles::isPrivateAttachment($attachmentId)) {
+            return new WP_Error('ouinpo_projects_private_missing', 'Fichier prive introuvable.', ['status' => 404]);
+        }
+
+        if ((int) get_post_meta($attachmentId, PrivateFiles::META_PROJECT_ID, true) !== (int) $evidence['project_id']) {
+            return new WP_Error('ouinpo_projects_private_mismatch', 'Fichier prive invalide.', ['status' => 403]);
+        }
+
+        if ((int) get_post_meta($attachmentId, PrivateFiles::META_EVIDENCE_ID, true) !== (int) $evidence['id']) {
+            return new WP_Error('ouinpo_projects_private_mismatch', 'Fichier prive invalide.', ['status' => 403]);
+        }
+
+        $path = PrivateFiles::absolutePath(PrivateFiles::attachmentRelativePath($attachmentId));
+        if (is_wp_error($path)) {
+            return new WP_Error($path->get_error_code(), $path->get_error_message(), ['status' => 404]);
+        }
+
+        PrivateFiles::sendFile(
+            (string) $path,
+            (string) ($evidence['attachment_filename'] ?: get_the_title($attachmentId) ?: 'trace-' . (int) $evidence['id']),
+            (string) ($evidence['attachment_mime'] ?: get_post_mime_type($attachmentId) ?: 'application/octet-stream')
+        );
     }
 
     public static function updateEvidence(WP_REST_Request $request)
@@ -643,6 +799,29 @@ final class RestController
         (new Repository())->deleteCompetencyLink(self::id($request));
 
         return rest_ensure_response(['deleted' => true]);
+    }
+
+    public static function exportProjectHtml(WP_REST_Request $request): WP_REST_Response
+    {
+        return rest_ensure_response([
+            'content' => ProjectExporter::projectHtml(self::id($request)),
+        ]);
+    }
+
+    public static function exportProjectMarkdown(WP_REST_Request $request): WP_REST_Response
+    {
+        return rest_ensure_response([
+            'content' => ProjectExporter::projectMarkdown(self::id($request)),
+            'filename' => 'projet-' . self::id($request) . '.md',
+        ]);
+    }
+
+    public static function exportBtsSituationMarkdown(WP_REST_Request $request): WP_REST_Response
+    {
+        return rest_ensure_response([
+            'content' => ProjectExporter::btsSituationMarkdown(self::id($request)),
+            'filename' => 'situation-bts-' . self::id($request) . '.md',
+        ]);
     }
 
     public static function canUseRest(WP_REST_Request $request)
@@ -827,17 +1006,12 @@ final class RestController
 
     public static function canCreateDeliverable(WP_REST_Request $request)
     {
-        $view = self::canViewProject($request);
-        if (is_wp_error($view)) {
-            return $view;
+        $allowed = self::requireLoggedInRestNonce();
+        if (is_wp_error($allowed)) {
+            return $allowed;
         }
 
-        $repository = new Repository();
-        $projectId = self::id($request);
-        $userId = get_current_user_id();
-
-        return $repository->userCanManageProject($projectId, $userId)
-            || (current_user_can(Capabilities::PROJECTS_EDIT_OWN_TASKS) && $repository->isProjectMember($projectId, $userId))
+        return (new Repository())->userCanManageProject(self::id($request), get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Creation de livrable refusee.', ['status' => 403]);
     }
@@ -906,6 +1080,24 @@ final class RestController
         return $repository->userCanManageEvidenceItem($evidence, get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Gestion de la trace refusee.', ['status' => 403]);
+    }
+
+    public static function canDownloadEvidence(WP_REST_Request $request)
+    {
+        $allowed = self::requireLoggedInRestNonce();
+        if (is_wp_error($allowed)) {
+            return $allowed;
+        }
+
+        $repository = new Repository();
+        $evidence = $repository->getEvidenceItem(self::id($request));
+        if (!$evidence) {
+            return new WP_Error('ouinpo_projects_evidence_not_found', 'Trace introuvable.', ['status' => 404]);
+        }
+
+        return $repository->userCanViewProject((int) $evidence['project_id'], get_current_user_id())
+            ? true
+            : new WP_Error('ouinpo_projects_forbidden', 'Acces refuse.', ['status' => 403]);
     }
 
     public static function canManageTaskProject(WP_REST_Request $request)
