@@ -602,6 +602,160 @@
     }
   }
 
+  function collectStudentAiInput(root) {
+    const body = {};
+    root.querySelectorAll('[data-ouinpo-projects-student-ai-field]').forEach(function (field) {
+      body[field.dataset.ouinpoProjectsStudentAiField] = field.value || '';
+    });
+    return body;
+  }
+
+  function renderStringList(parent, title, items) {
+    if (!Array.isArray(items) || !items.length) {
+      return;
+    }
+    const section = el('section', 'ouinpo-projects-ai-summary-section');
+    section.appendChild(el('h3', '', title));
+    const list = el('ul', 'ouinpo-projects-simple-list');
+    items.forEach(function (item) {
+      list.appendChild(el('li', '', text(item)));
+    });
+    section.appendChild(list);
+    parent.appendChild(section);
+  }
+
+  function renderStudentAiPayload(root, payload) {
+    const preview = root.querySelector('[data-ouinpo-projects-student-ai-preview]');
+    const copy = root.querySelector('[data-ouinpo-projects-student-ai-copy]');
+    preview.innerHTML = '';
+    root._ouinpoProjectsStudentAiText = '';
+
+    const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+    if (warnings.length) {
+      const warningBox = el('div', 'ouinpo-projects-ai-warning');
+      warnings.forEach(function (warning) {
+        warningBox.appendChild(el('p', '', text(warning)));
+      });
+      preview.appendChild(warningBox);
+    }
+
+    const copyLines = [];
+    if (payload.kind === 'reflection_questions' && Array.isArray(payload.questions)) {
+      const list = el('div', 'ouinpo-projects-ai-items');
+      payload.questions.forEach(function (item) {
+        const card = el('article', 'ouinpo-projects-ai-item');
+        card.appendChild(el('strong', '', text(item.theme || 'Question')));
+        card.appendChild(el('span', '', text(item.question)));
+        if (item.why_it_matters) {
+          card.appendChild(el('small', '', text(item.why_it_matters)));
+        }
+        list.appendChild(card);
+        copyLines.push('- ' + text(item.question));
+      });
+      preview.appendChild(list);
+    } else if (payload.kind === 'personal_summary' && payload.personal_summary) {
+      const summary = payload.personal_summary;
+      const section = el('section', 'ouinpo-projects-ai-summary-section');
+      section.appendChild(el('h3', '', 'Brouillon'));
+      section.appendChild(el('p', '', text(summary.draft)));
+      preview.appendChild(section);
+      copyLines.push(text(summary.draft));
+      renderStringList(preview, 'Forces a garder', summary.strengths_to_keep);
+      renderStringList(preview, 'Points a clarifier', summary.points_to_clarify);
+      renderStringList(preview, 'Traces a mentionner', summary.evidence_to_mention);
+      renderStringList(preview, 'Questions avant soumission', summary.questions_before_submission);
+    } else if (payload.kind === 'portfolio_draft' && payload.portfolio_draft) {
+      const draft = payload.portfolio_draft;
+      [
+        ['Contexte', 'context'],
+        ['Mon role', 'my_role'],
+        ['Productions', 'productions'],
+        ['Competences', 'skills'],
+        ['Difficultes et solutions', 'difficulties_and_solutions'],
+        ['Bilan personnel', 'personal_review']
+      ].forEach(function (pair) {
+        const value = text(draft[pair[1]]);
+        if (!value) {
+          return;
+        }
+        const section = el('section', 'ouinpo-projects-ai-summary-section');
+        section.appendChild(el('h3', '', pair[0]));
+        section.appendChild(el('p', '', value));
+        preview.appendChild(section);
+        copyLines.push(pair[0] + '\n' + value);
+      });
+      renderStringList(preview, 'A verifier', draft.to_verify);
+    }
+
+    if (!preview.childNodes.length) {
+      preview.appendChild(el('p', 'ouinpo-projects-empty', 'Aucun brouillon exploitable.'));
+      copy.hidden = true;
+      return;
+    }
+
+    root._ouinpoProjectsStudentAiText = copyLines.join('\n\n');
+    copy.hidden = !root._ouinpoProjectsStudentAiText;
+  }
+
+  function setStudentAiBusy(root, busy) {
+    root.classList.toggle('is-loading', busy);
+    root.querySelectorAll('[data-ouinpo-projects-student-ai-action], [data-ouinpo-projects-student-ai-copy]').forEach(function (button) {
+      button.disabled = busy;
+    });
+  }
+
+  function bindStudentAi(root) {
+    const status = root.querySelector('[data-ouinpo-projects-student-ai-status]');
+    const preview = root.querySelector('[data-ouinpo-projects-student-ai-preview]');
+    const copy = root.querySelector('[data-ouinpo-projects-student-ai-copy]');
+
+    root.addEventListener('click', function (event) {
+      const action = event.target.closest('[data-ouinpo-projects-student-ai-action]');
+      if (!action) {
+        return;
+      }
+
+      if (preview) {
+        preview.innerHTML = '';
+      }
+      if (copy) {
+        copy.hidden = true;
+      }
+      root._ouinpoProjectsStudentAiText = '';
+      setStudentAiBusy(root, true);
+      status.textContent = 'Generation en cours...';
+      request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/student-ai/' + encodeURIComponent(action.dataset.ouinpoProjectsStudentAiAction), {
+        method: 'POST',
+        body: JSON.stringify(collectStudentAiInput(root))
+      }).then(function (payload) {
+        status.textContent = text(payload.ai_notice || 'Brouillon IA recu.');
+        renderStudentAiPayload(root, payload);
+      }).catch(function (error) {
+        status.textContent = error.message || 'Erreur IA.';
+      }).then(function () {
+        setStudentAiBusy(root, false);
+      });
+    });
+
+    if (copy) {
+      copy.addEventListener('click', function () {
+        const value = root._ouinpoProjectsStudentAiText || '';
+        if (!value) {
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(value).then(function () {
+            status.textContent = 'Brouillon copie.';
+          }).catch(function () {
+            status.textContent = 'Copie impossible. Le brouillon reste affiche.';
+          });
+        } else {
+          status.textContent = 'Copie automatique indisponible. Le brouillon reste affiche.';
+        }
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-ouinpo-projects-board]').forEach(bindBoard);
     document.querySelectorAll('[data-ouinpo-projects-journal]').forEach(bindJournal);
@@ -609,6 +763,7 @@
     document.querySelectorAll('[data-ouinpo-projects-evidence]').forEach(bindEvidence);
     document.querySelectorAll('[data-ouinpo-projects-export]').forEach(bindExports);
     document.querySelectorAll('[data-ouinpo-projects-ai]').forEach(bindAiAssistant);
+    document.querySelectorAll('[data-ouinpo-projects-student-ai]').forEach(bindStudentAi);
     document.querySelectorAll('[data-ouinpo-projects-print]').forEach(function (button) {
       button.addEventListener('click', function () {
         window.print();

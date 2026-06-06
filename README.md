@@ -228,6 +228,8 @@ Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO. I
 
 Depuis `0.6.3-beta`, Projects inclut aussi un assistant IA encadre pour les enseignants : propositions de taches, livrables adaptes, competences liees, analyse de risques, aide portfolio et synthese enseignant. Toutes les reponses IA sont des brouillons/previsualisations. Le serveur n'applique rien sans selection explicite et confirmation par un enseignant ou administrateur autorise.
 
+Le lot 5 ajoute un assistant IA eleve distinct et limite a la preparation personnelle du portfolio BTS : questions de recul, synthese personnelle et brouillon portfolio. Il est desactive par defaut, doit etre active globalement puis projet par projet, et ne modifie jamais les donnees Projects.
+
 Shortcodes disponibles :
 
 | Shortcode | Usage |
@@ -240,6 +242,7 @@ Shortcodes disponibles :
 | `[ouinpo_project_sheet id="..."]` | Fiche projet portfolio HTML imprimable avec export Markdown |
 | `[ouinpo_project_bts_situation id="..."]` | Fiche situation professionnelle BTS SIO imprimable avec export Markdown |
 | `[ouinpo_project_ai_assistant id="..."]` | Assistant IA enseignant pour propositions Projects en brouillon |
+| `[ouinpo_project_student_ai id="..."]` | Assistant IA eleve lecture seule pour brouillons portfolio personnels |
 | `[ouinpo_teacher_projects]` | Vue enseignant avec statut, membres, taches, livrables, traces, alertes et acces Kanban/fiche |
 
 Capacites ajoutees :
@@ -254,23 +257,24 @@ ouinpo_projects_comment
 ouinpo_projects_validate
 ouinpo_projects_ai_use
 ouinpo_projects_ai_apply
+ouinpo_projects_ai_student_use
 ```
 
-Les capacites IA Projects sont attribuees aux administrateurs et enseignants OuInPo lors de l'installation/mise a jour. Elles ne sont pas attribuees aux eleves.
+Les capacites IA Projects enseignant (`ouinpo_projects_ai_use`, `ouinpo_projects_ai_apply`) sont attribuees aux administrateurs et enseignants OuInPo lors de l'installation/mise a jour. La capacite `ouinpo_projects_ai_student_use` est aussi attribuee aux eleves, mais les routes eleves exigent en plus l'appartenance actuelle au projet, l'activation globale et l'activation du projet. Les eleves ne recoivent jamais `ouinpo_projects_ai_apply`.
 
 Tables creees :
 
 ```text
-wp_ouinpo_projects
-wp_ouinpo_project_members
-wp_ouinpo_project_columns
-wp_ouinpo_project_tasks
-wp_ouinpo_project_task_comments
-wp_ouinpo_project_checklist_items
-wp_ouinpo_project_logs
-wp_ouinpo_project_deliverables
-wp_ouinpo_project_evidence
-wp_ouinpo_project_competency_links
+{prefix}ouinpo_projects
+{prefix}ouinpo_project_members
+{prefix}ouinpo_project_columns
+{prefix}ouinpo_project_tasks
+{prefix}ouinpo_project_task_comments
+{prefix}ouinpo_project_checklist_items
+{prefix}ouinpo_project_logs
+{prefix}ouinpo_project_deliverables
+{prefix}ouinpo_project_evidence
+{prefix}ouinpo_project_competency_links
 ```
 
 Les routes REST utilisent le namespace `ouinpo-projects/v1` et exigent un utilisateur connecte, un nonce REST et les capacites/appartenances adaptees. Les eleves ne voient que les projets dont ils sont membres. Les livrables sont geres/valides par les enseignants du projet ; les membres peuvent deposer des traces si leurs capacites Projects le permettent.
@@ -299,6 +303,9 @@ POST /projects/{id}/ai/analyze-risks
 POST /projects/{id}/ai/portfolio-summary
 POST /projects/{id}/ai/teacher-summary
 POST /projects/{id}/ai/apply-suggestion
+POST /projects/{id}/student-ai/reflection-questions
+POST /projects/{id}/student-ai/personal-summary
+POST /projects/{id}/student-ai/portfolio-draft
 ```
 
 Les liens de competences utilisent la table existante `ouin_exo_competencies`. Le module ne cree pas un second referentiel : si aucune competence BO n'est importee ou creee, les panneaux de liaison restent vides.
@@ -314,6 +321,17 @@ Assistant IA Projects :
 - les reponses sont demandees en JSON strict, parsees et revalidees cote serveur ; un JSON vide, incomplet, tronque, hors schema ou visant un objet hors projet est refuse avant toute application ;
 - les identifiants de projet, tache, livrable et competence sont reverifies avant application ; les doublons evidents et titres vides sont refuses ;
 - les logs IA sont synthetiques via les reglages IA existants et ne stockent pas les prompts complets, reponses completes, chemins, traces detaillees, noms ou emails.
+
+Assistant IA eleve Projects :
+
+- activation en deux temps : option globale `ouinpo_projects_student_ai_enabled` puis case `IA eleve` sur le projet ;
+- routes REST connectees uniquement, avec nonce REST, capacite `ouinpo_projects_ai_student_use`, projet existant, membre actuel du projet et quota disponible ;
+- champs eleve obligatoires dans l'interface : role, travail realise, difficultes, solutions, apprentissages et elements a montrer ; au moins le role ou le travail reel doit etre renseigne ;
+- quotas dedies : `ouinpo_ai_projects_student_per_minute`, `ouinpo_ai_projects_student_per_day` et `ouinpo_ai_projects_student_max_tokens` ;
+- contexte minimise : titre, description generale, statut, periode, taches liees a l'eleve, livrables en metadata, traces de l'eleve, synthese de traces globales, journal de l'eleve et competences liees ;
+- autres membres non nommes, pas d'emails, pas de chemins prives, pas d'URLs de telechargement, pas de contenu de fichier ;
+- reponses attendues en JSON strict et revalidees cote serveur ; un JSON invalide n'est pas affiche ;
+- aucune action d'application : l'IA eleve ne cree, modifie ni supprime tache, livrable, competence, trace ou journal.
 
 Uploads de traces fichier :
 
@@ -332,7 +350,7 @@ Exports :
 - les routes Markdown retournent un Markdown serveur nettoye, sans generation PDF serveur et sans dependance externe ;
 - l'export HTML retourne un fragment HTML echappe avec classes prefixees `ouinpo-projects-`.
 
-Limites actuelles : IA Projects limitee a des brouillons enseignants valides manuellement, pas d'IA eleve, pas d'export PDF serveur, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email.
+Limites actuelles : IA Projects limitee a des brouillons enseignants valides manuellement et a des brouillons eleves lecture seule, pas d'export PDF serveur, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email.
 
 #### Recette manuelle recommandee
 
@@ -425,6 +443,17 @@ Limites actuelles : IA Projects limitee a des brouillons enseignants valides man
 6. Verifier que les boutons IA sont desactives pendant l'appel, que l'aperçu precedent est remplace, et qu'aucune application ne part apres annulation de confirmation.
 7. Verifier que les logs IA ne contiennent ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
 
+
+#### Recette IA eleve Projects lot 5
+
+1. Activer l'IA globale, `ouinpo_projects_student_ai_enabled`, puis cocher `IA eleve` sur un projet de test.
+2. Verifier qu'un eleve membre voit l'acces `IA portfolio` depuis `[ouinpo_my_projects]` ou le shortcode `[ouinpo_project_student_ai]`.
+3. Appeler les trois actions avec les champs vides : la route doit demander d'indiquer le travail reel.
+4. Renseigner le role ou le travail realise, puis generer questions de recul, synthese personnelle et brouillon portfolio.
+5. Verifier que le resultat est copiable mais qu'aucun bouton d'application n'existe.
+6. Verifier qu'un eleve non membre, un ancien membre retire, un visiteur anonyme et un nonce invalide sont refuses.
+7. Verifier que `/ai/apply-suggestion` reste refuse a un eleve et que les routes `/student-ai/*` ne modifient aucune table de projet.
+8. Verifier que les logs IA ne contiennent ni texte eleve complet, ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
 
 ### Gate configurable
 

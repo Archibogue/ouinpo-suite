@@ -26,6 +26,7 @@ final class Shortcodes
         add_shortcode('ouinpo_project_sheet', [self::class, 'sheet']);
         add_shortcode('ouinpo_project_bts_situation', [self::class, 'btsSituation']);
         add_shortcode('ouinpo_project_ai_assistant', [self::class, 'aiAssistant']);
+        add_shortcode('ouinpo_project_student_ai', [self::class, 'studentAi']);
         add_shortcode('ouinpo_teacher_projects', [self::class, 'teacherProjects']);
     }
 
@@ -61,6 +62,8 @@ final class Shortcodes
                         $evidenceUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'evidence']);
                         $sheetUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'sheet']);
                         $btsUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'bts']);
+                        $studentAiUrl = self::currentUrl(['ouinpo_project_id' => $projectId, 'ouinpo_project_view' => 'student-ai']);
+                        $canUseStudentAi = self::canUseProjectStudentAi($repository, $projectId);
                         ?>
                         <article class="ouinpo-projects-project-card">
                             <h3><?php echo esc_html((string) $project['title']); ?></h3>
@@ -76,6 +79,9 @@ final class Shortcodes
                                 <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($evidenceUrl); ?>">Traces</a>
                                 <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($sheetUrl); ?>">Fiche</a>
                                 <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($btsUrl); ?>">Situation BTS</a>
+                                <?php if ($canUseStudentAi): ?>
+                                    <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($studentAiUrl); ?>">IA portfolio</a>
+                                <?php endif; ?>
                             </p>
                         </article>
                     <?php endforeach; ?>
@@ -95,6 +101,8 @@ final class Shortcodes
                 echo self::sheet(['id' => $selectedId]);
             } elseif ($selectedView === 'bts') {
                 echo self::btsSituation(['id' => $selectedId]);
+            } elseif ($selectedView === 'student-ai') {
+                echo self::studentAi(['id' => $selectedId]);
             } else {
                 echo self::kanban(['id' => $selectedId]);
             }
@@ -138,6 +146,7 @@ final class Shortcodes
                             <th>Livrables</th>
                             <th>Traces</th>
                             <th>Dernier journal</th>
+                            <th>IA eleve</th>
                             <th>Alertes</th>
                             <th>Acces</th>
                         </tr>
@@ -161,6 +170,7 @@ final class Shortcodes
                                 <td><?php echo esc_html((string) ((int) ($summary['validated_deliverables_count'] ?? 0)) . ' / ' . (int) ($summary['deliverables_count'] ?? 0)); ?></td>
                                 <td><?php echo esc_html((string) (($summary['last_evidence_at'] ?? '') ?: '-')); ?></td>
                                 <td><?php echo esc_html((string) (($summary['last_log_at'] ?? '') ?: '-')); ?></td>
+                                <td><?php echo esc_html(!empty($project['student_ai_enabled']) ? 'Activee' : 'Desactivee'); ?></td>
                                 <td><?php echo esc_html($alerts ? implode(', ', $alerts) : '-'); ?></td>
                                 <td>
                                     <a class="ouinpo-projects-button" href="<?php echo esc_url($kanbanUrl); ?>">Kanban</a>
@@ -738,6 +748,86 @@ final class Shortcodes
         return (string) ob_get_clean();
     }
 
+    public static function studentAi($atts = []): string
+    {
+        if (!is_user_logged_in()) {
+            return self::notice('Connexion requise pour utiliser l assistant portfolio.');
+        }
+
+        $atts = shortcode_atts(['id' => 0], (array) $atts, 'ouinpo_project_student_ai');
+        $projectId = absint($atts['id'] ?: (isset($_GET['ouinpo_project_id']) ? wp_unslash($_GET['ouinpo_project_id']) : 0));
+        if ($projectId <= 0) {
+            return self::notice('Projet non precise.');
+        }
+
+        $repository = new Repository();
+        $project = $repository->getProjectSummary($projectId);
+        if (!$project) {
+            return self::notice('Projet introuvable.');
+        }
+
+        if (!$repository->isProjectMember($projectId, get_current_user_id())) {
+            return self::notice('Assistant portfolio reserve aux membres actuels du projet.');
+        }
+
+        if (!ProjectsStudentAiAssistant::globalEnabled() || !ProjectsStudentAiAssistant::projectStudentAiEnabled($project)) {
+            return self::notice('Assistant IA eleve desactive pour ce projet.');
+        }
+
+        if (!current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) && !current_user_can('manage_options')) {
+            return self::notice('Droit IA eleve requis.');
+        }
+
+        Assets::enqueueFront();
+
+        $fields = [
+            'my_role' => 'Mon role dans le projet',
+            'what_i_did' => 'Ce que j ai reellement fait',
+            'difficulties' => 'Difficultes rencontrees',
+            'solutions' => 'Solutions apportees',
+            'what_i_learned' => 'Ce que j ai appris',
+            'what_i_want_to_show' => 'Ce que je veux montrer dans le portfolio',
+        ];
+
+        ob_start();
+        ?>
+        <section class="ouinpo-projects-student-ai" data-ouinpo-projects-student-ai data-project-id="<?php echo esc_attr((string) $projectId); ?>">
+            <div class="ouinpo-projects-heading">
+                <div>
+                    <h2>Assistant portfolio - <?php echo esc_html((string) $project['title']); ?></h2>
+                    <p>Brouillons personnels a relire et reformuler avant utilisation.</p>
+                </div>
+                <span class="ouinpo-projects-badge">Lecture seule</span>
+            </div>
+
+            <div class="ouinpo-projects-ai-warning">
+                L assistant s appuie sur tes declarations et les traces visibles du projet. Il ne modifie aucune tache, aucun livrable, aucune trace et aucune competence.
+            </div>
+
+            <div class="ouinpo-projects-student-ai-fields">
+                <?php foreach ($fields as $name => $label): ?>
+                    <label>
+                        <span><?php echo esc_html($label); ?></span>
+                        <textarea rows="3" maxlength="900" data-ouinpo-projects-student-ai-field="<?php echo esc_attr($name); ?>"></textarea>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="ouinpo-projects-ai-toolbar">
+                <button type="button" data-ouinpo-projects-student-ai-action="reflection-questions">Questions de recul</button>
+                <button type="button" data-ouinpo-projects-student-ai-action="personal-summary">Synthese personnelle</button>
+                <button type="button" data-ouinpo-projects-student-ai-action="portfolio-draft">Brouillon portfolio</button>
+            </div>
+
+            <div class="ouinpo-projects-ai-status" data-ouinpo-projects-student-ai-status aria-live="polite"></div>
+            <div class="ouinpo-projects-ai-preview" data-ouinpo-projects-student-ai-preview></div>
+            <button type="button" class="ouinpo-projects-button" data-ouinpo-projects-student-ai-copy hidden>Copier le brouillon</button>
+        </section>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+
     public static function renderColumns(array $columns, bool $canEdit): string
     {
         ob_start();
@@ -975,5 +1065,18 @@ final class Shortcodes
             current_user_can(Capabilities::PROJECTS_AI_USE)
             || current_user_can('manage_options')
         ) && $repository->userCanManageProject($projectId, get_current_user_id());
+    }
+
+    private static function canUseProjectStudentAi(Repository $repository, int $projectId): bool
+    {
+        $project = $repository->getProject($projectId);
+        if (!$project) {
+            return false;
+        }
+
+        return ProjectsStudentAiAssistant::globalEnabled()
+            && ProjectsStudentAiAssistant::projectStudentAiEnabled($project)
+            && $repository->isProjectMember($projectId, get_current_user_id())
+            && (current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) || current_user_can('manage_options'));
     }
 }

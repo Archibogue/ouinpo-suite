@@ -164,6 +164,7 @@ final class Installer
             level VARCHAR(100) NULL,
             class_slug VARCHAR(100) NULL,
             status VARCHAR(30) NOT NULL DEFAULT 'draft',
+            student_ai_enabled TINYINT(1) NOT NULL DEFAULT 0,
             teacher_id BIGINT UNSIGNED NOT NULL,
             start_date DATE NULL,
             end_date DATE NULL,

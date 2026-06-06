@@ -28,6 +28,7 @@ final class Capabilities
     public const PROJECTS_VALIDATE = 'ouinpo_projects_validate';
     public const PROJECTS_AI_USE = 'ouinpo_projects_ai_use';
     public const PROJECTS_AI_APPLY = 'ouinpo_projects_ai_apply';
+    public const PROJECTS_AI_STUDENT_USE = 'ouinpo_projects_ai_student_use';
 
     private static bool $initialized = false;
 
@@ -68,6 +69,7 @@ final class Capabilities
             self::PROJECTS_VALIDATE,
             self::PROJECTS_AI_USE,
             self::PROJECTS_AI_APPLY,
+            self::PROJECTS_AI_STUDENT_USE,
         ];
     }
 
@@ -80,6 +82,7 @@ final class Capabilities
             self::PROJECTS_VIEW_OWN,
             self::PROJECTS_EDIT_OWN_TASKS,
             self::PROJECTS_COMMENT,
+            self::PROJECTS_AI_STUDENT_USE,
         ];
     }
 
@@ -108,6 +111,7 @@ final class Capabilities
             self::PROJECTS_VALIDATE => 'Projets - validation',
             self::PROJECTS_AI_USE => 'Projets - assistant IA',
             self::PROJECTS_AI_APPLY => 'Projets - appliquer suggestions IA',
+            self::PROJECTS_AI_STUDENT_USE => 'Projets - assistant IA eleve',
         ];
     }
 
@@ -140,6 +144,7 @@ final class Capabilities
             self::PROJECTS_VALIDATE,
             self::PROJECTS_AI_USE,
             self::PROJECTS_AI_APPLY,
+            self::PROJECTS_AI_STUDENT_USE,
         ];
 
         $teacher = get_role('ouinpo_teacher');

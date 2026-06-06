@@ -12,7 +12,11 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Journalisation IA synthetique sans prompt complet ni reponse complete.
 - Lot 4.1 Projects : durcissement runtime IA, validation stricte du JSON, refus des objets hors schema ou hors projet, messages d'erreur propres et boutons IA verrouilles pendant les appels.
 - Documentation du quota IA Projects : reutilisation des quotas enseignants, consommation seulement sur appel fournisseur, aucune consommation lors de l'application ou des erreurs de permission.
-- Aucun appel IA anonyme ou eleve, aucun build et aucune modification du dossier `dist/`.
+- Lot 5 Projects : ajout d'un assistant IA eleve strictement lecture seule pour preparer questions de recul, synthese personnelle et brouillon portfolio.
+- Ajout de l'option globale `ouinpo_projects_student_ai_enabled`, du drapeau projet `student_ai_enabled`, de la capacite `ouinpo_projects_ai_student_use`, de quotas dedies et du shortcode `[ouinpo_project_student_ai]`.
+- Ajout des routes REST `POST /projects/{id}/student-ai/reflection-questions`, `personal-summary` et `portfolio-draft`, reservees aux membres actuels du projet avec nonce REST.
+- Contexte IA eleve minimise et anonymise : pas de noms d'autres membres, emails, chemins prives, URLs de telechargement, contenu de fichiers, prompts complets ni reponses completes dans les logs.
+- L'IA eleve ne peut pas creer, modifier, supprimer ni appliquer tache, livrable, competence ou trace ; aucun acces anonyme et aucun build ni modification du dossier `dist/`.
 
 ## [0.6.2-beta] - 2026-06-06
 

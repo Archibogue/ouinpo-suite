@@ -158,7 +158,8 @@
   gap: 0.45rem;
 }
 
-.ouinpo-projects-ai {
+.ouinpo-projects-ai,
+.ouinpo-projects-student-ai {
   margin: 1.5rem 0;
   padding: 1.1rem;
   background: #fff;
@@ -168,7 +169,8 @@
   box-shadow: 0 8px 18px rgba(31, 42, 51, 0.08);
 }
 
-.ouinpo-projects-ai.is-loading {
+.ouinpo-projects-ai.is-loading,
+.ouinpo-projects-student-ai.is-loading {
   cursor: wait;
 }
 
@@ -189,6 +191,30 @@
 
 .ouinpo-projects-ai-context textarea {
   width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #bdc7d0;
+  border-radius: 6px;
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  color: #24313a;
+}
+
+.ouinpo-projects-student-ai-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.ouinpo-projects-student-ai-fields label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.ouinpo-projects-student-ai-fields textarea {
+  width: 100%;
+  min-height: 7rem;
   box-sizing: border-box;
   border: 1px solid #bdc7d0;
   border-radius: 6px;
@@ -235,6 +261,14 @@
 
 .ouinpo-projects-ai-item input {
   margin-top: 0.25rem;
+}
+
+.ouinpo-projects-student-ai .ouinpo-projects-ai-item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ouinpo-projects-student-ai .ouinpo-projects-ai-item small {
+  color: #52616c;
 }
 
 .ouinpo-projects-ai-item-body {
@@ -515,6 +549,7 @@
   .ouinpo-projects-task-actions,
   .ouinpo-projects-actions,
   .ouinpo-projects-ai,
+  .ouinpo-projects-student-ai,
   .ouinpo-projects-export-output {
     display: none !important;
   }

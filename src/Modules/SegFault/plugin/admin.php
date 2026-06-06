@@ -4093,6 +4093,7 @@ try {
             <td>
               <label><input type="checkbox" name="ouinpo_ai_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_ai_enabled', 0)); ?> /> Activer globalement les usages IA OuInPo.</label><br>
               <label><input type="checkbox" name="ouinpo_ai_public_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_ai_public_enabled', 0)); ?> /> Autoriser les usages IA publics anonymes.</label><br>
+              <label><input type="checkbox" name="ouinpo_projects_student_ai_enabled" value="1" <?php checked(1, (int)get_option('ouinpo_projects_student_ai_enabled', 0)); ?> /> Activer l IA eleve Projects pour les brouillons de portfolio.</label><br>
               <label><input type="checkbox" name="ouinpo_ai_debug_logs" value="1" <?php checked(1, (int)get_option('ouinpo_ai_debug_logs', 0)); ?> /> Activer les logs IA/RAG synthetiques quand WP_DEBUG est actif.</label>
             </td>
           </tr>
@@ -4189,6 +4190,8 @@ try {
                 'ouinpo_ai_practical_ai_per_day' => 'Sujet pratique / jour',
                 'ouinpo_ai_teacher_per_minute' => 'Enseignant / minute',
                 'ouinpo_ai_teacher_per_day' => 'Enseignant / jour',
+                'ouinpo_ai_projects_student_per_minute' => 'Projects IA eleve / minute',
+                'ouinpo_ai_projects_student_per_day' => 'Projects IA eleve / jour',
               ] as $option => $label): ?>
                 <label><?php echo esc_html($label); ?>
                   <input type="number" min="0" max="10000" name="<?php echo esc_attr($option); ?>" value="<?php echo esc_attr((int)get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? 0)); ?>" class="ouinpo-sf-input-small" />
@@ -4205,6 +4208,7 @@ try {
                 'ouinpo_ai_public_chat_max_tokens' => 'Chat public',
                 'ouinpo_ai_exercise_ai_max_tokens' => 'Correction exercice',
                 'ouinpo_ai_practical_ai_max_tokens' => 'Correction sujet pratique',
+                'ouinpo_ai_projects_student_max_tokens' => 'Projects IA eleve',
                 'ouinpo_ai_public_rag_max_tokens' => 'Contexte RAG public',
               ] as $option => $label): ?>
                 <label><?php echo esc_html($label); ?>

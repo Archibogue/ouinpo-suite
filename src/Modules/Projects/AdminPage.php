@@ -256,6 +256,16 @@ final class AdminPage
                         <input type="date" name="end_date" value="<?php echo esc_attr((string) ($project['end_date'] ?? '')); ?>">
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row">IA eleve</th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="student_ai_enabled" value="1" <?php checked(1, (int) ($project['student_ai_enabled'] ?? 0)); ?>>
+                            Autoriser les membres du projet a preparer leurs brouillons portfolio avec l assistant IA eleve.
+                        </label>
+                        <p class="description">Necessite aussi l activation globale dans les reglages IA. L assistant eleve ne modifie jamais le projet.</p>
+                    </td>
+                </tr>
                 </tbody>
             </table>
 
@@ -270,6 +280,7 @@ final class AdminPage
                 <code>[ouinpo_project_evidence id="<?php echo esc_html((string) $projectId); ?>"]</code>
                 <code>[ouinpo_project_sheet id="<?php echo esc_html((string) $projectId); ?>"]</code>
                 <code>[ouinpo_project_bts_situation id="<?php echo esc_html((string) $projectId); ?>"]</code>
+                <code>[ouinpo_project_student_ai id="<?php echo esc_html((string) $projectId); ?>"]</code>
             </p>
         <?php endif; ?>
         <?php
@@ -511,6 +522,7 @@ final class AdminPage
                 <th>Statut</th>
                 <th>Membres</th>
                 <th>Taches</th>
+                <th>IA eleve</th>
                 <th>Shortcode Kanban</th>
                 <th>Action</th>
             </tr>
@@ -522,6 +534,7 @@ final class AdminPage
                     <td><?php echo esc_html((string) $project['status']); ?></td>
                     <td><?php echo esc_html((string) ((int) ($project['members_count'] ?? 0))); ?></td>
                     <td><?php echo esc_html((string) ((int) ($project['tasks_count'] ?? 0))); ?></td>
+                    <td><?php echo esc_html(!empty($project['student_ai_enabled']) ? 'Activee' : 'Desactivee'); ?></td>
                     <td><code>[ouinpo_project_kanban id="<?php echo esc_html((string) $project['id']); ?>"]</code></td>
                     <td>
                         <a class="button button-secondary" href="<?php echo esc_url(add_query_arg(['page' => self::PAGE, 'project_id' => (int) $project['id']], admin_url('admin.php'))); ?>">
@@ -567,6 +580,8 @@ final class AdminPage
                 $data[$field] = wp_unslash($_POST[$field]);
             }
         }
+
+        $data['student_ai_enabled'] = isset($_POST['student_ai_enabled']) ? 1 : 0;
 
         return $data;
     }

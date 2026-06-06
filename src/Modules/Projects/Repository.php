@@ -153,6 +153,7 @@ final class Repository
                 'level' => self::cleanNullableText($data['level'] ?? '', 100),
                 'class_slug' => self::cleanNullableKey($data['class_slug'] ?? '', 100),
                 'status' => $status,
+                'student_ai_enabled' => !empty($data['student_ai_enabled']) ? 1 : 0,
                 'teacher_id' => $teacherId,
                 'start_date' => self::cleanDate($data['start_date'] ?? ''),
                 'end_date' => self::cleanDate($data['end_date'] ?? ''),
@@ -160,7 +161,7 @@ final class Repository
                 'created_at' => $now,
                 'updated_at' => null,
             ],
-            ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s']
+            ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s', '%s']
         );
 
         if (!$inserted) {
@@ -217,6 +218,11 @@ final class Repository
 
         if (array_key_exists('teacher_id', $data)) {
             $updates['teacher_id'] = max(1, (int) $data['teacher_id']);
+            $formats[] = '%d';
+        }
+
+        if (array_key_exists('student_ai_enabled', $data)) {
+            $updates['student_ai_enabled'] = !empty($data['student_ai_enabled']) ? 1 : 0;
             $formats[] = '%d';
         }
 

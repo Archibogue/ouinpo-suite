@@ -324,6 +324,20 @@ final class RestController
             ]);
         }
 
+        foreach ([
+            'reflection-questions' => 'studentAiReflectionQuestions',
+            'personal-summary' => 'studentAiPersonalSummary',
+            'portfolio-draft' => 'studentAiPortfolioDraft',
+        ] as $route => $callback) {
+            register_rest_route(self::NS, '/projects/(?P<id>\d+)/student-ai/' . $route, [
+                [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => [self::class, $callback],
+                    'permission_callback' => [self::class, 'canUseProjectStudentAi'],
+                ],
+            ]);
+        }
+
         register_rest_route(self::NS, '/projects/(?P<id>\d+)/ai/apply-suggestion', [
             [
                 'methods' => WP_REST_Server::CREATABLE,
@@ -879,6 +893,21 @@ final class RestController
         return self::aiSuggest($request, 'teacher_summary');
     }
 
+    public static function studentAiReflectionQuestions(WP_REST_Request $request)
+    {
+        return self::studentAiSuggest($request, 'reflection_questions');
+    }
+
+    public static function studentAiPersonalSummary(WP_REST_Request $request)
+    {
+        return self::studentAiSuggest($request, 'personal_summary');
+    }
+
+    public static function studentAiPortfolioDraft(WP_REST_Request $request)
+    {
+        return self::studentAiSuggest($request, 'portfolio_draft');
+    }
+
     public static function applyAiSuggestion(WP_REST_Request $request)
     {
         $result = (new ProjectsAiAssistant())->applySuggestion(
@@ -949,6 +978,42 @@ final class RestController
     public static function canApplyProjectAi(WP_REST_Request $request)
     {
         return self::canUseProjectAiWithCapability($request, Capabilities::PROJECTS_AI_APPLY, true);
+    }
+
+    public static function canUseProjectStudentAi(WP_REST_Request $request)
+    {
+        $allowed = self::requireLoggedInRestNonce();
+        if (is_wp_error($allowed)) {
+            return $allowed;
+        }
+
+        $projectId = self::id($request);
+        if ($projectId <= 0) {
+            return new WP_Error('ouinpo_projects_bad_id', 'Identifiant invalide.', ['status' => 400]);
+        }
+
+        $repository = new Repository();
+        $project = $repository->getProject($projectId);
+        if (!$project) {
+            return new WP_Error('ouinpo_projects_not_found', 'Projet introuvable.', ['status' => 404]);
+        }
+
+        if (!ProjectsStudentAiAssistant::globalEnabled()) {
+            return new WP_Error('ouinpo_projects_student_ai_disabled', 'Assistant IA eleve desactive.', ['status' => 403]);
+        }
+
+        if (!ProjectsStudentAiAssistant::projectStudentAiEnabled($project)) {
+            return new WP_Error('ouinpo_projects_student_ai_project_disabled', 'Assistant IA eleve desactive pour ce projet.', ['status' => 403]);
+        }
+
+        $userId = get_current_user_id();
+        if (!$repository->isProjectMember($projectId, $userId)) {
+            return new WP_Error('ouinpo_projects_student_ai_not_member', 'Assistant IA reserve aux membres actuels du projet.', ['status' => 403]);
+        }
+
+        return current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) || current_user_can('manage_options')
+            ? true
+            : new WP_Error('ouinpo_projects_student_ai_forbidden', 'Droit IA eleve requis.', ['status' => 403]);
     }
 
     public static function canCreateTask(WP_REST_Request $request)
@@ -1241,6 +1306,18 @@ final class RestController
     private static function aiSuggest(WP_REST_Request $request, string $kind)
     {
         $result = (new ProjectsAiAssistant())->suggest(
+            self::id($request),
+            $kind,
+            self::body($request),
+            get_current_user_id()
+        );
+
+        return is_wp_error($result) ? $result : rest_ensure_response($result);
+    }
+
+    private static function studentAiSuggest(WP_REST_Request $request, string $kind)
+    {
+        $result = (new ProjectsStudentAiAssistant())->suggest(
             self::id($request),
             $kind,
             self::body($request),
