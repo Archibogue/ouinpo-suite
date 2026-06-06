@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.6.2-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.6.3-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -224,7 +224,9 @@ Ces pages correspondent a des modules avances desactives par defaut sur une inst
 
 ### SPOPI Projects
 
-Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO, sans appel IA. Il fournit une gestion simple des projets, des membres, d'un tableau Kanban, d'un journal de bord projet, de livrables, de traces/preuves avec fichiers, de liens vers les competences BO existantes, d'une fiche projet portfolio imprimable et d'une fiche de situation professionnelle BTS SIO.
+Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO. Il fournit une gestion simple des projets, des membres, d'un tableau Kanban, d'un journal de bord projet, de livrables, de traces/preuves avec fichiers, de liens vers les competences BO existantes, d'une fiche projet portfolio imprimable et d'une fiche de situation professionnelle BTS SIO.
+
+Depuis `0.6.3-beta`, Projects inclut aussi un assistant IA encadre pour les enseignants : propositions de taches, livrables adaptes, competences liees, analyse de risques, aide portfolio et synthese enseignant. Toutes les reponses IA sont des brouillons/previsualisations. Le serveur n'applique rien sans selection explicite et confirmation par un enseignant ou administrateur autorise.
 
 Shortcodes disponibles :
 
@@ -237,6 +239,7 @@ Shortcodes disponibles :
 | `[ouinpo_project_evidence id="..."]` | Traces/preuves deposees par les membres du projet : texte, lien ou fichier |
 | `[ouinpo_project_sheet id="..."]` | Fiche projet portfolio HTML imprimable avec export Markdown |
 | `[ouinpo_project_bts_situation id="..."]` | Fiche situation professionnelle BTS SIO imprimable avec export Markdown |
+| `[ouinpo_project_ai_assistant id="..."]` | Assistant IA enseignant pour propositions Projects en brouillon |
 | `[ouinpo_teacher_projects]` | Vue enseignant avec statut, membres, taches, livrables, traces, alertes et acces Kanban/fiche |
 
 Capacites ajoutees :
@@ -249,7 +252,11 @@ ouinpo_projects_view_own
 ouinpo_projects_edit_own_tasks
 ouinpo_projects_comment
 ouinpo_projects_validate
+ouinpo_projects_ai_use
+ouinpo_projects_ai_apply
 ```
+
+Les capacites IA Projects sont attribuees aux administrateurs et enseignants OuInPo lors de l'installation/mise a jour. Elles ne sont pas attribuees aux eleves.
 
 Tables creees :
 
@@ -285,9 +292,28 @@ DELETE /competency-links/{id}
 GET /projects/{id}/export/html
 GET /projects/{id}/export/markdown
 GET /projects/{id}/bts-situation/markdown
+POST /projects/{id}/ai/suggest-tasks
+POST /projects/{id}/ai/suggest-deliverables
+POST /projects/{id}/ai/suggest-competencies
+POST /projects/{id}/ai/analyze-risks
+POST /projects/{id}/ai/portfolio-summary
+POST /projects/{id}/ai/teacher-summary
+POST /projects/{id}/ai/apply-suggestion
 ```
 
 Les liens de competences utilisent la table existante `ouin_exo_competencies`. Le module ne cree pas un second referentiel : si aucune competence BO n'est importee ou creee, les panneaux de liaison restent vides.
+
+Assistant IA Projects :
+
+- les routes IA exigent utilisateur connecte, nonce REST, capacite `ouinpo_projects_ai_use`, et `ouinpo_projects_ai_apply` en plus pour l'application, avec droits enseignant/admin sur le projet ;
+- aucun appel IA anonyme ou declenche par un eleve n'est prevu dans ce lot ;
+- l'usage IA reutilise `ouinpo_ai_usage_pedagogical_suggestions`, les fournisseurs IA existants et les quotas enseignants `ouinpo_ai_teacher_per_minute` / `ouinpo_ai_teacher_per_day` ;
+- le quota est consomme uniquement lors d'un appel reel au fournisseur IA ; l'application d'une proposition deja recue, les erreurs de permission, les nonces invalides et l'IA desactivee ne consomment pas de quota ;
+- aucun quota dedie Projects n'est ajoute dans ce lot ; TODO possible ulterieur si les usages Projects doivent etre separes des autres usages enseignants ;
+- le contexte transmis a l'IA est minimise : metadonnees de projet, taches, livrables, traces, journal et competences disponibles ; le contenu des fichiers n'est pas lu ;
+- les reponses sont demandees en JSON strict, parsees et revalidees cote serveur ; un JSON vide, incomplet, tronque, hors schema ou visant un objet hors projet est refuse avant toute application ;
+- les identifiants de projet, tache, livrable et competence sont reverifies avant application ; les doublons evidents et titres vides sont refuses ;
+- les logs IA sont synthetiques via les reglages IA existants et ne stockent pas les prompts complets, reponses completes, chemins, traces detaillees, noms ou emails.
 
 Uploads de traces fichier :
 
@@ -306,7 +332,7 @@ Exports :
 - les routes Markdown retournent un Markdown serveur nettoye, sans generation PDF serveur et sans dependance externe ;
 - l'export HTML retourne un fragment HTML echappe avec classes prefixees `ouinpo-projects-`.
 
-Limites actuelles : pas d'IA, pas d'export PDF serveur, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email.
+Limites actuelles : IA Projects limitee a des brouillons enseignants valides manuellement, pas d'IA eleve, pas d'export PDF serveur, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email.
 
 #### Recette manuelle recommandee
 
@@ -377,6 +403,27 @@ Limites actuelles : pas d'IA, pas d'export PDF serveur, pas de badge projet, pas
 6. Avec un eleve non membre et avec un ancien membre retire du projet, appeler le meme lien : la route doit renvoyer `403` ou `401`.
 7. Supprimer ou alterer la meta `_ouinpo_project_evidence_id` d'un attachment de test, puis verifier que le telechargement est refuse.
 8. Verifier qu'une ancienne trace fichier creee avant le lot 3.2 reste visible via son URL historique, sans migration physique.
+
+#### Recette IA Projects lot 4
+
+1. Activer l'IA globale et l'usage `pedagogical_suggestions`, puis configurer Albert ou OpenAI dans les reglages IA existants.
+2. Verifier qu'un compte enseignant responsable du projet voit le bouton `IA` dans `[ouinpo_teacher_projects]`.
+3. Verifier qu'un eleve membre ne voit pas ce bouton et que `POST /projects/{id}/ai/suggest-tasks` renvoie `403`.
+4. Generer des propositions de taches, livrables, competences, risques, portfolio et synthese enseignant.
+5. Verifier que les risques et syntheses restent en lecture seule.
+6. Selectionner une partie des taches/livrables/competences puis confirmer l'application.
+7. Verifier que le serveur dedoublonne les titres existants et refuse les identifiants hors projet.
+8. Verifier les logs synthetiques si `WP_DEBUG` et les logs IA OuInPo sont actifs.
+
+#### Recette stabilisation IA Projects lot 4.1
+
+1. Avec l'IA desactivee, verifier qu'une route IA renvoie un message clair et ne consomme pas de quota.
+2. Avec un nonce absent ou invalide, verifier que les appels IA et l'application renvoient `401/403`.
+3. Forcer une reponse IA vide, invalide, tronquee ou avec JSON entoure de texte : le JSON entoure peut etre extrait, les autres cas doivent etre refuses sans application.
+4. Tenter d'appliquer une tache/livrable sans titre, avec type ou priorite invalide, doublon evident, ou competence inconnue : le serveur doit refuser.
+5. Tenter de lier une competence a une tache ou un livrable d'un autre projet : le serveur doit refuser.
+6. Verifier que les boutons IA sont desactives pendant l'appel, que l'aperçu precedent est remplace, et qu'aucune application ne part apres annulation de confirmation.
+7. Verifier que les logs IA ne contiennent ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
 
 
 ### Gate configurable

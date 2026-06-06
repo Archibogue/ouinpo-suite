@@ -384,6 +384,25 @@ final class Repository
         ));
     }
 
+    public function getColumnIdForStatusKey(int $projectId, string $statusKey): int
+    {
+        global $wpdb;
+
+        $this->ensureDefaultColumns($projectId);
+        $statusKey = sanitize_key($statusKey);
+        if ($statusKey === '') {
+            return $this->getFirstColumnId($projectId);
+        }
+
+        $columnId = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$this->table('columns')} WHERE project_id = %d AND status_key = %s ORDER BY position ASC, id ASC LIMIT 1",
+            $projectId,
+            $statusKey
+        ));
+
+        return $columnId > 0 ? $columnId : $this->getFirstColumnId($projectId);
+    }
+
     public function columnBelongsToProject(int $columnId, int $projectId): bool
     {
         global $wpdb;
@@ -1326,7 +1345,7 @@ final class Repository
         $limit = max(1, min(1000, $limit));
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT id, domain, domain_slug, competency, label
+            "SELECT id, domain, domain_slug, competency, label, slug
              FROM {$table}
              WHERE active = %d OR active IS NULL
              ORDER BY domain ASC, id ASC

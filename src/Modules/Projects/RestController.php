@@ -306,6 +306,31 @@ final class RestController
                 'permission_callback' => [self::class, 'canViewProject'],
             ],
         ]);
+
+        foreach ([
+            'suggest-tasks' => 'suggestAiTasks',
+            'suggest-deliverables' => 'suggestAiDeliverables',
+            'suggest-competencies' => 'suggestAiCompetencies',
+            'analyze-risks' => 'analyzeAiRisks',
+            'portfolio-summary' => 'portfolioAiSummary',
+            'teacher-summary' => 'teacherAiSummary',
+        ] as $route => $callback) {
+            register_rest_route(self::NS, '/projects/(?P<id>\d+)/ai/' . $route, [
+                [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => [self::class, $callback],
+                    'permission_callback' => [self::class, 'canUseProjectAi'],
+                ],
+            ]);
+        }
+
+        register_rest_route(self::NS, '/projects/(?P<id>\d+)/ai/apply-suggestion', [
+            [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => [self::class, 'applyAiSuggestion'],
+                'permission_callback' => [self::class, 'canApplyProjectAi'],
+            ],
+        ]);
     }
 
     public static function listProjects(WP_REST_Request $request): WP_REST_Response
@@ -824,6 +849,47 @@ final class RestController
         ]);
     }
 
+    public static function suggestAiTasks(WP_REST_Request $request)
+    {
+        return self::aiSuggest($request, 'suggest_tasks');
+    }
+
+    public static function suggestAiDeliverables(WP_REST_Request $request)
+    {
+        return self::aiSuggest($request, 'suggest_deliverables');
+    }
+
+    public static function suggestAiCompetencies(WP_REST_Request $request)
+    {
+        return self::aiSuggest($request, 'suggest_competencies');
+    }
+
+    public static function analyzeAiRisks(WP_REST_Request $request)
+    {
+        return self::aiSuggest($request, 'analyze_risks');
+    }
+
+    public static function portfolioAiSummary(WP_REST_Request $request)
+    {
+        return self::aiSuggest($request, 'portfolio_summary');
+    }
+
+    public static function teacherAiSummary(WP_REST_Request $request)
+    {
+        return self::aiSuggest($request, 'teacher_summary');
+    }
+
+    public static function applyAiSuggestion(WP_REST_Request $request)
+    {
+        $result = (new ProjectsAiAssistant())->applySuggestion(
+            self::id($request),
+            self::body($request),
+            get_current_user_id()
+        );
+
+        return is_wp_error($result) ? $result : rest_ensure_response($result);
+    }
+
     public static function canUseRest(WP_REST_Request $request)
     {
         unset($request);
@@ -873,6 +939,16 @@ final class RestController
         return (new Repository())->userCanManageProject(self::id($request), get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Gestion du projet refusee.', ['status' => 403]);
+    }
+
+    public static function canUseProjectAi(WP_REST_Request $request)
+    {
+        return self::canUseProjectAiWithCapability($request, Capabilities::PROJECTS_AI_USE);
+    }
+
+    public static function canApplyProjectAi(WP_REST_Request $request)
+    {
+        return self::canUseProjectAiWithCapability($request, Capabilities::PROJECTS_AI_APPLY, true);
     }
 
     public static function canCreateTask(WP_REST_Request $request)
@@ -1160,6 +1236,47 @@ final class RestController
     private static function id(WP_REST_Request $request): int
     {
         return absint($request['id']);
+    }
+
+    private static function aiSuggest(WP_REST_Request $request, string $kind)
+    {
+        $result = (new ProjectsAiAssistant())->suggest(
+            self::id($request),
+            $kind,
+            self::body($request),
+            get_current_user_id()
+        );
+
+        return is_wp_error($result) ? $result : rest_ensure_response($result);
+    }
+
+    private static function canUseProjectAiWithCapability(WP_REST_Request $request, string $capability, bool $requireUseCapability = false)
+    {
+        $allowed = self::requireLoggedInRestNonce();
+        if (is_wp_error($allowed)) {
+            return $allowed;
+        }
+
+        $projectId = self::id($request);
+        if ($projectId <= 0) {
+            return new WP_Error('ouinpo_projects_bad_id', 'Identifiant invalide.', ['status' => 400]);
+        }
+
+        $repository = new Repository();
+        if (!$repository->getProject($projectId)) {
+            return new WP_Error('ouinpo_projects_not_found', 'Projet introuvable.', ['status' => 404]);
+        }
+
+        $userId = get_current_user_id();
+        $hasCapability = current_user_can($capability) || current_user_can('manage_options');
+        if ($requireUseCapability) {
+            $hasCapability = $hasCapability && (current_user_can(Capabilities::PROJECTS_AI_USE) || current_user_can('manage_options'));
+        }
+        if (!$hasCapability || !$repository->userCanManageProject($projectId, $userId)) {
+            return new WP_Error('ouinpo_projects_ai_forbidden', 'Assistant IA reserve aux enseignants responsables du projet.', ['status' => 403]);
+        }
+
+        return true;
     }
 
     private static function body(WP_REST_Request $request): array

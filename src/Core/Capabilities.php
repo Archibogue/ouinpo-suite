@@ -26,6 +26,8 @@ final class Capabilities
     public const PROJECTS_EDIT_OWN_TASKS = 'ouinpo_projects_edit_own_tasks';
     public const PROJECTS_COMMENT = 'ouinpo_projects_comment';
     public const PROJECTS_VALIDATE = 'ouinpo_projects_validate';
+    public const PROJECTS_AI_USE = 'ouinpo_projects_ai_use';
+    public const PROJECTS_AI_APPLY = 'ouinpo_projects_ai_apply';
 
     private static bool $initialized = false;
 
@@ -64,6 +66,8 @@ final class Capabilities
             self::PROJECTS_EDIT_OWN_TASKS,
             self::PROJECTS_COMMENT,
             self::PROJECTS_VALIDATE,
+            self::PROJECTS_AI_USE,
+            self::PROJECTS_AI_APPLY,
         ];
     }
 
@@ -102,6 +106,8 @@ final class Capabilities
             self::PROJECTS_EDIT_OWN_TASKS => 'Projets - modifier ses taches',
             self::PROJECTS_COMMENT => 'Projets - commenter et journal',
             self::PROJECTS_VALIDATE => 'Projets - validation',
+            self::PROJECTS_AI_USE => 'Projets - assistant IA',
+            self::PROJECTS_AI_APPLY => 'Projets - appliquer suggestions IA',
         ];
     }
 
@@ -132,6 +138,8 @@ final class Capabilities
             self::PROJECTS_EDIT_OWN_TASKS,
             self::PROJECTS_COMMENT,
             self::PROJECTS_VALIDATE,
+            self::PROJECTS_AI_USE,
+            self::PROJECTS_AI_APPLY,
         ];
 
         $teacher = get_role('ouinpo_teacher');

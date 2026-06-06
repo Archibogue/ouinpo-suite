@@ -34,10 +34,15 @@
         return {};
       }).then(function (json) {
         if (!response.ok) {
-          throw new Error(json.message || (cfg.i18n && cfg.i18n.error) || 'Erreur');
+          const fallback = response.status === 403
+            ? 'Acces refuse ou session expiree.'
+            : (response.status === 429 ? 'Quota IA atteint. Reessaie plus tard.' : ((cfg.i18n && cfg.i18n.error) || 'Erreur serveur.'));
+          throw new Error(json.message || fallback);
         }
         return json;
       });
+    }).catch(function (error) {
+      throw new Error(error.message || 'Erreur reseau pendant l appel REST.');
     });
   }
 
@@ -383,12 +388,227 @@
     });
   }
 
+  function aiTitleForItem(item, kind) {
+    if (item.title) {
+      return text(item.title);
+    }
+    if (kind === 'suggest_competencies') {
+      return text(item.object_type) + ' #' + text(item.object_id) + ' -> competence #' + text(item.competency_id);
+    }
+    if (item.level && item.explanation) {
+      return text(item.level) + ' - ' + text(item.title || item.explanation).slice(0, 120);
+    }
+    return 'Proposition';
+  }
+
+  function aiDescriptionForItem(item) {
+    return text(item.reason || item.description || item.explanation || item.suggested_action || item.confidence || '');
+  }
+
+  function renderAiList(root, payload, key, canApply) {
+    const preview = root.querySelector('[data-ouinpo-projects-ai-preview]');
+    const apply = root.querySelector('[data-ouinpo-projects-ai-apply]');
+    const items = Array.isArray(payload[key]) ? payload[key] : [];
+    preview.innerHTML = '';
+
+    const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+    if (warnings.length) {
+      const warningBox = el('div', 'ouinpo-projects-ai-warning');
+      warnings.forEach(function (warning) {
+        warningBox.appendChild(el('p', '', text(warning)));
+      });
+      preview.appendChild(warningBox);
+    }
+
+    if (!items.length) {
+      preview.appendChild(el('p', 'ouinpo-projects-empty', 'Aucune proposition exploitable.'));
+      apply.hidden = true;
+      root._ouinpoProjectsAiPayload = null;
+      return;
+    }
+
+    const list = el('div', 'ouinpo-projects-ai-items');
+    items.forEach(function (item, index) {
+      const label = el('label', 'ouinpo-projects-ai-item');
+      if (canApply) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.dataset.index = String(index);
+        label.appendChild(checkbox);
+      }
+
+      const body = el('span', 'ouinpo-projects-ai-item-body');
+      body.appendChild(el('strong', '', aiTitleForItem(item, payload.kind)));
+      const desc = aiDescriptionForItem(item);
+      if (desc) {
+        body.appendChild(el('span', '', desc));
+      }
+      label.appendChild(body);
+      list.appendChild(label);
+    });
+
+    preview.appendChild(list);
+    root._ouinpoProjectsAiPayload = { kind: payload.kind, items: items };
+    apply.hidden = !canApply;
+  }
+
+  function renderAiSummary(root, payload) {
+    const preview = root.querySelector('[data-ouinpo-projects-ai-preview]');
+    const apply = root.querySelector('[data-ouinpo-projects-ai-apply]');
+    preview.innerHTML = '';
+    root._ouinpoProjectsAiPayload = null;
+    apply.hidden = true;
+
+    const keys = Object.keys(payload).filter(function (key) {
+      return ['kind', 'project_id', 'ai_notice'].indexOf(key) === -1;
+    });
+
+    keys.forEach(function (key) {
+      const value = payload[key];
+      const section = el('section', 'ouinpo-projects-ai-summary-section');
+      section.appendChild(el('h3', '', key.replace(/_/g, ' ')));
+      if (Array.isArray(value)) {
+        const ul = el('ul', 'ouinpo-projects-simple-list');
+        value.forEach(function (item) {
+          if (typeof item === 'object' && item) {
+            ul.appendChild(el('li', '', aiTitleForItem(item, payload.kind) + ' - ' + aiDescriptionForItem(item)));
+          } else {
+            ul.appendChild(el('li', '', text(item)));
+          }
+        });
+        section.appendChild(ul);
+      } else {
+        section.appendChild(el('p', '', text(value)));
+      }
+      preview.appendChild(section);
+    });
+  }
+
+  function renderAiPayload(root, payload) {
+    const status = root.querySelector('[data-ouinpo-projects-ai-status]');
+    if (!payload || typeof payload !== 'object') {
+      if (status) {
+        status.textContent = 'Reponse IA inattendue.';
+      }
+      root._ouinpoProjectsAiPayload = null;
+      return;
+    }
+
+    const applyable = {
+      suggest_tasks: 'tasks',
+      suggest_deliverables: 'deliverables',
+      suggest_competencies: 'competency_links'
+    };
+    if (applyable[payload.kind]) {
+      renderAiList(root, payload, applyable[payload.kind], true);
+      return;
+    }
+
+    if (payload.kind === 'analyze_risks') {
+      renderAiList(root, payload, 'risks', false);
+      return;
+    }
+
+    renderAiSummary(root, payload);
+  }
+
+  function setAiBusy(root, busy) {
+    root.classList.toggle('is-loading', busy);
+    root.querySelectorAll('[data-ouinpo-projects-ai-action], [data-ouinpo-projects-ai-apply]').forEach(function (button) {
+      button.disabled = busy;
+    });
+  }
+
+  function clearAiPreview(root) {
+    const preview = root.querySelector('[data-ouinpo-projects-ai-preview]');
+    const apply = root.querySelector('[data-ouinpo-projects-ai-apply]');
+    if (preview) {
+      preview.innerHTML = '';
+    }
+    if (apply) {
+      apply.hidden = true;
+    }
+    root._ouinpoProjectsAiPayload = null;
+  }
+
+  function bindAiAssistant(root) {
+    const status = root.querySelector('[data-ouinpo-projects-ai-status]');
+    const context = root.querySelector('[data-ouinpo-projects-ai-context]');
+    const apply = root.querySelector('[data-ouinpo-projects-ai-apply]');
+
+    root.addEventListener('click', function (event) {
+      const action = event.target.closest('[data-ouinpo-projects-ai-action]');
+      if (!action) {
+        return;
+      }
+
+      clearAiPreview(root);
+      setAiBusy(root, true);
+      status.textContent = 'Generation en cours...';
+      request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/ai/' + encodeURIComponent(action.dataset.ouinpoProjectsAiAction), {
+        method: 'POST',
+        body: JSON.stringify({ teacher_context: context ? context.value : '' })
+      }).then(function (payload) {
+        status.textContent = text(payload.ai_notice || 'Proposition IA recue.');
+        renderAiPayload(root, payload);
+      }).catch(function (error) {
+        status.textContent = error.message || 'Erreur IA.';
+      }).then(function () {
+        setAiBusy(root, false);
+      });
+    });
+
+    if (apply) {
+      apply.addEventListener('click', function () {
+        const payload = root._ouinpoProjectsAiPayload;
+        if (!payload || !payload.items || !payload.items.length) {
+          return;
+        }
+
+        const checked = Array.from(root.querySelectorAll('.ouinpo-projects-ai-item input[type="checkbox"]:checked'));
+        const items = checked.map(function (checkbox) {
+          return payload.items[parseInt(checkbox.dataset.index, 10)];
+        }).filter(Boolean);
+
+        if (!items.length) {
+          status.textContent = 'Aucune proposition selectionnee.';
+          return;
+        }
+
+        if (!window.confirm('Appliquer les propositions selectionnees ?')) {
+          return;
+        }
+
+        setAiBusy(root, true);
+        status.textContent = 'Application en cours...';
+        request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/ai/apply-suggestion', {
+          method: 'POST',
+          body: JSON.stringify({ kind: payload.kind, items: items })
+        }).then(function (result) {
+          const applied = result.applied || {};
+          const count = Object.keys(applied).reduce(function (total, key) {
+            return total + (Array.isArray(applied[key]) ? applied[key].length : 0);
+          }, 0);
+          status.textContent = count + ' element(s) applique(s).';
+          apply.hidden = true;
+          root._ouinpoProjectsAiPayload = null;
+        }).catch(function (error) {
+          status.textContent = error.message || 'Application IA impossible.';
+        }).then(function () {
+          setAiBusy(root, false);
+        });
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-ouinpo-projects-board]').forEach(bindBoard);
     document.querySelectorAll('[data-ouinpo-projects-journal]').forEach(bindJournal);
     document.querySelectorAll('[data-ouinpo-projects-deliverables]').forEach(bindDeliverables);
     document.querySelectorAll('[data-ouinpo-projects-evidence]').forEach(bindEvidence);
     document.querySelectorAll('[data-ouinpo-projects-export]').forEach(bindExports);
+    document.querySelectorAll('[data-ouinpo-projects-ai]').forEach(bindAiAssistant);
     document.querySelectorAll('[data-ouinpo-projects-print]').forEach(function (button) {
       button.addEventListener('click', function () {
         window.print();

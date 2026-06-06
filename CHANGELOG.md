@@ -2,6 +2,18 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.6.3-beta] - 2026-06-06
+
+- Lot 4 Projects : ajout de l'assistant IA enseignant "Assistant pataprojectif" en brouillon/previsualisation.
+- Ajout des capacites `ouinpo_projects_ai_use` et `ouinpo_projects_ai_apply`, reservees aux enseignants et administrateurs.
+- Ajout des routes REST IA Projects pour proposer des taches, livrables, competences, analyser les risques, aider le portfolio et produire une synthese enseignant.
+- Reutilisation des reglages IA centraux, de l'usage `pedagogical_suggestions` et des quotas enseignants existants.
+- Application serveur uniquement apres selection et confirmation enseignant, avec verification des identifiants, de l'appartenance au projet et dedoublonnage.
+- Journalisation IA synthetique sans prompt complet ni reponse complete.
+- Lot 4.1 Projects : durcissement runtime IA, validation stricte du JSON, refus des objets hors schema ou hors projet, messages d'erreur propres et boutons IA verrouilles pendant les appels.
+- Documentation du quota IA Projects : reutilisation des quotas enseignants, consommation seulement sur appel fournisseur, aucune consommation lors de l'application ou des erreurs de permission.
+- Aucun appel IA anonyme ou eleve, aucun build et aucune modification du dossier `dist/`.
+
 ## [0.6.2-beta] - 2026-06-06
 
 - Extension du module SPOPI Projects avec livrables, traces/preuves et fiche projet HTML imprimable.

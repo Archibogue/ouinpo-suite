@@ -25,6 +25,7 @@ final class Shortcodes
         add_shortcode('ouinpo_project_evidence', [self::class, 'evidence']);
         add_shortcode('ouinpo_project_sheet', [self::class, 'sheet']);
         add_shortcode('ouinpo_project_bts_situation', [self::class, 'btsSituation']);
+        add_shortcode('ouinpo_project_ai_assistant', [self::class, 'aiAssistant']);
         add_shortcode('ouinpo_teacher_projects', [self::class, 'teacherProjects']);
     }
 
@@ -148,7 +149,9 @@ final class Shortcodes
                             $kanbanUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'kanban']);
                             $sheetUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'sheet']);
                             $btsUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'bts']);
+                            $aiUrl = self::currentUrl(['ouinpo_project_id' => (int) $project['id'], 'ouinpo_project_view' => 'ai']);
                             $alerts = $repository->projectAlerts($summary);
+                            $canUseAi = self::canUseProjectAi($repository, (int) $project['id']);
                             ?>
                             <tr>
                                 <td><?php echo esc_html((string) $project['title']); ?></td>
@@ -163,6 +166,9 @@ final class Shortcodes
                                     <a class="ouinpo-projects-button" href="<?php echo esc_url($kanbanUrl); ?>">Kanban</a>
                                     <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($sheetUrl); ?>">Fiche</a>
                                     <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($btsUrl); ?>">BTS</a>
+                                    <?php if ($canUseAi): ?>
+                                        <a class="ouinpo-projects-button ouinpo-projects-button-secondary" href="<?php echo esc_url($aiUrl); ?>">IA</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -176,9 +182,11 @@ final class Shortcodes
         $selectedId = isset($_GET['ouinpo_project_id']) ? absint(wp_unslash($_GET['ouinpo_project_id'])) : 0;
         if ($selectedId > 0 && $repository->userCanViewProject($selectedId, get_current_user_id())) {
             $selectedView = isset($_GET['ouinpo_project_view']) ? sanitize_key(wp_unslash((string) $_GET['ouinpo_project_view'])) : '';
-            echo $selectedView === 'sheet'
+            echo $selectedView === 'ai'
+                ? self::aiAssistant(['id' => $selectedId])
+                : ($selectedView === 'sheet'
                 ? self::sheet(['id' => $selectedId])
-                : ($selectedView === 'bts' ? self::btsSituation(['id' => $selectedId]) : self::kanban(['id' => $selectedId]));
+                : ($selectedView === 'bts' ? self::btsSituation(['id' => $selectedId]) : self::kanban(['id' => $selectedId])));
         }
 
         return (string) ob_get_clean();
@@ -669,6 +677,67 @@ final class Shortcodes
         return ProjectExporter::renderBtsSituation($projectId);
     }
 
+    public static function aiAssistant($atts = []): string
+    {
+        if (!is_user_logged_in()) {
+            return self::notice('Connexion requise pour utiliser l assistant projet.');
+        }
+
+        $atts = shortcode_atts(['id' => 0], (array) $atts, 'ouinpo_project_ai_assistant');
+        $projectId = absint($atts['id'] ?: (isset($_GET['ouinpo_project_id']) ? wp_unslash($_GET['ouinpo_project_id']) : 0));
+        if ($projectId <= 0) {
+            return self::notice('Projet non precise.');
+        }
+
+        $repository = new Repository();
+        if (!self::canUseProjectAi($repository, $projectId)) {
+            return self::notice('Assistant IA reserve aux enseignants responsables du projet.');
+        }
+
+        Assets::enqueueFront();
+        $project = $repository->getProjectSummary($projectId);
+        if (!$project) {
+            return self::notice('Projet introuvable.');
+        }
+
+        ob_start();
+        ?>
+        <section class="ouinpo-projects-ai" data-ouinpo-projects-ai data-project-id="<?php echo esc_attr((string) $projectId); ?>">
+            <div class="ouinpo-projects-heading">
+                <div>
+                    <h2>Assistant pataprojectif - <?php echo esc_html((string) $project['title']); ?></h2>
+                    <p>Propositions IA a relire, selectionner et valider par l enseignant.</p>
+                </div>
+                <span class="ouinpo-projects-badge">Brouillon IA</span>
+            </div>
+
+            <div class="ouinpo-projects-ai-warning">
+                L assistant ne modifie rien seul : les taches, livrables et competences ne sont appliques qu apres selection et confirmation.
+            </div>
+
+            <label class="ouinpo-projects-ai-context">
+                <span>Contrainte ou consigne enseignant optionnelle</span>
+                <textarea rows="3" data-ouinpo-projects-ai-context maxlength="1200"></textarea>
+            </label>
+
+            <div class="ouinpo-projects-ai-toolbar">
+                <button type="button" data-ouinpo-projects-ai-action="suggest-tasks">Proposer des taches</button>
+                <button type="button" data-ouinpo-projects-ai-action="suggest-deliverables">Proposer des livrables</button>
+                <button type="button" data-ouinpo-projects-ai-action="suggest-competencies">Lier des competences</button>
+                <button type="button" data-ouinpo-projects-ai-action="analyze-risks">Analyser les risques</button>
+                <button type="button" data-ouinpo-projects-ai-action="portfolio-summary">Aide portfolio</button>
+                <button type="button" data-ouinpo-projects-ai-action="teacher-summary">Synthese enseignant</button>
+            </div>
+
+            <div class="ouinpo-projects-ai-status" data-ouinpo-projects-ai-status aria-live="polite"></div>
+            <div class="ouinpo-projects-ai-preview" data-ouinpo-projects-ai-preview></div>
+            <button type="button" class="ouinpo-projects-button" data-ouinpo-projects-ai-apply hidden>Appliquer la selection</button>
+        </section>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+
     public static function renderColumns(array $columns, bool $canEdit): string
     {
         ob_start();
@@ -898,5 +967,13 @@ final class Shortcodes
             || current_user_can(Capabilities::PROJECTS_MANAGE_CLASS)
             || current_user_can(Capabilities::PROJECTS_MANAGE_ALL)
             || current_user_can('manage_options');
+    }
+
+    private static function canUseProjectAi(Repository $repository, int $projectId): bool
+    {
+        return (
+            current_user_can(Capabilities::PROJECTS_AI_USE)
+            || current_user_can('manage_options')
+        ) && $repository->userCanManageProject($projectId, get_current_user_id());
     }
 }
