@@ -2,6 +2,27 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.6.2-beta] - 2026-06-06
+
+- Extension du module SPOPI Projects avec livrables, traces/preuves et fiche projet HTML imprimable.
+- Ajout des tables `ouinpo_project_deliverables`, `ouinpo_project_evidence` et `ouinpo_project_competency_links`.
+- Ajout des liens entre projets/taches/livrables et le referentiel existant `ouin_exo_competencies`.
+- Ajout des shortcodes `[ouinpo_project_deliverables]`, `[ouinpo_project_evidence]` et `[ouinpo_project_sheet]`.
+- Enrichissement de la vue enseignant avec avancement taches/livrables, derniere trace et alertes simples.
+- Extension REST `ouinpo-projects/v1` pour livrables, traces et liens competences.
+- Aucun appel IA, export PDF, badge projet, integration depot Git ni notification dans ce lot.
+
+## [0.6.1-beta] - 2026-06-06
+
+- Ajout du module optionnel SPOPI Projects pour le suivi pedagogique de projets BTS SIO.
+- Ajout des tables projets, membres, colonnes Kanban, taches, commentaires, checklist et journal de bord.
+- Ajout des capacites `ouinpo_projects_*` pour administrateurs, enseignants et eleves.
+- Ajout des routes REST securisees `ouinpo-projects/v1`.
+- Ajout des shortcodes `[ouinpo_my_projects]`, `[ouinpo_project_kanban]`, `[ouinpo_project_journal]` et `[ouinpo_teacher_projects]`.
+- Ajout d'une interface admin simple pour creer les projets et gerer les membres.
+- Stabilisation des permissions de taches, du payload REST front et des index de migration.
+- Aucun appel IA dans ce lot.
+
 ## [0.6.0-beta] - 2026-05-23
 
 - Ajout des workflows IA admin pour generer des exercices, composer des devoirs et assister la correction.

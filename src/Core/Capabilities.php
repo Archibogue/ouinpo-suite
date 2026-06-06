@@ -19,6 +19,13 @@ final class Capabilities
     public const MANAGE_SUBMISSIONS = 'ouinpo_manage_submissions';
     public const UPLOAD_SUBMISSION = 'ouinpo_upload_submission';
     public const SUBMIT_WORK = 'ouinpo_submit_work';
+    public const PROJECTS_MANAGE_ALL = 'ouinpo_projects_manage_all';
+    public const PROJECTS_MANAGE_CLASS = 'ouinpo_projects_manage_class';
+    public const PROJECTS_CREATE = 'ouinpo_projects_create';
+    public const PROJECTS_VIEW_OWN = 'ouinpo_projects_view_own';
+    public const PROJECTS_EDIT_OWN_TASKS = 'ouinpo_projects_edit_own_tasks';
+    public const PROJECTS_COMMENT = 'ouinpo_projects_comment';
+    public const PROJECTS_VALIDATE = 'ouinpo_projects_validate';
 
     private static bool $initialized = false;
 
@@ -50,6 +57,13 @@ final class Capabilities
             self::MANAGE_AI,
             self::VIEW_STUDENT_DATA,
             self::MANAGE_SUBMISSIONS,
+            self::PROJECTS_MANAGE_ALL,
+            self::PROJECTS_MANAGE_CLASS,
+            self::PROJECTS_CREATE,
+            self::PROJECTS_VIEW_OWN,
+            self::PROJECTS_EDIT_OWN_TASKS,
+            self::PROJECTS_COMMENT,
+            self::PROJECTS_VALIDATE,
         ];
     }
 
@@ -59,6 +73,9 @@ final class Capabilities
             'read',
             self::UPLOAD_SUBMISSION,
             self::SUBMIT_WORK,
+            self::PROJECTS_VIEW_OWN,
+            self::PROJECTS_EDIT_OWN_TASKS,
+            self::PROJECTS_COMMENT,
         ];
     }
 
@@ -78,6 +95,13 @@ final class Capabilities
             self::MANAGE_SUBMISSIONS => 'Dépôts élèves',
             self::UPLOAD_SUBMISSION => 'Envoyer un fichier de depot OuInPo',
             self::SUBMIT_WORK => 'Soumettre un travail OuInPo',
+            self::PROJECTS_MANAGE_ALL => 'Projets - gestion globale',
+            self::PROJECTS_MANAGE_CLASS => 'Projets - gestion de classe',
+            self::PROJECTS_CREATE => 'Projets - creation',
+            self::PROJECTS_VIEW_OWN => 'Projets - voir ses projets',
+            self::PROJECTS_EDIT_OWN_TASKS => 'Projets - modifier ses taches',
+            self::PROJECTS_COMMENT => 'Projets - commenter et journal',
+            self::PROJECTS_VALIDATE => 'Projets - validation',
         ];
     }
 
@@ -101,6 +125,13 @@ final class Capabilities
             self::MANAGE_BADGES,
             self::VIEW_STUDENT_DATA,
             self::MANAGE_SUBMISSIONS,
+            self::PROJECTS_MANAGE_ALL,
+            self::PROJECTS_MANAGE_CLASS,
+            self::PROJECTS_CREATE,
+            self::PROJECTS_VIEW_OWN,
+            self::PROJECTS_EDIT_OWN_TASKS,
+            self::PROJECTS_COMMENT,
+            self::PROJECTS_VALIDATE,
         ];
 
         $teacher = get_role('ouinpo_teacher');

@@ -466,6 +466,7 @@ final class SuiteAdmin
             'gate' => 'Gate',
             'segfault' => 'SegFault / IA',
             'submissions' => 'Submissions',
+            'projects' => 'SPOPI Projects',
             'rechtext' => 'RechText',
             'meta' => 'Meta',
         ];
@@ -3210,6 +3211,8 @@ final class SuiteAdmin
                                         Cartes de révision et mémorisation.
                                     <?php elseif ($id === 'submissions'): ?>
                                         Dépôts élèves et ressources.
+                                    <?php elseif ($id === 'projects'): ?>
+                                        Suivi pedagogique de projets BTS SIO, Kanban et journal de bord.
                                     <?php elseif ($id === 'gate'): ?>
                                         Énigmes, progression Gate et certificats.
                                     <?php elseif ($id === 'rechtext'): ?>

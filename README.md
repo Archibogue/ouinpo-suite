@@ -6,9 +6,9 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.6.0-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.6.2-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
-Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
+Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
 ## Pour commencer
 
@@ -30,6 +30,7 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Flashcards de révision
 - Concepteur de devoirs
 - Sujets pratiques de type bac NSI
+- Suivi de projets BTS SIO avec Kanban et journal de bord via le module optionnel Projects
 - Tableaux de suivi pour l’enseignant
 - Modules IA optionnels
 - Diagnostic d’installation
@@ -188,6 +189,8 @@ La carte du site dynamique est optionnelle et reflète surtout l'organisation du
 | Dépôt de travaux | `depot-travaux` | `[ouinpo_upload]` |
 | Mes dépôts | `mes-depots` | `[ouinpo_my_submissions]` |
 | Ressources | `ressources` | `[ouinpo_resources]` |
+| Mes projets | `mes-projets` | `[ouinpo_my_projects]` |
+| Suivi des projets | `suivi-projets` | `[ouinpo_teacher_projects]` |
 | Suivi des compétences | `suivi-competences` | `[ouinpo_competences_prof]` |
 
 Les trois premieres pages de ce tableau sont prevues pour des eleves connectes lorsque le module Submissions est active. Le suivi des competences est reserve aux enseignants ou administrateurs ayant les capacites OuInPo necessaires.
@@ -218,6 +221,88 @@ Ces pages supposent le module SegFault active. Le chat peut etre public ou reser
 | Signatures | `signatures` | `[ouinpo_signpad]` |
 
 Ces pages correspondent a des modules avances desactives par defaut sur une installation neuve. Les activer seulement si elles sont configurees et utiles au site.
+
+### SPOPI Projects
+
+Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO, sans appel IA. Il fournit une gestion simple des projets, des membres, d'un tableau Kanban, d'un journal de bord projet, de livrables, de traces/preuves, de liens vers les competences BO existantes et d'une fiche projet HTML imprimable.
+
+Shortcodes disponibles :
+
+| Shortcode | Usage |
+|---|---|
+| `[ouinpo_my_projects]` | Liste des projets visibles par l'utilisateur connecte, avec acces Kanban et journal |
+| `[ouinpo_project_kanban id="..."]` | Tableau Kanban d'un projet autorise |
+| `[ouinpo_project_journal id="..."]` | Journal de bord d'un projet autorise |
+| `[ouinpo_project_deliverables id="..."]` | Livrables attendus, statuts et validation enseignant |
+| `[ouinpo_project_evidence id="..."]` | Traces/preuves deposees par les membres du projet |
+| `[ouinpo_project_sheet id="..."]` | Fiche projet HTML imprimable |
+| `[ouinpo_teacher_projects]` | Vue enseignant avec statut, membres, taches, livrables, traces, alertes et acces Kanban/fiche |
+
+Capacites ajoutees :
+
+```text
+ouinpo_projects_manage_all
+ouinpo_projects_manage_class
+ouinpo_projects_create
+ouinpo_projects_view_own
+ouinpo_projects_edit_own_tasks
+ouinpo_projects_comment
+ouinpo_projects_validate
+```
+
+Tables creees :
+
+```text
+wp_ouinpo_projects
+wp_ouinpo_project_members
+wp_ouinpo_project_columns
+wp_ouinpo_project_tasks
+wp_ouinpo_project_task_comments
+wp_ouinpo_project_checklist_items
+wp_ouinpo_project_logs
+wp_ouinpo_project_deliverables
+wp_ouinpo_project_evidence
+wp_ouinpo_project_competency_links
+```
+
+Les routes REST utilisent le namespace `ouinpo-projects/v1` et exigent un utilisateur connecte, un nonce REST et les capacites/appartenances adaptees. Les eleves ne voient que les projets dont ils sont membres. Les livrables sont geres/valides par les enseignants du projet ; les membres peuvent deposer des traces si leurs capacites Projects le permettent.
+
+Routes REST principales ajoutees au lot 2 :
+
+```text
+GET/POST /projects/{id}/deliverables
+PATCH/DELETE /deliverables/{id}
+PATCH /deliverables/{id}/status
+GET/POST /projects/{id}/evidence
+PATCH/DELETE /evidence/{id}
+GET/POST /projects/{id}/competencies
+GET/POST /tasks/{id}/competencies
+GET/POST /deliverables/{id}/competencies
+DELETE /competency-links/{id}
+```
+
+Les liens de competences utilisent la table existante `ouin_exo_competencies`. Le module ne cree pas un second referentiel : si aucune competence BO n'est importee ou creee, les panneaux de liaison restent vides.
+
+Limites actuelles : pas d'IA, pas d'export PDF portfolio, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email. La fiche projet est un HTML imprimable, pas un export documentaire avance.
+
+#### Recette manuelle recommandee
+
+1. Activer le module Projects dans `OuInPo Suite > Reglages > Modules`.
+2. Verifier que la migration a cree les tables `ouinpo_project*`.
+3. Creer un projet depuis l'administration Projects.
+4. Verifier la creation des 7 colonnes par defaut.
+5. Ajouter deux eleves comme membres.
+6. Tester `[ouinpo_my_projects]` avec un eleve membre.
+7. Tester le meme shortcode avec un eleve non membre.
+8. Creer une tache depuis le Kanban.
+9. Deplacer la tache avec les boutons gauche/droite.
+10. Ajouter un commentaire via REST ou outil de test.
+11. Ajouter une entree de journal.
+12. Creer les livrables BTS par defaut depuis l'admin Projects.
+13. Deposer une trace avec un eleve membre.
+14. Lier une competence BO au projet ou a un livrable.
+15. Verifier la fiche `[ouinpo_project_sheet]`.
+16. Verifier la vue `[ouinpo_teacher_projects]` avec un compte professeur.
 
 
 ### Gate configurable

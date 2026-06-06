@@ -1,0 +1,42 @@
+.ouinpo-projects-admin {
+  max-width: 1280px;
+}
+
+.ouinpo-projects-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.ouinpo-projects-admin-card {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ouinpo-projects-admin-card h2 {
+  margin-top: 0;
+}
+
+.ouinpo-projects-admin-member-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ouinpo-projects-admin-inline {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 960px) {
+  .ouinpo-projects-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
