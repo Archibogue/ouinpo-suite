@@ -61,6 +61,40 @@
     return node;
   }
 
+  function copyText(value) {
+    const content = text(value);
+    if (!content) {
+      return Promise.reject(new Error('Aucun contenu a copier.'));
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(content);
+    }
+
+    return new Promise(function (resolve, reject) {
+      const textarea = document.createElement('textarea');
+      textarea.value = content;
+      textarea.setAttribute('readonly', 'readonly');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        if (document.execCommand('copy')) {
+          resolve();
+        } else {
+          reject(new Error('Copie automatique indisponible.'));
+        }
+      } catch (error) {
+        reject(error);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    });
+  }
+
   function renderTask(task, columnIndex, columnCount, canEdit) {
     const card = el('article', 'ouinpo-projects-task');
     card.dataset.taskId = String(task.id);
@@ -370,17 +404,9 @@
           output.focus();
           output.select();
 
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(output.value).catch(function () {
-              document.execCommand('copy');
-            });
-          } else {
-            try {
-              document.execCommand('copy');
-            } catch (error) {
-              window.alert('Markdown affiche : copie manuelle possible.');
-            }
-          }
+          copyText(output.value).catch(function () {
+            window.alert('Markdown affiche : copie manuelle possible.');
+          });
         })
         .catch(function (error) {
           window.alert(error.message);
@@ -743,15 +769,11 @@
         if (!value) {
           return;
         }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(value).then(function () {
-            status.textContent = 'Brouillon copie.';
-          }).catch(function () {
-            status.textContent = 'Copie impossible. Le brouillon reste affiche.';
-          });
-        } else {
-          status.textContent = 'Copie automatique indisponible. Le brouillon reste affiche.';
-        }
+        copyText(value).then(function () {
+          status.textContent = 'Brouillon copie.';
+        }).catch(function () {
+          status.textContent = 'Copie impossible. Le brouillon reste affiche.';
+        });
       });
     }
   }

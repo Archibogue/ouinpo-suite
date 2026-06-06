@@ -770,6 +770,10 @@ final class Shortcodes
             return self::notice('Assistant portfolio reserve aux membres actuels du projet.');
         }
 
+        if (sanitize_key((string) ($project['status'] ?? '')) === 'archived') {
+            return self::notice('Assistant IA eleve indisponible pour un projet archive.');
+        }
+
         if (!ProjectsStudentAiAssistant::globalEnabled() || !ProjectsStudentAiAssistant::projectStudentAiEnabled($project)) {
             return self::notice('Assistant IA eleve desactive pour ce projet.');
         }
@@ -802,6 +806,7 @@ final class Shortcodes
 
             <div class="ouinpo-projects-ai-warning">
                 L assistant s appuie sur tes declarations et les traces visibles du projet. Il ne modifie aucune tache, aucun livrable, aucune trace et aucune competence.
+                Cette aide ne remplace pas ton propre bilan.
             </div>
 
             <div class="ouinpo-projects-student-ai-fields">

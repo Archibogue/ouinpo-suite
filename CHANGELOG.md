@@ -2,6 +2,15 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.6.4-beta] - 2026-06-06
+
+- Lot 5.1 Projects : stabilisation securite/runtime de l'assistant IA eleve Projects.
+- Version plugin mise a jour en `0.6.4-beta` et migration idempotente des options `ouinpo_projects_student_ai_enabled`, `ouinpo_ai_projects_student_per_minute`, `ouinpo_ai_projects_student_per_day` et `ouinpo_ai_projects_student_max_tokens`.
+- Refus explicite des projets archives, de l'IA globale/projet desactivee, des non membres, des nonces invalides et des payloads eleves vides avant tout appel fournisseur ou consommation de quota.
+- Validation JSON eleve renforcee avec bornes `MAX_STUDENT_AI_QUESTIONS`, `MAX_STUDENT_AI_TEXT_LENGTH`, `MAX_STUDENT_AI_WARNINGS` et `MAX_STUDENT_CONTEXT_ITEMS`.
+- Nettoyage des entrees eleves, schemas stricts pour questions, synthese et brouillon portfolio, et copie front robuste avec fallback sans Clipboard API.
+- Documentation de la recette de test lot 5.1, des logs minimaux et du rappel : `Cette aide ne remplace pas ton propre bilan.`
+
 ## [0.6.3-beta] - 2026-06-06
 
 - Lot 4 Projects : ajout de l'assistant IA enseignant "Assistant pataprojectif" en brouillon/previsualisation.

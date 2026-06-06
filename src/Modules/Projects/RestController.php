@@ -998,6 +998,10 @@ final class RestController
             return new WP_Error('ouinpo_projects_not_found', 'Projet introuvable.', ['status' => 404]);
         }
 
+        if (sanitize_key((string) ($project['status'] ?? '')) === 'archived') {
+            return new WP_Error('ouinpo_projects_student_ai_archived', 'Assistant IA eleve indisponible pour un projet archive.', ['status' => 403]);
+        }
+
         if (!ProjectsStudentAiAssistant::globalEnabled()) {
             return new WP_Error('ouinpo_projects_student_ai_disabled', 'Assistant IA eleve desactive.', ['status' => 403]);
         }

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: OuInPo Suite
  * Description: Point d'entree unique pour la suite OuInPo (Exercices, Depots, SegFault, Gate, RechText, Meta, Projects).
- * Version: 0.6.3-beta
+ * Version: 0.6.4-beta
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author: OuInPo
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 define('OUINPO_SUITE_FILE', __FILE__);
 define('OUINPO_SUITE_DIR', plugin_dir_path(__FILE__));
 define('OUINPO_SUITE_URL', plugin_dir_url(__FILE__));
-define('OUINPO_SUITE_VERSION', '0.6.3-beta');
+define('OUINPO_SUITE_VERSION', '0.6.4-beta');
 
 require_once OUINPO_SUITE_DIR . 'src/Core/Autoloader.php';
 \Ouinpo\Suite\Core\Autoloader::init(OUINPO_SUITE_DIR . 'src');

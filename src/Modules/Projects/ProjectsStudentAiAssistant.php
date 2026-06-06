@@ -12,12 +12,10 @@ final class ProjectsStudentAiAssistant
 {
     private const QUOTA_SCOPE = 'projects_student_ai';
     private const AI_CLASS = '\\OuInPo\\SegFault\\OpenAI';
-    private const MAX_TEXT = 1200;
-    private const MAX_TASKS = 24;
-    private const MAX_DELIVERABLES = 30;
-    private const MAX_EVIDENCE = 18;
-    private const MAX_LOGS = 10;
-    private const MAX_COMPETENCIES = 40;
+    private const MAX_STUDENT_AI_QUESTIONS = 8;
+    private const MAX_STUDENT_AI_TEXT_LENGTH = 1200;
+    private const MAX_STUDENT_AI_WARNINGS = 8;
+    private const MAX_STUDENT_CONTEXT_ITEMS = 30;
     private const STUDENT_FIELDS = [
         'my_role',
         'what_i_did',
@@ -71,13 +69,14 @@ final class ProjectsStudentAiAssistant
             );
         }
 
+        $context = $this->buildStudentContext($projectId, $userId);
+
         $ready = $this->ensureAiReady($userId);
         if (is_wp_error($ready)) {
             $this->log($projectId, $kind, false, 'none', 0, $ready->get_error_code());
             return $ready;
         }
 
-        $context = $this->buildStudentContext($projectId, $userId);
         $messages = [
             ['role' => 'system', 'content' => $this->systemPrompt()],
             ['role' => 'user', 'content' => $this->userPrompt($kind, $this->schemaForKind($kind), $studentInput, $context)],
@@ -120,6 +119,10 @@ final class ProjectsStudentAiAssistant
 
         if (!self::projectStudentAiEnabled($project)) {
             return new WP_Error('ouinpo_projects_student_ai_project_disabled', 'Assistant IA eleve desactive pour ce projet.', ['status' => 403]);
+        }
+
+        if (sanitize_key((string) ($project['status'] ?? '')) === 'archived') {
+            return new WP_Error('ouinpo_projects_student_ai_archived', 'Assistant IA eleve indisponible pour un projet archive.', ['status' => 403]);
         }
 
         if ($userId <= 0 || !$this->repository->isProjectMember($projectId, $userId)) {
@@ -193,7 +196,7 @@ final class ProjectsStudentAiAssistant
             'project' => [
                 'id' => $projectId,
                 'title' => $this->cleanString($project['title'] ?? '', 190),
-                'description' => $this->cleanString(wp_strip_all_tags((string) ($project['description'] ?? '')), self::MAX_TEXT),
+                'description' => $this->cleanString(wp_strip_all_tags((string) ($project['description'] ?? '')), self::MAX_STUDENT_AI_TEXT_LENGTH),
                 'status' => sanitize_key((string) ($project['status'] ?? '')),
                 'period' => [
                     'start_date' => $this->cleanDate($project['start_date'] ?? ''),
@@ -228,7 +231,7 @@ final class ProjectsStudentAiAssistant
                     'priority' => sanitize_key((string) ($task['priority'] ?? 'normal')),
                     'due_date' => $this->cleanDate($task['due_date'] ?? ''),
                 ];
-                if (count($tasks) >= self::MAX_TASKS) {
+                if (count($tasks) >= self::MAX_STUDENT_CONTEXT_ITEMS) {
                     return $tasks;
                 }
             }
@@ -256,7 +259,7 @@ final class ProjectsStudentAiAssistant
     private function deliverablesContext(array $deliverables): array
     {
         $items = [];
-        foreach (array_slice($deliverables, 0, self::MAX_DELIVERABLES) as $deliverable) {
+        foreach (array_slice($deliverables, 0, self::MAX_STUDENT_CONTEXT_ITEMS) as $deliverable) {
             $items[] = [
                 'id' => (int) $deliverable['id'],
                 'title' => $this->cleanString($deliverable['title'] ?? '', 190),
@@ -288,7 +291,7 @@ final class ProjectsStudentAiAssistant
                 'attachment_type' => $this->cleanString($item['attachment_mime'] ?? '', 120),
                 'created_at' => $this->cleanString($item['created_at'] ?? '', 40),
             ];
-            if (count($items) >= self::MAX_EVIDENCE) {
+            if (count($items) >= self::MAX_STUDENT_CONTEXT_ITEMS) {
                 break;
             }
         }
@@ -321,7 +324,7 @@ final class ProjectsStudentAiAssistant
                 'decision_taken' => $this->cleanString($log['decision_taken'] ?? '', 500),
                 'next_step' => $this->cleanString($log['next_step'] ?? '', 500),
             ];
-            if (count($items) >= self::MAX_LOGS) {
+            if (count($items) >= self::MAX_STUDENT_CONTEXT_ITEMS) {
                 break;
             }
         }
@@ -352,7 +355,7 @@ final class ProjectsStudentAiAssistant
                 'domain' => $this->cleanString($link['domain'] ?? '', 140),
                 'label' => $this->cleanString(wp_strip_all_tags($label), 220),
             ];
-            if (count($items) >= self::MAX_COMPETENCIES) {
+            if (count($items) >= self::MAX_STUDENT_CONTEXT_ITEMS) {
                 break;
             }
         }
@@ -369,6 +372,7 @@ final class ProjectsStudentAiAssistant
             'Tu n inventes jamais de travail realise, de trace, de fichier, de competence ni de resultat.',
             'Tu distingues les elements prouves par le contexte des declarations de l eleve.',
             'Tu encourages l eleve a reformuler avec ses propres mots et a verifier avant soumission.',
+            'Cette aide ne remplace pas son propre bilan.',
             'Tu ne cites jamais de nom, email, chemin prive, URL de telechargement, prompt ou contenu de fichier.',
         ]);
     }
@@ -426,58 +430,107 @@ final class ProjectsStudentAiAssistant
 
     private function validateResponse(string $kind, array $decoded)
     {
-        $warnings = $this->stringList($decoded['warnings'] ?? [], 8, 260);
+        if (array_key_exists('warnings', $decoded) && !is_array($decoded['warnings'])) {
+            return $this->schemaError('Schema IA invalide : warnings doit etre une liste.');
+        }
+
+        $warnings = $this->stringList($decoded['warnings'] ?? [], self::MAX_STUDENT_AI_WARNINGS, 260);
 
         if ($kind === 'reflection_questions') {
+            if (!array_key_exists('questions', $decoded) || !is_array($decoded['questions'])) {
+                return $this->schemaError('Schema IA invalide : champ questions requis.');
+            }
+
             $questions = [];
-            foreach (array_slice((array) ($decoded['questions'] ?? []), 0, 8) as $item) {
+            foreach (array_slice($decoded['questions'], 0, self::MAX_STUDENT_AI_QUESTIONS) as $item) {
                 if (!is_array($item)) {
-                    continue;
+                    return $this->schemaError('Question IA invalide.');
                 }
-                $question = $this->cleanString($item['question'] ?? '', 400);
-                if ($question === '') {
-                    continue;
+                if (!array_key_exists('theme', $item) || !array_key_exists('question', $item) || !array_key_exists('why_it_matters', $item)) {
+                    return $this->schemaError('Question IA incomplete.');
+                }
+                $theme = $this->requiredString($item, 'theme', 120, 'Question IA sans theme.');
+                if (is_wp_error($theme)) {
+                    return $theme;
+                }
+                $question = $this->requiredString($item, 'question', 400, 'Question IA sans question.');
+                if (is_wp_error($question)) {
+                    return $question;
+                }
+                $why = $this->requiredString($item, 'why_it_matters', 400, 'Question IA sans justification.');
+                if (is_wp_error($why)) {
+                    return $why;
                 }
                 $questions[] = [
-                    'theme' => $this->cleanString($item['theme'] ?? '', 120),
+                    'theme' => $theme,
                     'question' => $question,
-                    'why_it_matters' => $this->cleanString($item['why_it_matters'] ?? '', 400),
+                    'why_it_matters' => $why,
                 ];
             }
             return $questions ? ['questions' => $questions, 'warnings' => $warnings] : $this->schemaError('Questions IA invalides.');
         }
 
         if ($kind === 'personal_summary') {
-            $summary = is_array($decoded['personal_summary'] ?? null) ? $decoded['personal_summary'] : [];
-            $draft = $this->cleanString($summary['draft'] ?? '', 2200);
-            if ($draft === '') {
-                return $this->schemaError('Synthese personnelle IA invalide.');
+            if (!array_key_exists('personal_summary', $decoded) || !is_array($decoded['personal_summary'])) {
+                return $this->schemaError('Schema IA invalide : personal_summary requis.');
+            }
+
+            $summary = $decoded['personal_summary'];
+            $draft = $this->requiredString($summary, 'draft', 2200, 'Synthese personnelle IA invalide.');
+            if (is_wp_error($draft)) {
+                return $draft;
+            }
+            foreach (['strengths_to_keep', 'points_to_clarify', 'evidence_to_mention', 'questions_before_submission'] as $field) {
+                if (!array_key_exists($field, $summary) || !is_array($summary[$field])) {
+                    return $this->schemaError('Schema IA invalide : champ liste requis "' . $field . '".');
+                }
             }
             return [
                 'personal_summary' => [
                     'draft' => $draft,
-                    'strengths_to_keep' => $this->stringList($summary['strengths_to_keep'] ?? [], 8, 240),
-                    'points_to_clarify' => $this->stringList($summary['points_to_clarify'] ?? [], 8, 240),
-                    'evidence_to_mention' => $this->stringList($summary['evidence_to_mention'] ?? [], 8, 240),
-                    'questions_before_submission' => $this->stringList($summary['questions_before_submission'] ?? [], 8, 240),
+                    'strengths_to_keep' => $this->stringList($summary['strengths_to_keep'], self::MAX_STUDENT_AI_WARNINGS, 240),
+                    'points_to_clarify' => $this->stringList($summary['points_to_clarify'], self::MAX_STUDENT_AI_WARNINGS, 240),
+                    'evidence_to_mention' => $this->stringList($summary['evidence_to_mention'], self::MAX_STUDENT_AI_WARNINGS, 240),
+                    'questions_before_submission' => $this->stringList($summary['questions_before_submission'], self::MAX_STUDENT_AI_WARNINGS, 240),
                 ],
                 'warnings' => $warnings,
             ];
         }
 
-        $draft = is_array($decoded['portfolio_draft'] ?? null) ? $decoded['portfolio_draft'] : [];
+        if (!array_key_exists('portfolio_draft', $decoded) || !is_array($decoded['portfolio_draft'])) {
+            return $this->schemaError('Schema IA invalide : portfolio_draft requis.');
+        }
+
+        $draft = $decoded['portfolio_draft'];
         $required = ['context', 'my_role', 'productions', 'skills', 'difficulties_and_solutions', 'personal_review'];
         $portfolio = [];
         foreach ($required as $field) {
-            $portfolio[$field] = $this->cleanString($draft[$field] ?? '', 1600);
+            $value = $this->requiredString($draft, $field, 1600, 'Brouillon portfolio IA incomplet : ' . $field . '.');
+            if (is_wp_error($value)) {
+                return $value;
+            }
+            $portfolio[$field] = $value;
         }
-        $portfolio['to_verify'] = $this->stringList($draft['to_verify'] ?? [], 8, 240);
-
-        if (implode('', array_intersect_key($portfolio, array_flip($required))) === '') {
-            return $this->schemaError('Brouillon portfolio IA invalide.');
+        if (!array_key_exists('to_verify', $draft) || !is_array($draft['to_verify'])) {
+            return $this->schemaError('Schema IA invalide : champ liste requis "to_verify".');
         }
+        $portfolio['to_verify'] = $this->stringList($draft['to_verify'], self::MAX_STUDENT_AI_WARNINGS, 240);
 
         return ['portfolio_draft' => $portfolio, 'warnings' => $warnings];
+    }
+
+    private function requiredString(array $data, string $key, int $maxLength, string $message)
+    {
+        if (!array_key_exists($key, $data) || is_array($data[$key]) || is_object($data[$key])) {
+            return $this->schemaError($message);
+        }
+
+        $value = $this->cleanString($data[$key], $maxLength);
+        if ($value === '') {
+            return $this->schemaError($message);
+        }
+
+        return $value;
     }
 
     private function stringList($value, int $limit, int $maxLength): array
@@ -608,7 +661,12 @@ final class ProjectsStudentAiAssistant
 
     private function cleanString($value, int $maxLength): string
     {
+        if (is_array($value) || is_object($value)) {
+            return '';
+        }
+
         $clean = trim(wp_strip_all_tags((string) $value));
+        $clean = preg_replace('/\s+/u', ' ', $clean) ?? $clean;
         if ($clean === '') {
             return '';
         }

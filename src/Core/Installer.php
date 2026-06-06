@@ -12,6 +12,7 @@ final class Installer
 
         self::installOrUpgradeSharedSchema();
         AiSettings::migrate_public_access_for_existing_site($installed);
+        self::ensureProjectsStudentAiDefaults();
         Capabilities::install();
         update_option('ouinpo_suite_version', OUINPO_SUITE_VERSION, false);
     }
@@ -439,6 +440,21 @@ private static function addForeignKeyIfMissing(string $table, string $name, stri
         ];
 
         update_option('ouinpo_suite_fk_failures', $failures, false);
+    }
+}
+
+private static function ensureProjectsStudentAiDefaults(): void
+{
+    $defaults = AiSettings::defaults();
+    foreach ([
+        'ouinpo_projects_student_ai_enabled',
+        'ouinpo_ai_projects_student_per_minute',
+        'ouinpo_ai_projects_student_per_day',
+        'ouinpo_ai_projects_student_max_tokens',
+    ] as $option) {
+        if (get_option($option, null) === null && array_key_exists($option, $defaults)) {
+            update_option($option, $defaults[$option], false);
+        }
     }
 }
 }

@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.6.3-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.6.4-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -228,7 +228,7 @@ Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO. I
 
 Depuis `0.6.3-beta`, Projects inclut aussi un assistant IA encadre pour les enseignants : propositions de taches, livrables adaptes, competences liees, analyse de risques, aide portfolio et synthese enseignant. Toutes les reponses IA sont des brouillons/previsualisations. Le serveur n'applique rien sans selection explicite et confirmation par un enseignant ou administrateur autorise.
 
-Le lot 5 ajoute un assistant IA eleve distinct et limite a la preparation personnelle du portfolio BTS : questions de recul, synthese personnelle et brouillon portfolio. Il est desactive par defaut, doit etre active globalement puis projet par projet, et ne modifie jamais les donnees Projects.
+Les lots 5 et 5.1 ajoutent puis stabilisent un assistant IA eleve distinct et limite a la preparation personnelle du portfolio BTS : questions de recul, synthese personnelle et brouillon portfolio. Il est desactive par defaut, doit etre active globalement puis projet par projet, refuse les projets archives et ne modifie jamais les donnees Projects.
 
 Shortcodes disponibles :
 
@@ -325,12 +325,14 @@ Assistant IA Projects :
 Assistant IA eleve Projects :
 
 - activation en deux temps : option globale `ouinpo_projects_student_ai_enabled` puis case `IA eleve` sur le projet ;
-- routes REST connectees uniquement, avec nonce REST, capacite `ouinpo_projects_ai_student_use`, projet existant, membre actuel du projet et quota disponible ;
+- routes REST connectees uniquement, avec nonce REST, capacite `ouinpo_projects_ai_student_use`, projet existant non archive, membre actuel du projet, option globale active, option projet active et quota disponible ;
 - champs eleve obligatoires dans l'interface : role, travail realise, difficultes, solutions, apprentissages et elements a montrer ; au moins le role ou le travail reel doit etre renseigne ;
+- si le role et le travail reel sont vides, le message attendu est : `Indique d’abord ce que tu as réellement fait dans le projet.` ;
 - quotas dedies : `ouinpo_ai_projects_student_per_minute`, `ouinpo_ai_projects_student_per_day` et `ouinpo_ai_projects_student_max_tokens` ;
 - contexte minimise : titre, description generale, statut, periode, taches liees a l'eleve, livrables en metadata, traces de l'eleve, synthese de traces globales, journal de l'eleve et competences liees ;
 - autres membres non nommes, pas d'emails, pas de chemins prives, pas d'URLs de telechargement, pas de contenu de fichier ;
-- reponses attendues en JSON strict et revalidees cote serveur ; un JSON invalide n'est pas affiche ;
+- reponses attendues en JSON strict et revalidees cote serveur avec constantes de bornage `MAX_STUDENT_AI_QUESTIONS`, `MAX_STUDENT_AI_TEXT_LENGTH`, `MAX_STUDENT_AI_WARNINGS` et `MAX_STUDENT_CONTEXT_ITEMS` ; un JSON invalide, incomplet ou hors type n'est pas affiche ;
+- les logs IA eleve restent synthetiques : user_id, project_id, action, provider, succes/echec, code, taille approximative et date, sans texte eleve, prompt, reponse, nom, email, URL, chemin ou contenu de fichier ;
 - aucune action d'application : l'IA eleve ne cree, modifie ni supprime tache, livrable, competence, trace ou journal.
 
 Uploads de traces fichier :
@@ -444,16 +446,19 @@ Limites actuelles : IA Projects limitee a des brouillons enseignants valides man
 7. Verifier que les logs IA ne contiennent ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
 
 
-#### Recette IA eleve Projects lot 5
+#### Recette IA eleve Projects lots 5 et 5.1
 
 1. Activer l'IA globale, `ouinpo_projects_student_ai_enabled`, puis cocher `IA eleve` sur un projet de test.
 2. Verifier qu'un eleve membre voit l'acces `IA portfolio` depuis `[ouinpo_my_projects]` ou le shortcode `[ouinpo_project_student_ai]`.
-3. Appeler les trois actions avec les champs vides : la route doit demander d'indiquer le travail reel.
+3. Appeler les trois actions avec les champs vides : la route doit renvoyer exactement `Indique d’abord ce que tu as réellement fait dans le projet.` et ne pas consommer de quota.
 4. Renseigner le role ou le travail realise, puis generer questions de recul, synthese personnelle et brouillon portfolio.
 5. Verifier que le resultat est copiable mais qu'aucun bouton d'application n'existe.
-6. Verifier qu'un eleve non membre, un ancien membre retire, un visiteur anonyme et un nonce invalide sont refuses.
+6. Verifier qu'un eleve non membre, un ancien membre retire, un visiteur anonyme, un nonce invalide, l'option globale desactivee, l'option projet desactivee et un projet archive sont refuses sans appel fournisseur.
 7. Verifier que `/ai/apply-suggestion` reste refuse a un eleve et que les routes `/student-ai/*` ne modifient aucune table de projet.
 8. Verifier que les logs IA ne contiennent ni texte eleve complet, ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
+9. Forcer une reponse IA vide, JSON invalide, JSON liste, objet incomplet ou champ de mauvais type : la route doit refuser avec une erreur de schema sans afficher de brouillon.
+10. Verifier que la copie fonctionne avec et sans `navigator.clipboard`, et que le rappel `Cette aide ne remplace pas ton propre bilan.` apparait dans le shortcode.
+11. Lancer les controles techniques : `php -l` sur les fichiers PHP Projects/Core modifies, `node --check assets/js/front/projects.js`, `git diff --check -- . ':!CSS_additionnels/add._bts.css' ':!dist'`, puis les recherches statiques sur permissions REST, nonces, JSON strict, logs IA, `apply-suggestion`, `student-ai`, `wp_ouinpo` et `dist/`.
 
 ### Gate configurable
 
