@@ -97,16 +97,21 @@ final class PrivateFiles
         return $dir;
     }
 
-    public static function markAttachmentPrivate(int $attachmentId, int $projectId, int $evidenceId, string $relativePath): void
+    public static function markAttachmentPrivate(int $attachmentId, int $projectId, int $evidenceId, string $relativePath): bool
     {
         if ($attachmentId <= 0 || $projectId <= 0 || $evidenceId <= 0 || $relativePath === '') {
-            return;
+            return false;
         }
 
         update_post_meta($attachmentId, self::META_PRIVATE_FILE, '1');
         update_post_meta($attachmentId, self::META_PROJECT_ID, $projectId);
         update_post_meta($attachmentId, self::META_EVIDENCE_ID, $evidenceId);
         update_post_meta($attachmentId, self::META_PRIVATE_PATH, $relativePath);
+
+        return self::isPrivateAttachment($attachmentId)
+            && (int) get_post_meta($attachmentId, self::META_PROJECT_ID, true) === $projectId
+            && (int) get_post_meta($attachmentId, self::META_EVIDENCE_ID, true) === $evidenceId
+            && self::attachmentRelativePath($attachmentId) === $relativePath;
     }
 
     public static function isPrivateAttachment(int $attachmentId): bool
@@ -178,6 +183,102 @@ final class PrivateFiles
         }
 
         return $real;
+    }
+
+    public static function deleteUploadedFile(string $absolutePath)
+    {
+        $relativePath = self::relativePath($absolutePath);
+        if (is_wp_error($relativePath)) {
+            return $relativePath;
+        }
+
+        $path = self::absolutePath((string) $relativePath);
+        if (is_wp_error($path)) {
+            return $path;
+        }
+
+        if (!@unlink((string) $path) && file_exists((string) $path)) {
+            return new WP_Error('ouinpo_projects_private_delete_failed', 'Suppression du fichier prive impossible.');
+        }
+
+        return true;
+    }
+
+    public static function deletePrivateAttachment(int $attachmentId, int $projectId, int $evidenceId)
+    {
+        if ($attachmentId <= 0 || !self::isPrivateAttachment($attachmentId)) {
+            return true;
+        }
+
+        if ((int) get_post_meta($attachmentId, self::META_PROJECT_ID, true) !== $projectId) {
+            return new WP_Error('ouinpo_projects_private_mismatch', 'Attachment prive rattache a un autre projet.');
+        }
+
+        if ((int) get_post_meta($attachmentId, self::META_EVIDENCE_ID, true) !== $evidenceId) {
+            return new WP_Error('ouinpo_projects_private_mismatch', 'Attachment prive rattache a une autre trace.');
+        }
+
+        $path = self::absolutePath(self::attachmentRelativePath($attachmentId));
+        if (is_wp_error($path)) {
+            return $path;
+        }
+
+        $deleted = wp_delete_attachment($attachmentId, true);
+        if (!$deleted) {
+            return new WP_Error('ouinpo_projects_private_delete_failed', 'Suppression du fichier prive impossible.');
+        }
+
+        if (file_exists((string) $path)) {
+            $deletedFile = self::deleteUploadedFile((string) $path);
+            if (is_wp_error($deletedFile)) {
+                return $deletedFile;
+            }
+        }
+
+        return true;
+    }
+
+    public static function isProtectionConfigured(): bool
+    {
+        static $configured = null;
+        if ($configured !== null) {
+            return $configured;
+        }
+
+        $dir = self::ensureDirectory(self::UPLOAD_SUBDIR);
+        if (is_wp_error($dir)) {
+            $configured = false;
+            return false;
+        }
+
+        $uploads = wp_upload_dir();
+        if (!empty($uploads['error'])) {
+            $configured = false;
+            return false;
+        }
+
+        $base = trailingslashit(wp_normalize_path((string) $uploads['basedir']));
+        $path = trailingslashit(wp_normalize_path((string) $dir));
+        if (!str_starts_with($path, $base . 'ouinpo/projects/')) {
+            $configured = false;
+            return false;
+        }
+
+        $index = $path . 'index.php';
+        $htaccess = $path . '.htaccess';
+        $htaccessContent = file_exists($htaccess) ? (string) file_get_contents($htaccess) : '';
+
+        $configured = is_dir($path)
+            && file_exists($index)
+            && file_exists($htaccess)
+            && (str_contains($htaccessContent, 'Require all denied') || str_contains($htaccessContent, 'Deny from all'));
+
+        return $configured;
+    }
+
+    public static function protectionWarningMessage(): string
+    {
+        return 'Protection locale des fichiers Projects non confirmee : verifie que wp-content/uploads/ouinpo/projects/ contient index.php et .htaccess, et que le serveur refuse les acces directs. La route REST protegee reste l acces normal aux fichiers.';
     }
 
     public static function sendFile(string $path, string $filename, string $mimeType): void

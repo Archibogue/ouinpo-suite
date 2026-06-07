@@ -656,10 +656,14 @@ final class RestController
             'post_title' => $title,
             'post_content' => $description,
             'post_status' => 'inherit',
-            'guid' => (string) ($uploaded['url'] ?? ''),
+            'guid' => '',
         ], (string) $uploaded['file'], 0, true);
 
         if (is_wp_error($attachmentId)) {
+            $cleanup = self::cleanupUploadedProjectFile((string) ($uploaded['file'] ?? ''));
+            if (is_wp_error($cleanup)) {
+                return new WP_Error($cleanup->get_error_code(), $cleanup->get_error_message(), ['status' => 500]);
+            }
             return new WP_Error($attachmentId->get_error_code(), $attachmentId->get_error_message(), ['status' => 400]);
         }
 
@@ -680,15 +684,27 @@ final class RestController
         ], get_current_user_id());
 
         if ($evidenceId <= 0) {
+            $cleanup = self::cleanupProjectAttachment((int) $attachmentId, (string) ($uploaded['file'] ?? ''));
+            if (is_wp_error($cleanup)) {
+                return new WP_Error($cleanup->get_error_code(), $cleanup->get_error_message(), ['status' => 500]);
+            }
             return new WP_Error('ouinpo_projects_evidence_failed', 'Trace fichier invalide.', ['status' => 400]);
         }
 
-        PrivateFiles::markAttachmentPrivate(
+        $marked = PrivateFiles::markAttachmentPrivate(
             (int) $attachmentId,
             $projectId,
             $evidenceId,
             (string) ($uploaded['private_relative_path'] ?? '')
         );
+        if (!$marked) {
+            $cleanup = self::cleanupProjectAttachment((int) $attachmentId, (string) ($uploaded['file'] ?? ''));
+            if (is_wp_error($cleanup)) {
+                return new WP_Error($cleanup->get_error_code(), $cleanup->get_error_message(), ['status' => 500]);
+            }
+            $repository->deleteEvidence($evidenceId);
+            return new WP_Error('ouinpo_projects_private_mark_failed', 'Marquage prive du fichier impossible.', ['status' => 500]);
+        }
 
         return rest_ensure_response($repository->getEvidenceItem($evidenceId));
     }
@@ -738,9 +754,29 @@ final class RestController
         return rest_ensure_response($repository->getEvidenceItem(self::id($request)));
     }
 
-    public static function deleteEvidence(WP_REST_Request $request): WP_REST_Response
+    public static function deleteEvidence(WP_REST_Request $request)
     {
-        (new Repository())->deleteEvidence(self::id($request));
+        $repository = new Repository();
+        $evidence = $repository->getEvidenceItem(self::id($request));
+        if (!$evidence) {
+            return new WP_Error('ouinpo_projects_evidence_not_found', 'Trace introuvable.', ['status' => 404]);
+        }
+
+        $attachmentId = (int) ($evidence['attachment_id'] ?? 0);
+        if ($attachmentId > 0 && PrivateFiles::isPrivateAttachment($attachmentId)) {
+            $deletedAttachment = PrivateFiles::deletePrivateAttachment(
+                $attachmentId,
+                (int) $evidence['project_id'],
+                (int) $evidence['id']
+            );
+            if (is_wp_error($deletedAttachment)) {
+                return new WP_Error($deletedAttachment->get_error_code(), $deletedAttachment->get_error_message(), ['status' => 500]);
+            }
+        }
+
+        if (!$repository->deleteEvidence((int) $evidence['id'])) {
+            return new WP_Error('ouinpo_projects_evidence_delete_failed', 'Suppression de la trace impossible.', ['status' => 500]);
+        }
 
         return rest_ensure_response(['deleted' => true]);
     }
@@ -1305,6 +1341,31 @@ final class RestController
     private static function id(WP_REST_Request $request): int
     {
         return absint($request['id']);
+    }
+
+    private static function cleanupUploadedProjectFile(string $path)
+    {
+        if ($path === '') {
+            return true;
+        }
+
+        return PrivateFiles::deleteUploadedFile($path);
+    }
+
+    private static function cleanupProjectAttachment(int $attachmentId, string $uploadedPath)
+    {
+        if ($attachmentId > 0) {
+            $deleted = wp_delete_attachment($attachmentId, true);
+            if (!$deleted && get_post($attachmentId)) {
+                return new WP_Error('ouinpo_projects_attachment_delete_failed', 'Suppression de l attachment de trace impossible.');
+            }
+        }
+
+        if ($uploadedPath !== '' && file_exists($uploadedPath)) {
+            return self::cleanupUploadedProjectFile($uploadedPath);
+        }
+
+        return true;
     }
 
     private static function aiSuggest(WP_REST_Request $request, string $kind)

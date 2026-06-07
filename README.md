@@ -341,10 +341,13 @@ Uploads de traces fichier :
 - extensions autorisees : `pdf`, `txt`, `md`, `csv`, `json`, `sql`, `py`, `html.txt`, `css.txt`, `js.txt`, `png`, `jpg`, `jpeg`, `webp`, `zip` ;
 - extensions refusees directement : `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `html`, `js`, `css`, `htaccess` ;
 - les fichiers web doivent etre neutralises avant depot, par exemple `index.html.txt`, `style.css.txt`, `script.js.txt` ;
-- les nouveaux fichiers sont stockes dans `wp-content/uploads/ouinpo/projects/`, avec `index.php` et `.htaccess` de refus d'acces direct ;
-- les fichiers sont crees comme attachments WordPress, rattaches a la table `ouinpo_project_evidence` via `attachment_id`, puis servis par `GET /evidence/{id}/download` avec nonce REST et droits de vue projet.
+- les nouveaux fichiers sont stockes dans `wp-content/uploads/ouinpo/projects/`, avec `index.php` et `.htaccess` de refus d'acces direct quand le serveur les applique ;
+- le plugin verifie en administration que les fichiers de protection locaux existent, mais cette verification ne garantit pas qu'un serveur Nginx, IIS ou Apache/LiteSpeed mal configure bloque l'acces HTTP direct ;
+- les fichiers sont crees comme attachments WordPress, rattaches a la table `ouinpo_project_evidence` via `attachment_id`, puis servis par `GET /evidence/{id}/download` avec nonce REST et droits de vue projet ;
+- la suppression d'une trace fichier privee supprime aussi son attachment WordPress et son fichier physique, uniquement si l'attachment est marque comme fichier prive Projects ;
+- une trace ancienne avec attachment public conserve son fichier public ; seule la ligne de trace est supprimee.
 
-Compatibilite : les fichiers Projects uploades avant le stockage prive ne sont pas migres physiquement. Ils restent affiches via leur URL historique et peuvent rester accessibles directement selon la configuration du site. Pour Nginx ou un serveur qui ignore `.htaccess`, il faut ajouter une regle serveur refusant l'acces web a `uploads/ouinpo/projects/`.
+Compatibilite : les fichiers Projects uploades avant le stockage protege par route REST ne sont pas migres physiquement. Ils restent affiches via leur URL historique et peuvent rester accessibles directement selon la configuration du site. Pour Nginx, IIS ou un serveur qui ignore `.htaccess`, il faut ajouter une regle serveur refusant l'acces web a `uploads/ouinpo/projects/`. Le stockage dans `uploads/` ne doit pas etre considere comme prive de maniere absolue sans cette regle serveur.
 
 Exports :
 
@@ -373,6 +376,7 @@ Limites actuelles : IA Projects limitee a des brouillons enseignants valides man
 15. Verifier la fiche `[ouinpo_project_sheet]`.
 16. Verifier la fiche `[ouinpo_project_bts_situation]`.
 17. Verifier la vue `[ouinpo_teacher_projects]` avec un compte professeur.
+18. Avec deux professeurs distincts, verifier que `?page=ouinpo-projects&project_id=` d'un projet non gere renvoie un refus 403.
 
 #### Recette securite lot 2.1
 
@@ -410,8 +414,9 @@ Limites actuelles : IA Projects limitee a des brouillons enseignants valides man
 6. Verifier que `index.html.txt`, `style.css.txt` et `script.js.txt` sont acceptes, mais pas `.html`, `.css` ou `.js`.
 7. Verifier qu'un fichier vide, un fichier de plus de 10 Mo et un MIME incoherent sont refuses.
 8. Supprimer manuellement un attachment WordPress lie a une trace, puis verifier que les shortcodes de traces, fiche projet et fiche BTS affichent un message propre.
-9. Tester les exports Markdown/HTML avec un professeur, un eleve membre, un eleve non membre et un ancien membre retire.
-10. Imprimer la fiche BTS et verifier que les boutons sont masques et que les longues URLs ne debordent pas.
+9. Simuler un echec de creation de trace apres upload si possible, puis verifier que le fichier et l'attachment ne restent pas orphelins.
+10. Tester les exports Markdown/HTML avec un professeur, un eleve membre, un eleve non membre et un ancien membre retire.
+11. Imprimer la fiche BTS et verifier que les boutons sont masques et que les longues URLs ne debordent pas.
 
 #### Recette securite lot 3.2
 
@@ -423,6 +428,8 @@ Limites actuelles : IA Projects limitee a des brouillons enseignants valides man
 6. Avec un eleve non membre et avec un ancien membre retire du projet, appeler le meme lien : la route doit renvoyer `403` ou `401`.
 7. Supprimer ou alterer la meta `_ouinpo_project_evidence_id` d'un attachment de test, puis verifier que le telechargement est refuse.
 8. Verifier qu'une ancienne trace fichier creee avant le lot 3.2 reste visible via son URL historique, sans migration physique.
+9. Supprimer une nouvelle trace fichier privee et verifier que son attachment et son fichier physique sont supprimes.
+10. Verifier l'URL directe du fichier : elle doit etre refusee seulement si le serveur applique `.htaccess` ou une regle equivalente.
 
 #### Recette IA Projects lot 4
 

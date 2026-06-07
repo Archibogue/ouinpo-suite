@@ -609,59 +609,6 @@ final class Shortcodes
         }
 
         return ProjectExporter::renderProjectSheet($projectId);
-
-        $members = $repository->getMembers($projectId);
-        $deliverables = $repository->getDeliverables($projectId);
-        $tasks = $repository->getMainTasks($projectId);
-        $logs = array_slice($repository->getLogs($projectId), 0, 6);
-        $evidence = array_slice($repository->getEvidence($projectId), 0, 10);
-        $competencies = $repository->getCompetencyLinks($projectId);
-
-        ob_start();
-        ?>
-        <section class="ouinpo-projects-sheet">
-            <div class="ouinpo-projects-sheet-toolbar">
-                <button type="button" class="ouinpo-projects-button" data-ouinpo-projects-print>Imprimer</button>
-            </div>
-            <header class="ouinpo-projects-sheet-header">
-                <p>SPOPI Projects - Bureau des Pataprojets Applicatifs</p>
-                <h2><?php echo esc_html((string) $project['title']); ?></h2>
-                <p><?php echo esc_html(self::period($project)); ?> - <?php echo esc_html((string) $project['status']); ?></p>
-            </header>
-
-            <div class="ouinpo-projects-sheet-grid">
-                <section>
-                    <h3>Contexte</h3>
-                    <div><?php echo wp_kses_post(wpautop((string) ($project['description'] ?: ''))); ?></div>
-                    <p>Niveau : <?php echo esc_html((string) ($project['level'] ?: '-')); ?></p>
-                    <p>Classe : <?php echo esc_html((string) ($project['class_slug'] ?: '-')); ?></p>
-                </section>
-                <section>
-                    <h3>Equipe</h3>
-                    <?php echo self::renderSimpleList(array_map(static function (array $member): string {
-                        return (string) (($member['display_name'] ?: $member['user_email']) . ' - ' . $member['role']);
-                    }, $members)); ?>
-                </section>
-                <section>
-                    <h3>Ce que le projet permet de demontrer</h3>
-                    <?php echo self::renderCompetencyList($competencies); ?>
-                </section>
-                <section>
-                    <h3>Indicateurs</h3>
-                    <p>Taches : <?php echo esc_html((string) ((int) $project['done_tasks_count'] . ' faites / ' . (int) $project['tasks_count'])); ?></p>
-                    <p>Livrables : <?php echo esc_html((string) ((int) $project['validated_deliverables_count'] . ' valides / ' . (int) $project['deliverables_count'])); ?></p>
-                    <p>Derniere trace : <?php echo esc_html((string) ($project['last_evidence_at'] ?: '-')); ?></p>
-                </section>
-            </div>
-
-            <section><h3>Livrables</h3><?php echo self::renderDeliverablesTable($deliverables); ?></section>
-            <section><h3>Taches principales</h3><?php echo self::renderTasksTable($tasks); ?></section>
-            <section><h3>Journal recent</h3><?php echo self::renderLogs($logs); ?></section>
-            <section><h3>Traces</h3><?php echo self::renderEvidenceList($evidence); ?></section>
-        </section>
-        <?php
-
-        return (string) ob_get_clean();
     }
 
     public static function btsSituation($atts = []): string

@@ -27,13 +27,17 @@ final class AdminPage
 
     public static function registerMenu(): void
     {
+        if (!self::canManage()) {
+            return;
+        }
+
         $parent = defined('OUINPO_SUITE_ADMIN_SLUG') ? OUINPO_SUITE_ADMIN_SLUG : 'ouinpo-suite';
 
         add_submenu_page(
             $parent,
             'OuinPo Projects',
             'Projects',
-            Capabilities::PROJECTS_CREATE,
+            'read',
             self::PAGE,
             [self::class, 'render']
         );
@@ -55,10 +59,21 @@ final class AdminPage
 
         $projectId = isset($_GET['project_id']) ? absint(wp_unslash($_GET['project_id'])) : 0;
         $project = $projectId > 0 ? $repository->getProject($projectId) : null;
+        if ($project && !$repository->userCanManageProject($projectId, get_current_user_id())) {
+            wp_die('Acces refuse a ce projet.', 'Acces refuse', ['response' => 403]);
+        }
         $projects = $repository->listVisibleProjects(get_current_user_id());
         ?>
         <div class="wrap ouinpo-projects-admin">
             <h1>SPOPI Projects - Bureau des Pataprojets Applicatifs</h1>
+
+            <?php if (!PrivateFiles::isProtectionConfigured()): ?>
+                <div class="notice notice-warning">
+                    <p>
+                        <?php echo esc_html(PrivateFiles::protectionWarningMessage()); ?>
+                    </p>
+                </div>
+            <?php endif; ?>
 
             <div class="ouinpo-projects-admin-grid">
                 <div class="ouinpo-projects-admin-card">

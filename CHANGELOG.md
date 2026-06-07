@@ -10,6 +10,7 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Validation JSON eleve renforcee avec bornes `MAX_STUDENT_AI_QUESTIONS`, `MAX_STUDENT_AI_TEXT_LENGTH`, `MAX_STUDENT_AI_WARNINGS` et `MAX_STUDENT_CONTEXT_ITEMS`.
 - Nettoyage des entrees eleves, schemas stricts pour questions, synthese et brouillon portfolio, et copie front robuste avec fallback sans Clipboard API.
 - Documentation de la recette de test lot 5.1, des logs minimaux et du rappel : `Cette aide ne remplace pas ton propre bilan.`
+- Hotfix revue Projects : refus admin 403 pour `project_id` non gere, menu Projects coherent avec les capacites de gestion, avertissement si la protection locale des fichiers de traces ne peut pas etre confirmee, rollback des uploads en echec et suppression des attachments prives lors de la suppression d'une trace.
 
 ## [0.6.3-beta] - 2026-06-06
 
