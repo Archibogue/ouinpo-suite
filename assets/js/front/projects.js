@@ -656,6 +656,12 @@
     preview.innerHTML = '';
     root._ouinpoProjectsStudentAiText = '';
 
+    if (!payload || typeof payload !== 'object') {
+      preview.appendChild(el('p', 'ouinpo-projects-empty', 'Reponse IA inattendue.'));
+      copy.hidden = true;
+      return;
+    }
+
     const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
     if (warnings.length) {
       const warningBox = el('div', 'ouinpo-projects-ai-warning');
@@ -749,15 +755,21 @@
       }
       root._ouinpoProjectsStudentAiText = '';
       setStudentAiBusy(root, true);
-      status.textContent = 'Generation en cours...';
+      if (status) {
+        status.textContent = 'Generation en cours...';
+      }
       request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/student-ai/' + encodeURIComponent(action.dataset.ouinpoProjectsStudentAiAction), {
         method: 'POST',
         body: JSON.stringify(collectStudentAiInput(root))
       }).then(function (payload) {
-        status.textContent = text(payload.ai_notice || 'Brouillon IA recu.');
+        if (status) {
+          status.textContent = text(payload && payload.ai_notice ? payload.ai_notice : 'Brouillon IA recu.');
+        }
         renderStudentAiPayload(root, payload);
       }).catch(function (error) {
-        status.textContent = error.message || 'Erreur IA.';
+        if (status) {
+          status.textContent = error.message || 'Erreur IA.';
+        }
       }).then(function () {
         setStudentAiBusy(root, false);
       });
@@ -770,9 +782,13 @@
           return;
         }
         copyText(value).then(function () {
-          status.textContent = 'Brouillon copie.';
+          if (status) {
+            status.textContent = 'Brouillon copie.';
+          }
         }).catch(function () {
-          status.textContent = 'Copie impossible. Le brouillon reste affiche.';
+          if (status) {
+            status.textContent = 'Copie impossible. Le brouillon reste affiche.';
+          }
         });
       });
     }

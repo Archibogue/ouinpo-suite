@@ -521,7 +521,7 @@ final class ProjectsStudentAiAssistant
 
     private function requiredString(array $data, string $key, int $maxLength, string $message)
     {
-        if (!array_key_exists($key, $data) || is_array($data[$key]) || is_object($data[$key])) {
+        if (!array_key_exists($key, $data) || !is_string($data[$key])) {
             return $this->schemaError($message);
         }
 
@@ -541,6 +541,9 @@ final class ProjectsStudentAiAssistant
 
         $items = [];
         foreach (array_slice($value, 0, $limit) as $item) {
+            if (!is_string($item)) {
+                continue;
+            }
             $clean = $this->cleanString($item, $maxLength);
             if ($clean !== '') {
                 $items[] = $clean;

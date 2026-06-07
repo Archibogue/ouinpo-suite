@@ -324,9 +324,9 @@ Assistant IA Projects :
 
 Assistant IA eleve Projects :
 
-- activation en deux temps : option globale `ouinpo_projects_student_ai_enabled` puis case `IA eleve` sur le projet ;
+- activation en deux temps : option globale `ouinpo_projects_student_ai_enabled` dans les reglages IA SegFault, puis case `IA eleve` sur le projet ;
 - routes REST connectees uniquement, avec nonce REST, capacite `ouinpo_projects_ai_student_use`, projet existant non archive, membre actuel du projet, option globale active, option projet active et quota disponible ;
-- champs eleve obligatoires dans l'interface : role, travail realise, difficultes, solutions, apprentissages et elements a montrer ; au moins le role ou le travail reel doit etre renseigne ;
+- champs eleve disponibles dans l'interface : role, travail realise, difficultes, solutions, apprentissages et elements a montrer ; au moins le role ou le travail reel doit etre renseigne ;
 - si le role et le travail reel sont vides, le message attendu est : `Indique d’abord ce que tu as réellement fait dans le projet.` ;
 - quotas dedies : `ouinpo_ai_projects_student_per_minute`, `ouinpo_ai_projects_student_per_day` et `ouinpo_ai_projects_student_max_tokens` ;
 - contexte minimise : titre, description generale, statut, periode, taches liees a l'eleve, livrables en metadata, traces de l'eleve, synthese de traces globales, journal de l'eleve et competences liees ;
@@ -455,7 +455,7 @@ Limites actuelles : IA Projects limitee a des brouillons enseignants valides man
 
 #### Recette IA eleve Projects lots 5 et 5.1
 
-1. Activer l'IA globale, `ouinpo_projects_student_ai_enabled`, puis cocher `IA eleve` sur un projet de test.
+1. Activer l'IA globale et `ouinpo_projects_student_ai_enabled` dans les reglages IA SegFault, puis cocher `IA eleve` sur un projet de test.
 2. Verifier qu'un eleve membre voit l'acces `IA portfolio` depuis `[ouinpo_my_projects]` ou le shortcode `[ouinpo_project_student_ai]`.
 3. Appeler les trois actions avec les champs vides : la route doit renvoyer exactement `Indique d’abord ce que tu as réellement fait dans le projet.` et ne pas consommer de quota.
 4. Renseigner le role ou le travail realise, puis generer questions de recul, synthese personnelle et brouillon portfolio.

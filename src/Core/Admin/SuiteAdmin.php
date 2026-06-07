@@ -2667,6 +2667,7 @@ final class SuiteAdmin
         $segfaultEnabled = ModuleSettings::isEnabled('segfault');
         $aiEnabled = ((int) get_option('ouinpo_ai_enabled', 0) === 1);
         $publicAiEnabled = ((int) get_option('ouinpo_ai_public_enabled', 0) === 1);
+        $projectsStudentAiEnabled = ((int) get_option('ouinpo_projects_student_ai_enabled', 0) === 1);
         ?>
         <div class="ouinpo-suite-grid">
             <div class="card ouinpo-suite-card">
@@ -2679,6 +2680,7 @@ final class SuiteAdmin
                 <p>
                     <?php self::statusBadge($aiEnabled, 'IA active', 'IA desactivee'); ?>
                     <?php self::statusBadge($publicAiEnabled, 'IA publique active', 'IA publique fermee'); ?>
+                    <?php self::statusBadge($projectsStudentAiEnabled, 'IA eleve Projects active', 'IA eleve Projects fermee'); ?>
                 </p>
                 <?php if ($segfaultEnabled): ?>
                     <p class="ouinpo-suite-bottomless">
@@ -2794,6 +2796,9 @@ final class SuiteAdmin
             'Sujet pratique / jour' => AiSettings::quota('ouinpo_ai_practical_ai_per_day'),
             'Enseignant / minute' => AiSettings::quota('ouinpo_ai_teacher_per_minute'),
             'Enseignant / jour' => AiSettings::quota('ouinpo_ai_teacher_per_day'),
+            'Projects IA eleve / minute' => AiSettings::quota('ouinpo_ai_projects_student_per_minute'),
+            'Projects IA eleve / jour' => AiSettings::quota('ouinpo_ai_projects_student_per_day'),
+            'Projects IA eleve / tokens' => AiSettings::maxTokens('ouinpo_ai_projects_student_max_tokens'),
             'Reference Albert indicative' => 'openai/gpt-oss-120b : 50 RPM / 5000 RPD',
         ];
     }
@@ -2811,12 +2816,14 @@ final class SuiteAdmin
             'Correction exercice / minute' => ['ouinpo_ai_exercise_ai_per_minute', $known_rpm],
             'Sujet pratique / minute' => ['ouinpo_ai_practical_ai_per_minute', $known_rpm],
             'Enseignant / minute' => ['ouinpo_ai_teacher_per_minute', $known_rpm],
+            'Projects IA eleve / minute' => ['ouinpo_ai_projects_student_per_minute', $known_rpm],
             'Public anonyme / IP / jour' => ['ouinpo_ai_public_ip_per_day', $known_rpd],
             'Public global / jour' => ['ouinpo_ai_public_global_per_day', $known_rpd],
             'Eleve connecte / jour' => ['ouinpo_ai_student_per_day', $known_rpd],
             'Correction exercice / jour' => ['ouinpo_ai_exercise_ai_per_day', $known_rpd],
             'Sujet pratique / jour' => ['ouinpo_ai_practical_ai_per_day', $known_rpd],
             'Enseignant / jour' => ['ouinpo_ai_teacher_per_day', $known_rpd],
+            'Projects IA eleve / jour' => ['ouinpo_ai_projects_student_per_day', $known_rpd],
         ] as $label => [$option, $limit]) {
             $value = AiSettings::quota($option);
             if ($value > $limit) {

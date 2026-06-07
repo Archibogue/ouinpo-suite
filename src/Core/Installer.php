@@ -6,13 +6,15 @@ final class Installer
     public static function maybeUpgrade(): void
     {
         $installed = (string) get_option('ouinpo_suite_version', '0.2.0');
+        self::ensureProjectsStudentAiSchema();
+
         if (version_compare($installed, OUINPO_SUITE_VERSION, '>=')) {
             return;
         }
 
         self::installOrUpgradeSharedSchema();
         AiSettings::migrate_public_access_for_existing_site($installed);
-        self::ensureProjectsStudentAiDefaults();
+        self::ensureProjectsStudentAiSchema();
         Capabilities::install();
         update_option('ouinpo_suite_version', OUINPO_SUITE_VERSION, false);
     }
@@ -441,6 +443,22 @@ private static function addForeignKeyIfMissing(string $table, string $name, stri
 
         update_option('ouinpo_suite_fk_failures', $failures, false);
     }
+}
+
+public static function ensureProjectsStudentAiSchema(): void
+{
+    global $wpdb;
+
+    $projects = $wpdb->prefix . 'ouinpo_projects';
+    $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $projects));
+    if ((string) $tableExists === $projects) {
+        $columnExists = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$projects} LIKE %s", 'student_ai_enabled'));
+        if (!$columnExists) {
+            $wpdb->query("ALTER TABLE {$projects} ADD student_ai_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER status");
+        }
+    }
+
+    self::ensureProjectsStudentAiDefaults();
 }
 
 private static function ensureProjectsStudentAiDefaults(): void
