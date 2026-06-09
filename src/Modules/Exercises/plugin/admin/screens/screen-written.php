@@ -213,6 +213,9 @@ final class ScreenWritten
         if (isset($_GET['saved'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Annale enregistree.</p></div>';
         }
+        if (isset($_GET['deleted'])) {
+            echo '<div class="notice notice-success is-dismissible"><p>Annale supprimee.</p></div>';
+        }
         if (isset($_GET['file_error'])) {
             echo '<div class="notice notice-error is-dismissible"><p>' . esc_html(wp_unslash((string) $_GET['file_error'])) . '</p></div>';
         }
@@ -244,17 +247,25 @@ final class ScreenWritten
         echo '<div>';
         echo '<h2>Annales</h2>';
         echo '<p><a class="button button-primary" href="' . esc_url(self::redirect_url()) . '">Nouvelle annale</a></p>';
-        echo '<table class="widefat striped"><thead><tr><th>Titre</th><th>Session</th><th>Questions</th><th>Visible</th></tr></thead><tbody>';
+        echo '<table class="widefat striped"><thead><tr><th>Titre</th><th>Session</th><th>Questions</th><th>Visible</th><th>Action</th></tr></thead><tbody>';
         if (!$subjects) {
-            echo '<tr><td colspan="4">Aucune annale pour le moment.</td></tr>';
+            echo '<tr><td colspan="5">Aucune annale pour le moment.</td></tr>';
         }
         foreach ($subjects as $row) {
             $url = self::redirect_url(['subject_id' => (int) $row['id']]);
+            $delete_url = wp_nonce_url(
+                add_query_arg([
+                    'action' => 'ouinpo_delete_written_subject',
+                    'subject_id' => (int) $row['id'],
+                ], admin_url('admin-post.php')),
+                'ouinpo_delete_written_subject_' . (int) $row['id']
+            );
             echo '<tr>';
             echo '<td><a href="' . esc_url($url) . '">' . esc_html((string) $row['title']) . '</a></td>';
             echo '<td>' . esc_html(trim((string) ($row['session_label'] ?? '') . ' ' . (string) ($row['year_label'] ?? '') . ' ' . (string) ($row['center_label'] ?? ''))) . '</td>';
             echo '<td>' . esc_html((string) (int) $row['questions_count']) . '</td>';
             echo '<td>' . (!empty($row['is_active']) ? 'Oui' : 'Non') . '</td>';
+            echo '<td><a class="button-link-delete" href="' . esc_url($delete_url) . '" onclick="return confirm(\'Supprimer cette annale et toutes les donnees eleves associees ?\');">Supprimer</a></td>';
             echo '</tr>';
         }
         echo '</tbody></table>';
@@ -726,6 +737,118 @@ final class ScreenWritten
 
         wp_safe_redirect(self::redirect_url(['subject_id' => $subject_id, 'saved' => 1]));
         exit;
+    }
+
+    public static function handle_delete_subject(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
+            wp_die('Acces refuse.');
+        }
+
+        $subject_id = isset($_GET['subject_id']) ? (int) $_GET['subject_id'] : 0;
+        check_admin_referer('ouinpo_delete_written_subject_' . $subject_id);
+
+        if ($subject_id <= 0 || !self::fetch_subject($subject_id)) {
+            wp_safe_redirect(self::redirect_url());
+            exit;
+        }
+
+        global $wpdb;
+
+        $tS = self::table('written_subjects');
+        $tSL = self::table('written_subject_school_level');
+        $tE = self::table('written_exercises');
+        $tQ = self::table('written_questions');
+        $tQC = self::table('written_question_competency');
+        $tH = self::table('written_question_hints');
+        $tStatus = self::table('written_question_status');
+        $tAnswers = self::table('written_question_answers');
+        $tHintUsage = self::table('written_hint_usage');
+        $tFiles = self::table('subject_files');
+
+        $files = $wpdb->get_results($wpdb->prepare(
+            "SELECT file_url FROM {$tFiles} WHERE subject_type = 'written' AND subject_id = %d",
+            $subject_id
+        ), ARRAY_A) ?: [];
+
+        $exercise_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$tE} WHERE subject_id = %d",
+            $subject_id
+        )) ?: []);
+
+        $question_ids = [];
+        if ($exercise_ids) {
+            $placeholders = implode(',', array_fill(0, count($exercise_ids), '%d'));
+            $question_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+                "SELECT id FROM {$tQ} WHERE exercise_id IN ({$placeholders})",
+                $exercise_ids
+            )) ?: []);
+        }
+
+        foreach ($files as $file) {
+            self::delete_uploaded_file_by_url((string) ($file['file_url'] ?? ''));
+        }
+
+        if ($question_ids) {
+            self::delete_where_in($tAnswers, 'question_id', $question_ids);
+            self::delete_where_in($tHintUsage, 'question_id', $question_ids);
+            self::delete_where_in($tStatus, 'question_id', $question_ids);
+            self::delete_where_in($tQC, 'question_id', $question_ids);
+            self::delete_where_in($tH, 'question_id', $question_ids);
+            self::delete_where_in($tQ, 'id', $question_ids);
+        }
+
+        if ($exercise_ids) {
+            self::delete_where_in($tE, 'id', $exercise_ids);
+        }
+
+        $wpdb->delete($tSL, ['subject_id' => $subject_id], ['%d']);
+        $wpdb->delete($tFiles, ['subject_type' => 'written', 'subject_id' => $subject_id], ['%s', '%d']);
+        $wpdb->delete($tS, ['id' => $subject_id], ['%d']);
+
+        wp_safe_redirect(self::redirect_url(['deleted' => 1]));
+        exit;
+    }
+
+    private static function delete_where_in(string $table, string $column, array $ids): void
+    {
+        global $wpdb;
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (!$ids) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$table} WHERE {$column} IN ({$placeholders})", $ids));
+    }
+
+    private static function delete_uploaded_file_by_url(string $file_url): void
+    {
+        $file_url = esc_url_raw(trim($file_url));
+        if ($file_url === '') {
+            return;
+        }
+
+        $uploads = wp_upload_dir();
+        $base_url = rtrim((string) ($uploads['baseurl'] ?? ''), '/');
+        $base_dir = wp_normalize_path((string) ($uploads['basedir'] ?? ''));
+        if ($base_url === '' || $base_dir === '' || !str_starts_with($file_url, $base_url . '/')) {
+            return;
+        }
+
+        $relative = rawurldecode(ltrim(substr($file_url, strlen($base_url)), '/'));
+        if ($relative === '' || str_contains($relative, '..')) {
+            return;
+        }
+
+        $path = wp_normalize_path(trailingslashit($base_dir) . $relative);
+        $safe_base = trailingslashit($base_dir);
+        if (!str_starts_with($path, $safe_base) || !is_file($path)) {
+            return;
+        }
+
+        @unlink($path);
     }
 
     public static function handle_import_pdf(): void

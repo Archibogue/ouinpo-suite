@@ -114,6 +114,7 @@ if (is_admin()) {
     add_action('admin_post_ouinpo_delete_practical_file', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_delete_file']);
     add_action('admin_post_ouinpo_save_written_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_save']);
     add_action('admin_post_ouinpo_delete_written_file', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_delete_file']);
+    add_action('admin_post_ouinpo_delete_written_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_delete_subject']);
     add_action('admin_post_ouinpo_import_written_pdf', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_import_pdf']);
     add_action('admin_post_ouinpo_written_question_status', ['\\Ouinpo\\Exercises\\Rest\\WrittenSubjectRoutes', 'handle_status_form']);
 
