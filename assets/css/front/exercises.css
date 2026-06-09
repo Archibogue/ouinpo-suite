@@ -2668,6 +2668,18 @@
   margin: 1rem 0 0.75rem;
 }
 
+.ouinpo-written-question-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ouinpo-written-question-progress.is-hidden {
+  display: none;
+}
+
 .ouinpo-exercise-statement pre {
   max-width: 100%;
   overflow: auto;

@@ -319,6 +319,41 @@
     };
   }
 
+  function updateWrittenQuestionProgressTag(questionRoot, forcedStatus) {
+    if (!questionRoot) return;
+
+    const tag = questionRoot.querySelector('[data-written-question-progress-tag]');
+    if (!tag) return;
+
+    const textarea = questionRoot.querySelector('[data-written-question-id].ouinpo-written-answer');
+    const answer = textarea ? String(textarea.value || '').trim() : '';
+    const currentStatus = forcedStatus || String(tag.getAttribute('data-written-question-status') || '').trim();
+
+    tag.classList.remove('ouinpo-badge--attempted', 'ouinpo-badge--solved');
+
+    if (currentStatus === 'solved') {
+      tag.textContent = 'Réussie';
+      tag.classList.add('ouinpo-badge--solved');
+      tag.classList.remove('is-hidden');
+      tag.setAttribute('data-written-question-status', 'solved');
+      return;
+    }
+
+    if (answer.length > 0 || currentStatus === 'attempted') {
+      tag.textContent = 'En cours';
+      tag.classList.add('ouinpo-badge--attempted');
+      tag.classList.remove('is-hidden');
+      if (currentStatus !== 'attempted') {
+        tag.setAttribute('data-written-question-status', 'none');
+      }
+      return;
+    }
+
+    tag.textContent = '';
+    tag.classList.add('is-hidden');
+    tag.setAttribute('data-written-question-status', 'none');
+  }
+
   function bindWrittenQuestionAdvice() {
     let didWork = false;
 
@@ -349,6 +384,7 @@
           const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/student-advice', collected.payload);
           renderMessage(status, 'Evaluation IA generee. Ta reponse et les aides cochees ont ete enregistrees.', 'ouinpo-success');
           renderWrittenQuestionAdvice(output, data && data.advice ? data.advice : {});
+          updateWrittenQuestionProgressTag(questionRoot, data && data.advice && data.advice.safe_to_mark_solved ? 'solved' : null);
         } catch (err) {
           renderMessage(status, err && err.message ? err.message : 'Evaluation impossible pour le moment.', 'ouinpo-error');
         } finally {
@@ -419,7 +455,10 @@
       }
 
       root.querySelectorAll('.ouinpo-written-answer').forEach(function (textarea) {
-        textarea.addEventListener('input', scheduleProgressSave);
+        textarea.addEventListener('input', function () {
+          updateWrittenQuestionProgressTag(textarea.closest('.ouinpo-written-question-front'));
+          scheduleProgressSave();
+        });
         textarea.addEventListener('blur', saveProgressQuietly);
       });
 
@@ -447,6 +486,9 @@
             });
             root.querySelectorAll('[data-written-question-advice-status], [data-written-question-advice-output], [data-written-report-output]').forEach(function (node) {
               node.innerHTML = '';
+            });
+            root.querySelectorAll('.ouinpo-written-question-front').forEach(function (questionRoot) {
+              updateWrittenQuestionProgressTag(questionRoot, 'none');
             });
 
             renderMessage(status, 'Sujet remis a zero pour ton compte.', 'ouinpo-success');

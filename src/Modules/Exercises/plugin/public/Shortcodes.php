@@ -1906,8 +1906,30 @@ public static function render_written_subject($atts = array(), $content = '') {
         <?php endif; ?>
 
         <?php foreach ((array) ($exercise['questions'] ?? []) as $question): ?>
+          <?php
+          $question_status = (string) ($question['student_status'] ?? 'none');
+          $has_answer = trim((string) ($question['student_answer'] ?? '')) !== '';
+          $question_tag = '';
+          $question_tag_class = '';
+          if ($question_status === 'solved') {
+            $question_tag = 'Réussie';
+            $question_tag_class = 'ouinpo-badge--solved';
+          } elseif ($has_answer || $question_status === 'attempted') {
+            $question_tag = 'En cours';
+            $question_tag_class = 'ouinpo-badge--attempted';
+          }
+          ?>
           <article class="ouinpo-written-question-front">
-            <h4><?php echo esc_html('Question ' . (string) ($question['question_label'] ?? '')); ?></h4>
+            <h4 class="ouinpo-written-question-title">
+              <span><?php echo esc_html('Question ' . (string) ($question['question_label'] ?? '')); ?></span>
+              <?php if (is_user_logged_in()): ?>
+                <span
+                  class="ouinpo-badge ouinpo-written-question-progress <?php echo esc_attr($question_tag_class); ?><?php echo $question_tag === '' ? ' is-hidden' : ''; ?>"
+                  data-written-question-progress-tag
+                  data-written-question-status="<?php echo esc_attr($question_status); ?>"
+                ><?php echo esc_html($question_tag); ?></span>
+              <?php endif; ?>
+            </h4>
             <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) ($question['prompt_html'] ?? '')); ?></div>
 
             <?php if (!empty($question['competencies'])): ?>
@@ -1942,16 +1964,14 @@ public static function render_written_subject($atts = array(), $content = '') {
               </div>
 
               <div class="ouinpo-written-status-actions">
-                <?php foreach (['attempted' => 'Marquer travaillee', 'solved' => 'Marquer reussie'] as $status_value => $status_label): ?>
-                  <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form">
-                    <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
-                    <input type="hidden" name="action" value="ouinpo_written_question_status">
-                    <input type="hidden" name="question_id" value="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">
-                    <input type="hidden" name="status" value="<?php echo esc_attr($status_value); ?>">
-                    <input type="hidden" name="redirect_to" value="<?php echo esc_url((string) ($_SERVER['REQUEST_URI'] ?? '')); ?>">
-                    <button type="submit" class="button"><?php echo esc_html($status_label); ?></button>
-                  </form>
-                <?php endforeach; ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form">
+                  <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
+                  <input type="hidden" name="action" value="ouinpo_written_question_status">
+                  <input type="hidden" name="question_id" value="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">
+                  <input type="hidden" name="status" value="solved">
+                  <input type="hidden" name="redirect_to" value="<?php echo esc_url((string) ($_SERVER['REQUEST_URI'] ?? '')); ?>">
+                  <button type="submit" class="button">Réussie</button>
+                </form>
               </div>
             <?php endif; ?>
 
