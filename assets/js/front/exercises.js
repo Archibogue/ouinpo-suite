@@ -397,6 +397,56 @@
     return didWork;
   }
 
+  function bindWrittenQuestionStatusForms() {
+    let didWork = false;
+
+    document.querySelectorAll('[data-written-question-status-form]').forEach(function (form) {
+      if (form.dataset.ouinpoQuestionStatusBooted === '1') return;
+
+      form.dataset.ouinpoQuestionStatusBooted = '1';
+      didWork = true;
+
+      const questionRoot = form.closest('.ouinpo-written-question-front');
+      const button = form.querySelector('button[type="submit"]');
+      const statusEl = questionRoot ? questionRoot.querySelector('[data-written-question-advice-status]') : null;
+      const questionInput = form.querySelector('input[name="question_id"]');
+      const statusInput = form.querySelector('input[name="status"]');
+      const questionId = questionInput ? String(questionInput.value || '').trim() : '';
+      const nextStatus = statusInput ? String(statusInput.value || 'solved').trim() : 'solved';
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        if (!questionId) {
+          renderMessage(statusEl, 'Question introuvable.', 'ouinpo-error');
+          return;
+        }
+
+        if (button) {
+          button.disabled = true;
+          button.classList.add('is-loading');
+        }
+
+        try {
+          const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/status', {
+            status: nextStatus
+          });
+          updateWrittenQuestionProgressTag(questionRoot, data && data.status ? data.status : nextStatus);
+          renderMessage(statusEl, 'Question marquée réussie.', 'ouinpo-success');
+        } catch (err) {
+          renderMessage(statusEl, err && err.message ? err.message : 'Statut impossible à enregistrer pour le moment.', 'ouinpo-error');
+        } finally {
+          if (button) {
+            button.disabled = false;
+            button.classList.remove('is-loading');
+          }
+        }
+      });
+    });
+
+    return didWork;
+  }
+
   function bindWrittenSubjectReports() {
     let didWork = false;
 
@@ -3481,6 +3531,10 @@ function enableTabInAnswerTextareas() {
     }
 
     if (bindWrittenQuestionAdvice()) {
+      didWork = true;
+    }
+
+    if (bindWrittenQuestionStatusForms()) {
       didWork = true;
     }
 

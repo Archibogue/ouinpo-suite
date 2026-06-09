@@ -2119,7 +2119,7 @@ public static function render_written_subject($atts = array(), $content = '') {
               </div>
 
               <div class="ouinpo-written-status-actions">
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form">
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form" data-written-question-status-form>
                   <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
                   <input type="hidden" name="action" value="ouinpo_written_question_status">
                   <input type="hidden" name="question_id" value="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">
