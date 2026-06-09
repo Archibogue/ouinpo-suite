@@ -232,6 +232,7 @@ final class WrittenSubjectPdfImporter
             'source_type' => $source_type,
             'fallback_title' => sanitize_text_field((string) ($request['fallback_title'] ?? 'Annale NSI')),
             'source_filename' => sanitize_file_name((string) ($request['source_filename'] ?? '')),
+            'existing_subject_id' => max(0, (int) ($request['existing_subject_id'] ?? 0)),
         ];
     }
 
@@ -427,7 +428,8 @@ final class WrittenSubjectPdfImporter
         if ($slug === '') {
             $slug = sanitize_title($title);
         }
-        $slug = $this->unique_slug($slug);
+        $existing_subject_id = max(0, (int) ($context['existing_subject_id'] ?? 0));
+        $slug = $this->unique_slug($slug, $existing_subject_id);
 
         $subject_group = sanitize_text_field((string) (self::first_value($data, ['subject_group', 'group', 'groupe', 'serie']) ?? $slug));
         if ($subject_group === '') {
@@ -865,9 +867,21 @@ final class WrittenSubjectPdfImporter
         global $wpdb;
 
         $p = $wpdb->prefix . 'ouin_exo_';
+        $existing_subject_id = max(0, (int) ($context['existing_subject_id'] ?? 0));
+        $existing_visibility = null;
+        if ($existing_subject_id > 0) {
+            $existing_visibility = $wpdb->get_var($wpdb->prepare(
+                "SELECT is_active FROM {$p}written_subjects WHERE id = %d LIMIT 1",
+                $existing_subject_id
+            ));
+            if ($existing_visibility === null) {
+                $existing_subject_id = 0;
+            }
+        }
+
         $wpdb->query('START TRANSACTION');
 
-        $inserted = $wpdb->insert($p . 'written_subjects', [
+        $subject_payload = [
             'title' => $data['title'],
             'slug' => $data['slug'],
             'statement' => $data['statement_html'] ?: null,
@@ -877,17 +891,31 @@ final class WrittenSubjectPdfImporter
             'center_label' => $data['center_label'] ?: null,
             'subject_group' => $data['subject_group'],
             'estimated_minutes' => $data['estimated_minutes'],
-            'is_active' => 0,
-            'created_at' => current_time('mysql'),
+            'is_active' => $existing_subject_id > 0 ? (int) $existing_visibility : 0,
             'updated_at' => current_time('mysql'),
-        ]);
+        ];
 
-        $subject_id = (int) $wpdb->insert_id;
-        if ($inserted === false || $subject_id <= 0) {
-            $wpdb->query('ROLLBACK');
-            return new \WP_Error('insert_failed', 'Creation de l annale impossible.');
+        if ($existing_subject_id > 0) {
+            $updated = $wpdb->update($p . 'written_subjects', $subject_payload, ['id' => $existing_subject_id]);
+            if ($updated === false) {
+                $wpdb->query('ROLLBACK');
+                return new \WP_Error('update_failed', 'Mise a jour de l annale impossible.');
+            }
+
+            $subject_id = $existing_subject_id;
+            $this->delete_existing_subject_content($subject_id);
+        } else {
+            $subject_payload['created_at'] = current_time('mysql');
+            $inserted = $wpdb->insert($p . 'written_subjects', $subject_payload);
+
+            $subject_id = (int) $wpdb->insert_id;
+            if ($inserted === false || $subject_id <= 0) {
+                $wpdb->query('ROLLBACK');
+                return new \WP_Error('insert_failed', 'Creation de l annale impossible.');
+            }
         }
 
+        $wpdb->delete($p . 'written_subject_school_level', ['subject_id' => $subject_id], ['%d']);
         foreach ((array) $context['school_levels'] as $level_id) {
             $level_id = (int) $level_id;
             if ($level_id > 0) {
@@ -971,7 +999,51 @@ final class WrittenSubjectPdfImporter
         return $subject_id;
     }
 
-    private function unique_slug(string $slug): string
+    private function delete_existing_subject_content(int $subject_id): void
+    {
+        if ($subject_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+
+        $p = $wpdb->prefix . 'ouin_exo_';
+        $exercise_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$p}written_exercises WHERE subject_id = %d",
+            $subject_id
+        )) ?: []);
+
+        if (!$exercise_ids) {
+            return;
+        }
+
+        $exercise_placeholders = implode(',', array_fill(0, count($exercise_ids), '%d'));
+        $question_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$p}written_questions WHERE exercise_id IN ({$exercise_placeholders})",
+            $exercise_ids
+        )) ?: []);
+
+        if ($question_ids) {
+            $question_placeholders = implode(',', array_fill(0, count($question_ids), '%d'));
+            foreach (['written_question_answers', 'written_hint_usage', 'written_question_status', 'written_question_competency', 'written_question_hints'] as $suffix) {
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM {$p}{$suffix} WHERE question_id IN ({$question_placeholders})",
+                    $question_ids
+                ));
+            }
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$p}written_questions WHERE id IN ({$question_placeholders})",
+                $question_ids
+            ));
+        }
+
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$p}written_exercises WHERE id IN ({$exercise_placeholders})",
+            $exercise_ids
+        ));
+    }
+
+    private function unique_slug(string $slug, int $exclude_subject_id = 0): string
     {
         global $wpdb;
 
@@ -980,7 +1052,11 @@ final class WrittenSubjectPdfImporter
         $candidate = $base;
         $i = 2;
 
-        while ((int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE slug = %s", $candidate)) > 0) {
+        while ((int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE slug = %s AND id <> %d",
+            $candidate,
+            $exclude_subject_id
+        )) > 0) {
             $candidate = $base . '-' . $i;
             $i++;
         }

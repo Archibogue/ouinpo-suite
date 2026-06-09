@@ -93,10 +93,12 @@ final class ScreenWritten
             return [];
         }
 
+        self::ensure_subject_file_identity_columns();
+
         global $wpdb;
         $t = self::table('subject_files');
         return $wpdb->get_results($wpdb->prepare("
-            SELECT id, label, file_name, file_url, file_kind, file_order
+            SELECT id, label, file_name, original_file_name, file_url, file_size, file_hash, file_kind, file_order
             FROM {$t}
             WHERE subject_type = 'written'
               AND subject_id = %d
@@ -152,6 +154,140 @@ final class ScreenWritten
         unset($exercise);
 
         return $exercises;
+    }
+
+    private static function ensure_subject_file_identity_columns(): void
+    {
+        global $wpdb;
+
+        $table = self::table('subject_files');
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $columns = (array) $wpdb->get_col("SHOW COLUMNS FROM {$table}");
+        $definitions = [
+            'original_file_name' => 'ALTER TABLE ' . $table . ' ADD COLUMN original_file_name VARCHAR(255) NULL AFTER file_name',
+            'file_size' => 'ALTER TABLE ' . $table . ' ADD COLUMN file_size BIGINT UNSIGNED NULL AFTER file_url',
+            'file_hash' => 'ALTER TABLE ' . $table . ' ADD COLUMN file_hash CHAR(64) NULL AFTER file_size',
+        ];
+
+        foreach ($definitions as $column => $sql) {
+            if (!in_array($column, $columns, true)) {
+                $wpdb->query($sql);
+            }
+        }
+    }
+
+    private static function uploaded_file_identity(array $file, string $filename): array
+    {
+        $tmp_name = (string) ($file['tmp_name'] ?? '');
+
+        return [
+            'original_file_name' => sanitize_file_name($filename),
+            'file_size' => max(0, (int) ($file['size'] ?? 0)),
+            'file_hash' => $tmp_name !== '' && is_readable($tmp_name) ? (string) hash_file('sha256', $tmp_name) : '',
+        ];
+    }
+
+    private static function local_path_from_upload_url(string $file_url): string
+    {
+        $file_url = esc_url_raw(trim($file_url));
+        if ($file_url === '') {
+            return '';
+        }
+
+        $uploads = wp_upload_dir();
+        $base_url = rtrim((string) ($uploads['baseurl'] ?? ''), '/');
+        $base_dir = wp_normalize_path((string) ($uploads['basedir'] ?? ''));
+        if ($base_url === '' || $base_dir === '' || !str_starts_with($file_url, $base_url . '/')) {
+            return '';
+        }
+
+        $relative = rawurldecode(ltrim(substr($file_url, strlen($base_url)), '/'));
+        if ($relative === '' || str_contains($relative, '..')) {
+            return '';
+        }
+
+        $path = wp_normalize_path(trailingslashit($base_dir) . $relative);
+        $safe_base = trailingslashit($base_dir);
+
+        return str_starts_with($path, $safe_base) ? $path : '';
+    }
+
+    private static function find_existing_subject_by_file_identity(array $identity): ?array
+    {
+        $filename = sanitize_file_name((string) ($identity['original_file_name'] ?? ''));
+        $size = (int) ($identity['file_size'] ?? 0);
+        $hash = (string) ($identity['file_hash'] ?? '');
+
+        if ($filename === '' || $size <= 0 || $hash === '') {
+            return null;
+        }
+
+        self::ensure_subject_file_identity_columns();
+
+        global $wpdb;
+        $tF = self::table('subject_files');
+        $tS = self::table('written_subjects');
+
+        $row = $wpdb->get_row($wpdb->prepare("
+            SELECT f.id AS file_id, f.subject_id, f.file_url
+            FROM {$tF} f
+            INNER JOIN {$tS} s ON s.id = f.subject_id
+            WHERE f.subject_type = 'written'
+              AND f.file_kind = 'subject'
+              AND f.original_file_name = %s
+              AND f.file_size = %d
+              AND f.file_hash = %s
+            ORDER BY f.id DESC
+            LIMIT 1",
+            $filename,
+            $size,
+            $hash
+        ), ARRAY_A);
+
+        if (!is_array($row)) {
+            $candidates = $wpdb->get_results($wpdb->prepare("
+                SELECT f.id AS file_id, f.subject_id, f.file_url, f.file_name
+                FROM {$tF} f
+                INNER JOIN {$tS} s ON s.id = f.subject_id
+                WHERE f.subject_type = 'written'
+                  AND f.file_kind = 'subject'
+                  AND (f.file_name = %s OR f.label = %s)
+                ORDER BY f.id DESC",
+                $filename,
+                $filename
+            ), ARRAY_A) ?: [];
+
+            foreach ($candidates as $candidate) {
+                $path = self::local_path_from_upload_url((string) ($candidate['file_url'] ?? ''));
+                if ($path === '' || !is_readable($path) || (int) filesize($path) !== $size || (string) hash_file('sha256', $path) !== $hash) {
+                    continue;
+                }
+
+                $row = $candidate;
+                $wpdb->update($tF, [
+                    'original_file_name' => $filename,
+                    'file_size' => $size,
+                    'file_hash' => $hash,
+                ], ['id' => (int) $candidate['file_id']], ['%s', '%d', '%s'], ['%d']);
+                break;
+            }
+        }
+
+        if (!is_array($row) || (int) ($row['subject_id'] ?? 0) <= 0) {
+            return null;
+        }
+
+        $path = self::local_path_from_upload_url((string) ($row['file_url'] ?? ''));
+
+        return [
+            'subject_id' => (int) $row['subject_id'],
+            'file_id' => (int) ($row['file_id'] ?? 0),
+            'file_url' => (string) ($row['file_url'] ?? ''),
+            'file_path' => $path,
+        ];
     }
 
     public static function render(): void
@@ -211,7 +347,10 @@ final class ScreenWritten
         echo '<h1>Annales ecrites NSI</h1>';
 
         if (isset($_GET['saved'])) {
-            echo '<div class="notice notice-success is-dismissible"><p>Annale enregistree.</p></div>';
+            $saved_message = isset($_GET['updated_existing'])
+                ? 'Annale existante mise a jour.'
+                : 'Annale enregistree.';
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($saved_message) . '</p></div>';
         }
         if (isset($_GET['deleted'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Annale supprimee.</p></div>';
@@ -543,6 +682,7 @@ final class ScreenWritten
         $tQC = self::table('written_question_competency');
         $tH = self::table('written_question_hints');
         $tF = self::table('subject_files');
+        self::ensure_subject_file_identity_columns();
 
         $subject_id = isset($_POST['subject_id']) ? (int) $_POST['subject_id'] : 0;
         $title = sanitize_text_field(wp_unslash((string) ($_POST['title'] ?? '')));
@@ -765,11 +905,14 @@ final class ScreenWritten
                     'subject_id' => $subject_id,
                     'label' => (string) $stored['filename'],
                     'file_name' => (string) $stored['filename'],
+                    'original_file_name' => (string) ($stored['original_filename'] ?? $stored['filename']),
                     'file_url' => (string) $stored['url'],
+                    'file_size' => (int) ($stored['size'] ?? 0),
+                    'file_hash' => (string) ($stored['hash'] ?? ''),
                     'file_kind' => $kind,
                     'file_order' => $file_order,
                     'created_at' => current_time('mysql'),
-                ], ['%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s']);
+                ], ['%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s']);
             }
         }
 
@@ -955,24 +1098,45 @@ final class ScreenWritten
         $fallback_title = sanitize_text_field(wp_unslash((string) ($_POST['fallback_title'] ?? 'Annale NSI')));
         $source_type = sanitize_key(wp_unslash((string) ($_POST['source_type'] ?? 'annale')));
         $school_levels = isset($_POST['school_levels']) ? array_map('intval', (array) wp_unslash($_POST['school_levels'])) : [];
-        $stored = WrittenFiles::store_uploaded_file($file, $fallback_title !== '' ? $fallback_title : 'annale-nsi', 0);
-        if (is_wp_error($stored)) {
-            wp_safe_redirect(self::redirect_url(['import_error' => $stored->get_error_message()]));
-            exit;
+
+        $identity = self::uploaded_file_identity($file, $filename);
+        $existing = self::find_existing_subject_by_file_identity($identity);
+        $stored = null;
+        $file_path = '';
+        $file_url = '';
+        $existing_subject_id = $existing ? (int) ($existing['subject_id'] ?? 0) : 0;
+
+        if ($existing && !empty($existing['file_path']) && is_readable((string) $existing['file_path'])) {
+            $file_path = (string) $existing['file_path'];
+            $file_url = (string) ($existing['file_url'] ?? '');
+        } else {
+            $stored = WrittenFiles::store_uploaded_file(
+                $file,
+                $existing_subject_id > 0 ? 'written_' . $existing_subject_id : ($fallback_title !== '' ? $fallback_title : 'annale-nsi'),
+                $existing_subject_id
+            );
+            if (is_wp_error($stored)) {
+                wp_safe_redirect(self::redirect_url(['import_error' => $stored->get_error_message()]));
+                exit;
+            }
+
+            $file_path = (string) $stored['path'];
+            $file_url = (string) $stored['url'];
         }
 
         $importer = new WrittenSubjectPdfImporter();
         $result = $importer->import([
-            'file_path' => (string) $stored['path'],
-            'file_url' => (string) $stored['url'],
+            'file_path' => $file_path,
+            'file_url' => $file_url,
             'source_filename' => $filename,
             'fallback_title' => $fallback_title,
             'source_type' => $source_type,
             'school_levels' => $school_levels,
+            'existing_subject_id' => $existing_subject_id,
         ]);
 
         if (is_wp_error($result)) {
-            if (!empty($stored['path']) && is_file((string) $stored['path'])) {
+            if (is_array($stored) && !empty($stored['path']) && is_file((string) $stored['path'])) {
                 @unlink((string) $stored['path']);
             }
             wp_safe_redirect(self::redirect_url(['import_error' => $result->get_error_message()]));
@@ -980,11 +1144,11 @@ final class ScreenWritten
         }
 
         $subject_id = (int) ($result['subject_id'] ?? 0);
-        if ($subject_id > 0) {
-            self::attach_stored_subject_file($stored, $subject_id);
+        if ($subject_id > 0 && is_array($stored)) {
+            self::attach_stored_subject_file($stored, $subject_id, $identity);
         }
 
-        wp_safe_redirect(self::redirect_url(['subject_id' => $subject_id, 'saved' => 1]));
+        wp_safe_redirect(self::redirect_url(['subject_id' => $subject_id, 'saved' => 1] + ($existing_subject_id > 0 ? ['updated_existing' => 1] : [])));
         exit;
     }
 
@@ -1002,11 +1166,13 @@ final class ScreenWritten
         self::attach_stored_subject_file($stored, $subject_id);
     }
 
-    private static function attach_stored_subject_file(array $stored, int $subject_id): void
+    private static function attach_stored_subject_file(array $stored, int $subject_id, array $identity = []): void
     {
         if ($subject_id <= 0 || empty($stored['filename']) || empty($stored['url'])) {
             return;
         }
+
+        self::ensure_subject_file_identity_columns();
 
         global $wpdb;
         $tF = self::table('subject_files');
@@ -1014,16 +1180,22 @@ final class ScreenWritten
             "SELECT COALESCE(MAX(file_order), 0) FROM {$tF} WHERE subject_type = 'written' AND subject_id = %d",
             $subject_id
         ));
+        $original_name = (string) ($identity['original_file_name'] ?? $stored['original_filename'] ?? $stored['filename']);
+        $file_size = (int) ($identity['file_size'] ?? $stored['size'] ?? 0);
+        $file_hash = (string) ($identity['file_hash'] ?? $stored['hash'] ?? '');
 
         $wpdb->insert($tF, [
             'subject_type' => 'written',
             'subject_id' => $subject_id,
             'label' => (string) $stored['filename'],
             'file_name' => (string) $stored['filename'],
+            'original_file_name' => $original_name,
             'file_url' => (string) $stored['url'],
+            'file_size' => $file_size,
+            'file_hash' => $file_hash,
             'file_kind' => 'subject',
             'file_order' => $file_order + 1,
             'created_at' => current_time('mysql'),
-        ], ['%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s']);
+        ], ['%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s']);
     }
 }

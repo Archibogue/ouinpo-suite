@@ -888,12 +888,16 @@ class InstallV2 {
             subject_id BIGINT UNSIGNED NOT NULL,
             label VARCHAR(150) NOT NULL,
             file_name VARCHAR(255) NOT NULL,
+            original_file_name VARCHAR(255) NULL,
             file_url VARCHAR(1000) NOT NULL,
+            file_size BIGINT UNSIGNED NULL,
+            file_hash CHAR(64) NULL,
             file_kind ENUM('subject','resource','correction') NOT NULL DEFAULT 'subject',
             file_order SMALLINT UNSIGNED NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY subject_lookup (subject_type, subject_id),
+            KEY file_identity (subject_type, file_kind, original_file_name(120), file_size),
             KEY file_kind (file_kind)
         ) $charset_innodb;";
 

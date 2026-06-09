@@ -61,9 +61,9 @@ final class WrittenFiles
             return new \WP_Error('missing_file', 'Fichier manquant.');
         }
 
-        $filename = self::validate_file_name((string) $file['name']);
-        if (is_wp_error($filename)) {
-            return $filename;
+        $original_filename = self::validate_file_name((string) $file['name']);
+        if (is_wp_error($original_filename)) {
+            return $original_filename;
         }
 
         $mime = self::validate_uploaded_mime($file);
@@ -72,7 +72,7 @@ final class WrittenFiles
         }
 
         $dir = self::get_subject_dir($folder_seed, $subject_id);
-        $filename = wp_unique_filename($dir['path'], $filename);
+        $filename = wp_unique_filename($dir['path'], $original_filename);
         $target = trailingslashit($dir['path']) . $filename;
 
         if (!@move_uploaded_file((string) $file['tmp_name'], $target)) {
@@ -82,9 +82,12 @@ final class WrittenFiles
         @chmod($target, 0644);
 
         return [
-            'filename' => $filename,
-            'path'     => $target,
-            'url'      => trailingslashit($dir['url']) . rawurlencode($filename),
+            'filename'          => $filename,
+            'original_filename' => $original_filename,
+            'size'              => is_file($target) ? (int) filesize($target) : (int) ($file['size'] ?? 0),
+            'hash'              => is_file($target) ? (string) hash_file('sha256', $target) : '',
+            'path'              => $target,
+            'url'               => trailingslashit($dir['url']) . rawurlencode($filename),
         ];
     }
 
