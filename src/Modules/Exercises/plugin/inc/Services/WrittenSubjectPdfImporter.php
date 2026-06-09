@@ -8,7 +8,8 @@ defined('ABSPATH') || exit;
 
 final class WrittenSubjectPdfImporter
 {
-    private const MAX_PDF_TEXT_CHARS = 32000;
+    private const MAX_PDF_TEXT_CHARS = 90000;
+    private const MAX_SOURCE_TRANSCRIPT_CHARS = 120000;
 
     public function import(array $request): array|\WP_Error
     {
@@ -64,7 +65,7 @@ final class WrittenSubjectPdfImporter
 
         $answer = \OuInPo\SegFault\OpenAI::respond($this->messages($context), [
             'temperature' => 0.15,
-            'max_tokens' => max(8000, AiSettings::maxTokens('ouinpo_ai_practical_ai_max_tokens')),
+            'max_tokens' => 16000,
             'response_format' => ['type' => 'json_object'],
             'albert_purpose' => 'chat',
         ]);
@@ -224,11 +225,13 @@ final class WrittenSubjectPdfImporter
 
         return [
             'pdf_text' => mb_substr($pdf_text, 0, self::MAX_PDF_TEXT_CHARS),
+            'source_text' => mb_substr($pdf_text, 0, self::MAX_SOURCE_TRANSCRIPT_CHARS),
             'competencies' => $competencies,
             'competency_ids' => array_map(static fn(array $row): int => (int) $row['id'], $competencies),
             'school_levels' => $level_ids,
             'source_type' => $source_type,
             'fallback_title' => sanitize_text_field((string) ($request['fallback_title'] ?? 'Annale NSI')),
+            'source_filename' => sanitize_file_name((string) ($request['source_filename'] ?? '')),
         ];
     }
 
@@ -274,16 +277,20 @@ final class WrittenSubjectPdfImporter
             . "Contraintes :\n"
             . "- Utilise exactement les cles JSON de l'exemple : exercises, questions, prompt_html, competency_ids, hints, html.\n"
             . "- Une entree exercises par exercice du sujet officiel.\n"
+            . "- Le nombre d entrees exercises doit correspondre a tous les titres Exercice 1, Exercice 2, Exercice 3, etc. presents dans le texte. Ne t arrete pas apres le premier exercice.\n"
+            . "- Renseigne obligatoirement session_label, year_label et center_label a partir de l en-tete du sujet ou, si besoin, du nom de fichier et du titre de secours.\n"
             . "- Une entree questions par sous-question reelle, par exemple 1.a, 1.b, 2.\n"
             . "- L eleve doit pouvoir faire le sujet sans ouvrir le PDF : aucun contexte utile ne doit manquer.\n"
-            . "- Place dans intro_html tout le contexte commun de l exercice : texte introductif, definitions, donnees, tableaux, schemas decrits, classes, fonctions, signatures et blocs de code utilises par plusieurs questions.\n"
-            . "- Place dans prompt_html l enonce exact de la sous-question et les extraits propres a cette question. Si la question demande de completer une fonction, affiche la fonction complete a completer avec sa signature et son squelette.\n"
+            . "- Place dans intro_html tout le contexte commun de l exercice : texte introductif, definitions, donnees, tableaux, schemas decrits, classes, fonctions, signatures et blocs de code utilises par plusieurs questions. Ne le duplique pas dans chaque sous-question.\n"
+            . "- Place dans prompt_html l enonce exact de la sous-question et les extraits propres a cette question. Si la question demande de completer une fonction, affiche la fonction complete a completer avec sa signature et son squelette dans intro_html si elle sert a plusieurs questions, sinon dans prompt_html.\n"
             . "- Ne remplace jamais un bloc de code, une table ou des donnees par des points de suspension. Recopie les blocs necessaires integralement, sauf si le PDF est illisible.\n"
             . "- Utilise <pre><code>...</code></pre> pour les programmes, requetes SQL, arbres/graphes textuels et sorties console ; utilise des tableaux HTML pour les donnees tabulaires.\n"
             . "- Chaque question doit avoir au moins une competence BO pertinente ; si tu hesites, choisis l'ID le plus proche dans la liste fournie.\n"
             . "- Chaque question doit avoir 1 a 3 aides progressives.\n"
             . "- answer_type vaut text, code, sql ou mixed.\n"
             . "- Si une partie du PDF est illisible, signale-le dans statement_html, mais ne l'invente pas.\n\n"
+            . "Titre de secours : " . (string) $context['fallback_title'] . "\n"
+            . "Nom du fichier source : " . (string) ($context['source_filename'] ?? '') . "\n\n"
             . "Texte extrait du PDF :\n" . (string) $context['pdf_text'];
 
         return [
@@ -410,6 +417,8 @@ final class WrittenSubjectPdfImporter
             ];
         }
 
+        $exercises = $this->complete_missing_source_exercises($exercises, $context);
+
         if (!$exercises) {
             return new \WP_Error('invalid_structure', 'L IA n a pas produit d exercices exploitables.');
         }
@@ -426,19 +435,196 @@ final class WrittenSubjectPdfImporter
         }
 
         $statement_html = ExerciseInsertService::clean_html((string) (self::first_value($data, ['statement_html', 'intro_html', 'presentation_html', 'enonce_html', 'statement', 'presentation']) ?? ''));
-        $statement_html = self::append_source_transcript($statement_html, (string) ($context['pdf_text'] ?? ''));
+        $statement_html = self::append_source_transcript($statement_html, (string) ($context['source_text'] ?? $context['pdf_text'] ?? ''));
+        $fallback_meta = self::infer_source_metadata($context, $title, $slug);
+        $session_label = sanitize_text_field((string) (self::first_value($data, ['session_label', 'session']) ?? ''));
+        $year_label = sanitize_text_field((string) (self::first_value($data, ['year_label', 'year', 'annee']) ?? ''));
+        $center_label = sanitize_text_field((string) (self::first_value($data, ['center_label', 'center', 'centre']) ?? ''));
 
         return [
             'title' => $title,
             'slug' => $slug,
             'statement_html' => $statement_html,
             'source_type' => (string) $context['source_type'],
-            'session_label' => sanitize_text_field((string) (self::first_value($data, ['session_label', 'session']) ?? '')),
-            'year_label' => sanitize_text_field((string) (self::first_value($data, ['year_label', 'year', 'annee']) ?? '')),
-            'center_label' => sanitize_text_field((string) (self::first_value($data, ['center_label', 'center', 'centre']) ?? '')),
+            'session_label' => $session_label !== '' ? $session_label : $fallback_meta['session_label'],
+            'year_label' => $year_label !== '' ? $year_label : $fallback_meta['year_label'],
+            'center_label' => $center_label !== '' ? $center_label : $fallback_meta['center_label'],
             'subject_group' => $subject_group,
             'estimated_minutes' => max(1, (int) (self::first_value($data, ['estimated_minutes', 'duration_minutes', 'duree_minutes', 'duree']) ?? 210)),
             'exercises' => $exercises,
+        ];
+    }
+
+    private function complete_missing_source_exercises(array $exercises, array $context): array
+    {
+        $source_exercises = self::split_source_exercises((string) ($context['source_text'] ?? $context['pdf_text'] ?? ''));
+        if (!$source_exercises) {
+            return $exercises;
+        }
+
+        $present = [];
+        foreach ($exercises as $exercise) {
+            $order = (int) ($exercise['exercise_order'] ?? 0);
+            if ($order > 0) {
+                $present[$order] = true;
+            }
+        }
+
+        $changed = false;
+        foreach ($source_exercises as $source_exercise) {
+            $order = (int) $source_exercise['exercise_order'];
+            if (isset($present[$order])) {
+                continue;
+            }
+
+            $chunk = (string) $source_exercise['text'];
+            $competency_ids = $this->infer_competency_ids($chunk, $context);
+            if (!$competency_ids && !empty($context['competency_ids'][0])) {
+                $competency_ids = [(int) $context['competency_ids'][0]];
+            }
+
+            $exercises[] = [
+                'exercise_order' => $order,
+                'title' => (string) $source_exercise['title'],
+                'intro_html' => self::source_text_to_html($chunk),
+                'max_points' => null,
+                'questions' => [[
+                    'question_order' => 1,
+                    'question_label' => 'Sujet complet',
+                    'prompt_html' => '<p>Traite les questions de cet exercice a partir du texte complet affiche ci-dessus.</p>',
+                    'answer_type' => 'mixed',
+                    'max_points' => null,
+                    'competency_ids' => $competency_ids,
+                    'hints' => [[
+                        'rank' => 1,
+                        'title' => 'Aide IA',
+                        'html' => '<p>Commence par reperer les sous-questions et les donnees utiles dans le texte de l exercice, puis reponds dans l ordre.</p>',
+                    ]],
+                ]],
+            ];
+            $changed = true;
+        }
+
+        if ($changed) {
+            usort($exercises, static fn(array $a, array $b): int => ((int) ($a['exercise_order'] ?? 0)) <=> ((int) ($b['exercise_order'] ?? 0)));
+        }
+
+        return $exercises;
+    }
+
+    private static function split_source_exercises(string $source_text): array
+    {
+        $source_text = trim(str_replace(["\r\n", "\r"], "\n", $source_text));
+        if ($source_text === '') {
+            return [];
+        }
+
+        preg_match_all('/(?:^|\n)\s*(EXERCICE|Exercice)\s+([1-9][0-9]*)[^\n]*/u', $source_text, $matches, PREG_OFFSET_CAPTURE);
+        if (empty($matches[0])) {
+            return [];
+        }
+
+        $starts = [];
+        foreach ($matches[0] as $index => $match) {
+            $order = (int) ($matches[2][$index][0] ?? 0);
+            $offset = (int) $match[1];
+            if ($order <= 0 || isset($starts[$order])) {
+                continue;
+            }
+            $starts[$order] = [
+                'order' => $order,
+                'offset' => $offset,
+                'title' => trim((string) $match[0]),
+            ];
+        }
+
+        usort($starts, static fn(array $a, array $b): int => $a['offset'] <=> $b['offset']);
+        $exercises = [];
+        $count = count($starts);
+        for ($i = 0; $i < $count; $i++) {
+            $start = $starts[$i]['offset'];
+            $end = $i + 1 < $count ? $starts[$i + 1]['offset'] : strlen($source_text);
+            $chunk = trim(substr($source_text, $start, max(0, $end - $start)));
+            if (mb_strlen($chunk) < 120) {
+                continue;
+            }
+
+            $title = sanitize_text_field($starts[$i]['title']);
+            if ($title === '') {
+                $title = 'Exercice ' . (int) $starts[$i]['order'];
+            }
+
+            $exercises[] = [
+                'exercise_order' => (int) $starts[$i]['order'],
+                'title' => $title,
+                'text' => $chunk,
+            ];
+        }
+
+        return $exercises;
+    }
+
+    private static function source_text_to_html(string $source_text): string
+    {
+        $html = '<pre><code>' . esc_html(trim($source_text)) . '</code></pre>';
+        return ExerciseInsertService::clean_html($html);
+    }
+
+    private static function infer_source_metadata(array $context, string $title, string $slug): array
+    {
+        $haystack = implode(' ', [
+            (string) ($context['source_filename'] ?? ''),
+            (string) ($context['fallback_title'] ?? ''),
+            $title,
+            $slug,
+            mb_substr((string) ($context['source_text'] ?? $context['pdf_text'] ?? ''), 0, 5000),
+        ]);
+
+        $normalized = remove_accents(strtolower($haystack));
+        $normalized = preg_replace('/[^a-z0-9]+/', ' ', (string) $normalized) ?? $normalized;
+        $year = '';
+        if (preg_match('/\b(20[0-9]{2})\b/', $normalized, $m)) {
+            $year = $m[1];
+        }
+
+        $centers = [
+            'centres etranger' => 'Centres etrangers',
+            'centres etrangers' => 'Centres etrangers',
+            'metropole' => 'Metropole',
+            'amerique du nord' => 'Amerique du Nord',
+            'asie' => 'Asie',
+            'polynesie' => 'Polynesie',
+            'nouvelle caledonie' => 'Nouvelle-Caledonie',
+            'antilles guyane' => 'Antilles-Guyane',
+            'liban' => 'Liban',
+            'mayotte' => 'Mayotte',
+            'reunion' => 'Reunion',
+        ];
+
+        $center = '';
+        foreach ($centers as $needle => $label) {
+            if (str_contains($normalized, $needle)) {
+                $center = $label;
+                break;
+            }
+        }
+
+        $subject_number = '';
+        if (preg_match('/\bsujet\s*([0-9]+)\b/', $normalized, $m)) {
+            $subject_number = $m[1];
+        } elseif (preg_match('/\b(?:metropole|etranger|etrangers|asie|polynesie|liban|reunion|mayotte)\s+([0-9]+)\b/', $normalized, $m)) {
+            $subject_number = $m[1];
+        }
+
+        $session = trim($center . ($subject_number !== '' ? ' sujet ' . $subject_number : ''));
+        if ($session === '') {
+            $session = sanitize_text_field((string) ($context['fallback_title'] ?? $title));
+        }
+
+        return [
+            'session_label' => $session,
+            'year_label' => $year,
+            'center_label' => $center,
         ];
     }
 

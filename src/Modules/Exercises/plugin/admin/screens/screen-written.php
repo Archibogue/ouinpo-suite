@@ -767,6 +767,7 @@ final class ScreenWritten
         $result = $importer->import([
             'file_path' => (string) $stored['path'],
             'file_url' => (string) $stored['url'],
+            'source_filename' => $filename,
             'fallback_title' => $fallback_title,
             'source_type' => $source_type,
             'school_levels' => $school_levels,
