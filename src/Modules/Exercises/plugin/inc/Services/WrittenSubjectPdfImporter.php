@@ -421,6 +421,8 @@ final class WrittenSubjectPdfImporter
             return new \WP_Error('invalid_structure', 'L IA n a pas produit d exercices exploitables.');
         }
 
+        $exercises = $this->normalize_ordering($exercises);
+
         $slug = sanitize_title((string) (self::first_value($data, ['slug', 'permalink', 'identifiant']) ?? $title));
         if ($slug === '') {
             $slug = sanitize_title($title);
@@ -505,6 +507,52 @@ final class WrittenSubjectPdfImporter
         }
 
         return $exercises;
+    }
+
+    private function normalize_ordering(array $exercises): array
+    {
+        $used_exercise_orders = [];
+
+        foreach ($exercises as &$exercise) {
+            $exercise['exercise_order'] = self::next_available_order(
+                (int) ($exercise['exercise_order'] ?? 1),
+                $used_exercise_orders
+            );
+
+            $used_question_orders = [];
+            $exercise['questions'] = array_values((array) ($exercise['questions'] ?? []));
+            foreach ($exercise['questions'] as &$question) {
+                $question['question_order'] = self::next_available_order(
+                    (int) ($question['question_order'] ?? 1),
+                    $used_question_orders
+                );
+
+                $used_hint_orders = [];
+                $question['hints'] = array_values((array) ($question['hints'] ?? []));
+                foreach ($question['hints'] as &$hint) {
+                    $hint['rank'] = self::next_available_order(
+                        (int) ($hint['rank'] ?? $hint['hint_order'] ?? 1),
+                        $used_hint_orders
+                    );
+                }
+                unset($hint);
+            }
+            unset($question);
+        }
+        unset($exercise);
+
+        return $exercises;
+    }
+
+    private static function next_available_order(int $requested, array &$used): int
+    {
+        $order = max(1, min(30000, $requested));
+        while (isset($used[$order])) {
+            $order++;
+        }
+
+        $used[$order] = true;
+        return $order;
     }
 
     private static function split_source_exercises(string $source_text): array
@@ -817,7 +865,9 @@ final class WrittenSubjectPdfImporter
         global $wpdb;
 
         $p = $wpdb->prefix . 'ouin_exo_';
-        $wpdb->insert($p . 'written_subjects', [
+        $wpdb->query('START TRANSACTION');
+
+        $inserted = $wpdb->insert($p . 'written_subjects', [
             'title' => $data['title'],
             'slug' => $data['slug'],
             'statement' => $data['statement_html'] ?: null,
@@ -833,22 +883,27 @@ final class WrittenSubjectPdfImporter
         ]);
 
         $subject_id = (int) $wpdb->insert_id;
-        if ($subject_id <= 0) {
+        if ($inserted === false || $subject_id <= 0) {
+            $wpdb->query('ROLLBACK');
             return new \WP_Error('insert_failed', 'Creation de l annale impossible.');
         }
 
         foreach ((array) $context['school_levels'] as $level_id) {
             $level_id = (int) $level_id;
             if ($level_id > 0) {
-                $wpdb->insert($p . 'written_subject_school_level', [
+                $inserted = $wpdb->insert($p . 'written_subject_school_level', [
                     'subject_id' => $subject_id,
                     'school_level_id' => $level_id,
                 ], ['%d', '%d']);
+                if ($inserted === false) {
+                    $wpdb->query('ROLLBACK');
+                    return new \WP_Error('insert_failed', 'Association du niveau impossible.');
+                }
             }
         }
 
         foreach ($data['exercises'] as $exercise) {
-            $wpdb->insert($p . 'written_exercises', [
+            $inserted = $wpdb->insert($p . 'written_exercises', [
                 'subject_id' => $subject_id,
                 'exercise_order' => (int) $exercise['exercise_order'],
                 'title' => $exercise['title'] ?: null,
@@ -859,12 +914,13 @@ final class WrittenSubjectPdfImporter
                 'updated_at' => current_time('mysql'),
             ]);
             $exercise_id = (int) $wpdb->insert_id;
-            if ($exercise_id <= 0) {
-                continue;
+            if ($inserted === false || $exercise_id <= 0) {
+                $wpdb->query('ROLLBACK');
+                return new \WP_Error('insert_failed', 'Creation d un exercice impossible.');
             }
 
             foreach ($exercise['questions'] as $question) {
-                $wpdb->insert($p . 'written_questions', [
+                $inserted = $wpdb->insert($p . 'written_questions', [
                     'exercise_id' => $exercise_id,
                     'question_order' => (int) $question['question_order'],
                     'question_label' => $question['question_label'],
@@ -876,19 +932,24 @@ final class WrittenSubjectPdfImporter
                     'updated_at' => current_time('mysql'),
                 ]);
                 $question_id = (int) $wpdb->insert_id;
-                if ($question_id <= 0) {
-                    continue;
+                if ($inserted === false || $question_id <= 0) {
+                    $wpdb->query('ROLLBACK');
+                    return new \WP_Error('insert_failed', 'Creation d une question impossible.');
                 }
 
                 foreach ($question['competency_ids'] as $competency_id) {
-                    $wpdb->insert($p . 'written_question_competency', [
+                    $inserted = $wpdb->insert($p . 'written_question_competency', [
                         'question_id' => $question_id,
                         'competency_id' => (int) $competency_id,
                     ], ['%d', '%d']);
+                    if ($inserted === false) {
+                        $wpdb->query('ROLLBACK');
+                        return new \WP_Error('insert_failed', 'Association de competence impossible.');
+                    }
                 }
 
                 foreach ($question['hints'] as $hint) {
-                    $wpdb->insert($p . 'written_question_hints', [
+                    $inserted = $wpdb->insert($p . 'written_question_hints', [
                         'question_id' => $question_id,
                         'hint_order' => (int) $hint['rank'],
                         'title' => $hint['title'] ?: null,
@@ -897,9 +958,15 @@ final class WrittenSubjectPdfImporter
                         'created_at' => current_time('mysql'),
                         'updated_at' => current_time('mysql'),
                     ]);
+                    if ($inserted === false) {
+                        $wpdb->query('ROLLBACK');
+                        return new \WP_Error('insert_failed', 'Creation d une aide IA impossible.');
+                    }
                 }
             }
         }
+
+        $wpdb->query('COMMIT');
 
         return $subject_id;
     }

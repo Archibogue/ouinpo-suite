@@ -455,6 +455,77 @@ final class ScreenWritten
         return self::decode_base64url(wp_unslash((string) $encoded[$key]));
     }
 
+    private static function normalize_posted_ordering(array &$exercises): void
+    {
+        $used_exercise_orders = [];
+
+        foreach ($exercises as &$exercise_row) {
+            if (!is_array($exercise_row)) {
+                continue;
+            }
+
+            $exercise_row['exercise_order'] = self::next_available_order((int) ($exercise_row['exercise_order'] ?? 1), $used_exercise_orders);
+            $used_question_orders = [];
+
+            if (!isset($exercise_row['questions']) || !is_array($exercise_row['questions'])) {
+                $exercise_row['questions'] = [];
+            }
+            foreach ($exercise_row['questions'] as &$question_row) {
+                if (!is_array($question_row)) {
+                    continue;
+                }
+
+                $question_row['question_order'] = self::next_available_order((int) ($question_row['question_order'] ?? 1), $used_question_orders);
+                $used_hint_orders = [];
+
+                if (!isset($question_row['hints']) || !is_array($question_row['hints'])) {
+                    $question_row['hints'] = [];
+                }
+                foreach ($question_row['hints'] as &$hint_row) {
+                    if (!is_array($hint_row)) {
+                        continue;
+                    }
+
+                    $hint_row['hint_order'] = self::next_available_order((int) ($hint_row['hint_order'] ?? 1), $used_hint_orders);
+                }
+                unset($hint_row);
+            }
+            unset($question_row);
+        }
+        unset($exercise_row);
+    }
+
+    private static function next_available_order(int $requested, array &$used): int
+    {
+        $order = max(1, min(30000, $requested));
+        while (isset($used[$order])) {
+            $order++;
+        }
+
+        $used[$order] = true;
+        return $order;
+    }
+
+    private static function temporarily_resequence_orders(string $table, string $owner_column, int $owner_id, string $order_column): void
+    {
+        if ($owner_id <= 0) {
+            return;
+        }
+
+        global $wpdb;
+
+        $ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$table} WHERE {$owner_column} = %d ORDER BY {$order_column} ASC, id ASC",
+            $owner_id
+        )) ?: []);
+
+        $order = 50000;
+        foreach ($ids as $id) {
+            $order++;
+            $wpdb->update($table, [$order_column => $order], ['id' => $id], ['%d'], ['%d']);
+        }
+    }
+
     public static function handle_save(): void
     {
         if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
@@ -523,7 +594,9 @@ final class ScreenWritten
         $posted_exercises = isset($_POST['written_exercises']) && is_array($_POST['written_exercises'])
             ? wp_unslash($_POST['written_exercises'])
             : [];
+        self::normalize_posted_ordering($posted_exercises);
 
+        self::temporarily_resequence_orders($tE, 'subject_id', $subject_id, 'exercise_order');
         $kept_exercises = [];
         foreach ($posted_exercises as $exercise_index => $exercise_row) {
             if (!is_array($exercise_row)) {
@@ -566,6 +639,7 @@ final class ScreenWritten
             $kept_exercises[] = $exercise_id;
             $kept_questions = [];
 
+            self::temporarily_resequence_orders($tQ, 'exercise_id', $exercise_id, 'question_order');
             foreach ((array) ($exercise_row['questions'] ?? []) as $question_index => $question_row) {
                 if (!is_array($question_row)) {
                     continue;
@@ -619,6 +693,7 @@ final class ScreenWritten
                 }
 
                 $kept_hints = [];
+                self::temporarily_resequence_orders($tH, 'question_id', $question_id, 'hint_order');
                 foreach ((array) ($question_row['hints'] ?? []) as $hint_index => $hint_row) {
                     if (!is_array($hint_row)) {
                         continue;

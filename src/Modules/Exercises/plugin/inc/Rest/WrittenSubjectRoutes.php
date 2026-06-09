@@ -784,6 +784,7 @@ final class WrittenSubjectRoutes
                 'contexte' => [
                     'subject_title' => (string) ($subject['title'] ?? ''),
                     'question_label' => (string) (($exercise['title'] ?? 'Exercice') . ' - Question ' . ($question['question_label'] ?? '')),
+                    'exercise_context' => self::excerpt((string) ($exercise['intro_html'] ?? ''), 2200),
                     'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 1500),
                     'answer' => self::excerpt_user_text($answer, 2000),
                     'used_hints' => $used_hints,
@@ -856,6 +857,7 @@ final class WrittenSubjectRoutes
                 $items[] = [
                     'question_id' => $question_id,
                     'question_label' => $exercise_title . ' - Question ' . (string) ($question['question_label'] ?? ''),
+                    'exercise_context' => self::excerpt((string) ($exercise['intro_html'] ?? ''), 1800),
                     'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 1200),
                     'answer' => $answer,
                     'used_hints' => $hints,
