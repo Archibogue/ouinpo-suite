@@ -355,6 +355,20 @@ final class ScreenWritten
         if (isset($_GET['deleted'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Annale supprimee.</p></div>';
         }
+        if (isset($_GET['bulk_done'])) {
+            $bulk_done = max(0, (int) $_GET['bulk_done']);
+            $bulk_action = sanitize_key((string) ($_GET['bulk_action_done'] ?? ''));
+            $bulk_labels = [
+                'delete' => 'supprimee(s)',
+                'show' => 'rendue(s) visible(s)',
+                'hide' => 'masquee(s)',
+            ];
+            $bulk_label = $bulk_labels[$bulk_action] ?? 'traitee(s)';
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($bulk_done . ' annale(s) ' . $bulk_label . '.') . '</p></div>';
+        }
+        if (isset($_GET['bulk_error'])) {
+            echo '<div class="notice notice-error is-dismissible"><p>Aucune annale ou action groupée valide n a ete selectionnee.</p></div>';
+        }
         if (isset($_GET['file_error'])) {
             echo '<div class="notice notice-error is-dismissible"><p>' . esc_html(wp_unslash((string) $_GET['file_error'])) . '</p></div>';
         }
@@ -386,9 +400,24 @@ final class ScreenWritten
         echo '<div>';
         echo '<h2>Annales</h2>';
         echo '<p><a class="button button-primary" href="' . esc_url(self::redirect_url()) . '">Nouvelle annale</a></p>';
-        echo '<table class="widefat striped"><thead><tr><th>Titre</th><th>Session</th><th>Questions</th><th>Visible</th><th>Action</th></tr></thead><tbody>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return this.bulk_action.value !== \'delete\' || confirm(\'Supprimer les annales selectionnees et toutes les donnees eleves associees ?\');">';
+        wp_nonce_field('ouinpo_written_subject_bulk');
+        echo '<input type="hidden" name="action" value="ouinpo_written_subject_bulk">';
+        echo '<div class="tablenav top"><div class="alignleft actions bulkactions">';
+        echo '<label for="ouinpo-written-bulk-action" class="screen-reader-text">Action groupee</label>';
+        echo '<select id="ouinpo-written-bulk-action" name="bulk_action">';
+        echo '<option value="">Actions groupees</option>';
+        echo '<option value="delete">Supprimer</option>';
+        echo '<option value="show">Rendre visible</option>';
+        echo '<option value="hide">Rendre non visible</option>';
+        echo '</select> ';
+        submit_button('Appliquer', 'secondary action', 'submit', false);
+        echo '</div><br class="clear"></div>';
+        echo '<table class="widefat striped"><thead><tr>';
+        echo '<td class="manage-column column-cb check-column"><input type="checkbox" aria-label="Tout selectionner" onclick="var boxes=document.querySelectorAll(\'.ouinpo-written-subject-check\'); for (var i=0;i&lt;boxes.length;i++){boxes[i].checked=this.checked;}"></td>';
+        echo '<th>Titre</th><th>Session</th><th>Questions</th><th>Visible</th><th>Action</th></tr></thead><tbody>';
         if (!$subjects) {
-            echo '<tr><td colspan="5">Aucune annale pour le moment.</td></tr>';
+            echo '<tr><td colspan="6">Aucune annale pour le moment.</td></tr>';
         }
         foreach ($subjects as $row) {
             $url = self::redirect_url(['subject_id' => (int) $row['id']]);
@@ -400,6 +429,7 @@ final class ScreenWritten
                 'ouinpo_delete_written_subject_' . (int) $row['id']
             );
             echo '<tr>';
+            echo '<th scope="row" class="check-column"><input class="ouinpo-written-subject-check" type="checkbox" name="subject_ids[]" value="' . (int) $row['id'] . '" aria-label="Selectionner ' . esc_attr((string) $row['title']) . '"></th>';
             echo '<td><a href="' . esc_url($url) . '">' . esc_html((string) $row['title']) . '</a></td>';
             echo '<td>' . esc_html(trim((string) ($row['session_label'] ?? '') . ' ' . (string) ($row['year_label'] ?? '') . ' ' . (string) ($row['center_label'] ?? ''))) . '</td>';
             echo '<td>' . esc_html((string) (int) $row['questions_count']) . '</td>';
@@ -408,6 +438,7 @@ final class ScreenWritten
             echo '</tr>';
         }
         echo '</tbody></table>';
+        echo '</form>';
         echo '</div>';
 
         echo '<div>';
@@ -957,18 +988,10 @@ final class ScreenWritten
         exit;
     }
 
-    public static function handle_delete_subject(): void
+    private static function delete_subject_by_id(int $subject_id): bool
     {
-        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
-            wp_die('Acces refuse.');
-        }
-
-        $subject_id = isset($_GET['subject_id']) ? (int) $_GET['subject_id'] : 0;
-        check_admin_referer('ouinpo_delete_written_subject_' . $subject_id);
-
         if ($subject_id <= 0 || !self::fetch_subject($subject_id)) {
-            wp_safe_redirect(self::redirect_url());
-            exit;
+            return false;
         }
 
         global $wpdb;
@@ -1024,7 +1047,74 @@ final class ScreenWritten
         $wpdb->delete($tFiles, ['subject_type' => 'written', 'subject_id' => $subject_id], ['%s', '%d']);
         $wpdb->delete($tS, ['id' => $subject_id], ['%d']);
 
+        return true;
+    }
+
+    public static function handle_delete_subject(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
+            wp_die('Acces refuse.');
+        }
+
+        $subject_id = isset($_GET['subject_id']) ? (int) $_GET['subject_id'] : 0;
+        check_admin_referer('ouinpo_delete_written_subject_' . $subject_id);
+
+        if ($subject_id <= 0) {
+            wp_safe_redirect(self::redirect_url());
+            exit;
+        }
+
+        self::delete_subject_by_id($subject_id);
+
         wp_safe_redirect(self::redirect_url(['deleted' => 1]));
+        exit;
+    }
+
+    public static function handle_bulk_action(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_EXERCISES)) {
+            wp_die('Acces refuse.');
+        }
+
+        check_admin_referer('ouinpo_written_subject_bulk');
+
+        $bulk_action = sanitize_key((string) ($_POST['bulk_action'] ?? ''));
+        $subject_ids = isset($_POST['subject_ids']) ? (array) wp_unslash($_POST['subject_ids']) : [];
+        $subject_ids = array_values(array_unique(array_filter(array_map('intval', $subject_ids))));
+
+        if (!$subject_ids || !in_array($bulk_action, ['delete', 'show', 'hide'], true)) {
+            wp_safe_redirect(self::redirect_url(['bulk_error' => 1]));
+            exit;
+        }
+
+        $done = 0;
+        if ($bulk_action === 'delete') {
+            foreach ($subject_ids as $subject_id) {
+                if (self::delete_subject_by_id($subject_id)) {
+                    $done++;
+                }
+            }
+        } else {
+            global $wpdb;
+
+            $tS = self::table('written_subjects');
+            $placeholders = implode(',', array_fill(0, count($subject_ids), '%d'));
+            $args = array_merge([
+                $bulk_action === 'show' ? 1 : 0,
+                current_time('mysql'),
+            ], $subject_ids);
+
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$tS} SET is_active = %d, updated_at = %s WHERE id IN ({$placeholders})",
+                $args
+            ));
+            $done = count($subject_ids);
+        }
+
+        wp_safe_redirect(self::redirect_url([
+            'bulk_done' => $done,
+            'bulk_action_done' => $bulk_action,
+        ]));
         exit;
     }
 
