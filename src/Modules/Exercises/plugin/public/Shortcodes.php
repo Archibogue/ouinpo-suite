@@ -1946,13 +1946,13 @@ public static function render_written_subject($atts = array(), $content = '') {
 
             <?php if (is_user_logged_in()): ?>
               <div class="ouinpo-written-answer-block">
-                <label for="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">Ta reponse</label>
+                <label for="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">Ta réponse</label>
                 <textarea
                   id="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
                   class="ouinpo-answer ouinpo-written-answer"
                   data-written-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
                   rows="7"
-                  placeholder="Redige ta reponse pour cette question. Evite les donnees personnelles."
+                  placeholder="Rédige ta réponse pour cette question. Évite les données personnelles."
                 ><?php echo esc_textarea((string) ($question['student_answer'] ?? '')); ?></textarea>
               </div>
 
@@ -1962,7 +1962,7 @@ public static function render_written_subject($atts = array(), $content = '') {
                   class="button"
                   data-written-question-advice-action
                   data-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
-                >Soumettre ma reponse a l IA</button>
+                >Soumettre ma réponse à l’IA</button>
                 <div class="ouinpo-written-question-advice-status" data-written-question-advice-status aria-live="polite"></div>
                 <div class="ouinpo-written-question-advice-output" data-written-question-advice-output></div>
               </div>
@@ -1995,7 +1995,7 @@ public static function render_written_subject($atts = array(), $content = '') {
                         data-written-hint-used
                         <?php checked(in_array((int) ($hint['id'] ?? 0), array_map('intval', (array) ($question['used_hint_ids'] ?? [])), true)); ?>
                       >
-                      Aide utilisee pour ma reponse
+                      Aide utilisée pour ma réponse
                     </label>
                   <?php endif; ?>
                 <?php endforeach; ?>
@@ -2010,15 +2010,15 @@ public static function render_written_subject($atts = array(), $content = '') {
       <section class="ouinpo-panel ouinpo-written-report-panel">
         <h3 class="ouinpo-panel-title">Rapport de travail</h3>
         <?php echo self::render_ai_notice('exercise'); ?>
-        <p>Quand tu as saisi tes reponses et coche les aides utilisees, genere un rapport de conseils pour orienter tes revisions.</p>
-        <button type="button" class="button button-primary" data-written-report-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Generer mon rapport</button>
-        <button type="button" class="button" data-written-reset-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Remettre a zero le sujet</button>
+        <p>Quand tu as saisi tes réponses et coché les aides utilisées, génère un rapport de conseils pour orienter tes révisions.</p>
+        <button type="button" class="button button-primary" data-written-report-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Générer mon rapport</button>
+        <button type="button" class="button" data-written-reset-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Remettre à zéro le sujet</button>
         <div class="ouinpo-written-report-status" data-written-report-status aria-live="polite"></div>
         <div class="ouinpo-written-report-output" data-written-report-output></div>
       </section>
     <?php else: ?>
       <section class="ouinpo-panel ouinpo-written-report-panel">
-        <p>Connecte-toi pour enregistrer tes reponses, indiquer les aides utilisees et generer un rapport de conseils.</p>
+        <p>Connecte-toi pour enregistrer tes réponses, indiquer les aides utilisées et générer un rapport de conseils.</p>
       </section>
     <?php endif; ?>
   </article>

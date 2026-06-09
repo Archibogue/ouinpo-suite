@@ -194,7 +194,7 @@
                 <h5>${escapeHtml(item.question_label || 'Question')}</h5>
                 ${item.advice ? `<p>${escapeHtml(item.advice)}</p>` : ''}
                 ${item.next_step ? `<p><strong>Prochaine etape :</strong> ${escapeHtml(item.next_step)}</p>` : ''}
-                ${item.used_hints_note ? `<p><strong>Aides utilisees :</strong> ${escapeHtml(item.used_hints_note)}</p>` : ''}
+                ${item.used_hints_note ? `<p><strong>Aides utilisées :</strong> ${escapeHtml(item.used_hints_note)}</p>` : ''}
               </article>
             `).join('')}
           </div>
@@ -216,7 +216,7 @@
     output.innerHTML = html;
 
     if (!output.textContent.trim()) {
-      output.innerHTML = '<div class="ouinpo-written-report-card"><p class="ouinpo-written-report-summary">Rapport genere, mais aucun contenu affichable n a ete retourne. Reessaie ou demande un conseil sur une question precise.</p></div>';
+      output.innerHTML = '<div class="ouinpo-written-report-card"><p class="ouinpo-written-report-summary">Rapport généré, mais aucun contenu affichable n’a été retourné. Réessaie ou demande un conseil sur une question précise.</p></div>';
     }
   }
 
@@ -224,12 +224,12 @@
     if (!output) return;
 
     const verdictMap = {
-      correct: 'Reponse correcte',
-      partial: 'Reponse partiellement correcte',
-      incorrect: 'Reponse a revoir'
+      correct: 'Réponse correcte',
+      partial: 'Réponse partiellement correcte',
+      incorrect: 'Réponse à revoir'
     };
     const verdict = advice && advice.verdict ? String(advice.verdict) : 'incorrect';
-    const title = verdictMap[verdict] || 'Evaluation IA';
+    const title = verdictMap[verdict] || 'Évaluation IA';
     const strengths = renderWrittenReportList('Ce qui va bien', advice && advice.strengths);
     const improvements = renderWrittenReportList('A ameliorer', advice && advice.improvements);
     const steps = renderWrittenReportList('A faire maintenant', advice && advice.next_steps);
@@ -249,14 +249,14 @@
         ${strengths}
         ${improvements}
         ${steps}
-        ${advice && advice.hint_usage_note ? `<p><strong>Aides utilisees :</strong> ${escapeHtml(advice.hint_usage_note)}</p>` : ''}
-        ${advice && advice.safe_to_mark_solved === false && verdict === 'correct' ? '<p><em>Reponse encourageante, mais non validee officiellement pour le moment.</em></p>' : ''}
+        ${advice && advice.hint_usage_note ? `<p><strong>Aides utilisées :</strong> ${escapeHtml(advice.hint_usage_note)}</p>` : ''}
+        ${advice && advice.safe_to_mark_solved === false && verdict === 'correct' ? '<p><em>Réponse encourageante, mais non validée officiellement pour le moment.</em></p>' : ''}
         ${confidenceHtml}
       </div>
     `;
 
     if (!output.textContent.trim()) {
-      output.innerHTML = '<div class="ouinpo-written-question-advice-card"><p>Evaluation generee, mais aucun contenu affichable n a ete retourne. Reessaie en precisant ta reponse.</p></div>';
+      output.innerHTML = '<div class="ouinpo-written-question-advice-card"><p>Évaluation générée, mais aucun contenu affichable n’a été retourné. Réessaie en précisant ta réponse.</p></div>';
     }
   }
 
@@ -372,21 +372,21 @@
         const collected = collectWrittenQuestionPayload(questionRoot);
 
         if (!collected.hasAnswer) {
-          renderMessage(status, 'Ecris ta reponse avant de demander un conseil IA.', 'ouinpo-empty');
+          renderMessage(status, 'Écris ta réponse avant de demander un conseil IA.', 'ouinpo-empty');
           return;
         }
 
         button.disabled = true;
         button.classList.add('is-loading');
-        renderMessage(status, 'Analyse de ta reponse en cours...', 'ouinpo-empty');
+        renderMessage(status, 'Analyse de ta réponse en cours...', 'ouinpo-empty');
 
         try {
           const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/student-advice', collected.payload);
-          renderMessage(status, 'Evaluation IA generee. Ta reponse et les aides cochees ont ete enregistrees.', 'ouinpo-success');
+          renderMessage(status, 'Évaluation IA générée. Ta réponse et les aides cochées ont été enregistrées.', 'ouinpo-success');
           renderWrittenQuestionAdvice(output, data && data.advice ? data.advice : {});
           updateWrittenQuestionProgressTag(questionRoot, data && data.advice && data.advice.safe_to_mark_solved ? 'solved' : null);
         } catch (err) {
-          renderMessage(status, err && err.message ? err.message : 'Evaluation impossible pour le moment.', 'ouinpo-error');
+          renderMessage(status, err && err.message ? err.message : 'Évaluation impossible pour le moment.', 'ouinpo-error');
         } finally {
           button.disabled = false;
           button.classList.remove('is-loading');
@@ -468,12 +468,12 @@
 
       if (resetButton) {
         resetButton.addEventListener('click', async function () {
-          if (!window.confirm('Remettre a zero tes reponses, aides cochees et statuts pour ce sujet ?')) {
+          if (!window.confirm('Remettre à zéro tes réponses, aides cochées et statuts pour ce sujet ?')) {
             return;
           }
 
           resetButton.disabled = true;
-          renderMessage(status, 'Remise a zero en cours...', 'ouinpo-empty');
+          renderMessage(status, 'Remise à zéro en cours...', 'ouinpo-empty');
 
           try {
             await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/reset-progress', {});
@@ -491,9 +491,9 @@
               updateWrittenQuestionProgressTag(questionRoot, 'none');
             });
 
-            renderMessage(status, 'Sujet remis a zero pour ton compte.', 'ouinpo-success');
+            renderMessage(status, 'Sujet remis à zéro pour ton compte.', 'ouinpo-success');
           } catch (err) {
-            renderMessage(status, err && err.message ? err.message : 'Remise a zero impossible pour le moment.', 'ouinpo-error');
+            renderMessage(status, err && err.message ? err.message : 'Remise à zéro impossible pour le moment.', 'ouinpo-error');
           } finally {
             resetButton.disabled = false;
           }
@@ -506,17 +506,17 @@
         const collected = collectWrittenReportPayload(root);
 
         if (!collected.hasAnswer) {
-          renderMessage(status, 'Ajoute au moins une reponse avant de demander un rapport.', 'ouinpo-empty');
+          renderMessage(status, 'Ajoute au moins une réponse avant de demander un rapport.', 'ouinpo-empty');
           return;
         }
 
         button.disabled = true;
         button.classList.add('is-loading');
-        renderMessage(status, 'Generation du rapport en cours...', 'ouinpo-empty');
+        renderMessage(status, 'Génération du rapport en cours...', 'ouinpo-empty');
 
         try {
           const data = await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/student-report', collected.payload);
-          renderMessage(status, 'Rapport genere. Tes reponses et les aides utilisees ont ete enregistrees.', 'ouinpo-success');
+          renderMessage(status, 'Rapport généré. Tes réponses et les aides utilisées ont été enregistrées.', 'ouinpo-success');
           renderWrittenReport(output, data && data.report ? data.report : {});
         } catch (err) {
           renderMessage(status, err && err.message ? err.message : 'Rapport impossible pour le moment.', 'ouinpo-error');
