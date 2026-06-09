@@ -3074,11 +3074,30 @@
   border-color: rgba(217,166,94,0.28);
 }
 
+.ouinpo-badge--student-progress,
+.ouinpo-written-question-progress.ouinpo-badge--attempted{
+  background: rgba(217,166,94,0.16);
+  color: #f3d9a5;
+  border-color: rgba(217,166,94,0.28);
+}
+
 .ouinpo-badge--solved,
 .badge-solved{
   background: rgba(116,193,122,0.16);
   color: #d5f0d7;
   border-color: rgba(116,193,122,0.30);
+}
+
+.ouinpo-written-question-progress.ouinpo-badge--solved{
+  background: rgba(116,193,122,0.16);
+  color: #d5f0d7;
+  border-color: rgba(116,193,122,0.30);
+}
+
+.ouinpo-badge--competency{
+  background: rgba(117,180,255,0.14);
+  color: #cfe3ff;
+  border-color: rgba(117,180,255,0.30);
 }
 
 .ouinpo-badge--none{
@@ -5073,10 +5092,29 @@
   border: 1px solid rgba(242,178,69,0.35);
 }
 
+.ouinpo-badge--student-progress,
+.ouinpo-written-question-progress.ouinpo-badge--attempted {
+  background: rgba(242,178,69,0.18);
+  color: #f2b245;
+  border: 1px solid rgba(242,178,69,0.35);
+}
+
 .exo-badge.badge-solved {
   background: rgba(90,195,106,0.18);
   color: #5ac36a;
   border: 1px solid rgba(90,195,106,0.35);
+}
+
+.ouinpo-written-question-progress.ouinpo-badge--solved {
+  background: rgba(90,195,106,0.18);
+  color: #5ac36a;
+  border: 1px solid rgba(90,195,106,0.35);
+}
+
+.ouinpo-badge--competency {
+  background: rgba(78,154,255,0.16);
+  color: #9fc6ff;
+  border: 1px solid rgba(78,154,255,0.34);
 }
 
 /* -------- Responsive -------- */
@@ -9310,4 +9348,26 @@ a.demo:active {text-decoration:none; font-weight:bold; color:#0000FF}
   filter: none;
   transform: none;
   text-shadow: none;
+}
+
+/* Annales ecrites : alignement final sur les couleurs des exercices classiques. */
+.ouinpo-exercises-page .ouinpo-badge--student-progress.ouinpo-badge--attempted,
+.ouinpo-written-subject .ouinpo-written-question-progress.ouinpo-badge--attempted {
+  background: rgba(227, 178, 85, 0.18) !important;
+  border: 1px solid rgba(227, 178, 85, 0.40) !important;
+  color: #f0c86f !important;
+}
+
+.ouinpo-exercises-page .ouinpo-badge--student-progress.ouinpo-badge--solved,
+.ouinpo-written-subject .ouinpo-written-question-progress.ouinpo-badge--solved {
+  background: rgba(119, 217, 138, 0.18) !important;
+  border: 1px solid rgba(119, 217, 138, 0.38) !important;
+  color: var(--op-green, #77d98a) !important;
+}
+
+.ouinpo-written-subject .ouinpo-badge--competency,
+.ouinpo-exercises-page .ouinpo-badge--competency {
+  background: rgba(78, 154, 255, 0.16) !important;
+  border: 1px solid rgba(78, 154, 255, 0.34) !important;
+  color: #9fc6ff !important;
 }

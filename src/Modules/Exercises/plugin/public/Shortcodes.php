@@ -1808,11 +1808,15 @@ public static function render_written_subjects($atts = array(), $content = '') {
               $started_count = (int) ($item['started_questions_count'] ?? 0);
               $solved_count = (int) ($item['solved_questions_count'] ?? 0);
               $student_tag = '';
+              $student_tag_class = '';
               if (is_user_logged_in() && $questions_count > 0 && $solved_count >= $questions_count) {
                 $student_tag = 'Terminé';
               } elseif (is_user_logged_in() && $started_count > 0) {
                 $student_tag = 'En cours';
               }
+              $student_tag_class = $student_tag === ''
+                ? ''
+                : ($student_tag === 'En cours' ? 'ouinpo-badge--attempted' : 'ouinpo-badge--solved');
               ?>
               <li class="ouinpo-exercise-item ouin-exo-li">
                 <div class="ouinpo-exercise-main ouin-exo-main">
@@ -1825,7 +1829,7 @@ public static function render_written_subjects($atts = array(), $content = '') {
                 </div>
                 <div class="ouinpo-badges ouin-exo-status">
                   <?php if ($student_tag !== ''): ?>
-                    <span class="ouinpo-badge ouinpo-badge--student-progress"><?php echo esc_html($student_tag); ?></span>
+                    <span class="ouinpo-badge ouinpo-badge--student-progress <?php echo esc_attr($student_tag_class); ?>"><?php echo esc_html($student_tag); ?></span>
                   <?php endif; ?>
                   <span class="ouinpo-badge ouinpo-badge--exam"><?php echo esc_html(self::source_type_label((string) ($item['source_type'] ?? 'annale'))); ?></span>
                   <span class="ouinpo-badge"><?php echo esc_html((string) (int) ($item['exercises_count'] ?? 0)); ?> exercice<?php echo ((int) ($item['exercises_count'] ?? 0) > 1) ? 's' : ''; ?></span>

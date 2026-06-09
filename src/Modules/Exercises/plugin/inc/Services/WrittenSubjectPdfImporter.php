@@ -286,6 +286,7 @@ final class WrittenSubjectPdfImporter
             . "- Ne remplace jamais un bloc de code, une table ou des donnees par des points de suspension. Recopie les blocs necessaires integralement, sauf si le PDF est illisible.\n"
             . "- Utilise <pre><code>...</code></pre> pour les programmes, requetes SQL, arbres/graphes textuels et sorties console ; utilise des tableaux HTML pour les donnees tabulaires.\n"
             . "- Chaque question doit avoir au moins une competence BO pertinente ; si tu hesites, choisis l'ID le plus proche dans la liste fournie.\n"
+            . "- N'utilise une competence transversale comme autonomie, projet, oral ou documentation que si la question porte explicitement sur la methode de travail ou la communication. Pour une question technique, par exemple conversion decimal/binaire, choisis une competence de contenu technique.\n"
             . "- Chaque question doit avoir 1 a 3 aides progressives.\n"
             . "- answer_type vaut text, code, sql ou mixed.\n"
             . "- Si une partie du PDF est illisible, signale-le dans statement_html, mais ne l'invente pas.\n\n"
@@ -360,9 +361,6 @@ final class WrittenSubjectPdfImporter
                 $competency_ids = array_values(array_unique($competency_ids));
                 if (!$competency_ids) {
                     $competency_ids = $this->infer_competency_ids($prompt . ' ' . $intro_html, $context);
-                }
-                if (!$competency_ids && !empty($context['competency_ids'][0])) {
-                    $competency_ids = [(int) $context['competency_ids'][0]];
                 }
 
                 $hints = [];
@@ -479,9 +477,6 @@ final class WrittenSubjectPdfImporter
 
             $chunk = (string) $source_exercise['text'];
             $competency_ids = $this->infer_competency_ids($chunk, $context);
-            if (!$competency_ids && !empty($context['competency_ids'][0])) {
-                $competency_ids = [(int) $context['competency_ids'][0]];
-            }
 
             $exercises[] = [
                 'exercise_order' => $order,
@@ -743,6 +738,7 @@ final class WrittenSubjectPdfImporter
     {
         $haystack = $this->normalize_for_score($text);
         $scores = [];
+        $numeric_conversion = preg_match('/\b(binaire|decimal|decimale|base|conversion|convertir|bits?|octets?|hexadecimal|representation|entiers?)\b/', $haystack) === 1;
 
         foreach ((array) ($context['competencies'] ?? []) as $competency) {
             $id = (int) ($competency['id'] ?? 0);
@@ -758,6 +754,7 @@ final class WrittenSubjectPdfImporter
             ]);
 
             $needle = $this->normalize_for_score($label);
+            $is_generic = preg_match('/\b(autonomie|autonome|collabor|projet|oral|documentation|transversal|organiser|communiquer)\b/', $needle) === 1;
             $tokens = array_values(array_unique(array_filter(preg_split('/\s+/', $needle) ?: [], static function ($token) {
                 return strlen($token) >= 4;
             })));
@@ -767,6 +764,17 @@ final class WrittenSubjectPdfImporter
                 if (strpos($haystack, $token) !== false) {
                     $score++;
                 }
+            }
+
+            if ($numeric_conversion) {
+                if (preg_match('/\b(binaire|decimal|decimale|base|bits?|octets?|hexadecimal|representation|entiers?|codage|encodage|machine|architecture|donnees?)\b/', $needle) === 1) {
+                    $score += 5;
+                }
+                if ($is_generic) {
+                    $score -= 4;
+                }
+            } elseif ($is_generic) {
+                $score -= 2;
             }
 
             if ($score > 0) {
