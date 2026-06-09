@@ -459,6 +459,14 @@ class Screen_Import_Exercises {
         }
         $max_solutions = max(1, $max_solutions);
 
+        $max_hints = 0;
+        foreach ($hints_by_exercise as $hints) {
+            if (!empty($hints)) {
+                $max_hints = max($max_hints, max(array_keys($hints)));
+            }
+        }
+        $max_hints = max(3, $max_hints);
+
         nocache_headers();
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename=ouinpo-exercises-export-' . gmdate('Y-m-d-His') . '.csv');
@@ -489,10 +497,11 @@ class Screen_Import_Exercises {
             'is_exam_like',
             'subject_group',
             'sort_in_subject',
-            'hint_1',
-            'hint_2',
-            'hint_3',
         ];
+
+        for ($i = 1; $i <= $max_hints; $i++) {
+            $header[] = "hint_{$i}";
+        }
 
         for ($i = 1; $i <= $max_solutions; $i++) {
             $header[] = "solution_{$i}_title";
@@ -526,10 +535,11 @@ class Screen_Import_Exercises {
                 isset($exam_meta_by_exercise[$exercise_id]['is_exam_like']) ? (string) ((int) $exam_meta_by_exercise[$exercise_id]['is_exam_like']) : '',
                 (string) ($exam_meta_by_exercise[$exercise_id]['subject_group'] ?? ''),
                 isset($exam_meta_by_exercise[$exercise_id]['sort_in_subject']) ? (string) $exam_meta_by_exercise[$exercise_id]['sort_in_subject'] : '',
-                (string) ($hints_by_exercise[$exercise_id][1] ?? ''),
-                (string) ($hints_by_exercise[$exercise_id][2] ?? ''),
-                (string) ($hints_by_exercise[$exercise_id][3] ?? ''),
             ];
+
+            for ($i = 1; $i <= $max_hints; $i++) {
+                $row[] = (string) ($hints_by_exercise[$exercise_id][$i] ?? '');
+            }
 
             for ($i = 1; $i <= $max_solutions; $i++) {
                 $sol = $solutions[$i - 1] ?? null;
@@ -619,8 +629,8 @@ class Screen_Import_Exercises {
     }
 
     private static function has_hint_columns(array $cols): bool {
-        for ($i = 1; $i <= 3; $i++) {
-            if (isset($cols["hint_{$i}"]) || isset($cols["indice_{$i}"])) {
+        foreach ($cols as $name => $_index) {
+            if (preg_match('/^(hint|indice)_\d+$/', (string) $name)) {
                 return true;
             }
         }
@@ -715,8 +725,12 @@ class Screen_Import_Exercises {
 
     private static function extract_hints(array $row, array $cols): array {
         $hints = [];
-        for ($i = 1; $i <= 3; $i++) {
-            $value = self::csv_value($row, $cols, ["hint_{$i}", "indice_{$i}"]);
+        foreach ($cols as $name => $index) {
+            if (!preg_match('/^(hint|indice)_(\d+)$/', (string) $name, $m)) {
+                continue;
+            }
+            $i = (int) $m[2];
+            $value = trim((string) ($row[$index] ?? ''));
             if ($value !== '') {
                 $hints[$i] = wp_kses_post($value);
             }
@@ -854,7 +868,7 @@ class Screen_Import_Exercises {
             $exercise_id = (int) ($row['exercise_id'] ?? 0);
             $hint_order  = (int) ($row['hint_order'] ?? 0);
 
-            if ($exercise_id <= 0 || $hint_order < 1 || $hint_order > 3) {
+            if ($exercise_id <= 0 || $hint_order < 1) {
                 continue;
             }
 

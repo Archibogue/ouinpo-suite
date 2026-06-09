@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.6.9';
+    const DB_VERSION = '2.7.1';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -765,6 +765,138 @@ class InstallV2 {
 
         ) $charset_innodb;";
 
+        $sql_written_subjects = "CREATE TABLE {$p}written_subjects (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            title VARCHAR(255) NOT NULL,
+            slug VARCHAR(255) NOT NULL,
+            statement MEDIUMTEXT NULL,
+            source_type ENUM('annale','inspired','type_bac') NOT NULL DEFAULT 'annale',
+            session_label VARCHAR(120) NULL,
+            year_label VARCHAR(20) NULL,
+            center_label VARCHAR(120) NULL,
+            subject_group VARCHAR(120) NULL,
+            estimated_minutes SMALLINT UNSIGNED NULL,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY slug (slug),
+            KEY source_type (source_type),
+            KEY session_label (session_label),
+            KEY year_label (year_label),
+            KEY center_label (center_label),
+            KEY subject_group (subject_group),
+            KEY is_active (is_active)
+        ) $charset_innodb;";
+
+        $sql_written_subject_school_level = "CREATE TABLE {$p}written_subject_school_level (
+            subject_id BIGINT UNSIGNED NOT NULL,
+            school_level_id TINYINT UNSIGNED NOT NULL,
+            PRIMARY KEY  (subject_id, school_level_id),
+            KEY school_level_id (school_level_id)
+        ) $charset_innodb;";
+
+        $sql_written_exercises = "CREATE TABLE {$p}written_exercises (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            subject_id BIGINT UNSIGNED NOT NULL,
+            exercise_order SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+            title VARCHAR(255) NULL,
+            intro_html MEDIUMTEXT NULL,
+            max_points DECIMAL(5,2) NULL,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY subject_order (subject_id, exercise_order),
+            KEY subject_id (subject_id),
+            KEY is_active (is_active)
+        ) $charset_innodb;";
+
+        $sql_written_questions = "CREATE TABLE {$p}written_questions (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            exercise_id BIGINT UNSIGNED NOT NULL,
+            question_order SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+            question_label VARCHAR(40) NOT NULL,
+            prompt_html MEDIUMTEXT NOT NULL,
+            answer_type ENUM('text','code','sql','mixed') NOT NULL DEFAULT 'text',
+            max_points DECIMAL(5,2) NULL,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY exercise_order (exercise_id, question_order),
+            KEY exercise_id (exercise_id),
+            KEY is_active (is_active)
+        ) $charset_innodb;";
+
+        $sql_written_question_competency = "CREATE TABLE {$p}written_question_competency (
+            question_id BIGINT UNSIGNED NOT NULL,
+            competency_id BIGINT UNSIGNED NOT NULL,
+            PRIMARY KEY  (question_id, competency_id),
+            KEY competency_id (competency_id)
+        ) $charset_innodb;";
+
+        $sql_written_question_hints = "CREATE TABLE {$p}written_question_hints (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            question_id BIGINT UNSIGNED NOT NULL,
+            hint_order SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+            title VARCHAR(150) NULL,
+            content MEDIUMTEXT NOT NULL,
+            is_ai TINYINT(1) NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY question_order (question_id, hint_order),
+            KEY question_id (question_id),
+            KEY is_ai (is_ai)
+        ) $charset_innodb;";
+
+        $sql_written_question_status = "CREATE TABLE {$p}written_question_status (
+            user_id BIGINT UNSIGNED NOT NULL,
+            question_id BIGINT UNSIGNED NOT NULL,
+            status ENUM('none','attempted','solved') NOT NULL DEFAULT 'none',
+            declared_at DATETIME NULL,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (user_id, question_id),
+            KEY question_id (question_id),
+            KEY status (status)
+        ) $charset_innodb;";
+
+        $sql_written_question_answers = "CREATE TABLE {$p}written_question_answers (
+            user_id BIGINT UNSIGNED NOT NULL,
+            question_id BIGINT UNSIGNED NOT NULL,
+            answer_text LONGTEXT NOT NULL,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (user_id, question_id),
+            KEY question_id (question_id),
+            KEY updated_at (updated_at)
+        ) $charset_innodb;";
+
+        $sql_written_hint_usage = "CREATE TABLE {$p}written_hint_usage (
+            user_id BIGINT UNSIGNED NOT NULL,
+            question_id BIGINT UNSIGNED NOT NULL,
+            hint_id BIGINT UNSIGNED NOT NULL,
+            used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (user_id, question_id, hint_id),
+            KEY question_id (question_id),
+            KEY hint_id (hint_id)
+        ) $charset_innodb;";
+
+        $sql_subject_files = "CREATE TABLE {$p}subject_files (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            subject_type ENUM('written','practical') NOT NULL DEFAULT 'written',
+            subject_id BIGINT UNSIGNED NOT NULL,
+            label VARCHAR(150) NOT NULL,
+            file_name VARCHAR(255) NOT NULL,
+            file_url VARCHAR(1000) NOT NULL,
+            file_kind ENUM('subject','resource','correction') NOT NULL DEFAULT 'subject',
+            file_order SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY subject_lookup (subject_type, subject_id),
+            KEY file_kind (file_kind)
+        ) $charset_innodb;";
+
         $sql_correction_batches = "CREATE TABLE {$p}correction_batches (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             assessment_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
@@ -906,6 +1038,26 @@ class InstallV2 {
         dbDelta($sql_practical_calls);
 
         dbDelta($sql_practical_files);
+
+        dbDelta($sql_written_subjects);
+
+        dbDelta($sql_written_subject_school_level);
+
+        dbDelta($sql_written_exercises);
+
+        dbDelta($sql_written_questions);
+
+        dbDelta($sql_written_question_competency);
+
+        dbDelta($sql_written_question_hints);
+
+        dbDelta($sql_written_question_status);
+
+        dbDelta($sql_written_question_answers);
+
+        dbDelta($sql_written_hint_usage);
+
+        dbDelta($sql_subject_files);
 
         dbDelta($sql_practical_call_attempts);
 
@@ -2043,6 +2195,105 @@ class InstallV2 {
 
              ON DELETE CASCADE"
 
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_subject_school_level',
+            'fk_written_subject_level_subject',
+            "ALTER TABLE {$p}written_subject_school_level
+             ADD CONSTRAINT fk_written_subject_level_subject
+             FOREIGN KEY (subject_id) REFERENCES {$p}written_subjects(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_subject_school_level',
+            'fk_written_subject_level_level',
+            "ALTER TABLE {$p}written_subject_school_level
+             ADD CONSTRAINT fk_written_subject_level_level
+             FOREIGN KEY (school_level_id) REFERENCES {$p}school_levels(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_exercises',
+            'fk_written_exercises_subject',
+            "ALTER TABLE {$p}written_exercises
+             ADD CONSTRAINT fk_written_exercises_subject
+             FOREIGN KEY (subject_id) REFERENCES {$p}written_subjects(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_questions',
+            'fk_written_questions_exercise',
+            "ALTER TABLE {$p}written_questions
+             ADD CONSTRAINT fk_written_questions_exercise
+             FOREIGN KEY (exercise_id) REFERENCES {$p}written_exercises(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_question_competency',
+            'fk_written_question_competency_question',
+            "ALTER TABLE {$p}written_question_competency
+             ADD CONSTRAINT fk_written_question_competency_question
+             FOREIGN KEY (question_id) REFERENCES {$p}written_questions(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_question_competency',
+            'fk_written_question_competency_competency',
+            "ALTER TABLE {$p}written_question_competency
+             ADD CONSTRAINT fk_written_question_competency_competency
+             FOREIGN KEY (competency_id) REFERENCES {$p}competencies(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_question_hints',
+            'fk_written_question_hints_question',
+            "ALTER TABLE {$p}written_question_hints
+             ADD CONSTRAINT fk_written_question_hints_question
+             FOREIGN KEY (question_id) REFERENCES {$p}written_questions(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_question_status',
+            'fk_written_question_status_question',
+            "ALTER TABLE {$p}written_question_status
+             ADD CONSTRAINT fk_written_question_status_question
+             FOREIGN KEY (question_id) REFERENCES {$p}written_questions(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_question_answers',
+            'fk_written_question_answers_question',
+            "ALTER TABLE {$p}written_question_answers
+             ADD CONSTRAINT fk_written_question_answers_question
+             FOREIGN KEY (question_id) REFERENCES {$p}written_questions(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_hint_usage',
+            'fk_written_hint_usage_question',
+            "ALTER TABLE {$p}written_hint_usage
+             ADD CONSTRAINT fk_written_hint_usage_question
+             FOREIGN KEY (question_id) REFERENCES {$p}written_questions(id)
+             ON DELETE CASCADE"
+        );
+
+        self::add_fk_if_missing(
+            $p . 'written_hint_usage',
+            'fk_written_hint_usage_hint',
+            "ALTER TABLE {$p}written_hint_usage
+             ADD CONSTRAINT fk_written_hint_usage_hint
+             FOREIGN KEY (hint_id) REFERENCES {$p}written_question_hints(id)
+             ON DELETE CASCADE"
         );
 
         

@@ -77,6 +77,10 @@ class AdminMenu {
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
             ],
+            'ouinpo-written-subjects' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
         ];
 
         if (!isset($styles[$page])) {
@@ -90,6 +94,7 @@ class AdminMenu {
 
         $script_pages = [
             'ouinpo-exercices',
+            'ouinpo-written-subjects',
             'ouinpo-courses-competencies',
             'ouinpo-groups',
             'ouinpo-levels',
@@ -333,6 +338,15 @@ class AdminMenu {
             Capabilities::MANAGE_SETTINGS,
             'ouinpo-exercises-settings',
             [self::class, 'render_settings']
+        );
+
+        add_submenu_page(
+            $parent,
+            'Annales ecrites NSI',
+            'Annales ecrites',
+            Capabilities::MANAGE_EXERCISES,
+            'ouinpo-written-subjects',
+            ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'render']
         );
 
         add_submenu_page(

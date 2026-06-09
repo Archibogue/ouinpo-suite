@@ -84,6 +84,14 @@ final class Shortcodes {
 
     add_shortcode('ouinpo-practical-subject', [__CLASS__, 'render_practical_subject']); 
 
+    add_shortcode('ouinpo_written_subjects', [__CLASS__, 'render_written_subjects']);
+
+    add_shortcode('ouinpo-written-subjects', [__CLASS__, 'render_written_subjects']);
+
+    add_shortcode('ouinpo_written_subject', [__CLASS__, 'render_written_subject']);
+
+    add_shortcode('ouinpo-written-subject', [__CLASS__, 'render_written_subject']);
+
     
 
   }
@@ -1742,6 +1750,257 @@ JS,
 }
 
 /** Liste des sujets d’épreuve pratique */
+
+public static function render_written_subjects($atts = array(), $content = '') {
+  wp_enqueue_style('ouinpo-exo-css');
+
+  $atts = shortcode_atts([
+    'page'        => '',
+    'source_type' => '',
+  ], $atts, 'ouinpo_written_subjects');
+
+  $page = trim((string) $atts['page']);
+  if ($page === '') {
+    $page = self::page_url_or_fallback('annale-nsi-sujet', '/annale-nsi-sujet/');
+  }
+
+  $items = [];
+  if (class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes') && class_exists('\WP_REST_Request')) {
+    $request = new \WP_REST_Request('GET', '/ouinpo/v1/written-subjects');
+    $source_type = sanitize_key((string) $atts['source_type']);
+    if ($source_type !== '') {
+      $request->set_param('source_type', $source_type);
+    }
+    $response = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::index($request);
+    if (!is_wp_error($response)) {
+      $items = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+    }
+  }
+
+  ob_start();
+  ?>
+  <div class="ouinpo-exercises-page ouinpo-written-page">
+    <div class="ouinpo-exercises-shell">
+      <section class="ouinpo-panel ouinpo-panel--results">
+        <div class="ouinpo-panel-head">
+          <h2 class="ouinpo-panel-title">Annales du bac NSI ecrit</h2>
+          <p class="ouinpo-panel-intro">Choisis un sujet, puis travaille les exercices et sous-questions avec leurs aides IA ciblees.</p>
+        </div>
+
+        <?php if (empty($items) || !is_array($items)): ?>
+          <div class="ouinpo-empty">Aucune annale ecrite disponible.</div>
+        <?php else: ?>
+          <ul class="ouinpo-exercises-list ouinpo-exo-list">
+            <?php foreach ($items as $item): ?>
+              <?php
+              $item = is_object($item) ? (array) $item : (array) $item;
+              $id = (int) ($item['id'] ?? 0);
+              if ($id <= 0) {
+                continue;
+              }
+              $url = add_query_arg('written', $id, $page);
+              $meta = array_filter([
+                (string) ($item['session_label'] ?? ''),
+                (string) ($item['year_label'] ?? ''),
+                (string) ($item['center_label'] ?? ''),
+              ]);
+              $questions_count = (int) ($item['questions_count'] ?? 0);
+              $started_count = (int) ($item['started_questions_count'] ?? 0);
+              $solved_count = (int) ($item['solved_questions_count'] ?? 0);
+              $student_tag = '';
+              if (is_user_logged_in() && $questions_count > 0 && $solved_count >= $questions_count) {
+                $student_tag = 'Terminé';
+              } elseif (is_user_logged_in() && $started_count > 0) {
+                $student_tag = 'En cours';
+              }
+              ?>
+              <li class="ouinpo-exercise-item ouin-exo-li">
+                <div class="ouinpo-exercise-main ouin-exo-main">
+                  <a class="ouinpo-exercise-link ouin-exo-link" href="<?php echo esc_url($url); ?>">
+                    <?php echo esc_html((string) ($item['title'] ?? 'Annale ecrite')); ?>
+                  </a>
+                  <?php if ($meta): ?>
+                    <div class="ouinpo-exercise-sub"><?php echo esc_html(implode(' - ', $meta)); ?></div>
+                  <?php endif; ?>
+                </div>
+                <div class="ouinpo-badges ouin-exo-status">
+                  <?php if ($student_tag !== ''): ?>
+                    <span class="ouinpo-badge ouinpo-badge--student-progress"><?php echo esc_html($student_tag); ?></span>
+                  <?php endif; ?>
+                  <span class="ouinpo-badge ouinpo-badge--exam"><?php echo esc_html(self::source_type_label((string) ($item['source_type'] ?? 'annale'))); ?></span>
+                  <span class="ouinpo-badge"><?php echo esc_html((string) (int) ($item['exercises_count'] ?? 0)); ?> exercice<?php echo ((int) ($item['exercises_count'] ?? 0) > 1) ? 's' : ''; ?></span>
+                  <span class="ouinpo-badge"><?php echo esc_html((string) $questions_count); ?> question<?php echo ($questions_count > 1) ? 's' : ''; ?></span>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </section>
+    </div>
+  </div>
+  <?php
+  return ob_get_clean();
+}
+
+public static function render_written_subject($atts = array(), $content = '') {
+  wp_enqueue_style('ouinpo-exo-css');
+  wp_enqueue_script('ouinpo-exo-js');
+
+  $atts = shortcode_atts([
+    'id'   => 0,
+    'auto' => '1',
+  ], $atts, 'ouinpo_written_subject');
+
+  $id = (int) $atts['id'];
+  if ($id <= 0 && $atts['auto'] === '1' && isset($_GET['written'])) {
+    $id = (int) $_GET['written'];
+  }
+
+  if ($id <= 0) {
+    return '<p>Annale ecrite non specifiee. Utilise <code>[ouinpo_written_subject id="123"]</code> ou ajoute <code>?written=123</code> a l URL.</p>';
+  }
+
+  if (!class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes')) {
+    return '<p>Le module des annales ecrites est indisponible.</p>';
+  }
+
+  $subject = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::get_subject($id);
+  if (!$subject) {
+    return '<p>Annale ecrite introuvable.</p>';
+  }
+
+  ob_start();
+  ?>
+  <article class="ouinpo-exercises-page ouinpo-written-subject" data-written-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">
+    <section class="ouinpo-panel">
+      <div class="ouinpo-panel-head">
+        <h2 class="ouinpo-panel-title"><?php echo esc_html((string) $subject['title']); ?></h2>
+        <div class="ouinpo-badges">
+          <?php foreach (array_filter([(string) ($subject['session_label'] ?? ''), (string) ($subject['year_label'] ?? ''), (string) ($subject['center_label'] ?? '')]) as $meta): ?>
+            <span class="ouinpo-badge"><?php echo esc_html($meta); ?></span>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <?php if (!empty($subject['statement'])): ?>
+        <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) $subject['statement']); ?></div>
+      <?php endif; ?>
+
+      <?php if (!empty($subject['files']) && is_array($subject['files'])): ?>
+        <div class="ouinpo-practical-files">
+          <h3>Fichiers du sujet</h3>
+          <ul>
+            <?php foreach ($subject['files'] as $file): ?>
+              <li><a href="<?php echo esc_url((string) ($file['file_url'] ?? '')); ?>" target="_blank" rel="noopener"><?php echo esc_html((string) ($file['label'] ?? 'Fichier')); ?></a></li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
+    </section>
+
+    <?php foreach ((array) ($subject['exercises'] ?? []) as $exercise): ?>
+      <section class="ouinpo-panel ouinpo-written-exercise-front">
+        <h3 class="ouinpo-panel-title"><?php echo esc_html((string) (($exercise['title'] ?? '') ?: 'Exercice ' . (int) ($exercise['exercise_order'] ?? 1))); ?></h3>
+        <?php if (!empty($exercise['intro_html'])): ?>
+          <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) $exercise['intro_html']); ?></div>
+        <?php endif; ?>
+
+        <?php foreach ((array) ($exercise['questions'] ?? []) as $question): ?>
+          <article class="ouinpo-written-question-front">
+            <h4><?php echo esc_html('Question ' . (string) ($question['question_label'] ?? '')); ?></h4>
+            <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) ($question['prompt_html'] ?? '')); ?></div>
+
+            <?php if (!empty($question['competencies'])): ?>
+              <div class="ouinpo-badges">
+                <?php foreach ((array) $question['competencies'] as $competency): ?>
+                  <span class="ouinpo-badge ouinpo-badge--competency"><?php echo esc_html(trim((string) ($competency['domain'] ?? '') . ' - ' . (string) ($competency['competency'] ?? ''))); ?></span>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+
+            <?php if (is_user_logged_in()): ?>
+              <div class="ouinpo-written-answer-block">
+                <label for="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">Ta reponse</label>
+                <textarea
+                  id="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                  class="ouinpo-answer ouinpo-written-answer"
+                  data-written-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                  rows="7"
+                  placeholder="Redige ta reponse pour cette question. Evite les donnees personnelles."
+                ><?php echo esc_textarea((string) ($question['student_answer'] ?? '')); ?></textarea>
+              </div>
+
+              <div class="ouinpo-written-question-ai">
+                <button
+                  type="button"
+                  class="button"
+                  data-written-question-advice-action
+                  data-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                >Soumettre ma reponse a l IA</button>
+                <div class="ouinpo-written-question-advice-status" data-written-question-advice-status aria-live="polite"></div>
+                <div class="ouinpo-written-question-advice-output" data-written-question-advice-output></div>
+              </div>
+
+              <div class="ouinpo-written-status-actions">
+                <?php foreach (['attempted' => 'Marquer travaillee', 'solved' => 'Marquer reussie'] as $status_value => $status_label): ?>
+                  <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form">
+                    <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
+                    <input type="hidden" name="action" value="ouinpo_written_question_status">
+                    <input type="hidden" name="question_id" value="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">
+                    <input type="hidden" name="status" value="<?php echo esc_attr($status_value); ?>">
+                    <input type="hidden" name="redirect_to" value="<?php echo esc_url((string) ($_SERVER['REQUEST_URI'] ?? '')); ?>">
+                    <button type="submit" class="button"><?php echo esc_html($status_label); ?></button>
+                  </form>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+
+            <?php if (!empty($question['hints'])): ?>
+              <div class="ouinpo-written-hints-front">
+                <?php foreach ((array) $question['hints'] as $hint): ?>
+                  <details class="ai-feedback-block">
+                    <summary><?php echo esc_html((string) (($hint['title'] ?? '') ?: 'Aide IA')); ?></summary>
+                    <div><?php echo wp_kses_post((string) ($hint['content'] ?? '')); ?></div>
+                  </details>
+                  <?php if (is_user_logged_in()): ?>
+                    <label class="ouinpo-written-hint-used">
+                      <input
+                        type="checkbox"
+                        value="<?php echo esc_attr((string) (int) ($hint['id'] ?? 0)); ?>"
+                        data-written-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                        data-written-hint-used
+                        <?php checked(in_array((int) ($hint['id'] ?? 0), array_map('intval', (array) ($question['used_hint_ids'] ?? [])), true)); ?>
+                      >
+                      Aide utilisee pour ma reponse
+                    </label>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+          </article>
+        <?php endforeach; ?>
+      </section>
+    <?php endforeach; ?>
+
+    <?php if (is_user_logged_in()): ?>
+      <section class="ouinpo-panel ouinpo-written-report-panel">
+        <h3 class="ouinpo-panel-title">Rapport de travail</h3>
+        <?php echo self::render_ai_notice('exercise'); ?>
+        <p>Quand tu as saisi tes reponses et coche les aides utilisees, genere un rapport de conseils pour orienter tes revisions.</p>
+        <button type="button" class="button button-primary" data-written-report-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Generer mon rapport</button>
+        <button type="button" class="button" data-written-reset-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Remettre a zero le sujet</button>
+        <div class="ouinpo-written-report-status" data-written-report-status aria-live="polite"></div>
+        <div class="ouinpo-written-report-output" data-written-report-output></div>
+      </section>
+    <?php else: ?>
+      <section class="ouinpo-panel ouinpo-written-report-panel">
+        <p>Connecte-toi pour enregistrer tes reponses, indiquer les aides utilisees et generer un rapport de conseils.</p>
+      </section>
+    <?php endif; ?>
+  </article>
+  <?php
+  return ob_get_clean();
+}
 
 public static function render_practical_subjects($atts = array(), $content = '') {
 

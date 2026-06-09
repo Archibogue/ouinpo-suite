@@ -165,6 +165,329 @@
 
   }
 
+  function renderWrittenReportList(title, items) {
+    const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (!safeItems.length) return '';
+
+    return `
+      <section class="ouinpo-written-report-section">
+        <h4>${escapeHtml(title)}</h4>
+        <ul>${safeItems.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+      </section>
+    `;
+  }
+
+  function renderWrittenReport(output, report) {
+    if (!output) return;
+
+    const questionAdvice = Array.isArray(report && report.question_advice)
+      ? report.question_advice
+      : [];
+
+    const questionHtml = questionAdvice.length
+      ? `
+        <section class="ouinpo-written-report-section">
+          <h4>Conseils par question</h4>
+          <div class="ouinpo-written-report-questions">
+            ${questionAdvice.map(item => `
+              <article class="ouinpo-written-report-question">
+                <h5>${escapeHtml(item.question_label || 'Question')}</h5>
+                ${item.advice ? `<p>${escapeHtml(item.advice)}</p>` : ''}
+                ${item.next_step ? `<p><strong>Prochaine etape :</strong> ${escapeHtml(item.next_step)}</p>` : ''}
+                ${item.used_hints_note ? `<p><strong>Aides utilisees :</strong> ${escapeHtml(item.used_hints_note)}</p>` : ''}
+              </article>
+            `).join('')}
+          </div>
+        </section>
+      `
+      : '';
+
+    const html = `
+      <div class="ouinpo-written-report-card">
+        ${report && report.summary ? `<p class="ouinpo-written-report-summary">${escapeHtml(report.summary)}</p>` : ''}
+        ${renderWrittenReportList('Points forts', report && report.strengths)}
+        ${renderWrittenReportList('Priorites', report && report.priorities)}
+        ${questionHtml}
+        ${renderWrittenReportList('Plan de revision', report && report.revision_plan)}
+        ${report && report.teacher_note ? `<p class="ouinpo-written-report-note">${escapeHtml(report.teacher_note)}</p>` : ''}
+      </div>
+    `;
+
+    output.innerHTML = html;
+
+    if (!output.textContent.trim()) {
+      output.innerHTML = '<div class="ouinpo-written-report-card"><p class="ouinpo-written-report-summary">Rapport genere, mais aucun contenu affichable n a ete retourne. Reessaie ou demande un conseil sur une question precise.</p></div>';
+    }
+  }
+
+  function renderWrittenQuestionAdvice(output, advice) {
+    if (!output) return;
+
+    const verdictMap = {
+      correct: 'Reponse correcte',
+      partial: 'Reponse partiellement correcte',
+      incorrect: 'Reponse a revoir'
+    };
+    const verdict = advice && advice.verdict ? String(advice.verdict) : 'incorrect';
+    const title = verdictMap[verdict] || 'Evaluation IA';
+    const strengths = renderWrittenReportList('Ce qui va bien', advice && advice.strengths);
+    const improvements = renderWrittenReportList('A ameliorer', advice && advice.improvements);
+    const steps = renderWrittenReportList('A faire maintenant', advice && advice.next_steps);
+    let confidenceHtml = '';
+
+    if (advice && typeof advice.confidence !== 'undefined' && advice.confidence !== null && advice.confidence !== '') {
+      const confidence = Number(advice.confidence);
+      if (!Number.isNaN(confidence)) {
+        confidenceHtml = `<p><strong>Confiance :</strong> ${escapeHtml(Math.round(confidence * 100) + ' %')}</p>`;
+      }
+    }
+
+    output.innerHTML = `
+      <div class="ouin-exo-block ai-feedback-block ouinpo-written-question-advice-card">
+        <h5>${escapeHtml(title)}</h5>
+        ${advice && advice.feedback ? `<p>${escapeHtml(advice.feedback)}</p>` : '<p>Retour indisponible.</p>'}
+        ${strengths}
+        ${improvements}
+        ${steps}
+        ${advice && advice.hint_usage_note ? `<p><strong>Aides utilisees :</strong> ${escapeHtml(advice.hint_usage_note)}</p>` : ''}
+        ${advice && advice.safe_to_mark_solved === false && verdict === 'correct' ? '<p><em>Reponse encourageante, mais non validee officiellement pour le moment.</em></p>' : ''}
+        ${confidenceHtml}
+      </div>
+    `;
+
+    if (!output.textContent.trim()) {
+      output.innerHTML = '<div class="ouinpo-written-question-advice-card"><p>Evaluation generee, mais aucun contenu affichable n a ete retourne. Reessaie en precisant ta reponse.</p></div>';
+    }
+  }
+
+  function collectWrittenReportPayload(root) {
+    const answers = {};
+    let hasAnswer = false;
+
+    root.querySelectorAll('[data-written-question-id].ouinpo-written-answer').forEach(function (textarea) {
+      const questionId = String(textarea.getAttribute('data-written-question-id') || '').trim();
+      if (!questionId) return;
+
+      const answer = String(textarea.value || '').trim();
+      answers[questionId] = answer;
+
+      if (answer.length > 0) {
+        hasAnswer = true;
+      }
+    });
+
+    const usedHints = {};
+    root.querySelectorAll('[data-written-hint-used]:checked').forEach(function (checkbox) {
+      const questionId = String(checkbox.getAttribute('data-written-question-id') || '').trim();
+      const hintId = String(checkbox.value || '').trim();
+
+      if (!questionId || !hintId) return;
+      if (!usedHints[questionId]) usedHints[questionId] = [];
+
+      usedHints[questionId].push(hintId);
+    });
+
+    return {
+      hasAnswer: hasAnswer,
+      payload: {
+        answers: answers,
+        used_hints: usedHints
+      }
+    };
+  }
+
+  function collectWrittenQuestionPayload(questionRoot) {
+    const textarea = questionRoot ? questionRoot.querySelector('[data-written-question-id].ouinpo-written-answer') : null;
+    const answer = textarea ? String(textarea.value || '').trim() : '';
+    const usedHints = [];
+
+    if (questionRoot) {
+      questionRoot.querySelectorAll('[data-written-hint-used]:checked').forEach(function (checkbox) {
+        const hintId = String(checkbox.value || '').trim();
+        if (hintId) {
+          usedHints.push(hintId);
+        }
+      });
+    }
+
+    return {
+      hasAnswer: answer.length > 0,
+      payload: {
+        answer: answer,
+        used_hints: usedHints
+      }
+    };
+  }
+
+  function bindWrittenQuestionAdvice() {
+    let didWork = false;
+
+    document.querySelectorAll('[data-written-question-advice-action]').forEach(function (button) {
+      if (button.dataset.ouinpoQuestionAdviceBooted === '1') return;
+
+      button.dataset.ouinpoQuestionAdviceBooted = '1';
+      didWork = true;
+
+      const questionRoot = button.closest('.ouinpo-written-question-front');
+      const status = questionRoot ? questionRoot.querySelector('[data-written-question-advice-status]') : null;
+      const output = questionRoot ? questionRoot.querySelector('[data-written-question-advice-output]') : null;
+      const questionId = String(button.getAttribute('data-question-id') || '').trim();
+
+      button.addEventListener('click', async function () {
+        const collected = collectWrittenQuestionPayload(questionRoot);
+
+        if (!collected.hasAnswer) {
+          renderMessage(status, 'Ecris ta reponse avant de demander un conseil IA.', 'ouinpo-empty');
+          return;
+        }
+
+        button.disabled = true;
+        button.classList.add('is-loading');
+        renderMessage(status, 'Analyse de ta reponse en cours...', 'ouinpo-empty');
+
+        try {
+          const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/student-advice', collected.payload);
+          renderMessage(status, 'Evaluation IA generee. Ta reponse et les aides cochees ont ete enregistrees.', 'ouinpo-success');
+          renderWrittenQuestionAdvice(output, data && data.advice ? data.advice : {});
+        } catch (err) {
+          renderMessage(status, err && err.message ? err.message : 'Evaluation impossible pour le moment.', 'ouinpo-error');
+        } finally {
+          button.disabled = false;
+          button.classList.remove('is-loading');
+        }
+      });
+    });
+
+    return didWork;
+  }
+
+  function bindWrittenSubjectReports() {
+    let didWork = false;
+
+    document.querySelectorAll('.ouinpo-written-subject[data-written-subject-id]').forEach(function (root) {
+      if (root.dataset.ouinpoWrittenReportBooted === '1') return;
+
+      root.dataset.ouinpoWrittenReportBooted = '1';
+      didWork = true;
+
+      const button = root.querySelector('[data-written-report-action]');
+      const resetButton = root.querySelector('[data-written-reset-action]');
+      if (!button && !resetButton) return;
+
+      const status = root.querySelector('[data-written-report-status]');
+      const output = root.querySelector('[data-written-report-output]');
+      const subjectId = String(
+        (button && button.getAttribute('data-subject-id'))
+        || (resetButton && resetButton.getAttribute('data-subject-id'))
+        || root.getAttribute('data-written-subject-id')
+        || ''
+      ).trim();
+      let saveTimer = null;
+      let saveInFlight = false;
+      let savePending = false;
+
+      async function saveProgressQuietly() {
+        if (!subjectId) return;
+
+        if (saveInFlight) {
+          savePending = true;
+          return;
+        }
+
+        saveInFlight = true;
+        savePending = false;
+
+        try {
+          const collected = collectWrittenReportPayload(root);
+          await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/save-progress', collected.payload);
+        } catch (_) {
+          // Sauvegarde silencieuse : les actions explicites afficheront les erreurs utiles.
+        } finally {
+          saveInFlight = false;
+          if (savePending) {
+            scheduleProgressSave();
+          }
+        }
+      }
+
+      function scheduleProgressSave() {
+        if (!subjectId) return;
+
+        savePending = true;
+        window.clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(saveProgressQuietly, 900);
+      }
+
+      root.querySelectorAll('.ouinpo-written-answer').forEach(function (textarea) {
+        textarea.addEventListener('input', scheduleProgressSave);
+        textarea.addEventListener('blur', saveProgressQuietly);
+      });
+
+      root.querySelectorAll('[data-written-hint-used]').forEach(function (checkbox) {
+        checkbox.addEventListener('change', scheduleProgressSave);
+      });
+
+      if (resetButton) {
+        resetButton.addEventListener('click', async function () {
+          if (!window.confirm('Remettre a zero tes reponses, aides cochees et statuts pour ce sujet ?')) {
+            return;
+          }
+
+          resetButton.disabled = true;
+          renderMessage(status, 'Remise a zero en cours...', 'ouinpo-empty');
+
+          try {
+            await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/reset-progress', {});
+
+            root.querySelectorAll('.ouinpo-written-answer').forEach(function (textarea) {
+              textarea.value = '';
+            });
+            root.querySelectorAll('[data-written-hint-used]').forEach(function (checkbox) {
+              checkbox.checked = false;
+            });
+            root.querySelectorAll('[data-written-question-advice-status], [data-written-question-advice-output], [data-written-report-output]').forEach(function (node) {
+              node.innerHTML = '';
+            });
+
+            renderMessage(status, 'Sujet remis a zero pour ton compte.', 'ouinpo-success');
+          } catch (err) {
+            renderMessage(status, err && err.message ? err.message : 'Remise a zero impossible pour le moment.', 'ouinpo-error');
+          } finally {
+            resetButton.disabled = false;
+          }
+        });
+      }
+
+      if (!button) return;
+
+      button.addEventListener('click', async function () {
+        const collected = collectWrittenReportPayload(root);
+
+        if (!collected.hasAnswer) {
+          renderMessage(status, 'Ajoute au moins une reponse avant de demander un rapport.', 'ouinpo-empty');
+          return;
+        }
+
+        button.disabled = true;
+        button.classList.add('is-loading');
+        renderMessage(status, 'Generation du rapport en cours...', 'ouinpo-empty');
+
+        try {
+          const data = await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/student-report', collected.payload);
+          renderMessage(status, 'Rapport genere. Tes reponses et les aides utilisees ont ete enregistrees.', 'ouinpo-success');
+          renderWrittenReport(output, data && data.report ? data.report : {});
+        } catch (err) {
+          renderMessage(status, err && err.message ? err.message : 'Rapport impossible pour le moment.', 'ouinpo-error');
+        } finally {
+          button.disabled = false;
+          button.classList.remove('is-loading');
+        }
+      });
+    });
+
+    return didWork;
+  }
+
 
 
   // URL cible pour un exo
@@ -3040,6 +3363,14 @@ function enableTabInAnswerTextareas() {
     let didWork = false;
 
     if (bindExerciseLevelFilter()) {
+      didWork = true;
+    }
+
+    if (bindWrittenSubjectReports()) {
+      didWork = true;
+    }
+
+    if (bindWrittenQuestionAdvice()) {
       didWork = true;
     }
 
