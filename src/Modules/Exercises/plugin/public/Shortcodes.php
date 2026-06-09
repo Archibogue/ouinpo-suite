@@ -1454,11 +1454,87 @@ private static function practical_subject_list_fallback_html(string $page, strin
 private static function source_type_label(string $source_type): string {
   $labels = [
     'annale'   => 'Annale',
-    'inspired' => 'Inspire annale',
+    'inspired' => 'Inspiré annale',
     'type_bac' => 'Type bac',
   ];
 
   return $labels[strtolower($source_type)] ?? '';
+}
+
+private static function written_subject_filter_domains(string $level_slug): array {
+  if ($level_slug === '') {
+    return [];
+  }
+
+  global $wpdb;
+
+  $p = $wpdb->prefix . 'ouin_exo_';
+  $rows = $wpdb->get_results($wpdb->prepare(
+    "SELECT DISTINCT c.domain_slug AS slug, c.domain AS label
+       FROM {$p}written_subjects s
+       INNER JOIN {$p}written_subject_school_level wsl ON wsl.subject_id = s.id
+       INNER JOIN {$p}school_levels sl ON sl.id = wsl.school_level_id
+       INNER JOIN {$p}written_exercises e ON e.subject_id = s.id AND e.is_active = 1
+       INNER JOIN {$p}written_questions q ON q.exercise_id = e.id AND q.is_active = 1
+       INNER JOIN {$p}written_question_competency wqc ON wqc.question_id = q.id
+       INNER JOIN {$p}competencies c ON c.id = wqc.competency_id
+      WHERE s.is_active = 1
+        AND sl.slug = %s
+        AND c.active = 1
+        AND c.domain_slug IS NOT NULL
+        AND c.domain_slug <> ''
+      ORDER BY c.domain ASC, c.domain_slug ASC",
+    $level_slug
+  ), ARRAY_A);
+
+  $options = [];
+  foreach ((array) $rows as $row) {
+    $slug = sanitize_key((string) ($row['slug'] ?? ''));
+    $label = trim((string) ($row['label'] ?? ''));
+    if ($slug !== '' && $label !== '') {
+      $options[$slug] = $label;
+    }
+  }
+
+  return $options;
+}
+
+private static function written_subject_filter_competencies(string $level_slug, string $domain_slug): array {
+  if ($level_slug === '' || $domain_slug === '') {
+    return [];
+  }
+
+  global $wpdb;
+
+  $p = $wpdb->prefix . 'ouin_exo_';
+  $rows = $wpdb->get_results($wpdb->prepare(
+    "SELECT DISTINCT c.id, COALESCE(NULLIF(c.label, ''), c.competency) AS label
+       FROM {$p}written_subjects s
+       INNER JOIN {$p}written_subject_school_level wsl ON wsl.subject_id = s.id
+       INNER JOIN {$p}school_levels sl ON sl.id = wsl.school_level_id
+       INNER JOIN {$p}written_exercises e ON e.subject_id = s.id AND e.is_active = 1
+       INNER JOIN {$p}written_questions q ON q.exercise_id = e.id AND q.is_active = 1
+       INNER JOIN {$p}written_question_competency wqc ON wqc.question_id = q.id
+       INNER JOIN {$p}competencies c ON c.id = wqc.competency_id
+      WHERE s.is_active = 1
+        AND sl.slug = %s
+        AND c.active = 1
+        AND c.domain_slug = %s
+      ORDER BY label ASC, c.id ASC",
+    $level_slug,
+    $domain_slug
+  ), ARRAY_A);
+
+  $options = [];
+  foreach ((array) $rows as $row) {
+    $id = (int) ($row['id'] ?? 0);
+    $label = trim((string) ($row['label'] ?? ''));
+    if ($id > 0 && $label !== '') {
+      $options[$id] = $label;
+    }
+  }
+
+  return $options;
 }
 
 private static function theme_bac_label(string $theme): string {
@@ -1753,6 +1829,7 @@ JS,
 
 public static function render_written_subjects($atts = array(), $content = '') {
   wp_enqueue_style('ouinpo-exo-css');
+  wp_enqueue_script('ouinpo-exo-js');
 
   $atts = shortcode_atts([
     'page'        => '',
@@ -1764,9 +1841,36 @@ public static function render_written_subjects($atts = array(), $content = '') {
     $page = self::page_url_or_fallback('annale-nsi-sujet', '/annale-nsi-sujet/');
   }
 
+  $level_options = self::school_level_options();
+  $selected_level = isset($_GET['written_level']) ? sanitize_key((string) $_GET['written_level']) : '';
+  if ($selected_level !== '' && !isset($level_options[$selected_level])) {
+    $selected_level = '';
+  }
+
+  $domain_options = self::written_subject_filter_domains($selected_level);
+  $selected_domain = isset($_GET['written_domain']) ? sanitize_key((string) $_GET['written_domain']) : '';
+  if ($selected_level === '' || $selected_domain === '' || !isset($domain_options[$selected_domain])) {
+    $selected_domain = '';
+  }
+
+  $competency_options = self::written_subject_filter_competencies($selected_level, $selected_domain);
+  $selected_competency = isset($_GET['written_competency']) ? max(0, (int) $_GET['written_competency']) : 0;
+  if ($selected_domain === '' || $selected_competency <= 0 || !isset($competency_options[$selected_competency])) {
+    $selected_competency = 0;
+  }
+
   $items = [];
   if (class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes') && class_exists('\WP_REST_Request')) {
     $request = new \WP_REST_Request('GET', '/ouinpo/v1/written-subjects');
+    if ($selected_level !== '') {
+      $request->set_param('school_level', $selected_level);
+    }
+    if ($selected_domain !== '') {
+      $request->set_param('domain_slug', $selected_domain);
+    }
+    if ($selected_competency > 0) {
+      $request->set_param('competency_id', $selected_competency);
+    }
     $source_type = sanitize_key((string) $atts['source_type']);
     if ($source_type !== '') {
       $request->set_param('source_type', $source_type);
@@ -1777,18 +1881,65 @@ public static function render_written_subjects($atts = array(), $content = '') {
     }
   }
 
+  $filter_action = remove_query_arg(['written_level', 'written_domain', 'written_competency']);
+  $has_filters = $selected_level !== '' || $selected_domain !== '' || $selected_competency > 0;
+
   ob_start();
   ?>
   <div class="ouinpo-exercises-page ouinpo-written-page">
     <div class="ouinpo-exercises-shell">
+      <section class="ouinpo-panel ouinpo-panel--filters ouinpo-written-filters" data-written-subject-filters>
+        <h2 class="ouinpo-panel-title">Filtrer les sujets</h2>
+        <form method="get" action="<?php echo esc_url($filter_action); ?>" class="ouinpo-written-filter-form">
+          <div class="ouinpo-filters-grid">
+            <div class="ouinpo-field">
+              <label for="ouinpo-written-level">Niveau</label>
+              <select id="ouinpo-written-level" name="written_level" class="ouinpo-select" data-written-filter-level>
+                <option value="" <?php selected($selected_level, ''); ?>>Tous les niveaux</option>
+                <?php foreach ($level_options as $slug => $label): ?>
+                  <option value="<?php echo esc_attr($slug); ?>" <?php selected($selected_level, $slug); ?>><?php echo esc_html($label); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="ouinpo-field">
+              <label for="ouinpo-written-domain">Domaine</label>
+              <select id="ouinpo-written-domain" name="written_domain" class="ouinpo-select" data-written-filter-domain <?php disabled($selected_level === ''); ?>>
+                <option value=""><?php echo $selected_level === '' ? esc_html('Choisis un niveau') : esc_html('Tous les domaines'); ?></option>
+                <?php foreach ($domain_options as $slug => $label): ?>
+                  <option value="<?php echo esc_attr($slug); ?>" <?php selected($selected_domain, $slug); ?>><?php echo esc_html($label); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="ouinpo-field">
+              <label for="ouinpo-written-competency">Compétence</label>
+              <select id="ouinpo-written-competency" name="written_competency" class="ouinpo-select" data-written-filter-competency <?php disabled($selected_domain === ''); ?>>
+                <option value=""><?php echo $selected_domain === '' ? esc_html('Choisis un domaine') : esc_html('Toutes les compétences'); ?></option>
+                <?php foreach ($competency_options as $id => $label): ?>
+                  <option value="<?php echo esc_attr((string) (int) $id); ?>" <?php selected($selected_competency, (int) $id); ?>><?php echo esc_html($label); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+
+          <div class="ouinpo-written-filter-actions">
+            <button type="submit" class="button button-primary">Filtrer</button>
+            <?php if ($has_filters): ?>
+              <a class="button" href="<?php echo esc_url(remove_query_arg(['written_level', 'written_domain', 'written_competency'])); ?>">Réinitialiser</a>
+            <?php endif; ?>
+          </div>
+        </form>
+      </section>
+
       <section class="ouinpo-panel ouinpo-panel--results">
         <div class="ouinpo-panel-head">
-          <h2 class="ouinpo-panel-title">Annales du bac NSI ecrit</h2>
-          <p class="ouinpo-panel-intro">Choisis un sujet, puis travaille les exercices et sous-questions avec leurs aides IA ciblees.</p>
+          <h2 class="ouinpo-panel-title">Annales du bac NSI écrit</h2>
+          <p class="ouinpo-panel-intro">Choisis un sujet, puis travaille les exercices et sous-questions avec leurs aides IA ciblées.</p>
         </div>
 
         <?php if (empty($items) || !is_array($items)): ?>
-          <div class="ouinpo-empty">Aucune annale ecrite disponible.</div>
+          <div class="ouinpo-empty">Aucune annale écrite disponible.</div>
         <?php else: ?>
           <ul class="ouinpo-exercises-list ouinpo-exo-list">
             <?php foreach ($items as $item): ?>
@@ -1821,7 +1972,7 @@ public static function render_written_subjects($atts = array(), $content = '') {
               <li class="ouinpo-exercise-item ouin-exo-li">
                 <div class="ouinpo-exercise-main ouin-exo-main">
                   <a class="ouinpo-exercise-link ouin-exo-link" href="<?php echo esc_url($url); ?>">
-                    <?php echo esc_html((string) ($item['title'] ?? 'Annale ecrite')); ?>
+                    <?php echo esc_html((string) ($item['title'] ?? 'Annale écrite')); ?>
                   </a>
                   <?php if ($meta): ?>
                     <div class="ouinpo-exercise-sub"><?php echo esc_html(implode(' - ', $meta)); ?></div>
@@ -1861,16 +2012,16 @@ public static function render_written_subject($atts = array(), $content = '') {
   }
 
   if ($id <= 0) {
-    return '<p>Annale ecrite non specifiee. Utilise <code>[ouinpo_written_subject id="123"]</code> ou ajoute <code>?written=123</code> a l URL.</p>';
+    return '<p>Annale écrite non spécifiée. Utilise <code>[ouinpo_written_subject id="123"]</code> ou ajoute <code>?written=123</code> à l’URL.</p>';
   }
 
   if (!class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes')) {
-    return '<p>Le module des annales ecrites est indisponible.</p>';
+    return '<p>Le module des annales écrites est indisponible.</p>';
   }
 
   $subject = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::get_subject($id);
   if (!$subject) {
-    return '<p>Annale ecrite introuvable.</p>';
+    return '<p>Annale écrite introuvable.</p>';
   }
 
   ob_start();
@@ -1886,9 +2037,9 @@ public static function render_written_subject($atts = array(), $content = '') {
         </div>
       </div>
 
-      <?php if (!empty($subject['statement'])): ?>
-        <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) $subject['statement']); ?></div>
-      <?php endif; ?>
+      <div class="ouinpo-alert ouinpo-written-source-warning">
+        Vérifie aussi le sujet officiel dans le PDF : l’import automatique peut ne pas reprendre parfaitement tous les éléments du document.
+      </div>
 
       <?php if (!empty($subject['files']) && is_array($subject['files'])): ?>
         <div class="ouinpo-practical-files">

@@ -71,7 +71,7 @@ final class WrittenSubjectRoutes
 
         return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_exercises_enabled')
             ? true
-            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les annales ecrites.', ['status' => 401]);
+            : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les annales écrites.', ['status' => 401]);
     }
 
     private static function table(string $suffix): string
@@ -94,6 +94,8 @@ final class WrittenSubjectRoutes
         $tQ = self::table('written_questions');
         $tSL = self::table('written_subject_school_level');
         $tLevel = self::table('school_levels');
+        $tQC = self::table('written_question_competency');
+        $tComp = self::table('competencies');
         $tFiles = self::table('subject_files');
         $tStatus = self::table('written_question_status');
         $tAnswers = self::table('written_question_answers');
@@ -101,6 +103,8 @@ final class WrittenSubjectRoutes
         $user_id = is_user_logged_in() ? (int) get_current_user_id() : 0;
 
         $school_level = self::sanitize_school_level($request->get_param('school_level'));
+        $domain_slug = sanitize_key((string) $request->get_param('domain_slug'));
+        $competency_id = max(0, (int) $request->get_param('competency_id'));
         $source_type = sanitize_key((string) $request->get_param('source_type'));
         $year_label = sanitize_text_field((string) $request->get_param('year_label'));
 
@@ -150,6 +154,10 @@ final class WrittenSubjectRoutes
             ", $user_id, $user_id, $user_id);
         }
 
+        if ($domain_slug !== '' || $competency_id > 0) {
+            $sql .= " INNER JOIN {$tQC} qc_filter ON qc_filter.question_id = q.id INNER JOIN {$tComp} c_filter ON c_filter.id = qc_filter.competency_id ";
+        }
+
         $where = ["s.is_active = 1"];
         $args = [];
 
@@ -162,6 +170,20 @@ final class WrittenSubjectRoutes
         if ($source_type !== '') {
             $where[] = 's.source_type = %s';
             $args[] = $source_type;
+        }
+
+        if ($domain_slug !== '') {
+            $where[] = 'c_filter.domain_slug = %s';
+            $args[] = $domain_slug;
+        }
+
+        if ($competency_id > 0) {
+            $where[] = 'c_filter.id = %d';
+            $args[] = $competency_id;
+        }
+
+        if ($domain_slug !== '' || $competency_id > 0) {
+            $where[] = 'c_filter.active = 1';
         }
 
         if ($year_label !== '') {
@@ -186,7 +208,7 @@ final class WrittenSubjectRoutes
 
         $subject = self::get_subject($id);
         if (!$subject) {
-            return new \WP_Error('not_found', 'Annale ecrite introuvable.', ['status' => 404]);
+            return new \WP_Error('not_found', 'Annale écrite introuvable.', ['status' => 404]);
         }
 
         return rest_ensure_response($subject);
@@ -214,7 +236,7 @@ final class WrittenSubjectRoutes
 
         $subject = self::get_subject($subject_id);
         if (!$subject) {
-            return new \WP_Error('not_found', 'Annale ecrite introuvable.', ['status' => 404]);
+            return new \WP_Error('not_found', 'Annale écrite introuvable.', ['status' => 404]);
         }
 
         if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('exercise_correction')) {
@@ -263,7 +285,7 @@ final class WrittenSubjectRoutes
 
         $subject = self::get_subject($subject_id);
         if (!$subject) {
-            return new \WP_Error('not_found', 'Annale ecrite introuvable.', ['status' => 404]);
+            return new \WP_Error('not_found', 'Annale écrite introuvable.', ['status' => 404]);
         }
 
         $params = $request->get_json_params();
@@ -293,7 +315,7 @@ final class WrittenSubjectRoutes
 
         $question_ids = self::get_subject_question_ids($subject_id);
         if (!$question_ids) {
-            return new \WP_Error('not_found', 'Annale ecrite introuvable ou sans questions actives.', ['status' => 404]);
+            return new \WP_Error('not_found', 'Annale écrite introuvable ou sans questions actives.', ['status' => 404]);
         }
 
         self::delete_student_subject_progress(get_current_user_id(), $question_ids);

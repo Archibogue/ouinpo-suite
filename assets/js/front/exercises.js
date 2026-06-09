@@ -3399,12 +3399,80 @@ function enableTabInAnswerTextareas() {
     return true;
   }
 
+  function bindWrittenSubjectFilters() {
+    let didWork = false;
+
+    document.querySelectorAll('[data-written-subject-filters]').forEach(function (root) {
+      if (root.dataset.ouinpoWrittenFiltersBooted === '1') {
+        return;
+      }
+
+      root.dataset.ouinpoWrittenFiltersBooted = '1';
+      didWork = true;
+
+      const level = root.querySelector('[data-written-filter-level]');
+      const domain = root.querySelector('[data-written-filter-domain]');
+      const competency = root.querySelector('[data-written-filter-competency]');
+
+      function navigate(update) {
+        const url = new URL(window.location.href);
+        update(url.searchParams);
+        window.location.href = url.toString();
+      }
+
+      if (level) {
+        level.addEventListener('change', function () {
+          navigate(function (params) {
+            params.delete('written_domain');
+            params.delete('written_competency');
+            if (level.value) {
+              params.set('written_level', level.value);
+            } else {
+              params.delete('written_level');
+            }
+          });
+        });
+      }
+
+      if (domain) {
+        domain.addEventListener('change', function () {
+          navigate(function (params) {
+            params.delete('written_competency');
+            if (domain.value) {
+              params.set('written_domain', domain.value);
+            } else {
+              params.delete('written_domain');
+            }
+          });
+        });
+      }
+
+      if (competency) {
+        competency.addEventListener('change', function () {
+          navigate(function (params) {
+            if (competency.value) {
+              params.set('written_competency', competency.value);
+            } else {
+              params.delete('written_competency');
+            }
+          });
+        });
+      }
+    });
+
+    return didWork;
+  }
+
   function ouinpoExercisesBoot() {
     enableTabInAnswerTextareas();
 
     let didWork = false;
 
     if (bindExerciseLevelFilter()) {
+      didWork = true;
+    }
+
+    if (bindWrittenSubjectFilters()) {
       didWork = true;
     }
 
