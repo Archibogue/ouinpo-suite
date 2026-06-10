@@ -192,7 +192,13 @@ final class WrittenSubjectRoutes
         }
 
         $sql .= ' WHERE ' . implode(' AND ', $where);
-        $sql .= ' GROUP BY s.id ORDER BY s.year_label DESC, s.created_at DESC, s.id DESC';
+        $sql .= " GROUP BY s.id
+            ORDER BY
+                s.year_label DESC,
+                (s.center_label IS NULL OR s.center_label = '') ASC,
+                s.center_label ASC,
+                s.created_at DESC,
+                s.id DESC";
 
         $rows = $args ? $wpdb->get_results($wpdb->prepare($sql, $args), ARRAY_A) : $wpdb->get_results($sql, ARRAY_A);
 
