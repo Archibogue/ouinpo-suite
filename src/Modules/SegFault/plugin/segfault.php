@@ -478,6 +478,8 @@ function ouinpo_sf_build_sources(array $chunks, int $limit = 5): array {
 
     if ($url === '') continue;
 
+    if (str_starts_with($url, 'private://')) continue;
+
 
 
     if (!empty($c['is_current'])) continue; // jamais la page courante
@@ -1789,7 +1791,7 @@ function ouinpo_sf_student_quota_check() {
 
 
 
-function ouinpo_sf_public_sanitize_message($value): string {
+function ouinpo_sf_sanitize_message($value, int $max_chars = 8000, int $max_bytes = 20000): string {
 
   $q = is_string($value) ? $value : '';
 
@@ -1799,17 +1801,23 @@ function ouinpo_sf_public_sanitize_message($value): string {
 
   $q = trim($q);
 
-  if (function_exists('mb_strlen') && mb_strlen($q) > 1200) {
+  if (function_exists('mb_strlen') && mb_strlen($q) > $max_chars) {
 
-    $q = mb_substr($q, 0, 1200);
+    $q = mb_substr($q, 0, $max_chars);
 
-  } elseif (strlen($q) > 3000) {
+  } elseif (strlen($q) > $max_bytes) {
 
-    $q = substr($q, 0, 3000);
+    $q = substr($q, 0, $max_bytes);
 
   }
 
   return $q;
+
+}
+
+function ouinpo_sf_public_sanitize_message($value): string {
+
+  return ouinpo_sf_sanitize_message($value, 1200, 3000);
 
 }
 
@@ -3031,7 +3039,7 @@ add_action('rest_api_init', function () {
 
         $body     = $req->get_json_params();
 
-        $q        = trim($body['message'] ?? '');
+        $q        = ouinpo_sf_sanitize_message($body['message'] ?? '', 8000, 20000);
 
         $consent  = (bool)($body['consent'] ?? false);
 

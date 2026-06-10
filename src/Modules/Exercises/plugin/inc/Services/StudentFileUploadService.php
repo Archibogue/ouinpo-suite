@@ -149,16 +149,15 @@ final class StudentFileUploadService
 
     public static function batch_dir(int $batch_id): array
     {
-        $base = defined('WP_CONTENT_DIR')
-            ? WP_CONTENT_DIR
-            : dirname((string) ABSPATH) . '/wp-content';
-        $path = trailingslashit($base) . 'ouinpo-private/corrections-file/batch-' . $batch_id;
+        $uploads = wp_upload_dir();
+        $base = trailingslashit((string) $uploads['basedir']) . 'ouinpo';
+        $path = trailingslashit($base) . 'corrections-file/batch-' . $batch_id;
 
-        self::ensure_dir(trailingslashit($base) . 'ouinpo-private');
-        self::ensure_dir(trailingslashit($base) . 'ouinpo-private/corrections-file');
+        self::ensure_dir($base);
+        self::ensure_dir(trailingslashit($base) . 'corrections-file');
         self::ensure_dir($path);
 
-        return ['path' => $path, 'url' => '', 'subdir' => 'ouinpo-private/corrections-file/batch-' . $batch_id];
+        return ['path' => $path, 'url' => '', 'subdir' => '/ouinpo/corrections-file/batch-' . $batch_id];
     }
 
     private static function student_ref(string $requested, int $index): string

@@ -18,6 +18,7 @@ class RAG {
   // ============================================================
   public static function reindex_all(): int {
     DB::init();
+    self::purge_legacy_private_documents_once();
     $n = 0;
 
     // 1) Sources privées (full) — OK, mais limité par max_chunks_run
@@ -46,6 +47,7 @@ class RAG {
    * Indexation complète des sources privées (md/txt/pdf).
    */
   public static function index_sources(): int {
+    self::purge_legacy_private_documents_once();
     $count = 0;
 
     // Taille max des fichiers pour limiter les gros monstres
@@ -69,11 +71,12 @@ class RAG {
         continue;
       }
 
-      $title = basename($file);
-      $url   = ''; // pas de lien côté UI
+      $rel   = self::relative_source_path($file);
+      $title = self::title_for_source_file($file);
+      $url   = self::private_source_url($rel);
       $text  = @file_get_contents($file) ?: '';
 
-      self::delete_private_by_title($title);
+      self::delete_private_by_source_url($url);
       $count += self::index_text($text, 'private', $url, $title, 'text');
     }
 
@@ -84,12 +87,13 @@ class RAG {
         continue;
       }
 
-      $title = preg_replace('/\.pdf$/i', '', basename($file));
-      $url   = '';
+      $rel   = self::relative_source_path($file);
+      $title = self::title_for_source_file($file);
+      $url   = self::private_source_url($rel);
       $text  = self::pdf_to_text($file);
       if (trim($text) === '') $text = $title;
 
-      self::delete_private_by_title($title);
+      self::delete_private_by_source_url($url);
       $count += self::index_text($text, 'private', $url, $title, 'pdf');
     }
 
@@ -459,11 +463,36 @@ public static function cron_reindex_nightly_stats(): array {
     $st->execute([$origin, $url]);
   }
 
-  private static function delete_private_by_title(string $title): void {
-    if ($title === '') return;
+  private static function private_source_url(string $rel): string {
+    $rel = str_replace('\\', '/', trim($rel));
+    $rel = ltrim($rel, '/');
+
+    return $rel !== '' ? 'private://' . $rel : '';
+  }
+
+  private static function delete_private_by_source_url(string $source_url): void {
+    if ($source_url === '') return;
     $db = DB::pdo();
-    $st = $db->prepare("DELETE FROM documents WHERE origin = 'private' AND title = ?");
-    $st->execute([$title]);
+    $st = $db->prepare("DELETE FROM documents WHERE origin = 'private' AND url = ?");
+    $st->execute([$source_url]);
+  }
+
+  private static function purge_legacy_private_documents_once(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+
+    if ((string) get_option('ouinpo_sf_private_source_url_migrated', '') === '1') {
+      return;
+    }
+
+    try {
+      $db = DB::pdo();
+      $db->exec("DELETE FROM documents WHERE origin = 'private' AND (url = '' OR url IS NULL)");
+      update_option('ouinpo_sf_private_source_url_migrated', '1', false);
+    } catch (\Throwable $e) {
+      \Ouinpo\Suite\Core\AiSettings::debug_log('[SegFault] purge anciens documents prives impossible: ' . $e->getMessage());
+    }
   }
 
   private static function title_for_source_file(string $file): string {
@@ -473,12 +502,23 @@ public static function cron_reindex_nightly_stats(): array {
     return $base;
   }
 
+  private static function relative_source_path(string $file): string {
+    $root = str_replace('\\', '/', trailingslashit(OUINPO_SF_SRC));
+    $path = str_replace('\\', '/', $file);
+
+    if (str_starts_with($path, $root)) {
+      return ltrim(substr($path, strlen($root)), '/');
+    }
+
+    return basename($file);
+  }
+
   private static function index_one_source_file(string $file, string $rel): int {
     if (!is_file($file)) return 0;
 
     $ext   = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     $title = self::title_for_source_file($file);
-    $url   = '';
+    $url   = self::private_source_url($rel);
     $text  = '';
 
     $max_text_size = 5 * 1024 * 1024;
@@ -515,7 +555,7 @@ public static function cron_reindex_nightly_stats(): array {
     $text = trim($text);
     if ($text === '') return 0;
 
-    self::delete_private_by_title($title);
+    self::delete_private_by_source_url($url);
 
     $ptype = in_array($ext, ['md', 'txt'], true) ? 'text' : $ext;
     return self::index_text($text, 'private', $url, $title, $ptype);
@@ -729,8 +769,8 @@ public static function index_missing_site_posts(int $limit = 50): int {
   return $count;
 }
 
-private static function private_source_has_current_embedding(string $title): bool {
-  if ($title === '') return false;
+private static function private_source_has_current_embedding(string $source_url): bool {
+  if ($source_url === '') return false;
 
   $db = DB::pdo();
 
@@ -741,13 +781,13 @@ private static function private_source_has_current_embedding(string $title): boo
     SELECT COUNT(*)
     FROM documents
     WHERE origin = 'private'
-      AND title = ?
+      AND url = ?
       AND embedding IS NOT NULL
       AND embedding_provider = ?
       AND embedding_model = ?
   ");
 
-  $st->execute([$title, $provider, $model]);
+  $st->execute([$source_url, $provider, $model]);
 
   return ((int)$st->fetchColumn()) > 0;
 }
@@ -855,8 +895,7 @@ private static function index_sources_diff(int $budget = 20): int {
     $full = OUINPO_SF_SRC . $rel;
 
     if (!file_exists($full)) {
-      $title = self::title_for_source_file($rel);
-      self::delete_private_by_title($title);
+      self::delete_private_by_source_url(self::private_source_url($rel));
       unset($stored[$rel]);
       $seen['removed']++;
     }
@@ -891,7 +930,7 @@ private static function index_sources_diff(int $budget = 20): int {
       && self::source_stored_is_current($stored_entry, $mtime, $size, $provider, $model);
 
     if ($looks_current) {
-      if (self::private_source_has_current_embedding($title)) {
+      if (self::private_source_has_current_embedding(self::private_source_url($rel))) {
         $seen['skipped_up_to_date']++;
         continue;
       }
@@ -1411,6 +1450,7 @@ return min($bonus, 2.5);
     public static function search(string $query, int $k = 6, int $user_id = 0): array {
       try {
         $db  = DB::pdo();
+        self::purge_legacy_private_documents_once();
         if ($user_id <= 0 && is_user_logged_in()) {
           $user_id = get_current_user_id();
         }
@@ -2735,6 +2775,7 @@ if (!$exo_rows) return [];
     public static function search_sources(string $query, int $k = 6): array {
       try {
             $db  = DB::pdo();
+            self::purge_legacy_private_documents_once();
             $user_id = is_user_logged_in() ? get_current_user_id() : 0;
             $emb = self::embed_text($query);
             if (!$emb) return [];
@@ -3560,8 +3601,9 @@ public static function format_context(array $chunks, int $max_tokens = 0): strin
       $head .= " — section : " . $section;
     }
 
-    if (!empty($c['url'])) {
-      $head .= " — " . $c['url'];
+    $url = (string)($c['url'] ?? '');
+    if ($url !== '' && !str_starts_with($url, 'private://')) {
+      $head .= " — " . $url;
     }
 
     $chunk = self::trim((string)($c['chunk'] ?? ''), 900);

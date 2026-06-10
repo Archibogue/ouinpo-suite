@@ -78,7 +78,7 @@ final class CopyUploadService
             'student_ref' => $student_ref,
             'file_name' => $filename,
             'file_path' => $target,
-            'file_url' => trailingslashit($dir['url']) . rawurlencode($filename),
+            'file_url' => '',
             'mime_type' => (string) $check['type'],
             'file_size' => (int) ($file['size'] ?? 0),
             'pages_count' => $ext === 'pdf' ? null : 1,
@@ -89,19 +89,25 @@ final class CopyUploadService
             'updated_at' => current_time('mysql'),
         ], ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s']);
 
-        return $ok ? (int) $wpdb->insert_id : new \WP_Error('copy_insert_failed', 'Impossible d’enregistrer la copie.');
+        if (!$ok) {
+            @unlink($target);
+            return new \WP_Error('copy_insert_failed', 'Impossible d’enregistrer la copie.');
+        }
+
+        return (int) $wpdb->insert_id;
     }
 
     public static function batch_dir(int $batch_id): array
     {
         $uploads = wp_upload_dir();
-        $subdir = '/ouinpo/corrections/batch-' . $batch_id;
-        $path = $uploads['basedir'] . $subdir;
-        $url = $uploads['baseurl'] . $subdir;
-        self::ensure_dir($uploads['basedir'] . '/ouinpo');
-        self::ensure_dir($uploads['basedir'] . '/ouinpo/corrections');
+        $base = trailingslashit((string) $uploads['basedir']) . 'ouinpo';
+        $path = trailingslashit($base) . 'corrections-scan/batch-' . $batch_id;
+
+        self::ensure_dir($base);
+        self::ensure_dir(trailingslashit($base) . 'corrections-scan');
         self::protect_dir($path);
-        return ['path' => $path, 'url' => $url, 'subdir' => $subdir];
+
+        return ['path' => $path, 'url' => '', 'subdir' => '/ouinpo/corrections-scan/batch-' . $batch_id];
     }
 
     private static function ensure_dir(string $path): void

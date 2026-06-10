@@ -982,7 +982,13 @@ final class ScreenWritten
 
         global $wpdb;
         $t = self::table('subject_files');
+        $file_url = (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT file_url FROM {$t} WHERE id = %d AND subject_type = 'written' LIMIT 1",
+            $file_id
+        ));
+
         $wpdb->delete($t, ['id' => $file_id, 'subject_type' => 'written'], ['%d', '%s']);
+        self::delete_uploaded_file_by_url($file_url);
 
         wp_safe_redirect(self::redirect_url(['subject_id' => $subject_id, 'saved' => 1]));
         exit;
@@ -1289,3 +1295,5 @@ final class ScreenWritten
         ], ['%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s']);
     }
 }
+
+add_action('init', ['\\Ouinpo\\Exercises\\Services\\CorrectionBatchService', 'init_cleanup_hooks']);
