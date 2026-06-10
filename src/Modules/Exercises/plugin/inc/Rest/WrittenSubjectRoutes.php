@@ -379,7 +379,9 @@ final class WrittenSubjectRoutes
             'question_ids' => [$question_id],
         ]);
 
-        $advice = self::generate_question_advice($context, $answer, $used_hints);
+        $previous_answers = self::build_previous_answer_context($context, $params['context_answers'] ?? []);
+
+        $advice = self::generate_question_advice($context, $answer, $used_hints, $previous_answers);
         if (is_wp_error($advice)) {
             return $advice;
         }
@@ -672,6 +674,81 @@ final class WrittenSubjectRoutes
         return array_values($ids);
     }
 
+    private static function build_previous_answer_context(array $context, $raw_answers): array
+    {
+        $subject = (array) ($context['subject'] ?? []);
+        $current_exercise = (array) ($context['exercise'] ?? []);
+        $current_question = (array) ($context['question'] ?? []);
+        $subject_id = (int) ($subject['id'] ?? 0);
+        $current_exercise_id = (int) ($current_exercise['id'] ?? 0);
+        $current_question_id = (int) ($current_question['id'] ?? 0);
+
+        if ($subject_id <= 0 || $current_exercise_id <= 0 || $current_question_id <= 0) {
+            return [];
+        }
+
+        $submitted_answers = [];
+        if (is_array($raw_answers)) {
+            foreach ($raw_answers as $key => $value) {
+                if (is_array($value)) {
+                    $question_id = (int) ($value['question_id'] ?? $key);
+                    $answer_text = (string) ($value['answer_text'] ?? $value['answer'] ?? '');
+                } else {
+                    $question_id = (int) $key;
+                    $answer_text = (string) $value;
+                }
+
+                if ($question_id > 0) {
+                    $submitted_answers[$question_id] = self::clean_answer_text($answer_text);
+                }
+            }
+        }
+
+        $full_subject = self::get_subject($subject_id);
+        if (!$full_subject) {
+            return [];
+        }
+
+        $previous_answers = [];
+        foreach ((array) ($full_subject['exercises'] ?? []) as $exercise) {
+            if ((int) ($exercise['id'] ?? 0) !== $current_exercise_id) {
+                continue;
+            }
+
+            $exercise_title = (string) (($exercise['title'] ?? '') ?: 'Exercice ' . (int) ($exercise['exercise_order'] ?? 1));
+
+            foreach ((array) ($exercise['questions'] ?? []) as $question) {
+                $question_id = (int) ($question['id'] ?? 0);
+                if ($question_id <= 0) {
+                    continue;
+                }
+
+                if ($question_id === $current_question_id) {
+                    return $previous_answers;
+                }
+
+                $answer_text = array_key_exists($question_id, $submitted_answers)
+                    ? $submitted_answers[$question_id]
+                    : self::clean_answer_text((string) ($question['student_answer'] ?? ''));
+
+                if (trim($answer_text) === '') {
+                    continue;
+                }
+
+                $previous_answers[] = [
+                    'question_id' => $question_id,
+                    'question_label' => $exercise_title . ' - Question ' . (string) ($question['question_label'] ?? ''),
+                    'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 900),
+                    'answer' => self::excerpt_user_text($answer_text, 2500),
+                ];
+            }
+
+            return $previous_answers;
+        }
+
+        return [];
+    }
+
     private static function consume_report_quota()
     {
         $teacher_quota = \Ouinpo\Suite\Core\AiSettings::currentUserUsesTeacherAiQuota();
@@ -684,13 +761,129 @@ final class WrittenSubjectRoutes
         );
     }
 
+    private static function current_ai_user_id(): int
+    {
+        return is_user_logged_in() ? (int) get_current_user_id() : 0;
+    }
+
+    private static function student_pedagogical_context(): string
+    {
+        $user_id = self::current_ai_user_id();
+        if (
+            $user_id <= 0
+            || !class_exists('\OuInPo\SegFault\RAG')
+            || !method_exists('\OuInPo\SegFault\RAG', 'student_pedagogical_context')
+        ) {
+            return '';
+        }
+
+        return self::excerpt_user_text((string) \OuInPo\SegFault\RAG::student_pedagogical_context($user_id), 2600);
+    }
+
+    private static function course_rag_context(string $query, int $limit = 4, int $max_tokens = 1200): string
+    {
+        $query = trim(wp_strip_all_tags($query));
+        if ($query === '' || !class_exists('\OuInPo\SegFault\RAG')) {
+            return '';
+        }
+
+        $user_id = self::current_ai_user_id();
+        $chunks = [];
+
+        try {
+            if (method_exists('\OuInPo\SegFault\RAG', 'search_courses_by_competency')) {
+                $chunks = array_merge($chunks, \OuInPo\SegFault\RAG::search_courses_by_competency($query, min(3, $limit), $user_id));
+            }
+
+            if (count($chunks) < $limit && method_exists('\OuInPo\SegFault\RAG', 'search')) {
+                $chunks = array_merge($chunks, \OuInPo\SegFault\RAG::search($query, $limit, $user_id));
+            }
+        } catch (\Throwable $e) {
+            \Ouinpo\Suite\Core\AiSettings::debug_log('Written subject RAG context unavailable', [
+                'stage' => 'written_subject_rag_context',
+                'error' => $e->getMessage(),
+            ]);
+            return '';
+        }
+
+        $filtered = [];
+        $seen = [];
+        foreach ($chunks as $chunk) {
+            if (!is_array($chunk)) {
+                continue;
+            }
+
+            $ptype = strtolower(trim((string) ($chunk['ptype'] ?? ($chunk['type'] ?? ($chunk['origin'] ?? '')))));
+            if ($ptype === 'exercise') {
+                continue;
+            }
+
+            $key = (string) ($chunk['url'] ?? '');
+            if ($key === '') {
+                $key = (string) ($chunk['title'] ?? '') . '|' . substr((string) ($chunk['chunk'] ?? ''), 0, 80);
+            }
+
+            if ($key !== '' && isset($seen[$key])) {
+                continue;
+            }
+
+            if ($key !== '') {
+                $seen[$key] = true;
+            }
+
+            $filtered[] = $chunk;
+            if (count($filtered) >= $limit) {
+                break;
+            }
+        }
+
+        if (!$filtered || !method_exists('\OuInPo\SegFault\RAG', 'format_context')) {
+            return '';
+        }
+
+        return \OuInPo\SegFault\RAG::format_context($filtered, max(400, $max_tokens));
+    }
+
+    private static function question_rag_query(array $subject, array $exercise, array $question, array $competencies): string
+    {
+        return implode("\n", array_values(array_filter([
+            (string) ($subject['title'] ?? ''),
+            (string) ($exercise['title'] ?? ''),
+            self::excerpt((string) ($exercise['intro_html'] ?? ''), 800),
+            self::excerpt((string) ($question['prompt_html'] ?? ''), 900),
+            implode("\n", array_values(array_filter($competencies))),
+        ])));
+    }
+
+    private static function report_rag_query(array $context): string
+    {
+        $parts = [
+            (string) ($context['subject_title'] ?? ''),
+            implode(' ', (array) ($context['subject_meta'] ?? [])),
+        ];
+
+        foreach (array_slice((array) ($context['questions'] ?? []), 0, 6) as $question) {
+            if (!is_array($question)) {
+                continue;
+            }
+
+            $parts[] = (string) ($question['question_label'] ?? '');
+            $parts[] = (string) ($question['prompt'] ?? '');
+            $parts[] = implode(' ', (array) ($question['competencies'] ?? []));
+        }
+
+        return self::excerpt_user_text(implode("\n", array_values(array_filter($parts))), 4500);
+    }
+
     private static function generate_student_report(array $subject, array $input)
     {
         $context = self::build_report_context($subject, $input);
+        $context['course_context'] = self::course_rag_context(self::report_rag_query($context), 5, 1400);
+        $context['student_pedagogical_context'] = self::student_pedagogical_context();
 
         $messages = [[
             'role' => 'system',
-            'content' => "Tu es un assistant pedagogique NSI. Tu rediges un rapport de conseils pour un eleve apres un sujet ecrit de bac NSI, meme si l'eleve n'a repondu qu'a une seule question. Base-toi uniquement sur les questions repondues, les competences BO et les aides qu'il indique avoir utilisees. Ne fais pas semblant d'avoir analyse les questions sans reponse. Ne donne pas de note chiffree et ne corrige pas exhaustivement le sujet. Reste bienveillant, precis et actionnable. Reponds uniquement en JSON valide.",
+            'content' => "Tu es un assistant pedagogique NSI. Tu rediges un rapport de conseils pour un eleve apres un sujet ecrit de bac NSI, meme si l'eleve n'a repondu qu'a une seule question. Base-toi uniquement sur les questions repondues, les competences BO, le contexte de cours fourni et les aides qu'il indique avoir utilisees. Ne fais pas semblant d'avoir analyse les questions sans reponse. Ne donne pas de note chiffree et ne corrige pas exhaustivement le sujet. Reste bienveillant, precis et actionnable. Reponds uniquement en JSON valide.",
         ], [
             'role' => 'user',
             'content' => wp_json_encode([
@@ -711,6 +904,8 @@ final class WrittenSubjectRoutes
                 'contexte' => $context,
                 'consignes' => [
                     'Si une seule question est repondue, produis un rapport court sur cette question uniquement.',
+                    'Utilise le contexte de cours/RAG seulement pour cadrer les notions attendues et le programme, sans inventer de source absente.',
+                    'Adapte les conseils au contexte pedagogique eleve quand il est fourni, sans citer d identite personnelle.',
                     'Ne laisse pas les champs vides.',
                     'Mentionne sobrement que le rapport porte sur les questions deja repondues.',
                     'Utilise exactement les cles summary, strengths, priorities, question_advice, revision_plan, teacher_note.',
@@ -742,7 +937,7 @@ final class WrittenSubjectRoutes
         return $report;
     }
 
-    private static function generate_question_advice(array $context, string $answer, array $used_hint_ids)
+    private static function generate_question_advice(array $context, string $answer, array $used_hint_ids, array $previous_answers = [])
     {
         $question = (array) ($context['question'] ?? []);
         $exercise = (array) ($context['exercise'] ?? []);
@@ -764,9 +959,12 @@ final class WrittenSubjectRoutes
             $competencies[] = trim((string) ($competency['domain'] ?? '') . ' - ' . (string) ($competency['competency'] ?? ''));
         }
 
+        $course_context = self::course_rag_context(self::question_rag_query($subject, $exercise, $question, $competencies), 4, 1200);
+        $student_context = self::student_pedagogical_context();
+
         $messages = [[
             'role' => 'system',
-            'content' => "Tu es un evaluateur pedagogique NSI. Tu analyses une reponse d'eleve a une question de bac ecrit. Tu ne donnes pas la correction complete et tu n'attribues pas de note chiffree. Tu determines un verdict prudent, un taux de confiance et des pistes d'amelioration. Reponds uniquement en JSON valide.",
+            'content' => "Tu es un evaluateur pedagogique NSI. Tu analyses une reponse d'eleve a une question de bac ecrit. Tu utilises le contexte de cours fourni pour cadrer le programme et les attendus, sans inventer de source absente. Tu ne donnes pas la correction complete et tu n'attribues pas de note chiffree. Tu determines un verdict prudent, un taux de confiance et des pistes d'amelioration. Reponds uniquement en JSON valide.",
         ], [
             'role' => 'user',
             'content' => wp_json_encode([
@@ -781,6 +979,12 @@ final class WrittenSubjectRoutes
                     'hint_usage_note' => 'Comment exploiter les aides utilisees.',
                 ],
                 'regles' => [
+                    'les reponses precedentes du meme exercice sont du contexte: utilise les definitions, fonctions, variables ou resultats que l eleve y introduit',
+                    'si une reponse courante utilise correctement une definition, fonction, variable ou un resultat introduit precedemment, juge la logique courante avec cette definition locale',
+                    'si cette definition ou ce resultat precedent est faux, ne penalise pas automatiquement la question courante: indique que la question courante est reussie si son usage est coherent, puis rappelle explicitement dans feedback ou improvements que l element precedent doit etre corrige',
+                    'n evalue pas les reponses precedentes pour elles-memes, sauf si elles rendent la reponse courante incoherente',
+                    'utilise course_context comme cadre documentaire prioritaire si pertinent, sans citer les numeros de contexte',
+                    'adapte le retour au student_pedagogical_context quand il est fourni, sans mentionner d identite personnelle',
                     'verdict correct seulement si la reponse est suffisante pour la question',
                     'verdict partial si la demarche est pertinente mais incomplete ou imprecise',
                     'verdict incorrect si la reponse est hors sujet, absente ou conceptuellement fausse',
@@ -793,8 +997,11 @@ final class WrittenSubjectRoutes
                     'exercise_context' => self::excerpt((string) ($exercise['intro_html'] ?? ''), 2200),
                     'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 1500),
                     'answer' => self::excerpt_user_text($answer, 2000),
+                    'previous_answers' => $previous_answers,
                     'used_hints' => $used_hints,
                     'competencies' => array_values(array_filter($competencies)),
+                    'course_context' => $course_context,
+                    'student_pedagogical_context' => $student_context,
                 ],
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]];

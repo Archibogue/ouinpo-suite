@@ -300,6 +300,19 @@
     const textarea = questionRoot ? questionRoot.querySelector('[data-written-question-id].ouinpo-written-answer') : null;
     const answer = textarea ? String(textarea.value || '').trim() : '';
     const usedHints = [];
+    const contextAnswers = {};
+    const subjectRoot = questionRoot
+      ? questionRoot.closest('.ouinpo-written-subject[data-written-subject-id]')
+      : null;
+
+    if (subjectRoot) {
+      subjectRoot.querySelectorAll('[data-written-question-id].ouinpo-written-answer').forEach(function (field) {
+        const questionId = String(field.getAttribute('data-written-question-id') || '').trim();
+        if (!questionId) return;
+
+        contextAnswers[questionId] = String(field.value || '').trim();
+      });
+    }
 
     if (questionRoot) {
       questionRoot.querySelectorAll('[data-written-hint-used]:checked').forEach(function (checkbox) {
@@ -314,7 +327,8 @@
       hasAnswer: answer.length > 0,
       payload: {
         answer: answer,
-        used_hints: usedHints
+        used_hints: usedHints,
+        context_answers: contextAnswers
       }
     };
   }
@@ -366,10 +380,14 @@
       const questionRoot = button.closest('.ouinpo-written-question-front');
       const status = questionRoot ? questionRoot.querySelector('[data-written-question-advice-status]') : null;
       const output = questionRoot ? questionRoot.querySelector('[data-written-question-advice-output]') : null;
+      const subjectRoot = questionRoot
+        ? questionRoot.closest('.ouinpo-written-subject[data-written-subject-id]')
+        : null;
+      const subjectId = String(subjectRoot ? (subjectRoot.getAttribute('data-written-subject-id') || '') : '').trim();
       const questionId = String(button.getAttribute('data-question-id') || '').trim();
 
       button.addEventListener('click', async function () {
-        const collected = collectWrittenQuestionPayload(questionRoot);
+        let collected = collectWrittenQuestionPayload(questionRoot);
 
         if (!collected.hasAnswer) {
           renderMessage(status, 'Écris ta réponse avant de demander un conseil IA.', 'ouinpo-empty');
@@ -381,6 +399,13 @@
         renderMessage(status, 'Analyse de ta réponse en cours...', 'ouinpo-empty');
 
         try {
+          if (subjectRoot && subjectId) {
+            renderMessage(status, 'Sauvegarde de tes réponses en cours...', 'ouinpo-empty');
+            await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/save-progress', collectWrittenReportPayload(subjectRoot).payload);
+            collected = collectWrittenQuestionPayload(questionRoot);
+          }
+
+          renderMessage(status, 'Analyse de ta réponse en cours...', 'ouinpo-empty');
           const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/student-advice', collected.payload);
           renderMessage(status, 'Évaluation IA générée. Ta réponse et les aides cochées ont été enregistrées.', 'ouinpo-success');
           renderWrittenQuestionAdvice(output, data && data.advice ? data.advice : {});
