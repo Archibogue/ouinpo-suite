@@ -3513,6 +3513,46 @@ function enableTabInAnswerTextareas() {
     return didWork;
   }
 
+  function bindWrittenFilePreviews() {
+    let didWork = false;
+
+    document.querySelectorAll('[data-written-file-preview-toggle]').forEach(function (button) {
+      if (button.dataset.ouinpoWrittenPreviewBooted === '1') {
+        return;
+      }
+
+      button.dataset.ouinpoWrittenPreviewBooted = '1';
+      didWork = true;
+
+      button.addEventListener('click', function () {
+        const targetId = button.getAttribute('data-preview-target') || button.getAttribute('aria-controls') || '';
+        const preview = targetId ? document.getElementById(targetId) : null;
+        const frame = preview ? preview.querySelector('iframe[data-src]') : null;
+
+        if (!preview) {
+          return;
+        }
+
+        const willOpen = preview.hasAttribute('hidden');
+        if (willOpen && frame && !frame.getAttribute('src')) {
+          frame.setAttribute('src', frame.getAttribute('data-src') || '');
+        }
+
+        if (willOpen) {
+          preview.removeAttribute('hidden');
+          button.setAttribute('aria-expanded', 'true');
+          button.textContent = 'Masquer l’aperçu';
+        } else {
+          preview.setAttribute('hidden', '');
+          button.setAttribute('aria-expanded', 'false');
+          button.textContent = 'Aperçu';
+        }
+      });
+    });
+
+    return didWork;
+  }
+
   function ouinpoExercisesBoot() {
     enableTabInAnswerTextareas();
 
@@ -3523,6 +3563,10 @@ function enableTabInAnswerTextareas() {
     }
 
     if (bindWrittenSubjectFilters()) {
+      didWork = true;
+    }
+
+    if (bindWrittenFilePreviews()) {
       didWork = true;
     }
 

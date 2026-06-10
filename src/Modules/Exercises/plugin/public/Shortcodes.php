@@ -2024,6 +2024,18 @@ public static function render_written_subject($atts = array(), $content = '') {
     return '<p>Annale écrite introuvable.</p>';
   }
 
+  $written_subject_pdf_url = '';
+  foreach ((array) ($subject['files'] ?? []) as $file) {
+    $file_url = (string) ($file['file_url'] ?? '');
+    $file_path = (string) (wp_parse_url($file_url, PHP_URL_PATH) ?: '');
+    if ($file_url !== '' && strtolower((string) pathinfo($file_path, PATHINFO_EXTENSION)) === 'pdf') {
+      $written_subject_pdf_url = $file_url;
+      if ((string) ($file['file_kind'] ?? '') === 'subject') {
+        break;
+      }
+    }
+  }
+
   ob_start();
   ?>
   <article class="ouinpo-exercises-page ouinpo-written-subject" data-written-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">
@@ -2044,9 +2056,39 @@ public static function render_written_subject($atts = array(), $content = '') {
       <?php if (!empty($subject['files']) && is_array($subject['files'])): ?>
         <div class="ouinpo-practical-files">
           <h3>Fichiers du sujet</h3>
-          <ul>
+          <ul class="ouinpo-practical-files-list">
             <?php foreach ($subject['files'] as $file): ?>
-              <li><a href="<?php echo esc_url((string) ($file['file_url'] ?? '')); ?>" target="_blank" rel="noopener"><?php echo esc_html((string) ($file['label'] ?? 'Fichier')); ?></a></li>
+              <?php
+              $file_url = (string) ($file['file_url'] ?? '');
+              $file_label = (string) ($file['label'] ?? 'Fichier');
+              $file_path = (string) (wp_parse_url($file_url, PHP_URL_PATH) ?: '');
+              $is_pdf = strtolower((string) pathinfo($file_path, PATHINFO_EXTENSION)) === 'pdf';
+              $preview_id = 'ouinpo-written-file-preview-' . (int) ($file['id'] ?? 0);
+              ?>
+              <li class="ouinpo-written-file-item">
+                <div class="ouinpo-written-file-actions">
+                  <a href="<?php echo esc_url($file_url); ?>" target="_blank" rel="noopener"><?php echo esc_html($file_label); ?></a>
+                  <?php if ($is_pdf): ?>
+                    <button
+                      type="button"
+                      class="button ouinpo-written-file-preview-button"
+                      data-written-file-preview-toggle
+                      data-preview-target="<?php echo esc_attr($preview_id); ?>"
+                      aria-controls="<?php echo esc_attr($preview_id); ?>"
+                      aria-expanded="false"
+                    >Aperçu</button>
+                  <?php endif; ?>
+                </div>
+                <?php if ($is_pdf): ?>
+                  <div id="<?php echo esc_attr($preview_id); ?>" class="ouinpo-written-file-preview" data-written-file-preview hidden>
+                    <iframe
+                      title="<?php echo esc_attr('Aperçu du fichier ' . $file_label); ?>"
+                      data-src="<?php echo esc_url($file_url); ?>"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                <?php endif; ?>
+              </li>
             <?php endforeach; ?>
           </ul>
         </div>
@@ -2096,6 +2138,12 @@ public static function render_written_subject($atts = array(), $content = '') {
             <?php endif; ?>
 
             <?php if (is_user_logged_in()): ?>
+              <?php if ($written_subject_pdf_url !== ''): ?>
+                <div class="ouinpo-written-question-subject-link">
+                  <a class="button" href="<?php echo esc_url($written_subject_pdf_url); ?>" target="_blank" rel="noopener">Voir le sujet</a>
+                </div>
+              <?php endif; ?>
+
               <div class="ouinpo-written-answer-block">
                 <label for="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">Ta réponse</label>
                 <textarea

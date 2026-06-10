@@ -2720,6 +2720,39 @@
   margin-top: 1rem;
 }
 
+.ouinpo-written-file-item {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ouinpo-written-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ouinpo-written-file-preview {
+  width: 100%;
+  min-height: 520px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ouinpo-written-file-preview iframe {
+  display: block;
+  width: 100%;
+  height: min(76vh, 760px);
+  min-height: 520px;
+  border: 0;
+}
+
+.ouinpo-written-question-subject-link {
+  margin: 0.9rem 0 0.55rem;
+}
+
 .ouinpo-written-answer-block label {
   display: block;
   margin-bottom: 0.35rem;
@@ -2815,6 +2848,17 @@
 .ouinpo-written-report-question p,
 .ouinpo-written-report-note {
   margin: 0.35rem 0 0;
+}
+
+@media (max-width: 700px) {
+  .ouinpo-written-file-preview,
+  .ouinpo-written-file-preview iframe {
+    min-height: 420px;
+  }
+
+  .ouinpo-written-file-preview iframe {
+    height: 68vh;
+  }
 }
 
 .ouinpo-success {
