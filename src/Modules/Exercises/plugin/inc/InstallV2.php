@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.7.1';
+    const DB_VERSION = '2.7.2';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -855,6 +855,8 @@ class InstallV2 {
             user_id BIGINT UNSIGNED NOT NULL,
             question_id BIGINT UNSIGNED NOT NULL,
             status ENUM('none','attempted','solved') NOT NULL DEFAULT 'none',
+            attempt_count INT UNSIGNED NOT NULL DEFAULT 0,
+            last_attempt_at DATETIME NULL,
             declared_at DATETIME NULL,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (user_id, question_id),
@@ -1140,6 +1142,7 @@ class InstallV2 {
         self::migrate_domains();
         self::migrate_competency_school_levels();
         self::ensure_assessment_item_edit_columns();
+        self::ensure_written_question_attempt_columns();
 
         self::seed_year_if_missing();
 
@@ -2302,6 +2305,43 @@ class InstallV2 {
 
         
 
+    }
+
+    private static function ensure_written_question_attempt_columns(): void {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_written_question_status';
+        if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table))) {
+            return;
+        }
+
+        $has_attempt_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'attempt_count'",
+            DB_NAME,
+            $table
+        ));
+
+        if ($has_attempt_count <= 0) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN attempt_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER status");
+        }
+
+        $has_last_attempt = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = %s
+               AND TABLE_NAME = %s
+               AND COLUMN_NAME = 'last_attempt_at'",
+            DB_NAME,
+            $table
+        ));
+
+        if ($has_last_attempt <= 0) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN last_attempt_at DATETIME NULL AFTER attempt_count");
+        }
     }
 
     

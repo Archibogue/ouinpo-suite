@@ -386,15 +386,20 @@ final class WrittenSubjectRoutes
             return $advice;
         }
 
+        $attempt_count = self::increment_question_attempt_if_open(get_current_user_id(), $question_id);
+
         if (in_array((string) ($advice['verdict'] ?? ''), ['partial', 'incorrect'], true)) {
             self::save_question_status(get_current_user_id(), $question_id, 'attempted');
         } elseif (!empty($advice['safe_to_mark_solved'])) {
             self::save_question_status(get_current_user_id(), $question_id, 'solved');
         }
 
+        $advice['attempt_count'] = $attempt_count;
+
         return rest_ensure_response([
             'ok' => true,
             'stored' => true,
+            'attempt_count' => $attempt_count,
             'advice' => $advice,
         ]);
     }
@@ -441,19 +446,75 @@ final class WrittenSubjectRoutes
             return new \WP_Error('not_found', 'Question introuvable.', ['status' => 404]);
         }
 
+        $existing = $wpdb->get_row($wpdb->prepare(
+            "SELECT attempt_count, last_attempt_at FROM {$tS} WHERE user_id = %d AND question_id = %d LIMIT 1",
+            $user_id,
+            $question_id
+        ), ARRAY_A);
+
         $wpdb->replace($tS, [
             'user_id' => $user_id,
             'question_id' => $question_id,
             'status' => $status,
+            'attempt_count' => max(0, (int) ($existing['attempt_count'] ?? 0)),
+            'last_attempt_at' => $existing['last_attempt_at'] ?? null,
             'declared_at' => $status === 'solved' ? current_time('mysql') : null,
             'updated_at' => current_time('mysql'),
-        ], ['%d', '%d', '%s', '%s', '%s']);
+        ], ['%d', '%d', '%s', '%d', '%s', '%s', '%s']);
 
         if (class_exists('\Ouinpo\Exercises\BadgeEngine')) {
             \Ouinpo\Exercises\BadgeEngine::recompute_for_user($user_id);
         }
 
         return true;
+    }
+
+    private static function increment_question_attempt_if_open(int $user_id, int $question_id): int
+    {
+        if ($user_id <= 0 || $question_id <= 0) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        $tS = self::table('written_question_status');
+        $now = current_time('mysql');
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT status, attempt_count FROM {$tS} WHERE user_id = %d AND question_id = %d LIMIT 1",
+            $user_id,
+            $question_id
+        ), ARRAY_A);
+
+        if (is_array($row) && (string) ($row['status'] ?? '') === 'solved') {
+            return max(0, (int) ($row['attempt_count'] ?? 0));
+        }
+
+        if (is_array($row)) {
+            $next = max(0, (int) ($row['attempt_count'] ?? 0)) + 1;
+            $wpdb->update($tS, [
+                'attempt_count' => $next,
+                'last_attempt_at' => $now,
+                'updated_at' => $now,
+            ], [
+                'user_id' => $user_id,
+                'question_id' => $question_id,
+            ], ['%d', '%s', '%s'], ['%d', '%d']);
+
+            return $next;
+        }
+
+        $wpdb->insert($tS, [
+            'user_id' => $user_id,
+            'question_id' => $question_id,
+            'status' => 'none',
+            'attempt_count' => 1,
+            'last_attempt_at' => $now,
+            'declared_at' => null,
+            'updated_at' => $now,
+        ], ['%d', '%d', '%s', '%d', '%s', '%s', '%s']);
+
+        return 1;
     }
 
     private static function normalize_report_input(array $params, array $subject, bool $allow_empty_answers = false)
@@ -710,6 +771,8 @@ final class WrittenSubjectRoutes
         }
 
         $previous_answers = [];
+        $previous_answer_budget = 8000;
+        $previous_answer_used = 0;
         foreach ((array) ($full_subject['exercises'] ?? []) as $exercise) {
             if ((int) ($exercise['id'] ?? 0) !== $current_exercise_id) {
                 continue;
@@ -735,12 +798,26 @@ final class WrittenSubjectRoutes
                     continue;
                 }
 
-                $previous_answers[] = [
+                $entry = [
                     'question_id' => $question_id,
                     'question_label' => $exercise_title . ' - Question ' . (string) ($question['question_label'] ?? ''),
                     'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 900),
                     'answer' => self::excerpt_user_text($answer_text, 2500),
                 ];
+
+                $entry_size = strlen(wp_json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+                if ($previous_answer_used + $entry_size > $previous_answer_budget) {
+                    $remaining = $previous_answer_budget - $previous_answer_used;
+                    if ($remaining < 400) {
+                        break;
+                    }
+
+                    $entry['answer'] = self::excerpt_user_text($entry['answer'], max(200, $remaining - 250));
+                    $entry_size = strlen(wp_json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+                }
+
+                $previous_answers[] = $entry;
+                $previous_answer_used += $entry_size;
             }
 
             return $previous_answers;
@@ -780,8 +857,13 @@ final class WrittenSubjectRoutes
         return self::excerpt_user_text((string) \OuInPo\SegFault\RAG::student_pedagogical_context($user_id), 2600);
     }
 
-    private static function course_rag_context(string $query, int $limit = 4, int $max_tokens = 1200): string
+    private static function course_rag_context(string $query, int $limit = 4, int $max_tokens = 1200, ?array &$debug = null): string
     {
+        $debug = [
+            'count' => 0,
+            'sources' => '',
+        ];
+
         $query = trim(wp_strip_all_tags($query));
         if ($query === '' || !class_exists('\OuInPo\SegFault\RAG')) {
             return '';
@@ -841,7 +923,46 @@ final class WrittenSubjectRoutes
             return '';
         }
 
+        $debug['count'] = count($filtered);
+        $debug['sources'] = implode(' | ', array_map(static function (array $chunk): string {
+            $title = trim((string) ($chunk['title'] ?? 'Document'));
+            $url = trim((string) ($chunk['url'] ?? ''));
+            return $url !== '' ? $title . ' <' . $url . '>' : $title;
+        }, $filtered));
+
         return \OuInPo\SegFault\RAG::format_context($filtered, max(400, $max_tokens));
+    }
+
+    private static function out_of_program_notice(string $query): string
+    {
+        $user_id = self::current_ai_user_id();
+        if (
+            $user_id <= 0
+            || trim($query) === ''
+            || !class_exists('\OuInPo\SegFault\RAG')
+            || !method_exists('\OuInPo\SegFault\RAG', 'topic_is_out_of_program_for_user')
+        ) {
+            return '';
+        }
+
+        try {
+            return \OuInPo\SegFault\RAG::topic_is_out_of_program_for_user($query, $user_id)
+                ? 'Attention programme : certaines notions semblent hors programme pour le niveau connu de l eleve. Le signaler sans penaliser une reponse conforme au sujet.'
+                : '';
+        } catch (\Throwable $e) {
+            \Ouinpo\Suite\Core\AiSettings::debug_log('Written subject program guard unavailable', [
+                'stage' => 'written_subject_program_guard',
+                'error' => $e->getMessage(),
+            ]);
+            return '';
+        }
+    }
+
+    private static function debug_written_ai_context(string $stage, array $meta): void
+    {
+        \Ouinpo\Suite\Core\AiSettings::debug_log('Written subject AI context', array_merge([
+            'stage' => $stage,
+        ], $meta));
     }
 
     private static function question_rag_query(array $subject, array $exercise, array $question, array $competencies): string
@@ -878,8 +999,21 @@ final class WrittenSubjectRoutes
     private static function generate_student_report(array $subject, array $input)
     {
         $context = self::build_report_context($subject, $input);
-        $context['course_context'] = self::course_rag_context(self::report_rag_query($context), 5, 1400);
+        $rag_query = self::report_rag_query($context);
+        $rag_debug = [];
+        $context['course_context'] = self::course_rag_context($rag_query, 5, 1400, $rag_debug);
         $context['student_pedagogical_context'] = self::student_pedagogical_context();
+        $context['program_guardrail'] = self::out_of_program_notice($rag_query);
+
+        self::debug_written_ai_context('written_subject_student_report', [
+            'subject_id' => (int) ($subject['id'] ?? 0),
+            'answered_questions' => (int) ($context['answered_questions_count'] ?? 0),
+            'course_context_chars' => strlen((string) ($context['course_context'] ?? '')),
+            'course_context_sources' => (string) ($rag_debug['sources'] ?? ''),
+            'course_context_count' => (int) ($rag_debug['count'] ?? 0),
+            'student_context_chars' => strlen((string) ($context['student_pedagogical_context'] ?? '')),
+            'program_guardrail' => $context['program_guardrail'] !== '' ? 1 : 0,
+        ]);
 
         $messages = [[
             'role' => 'system',
@@ -897,6 +1031,7 @@ final class WrittenSubjectRoutes
                         'advice' => 'Conseil ciblé.',
                         'next_step' => 'Action concrete.',
                         'used_hints_note' => 'Comment exploiter les aides utilisees.',
+                        'attempt_note' => 'Comment tenir compte du nombre d essais IA deja realises et, si la question est reussie, du nombre d essais avant reussite.',
                     ]],
                     'revision_plan' => ['actions de revision courtes'],
                     'teacher_note' => 'Formulation prudente utile pour relire avec le professeur.',
@@ -906,6 +1041,8 @@ final class WrittenSubjectRoutes
                     'Si une seule question est repondue, produis un rapport court sur cette question uniquement.',
                     'Utilise le contexte de cours/RAG seulement pour cadrer les notions attendues et le programme, sans inventer de source absente.',
                     'Adapte les conseils au contexte pedagogique eleve quand il est fourni, sans citer d identite personnelle.',
+                    'Si program_guardrail est renseigne, signale la prudence programme sans sanctionner abusivement une reponse attendue par le sujet.',
+                    'Tiens compte de attempt_count : plusieurs essais appellent un conseil de consolidation, pas une penalite. Si status=solved, attempt_count_before_success indique le nombre d essais avant reussite.',
                     'Ne laisse pas les champs vides.',
                     'Mentionne sobrement que le rapport porte sur les questions deja repondues.',
                     'Utilise exactement les cles summary, strengths, priorities, question_advice, revision_plan, teacher_note.',
@@ -959,8 +1096,23 @@ final class WrittenSubjectRoutes
             $competencies[] = trim((string) ($competency['domain'] ?? '') . ' - ' . (string) ($competency['competency'] ?? ''));
         }
 
-        $course_context = self::course_rag_context(self::question_rag_query($subject, $exercise, $question, $competencies), 4, 1200);
+        $rag_query = self::question_rag_query($subject, $exercise, $question, $competencies);
+        $rag_debug = [];
+        $course_context = self::course_rag_context($rag_query, 4, 1200, $rag_debug);
         $student_context = self::student_pedagogical_context();
+        $program_guardrail = self::out_of_program_notice($rag_query);
+
+        self::debug_written_ai_context('written_question_student_advice', [
+            'subject_id' => (int) ($subject['id'] ?? 0),
+            'exercise_id' => (int) ($exercise['id'] ?? 0),
+            'question_id' => (int) ($question['id'] ?? 0),
+            'previous_answers' => count($previous_answers),
+            'course_context_chars' => strlen($course_context),
+            'course_context_sources' => (string) ($rag_debug['sources'] ?? ''),
+            'course_context_count' => (int) ($rag_debug['count'] ?? 0),
+            'student_context_chars' => strlen($student_context),
+            'program_guardrail' => $program_guardrail !== '' ? 1 : 0,
+        ]);
 
         $messages = [[
             'role' => 'system',
@@ -977,14 +1129,19 @@ final class WrittenSubjectRoutes
                     'strengths' => ['point solide observe'],
                     'improvements' => ['point a ameliorer'],
                     'hint_usage_note' => 'Comment exploiter les aides utilisees.',
+                    'inherited_issue_note' => 'Rappel si une erreur vient d une reponse precedente du meme exercice.',
                 ],
                 'regles' => [
                     'les reponses precedentes du meme exercice sont du contexte: utilise les definitions, fonctions, variables ou resultats que l eleve y introduit',
                     'si une reponse courante utilise correctement une definition, fonction, variable ou un resultat introduit precedemment, juge la logique courante avec cette definition locale',
-                    'si cette definition ou ce resultat precedent est faux, ne penalise pas automatiquement la question courante: indique que la question courante est reussie si son usage est coherent, puis rappelle explicitement dans feedback ou improvements que l element precedent doit etre corrige',
+                    'si cette definition ou ce resultat precedent est faux, ne penalise pas automatiquement la question courante: indique que la question courante est reussie si son usage est coherent, puis renseigne inherited_issue_note pour rappeler explicitement que l element precedent doit etre corrige',
                     'n evalue pas les reponses precedentes pour elles-memes, sauf si elles rendent la reponse courante incoherente',
                     'utilise course_context comme cadre documentaire prioritaire si pertinent, sans citer les numeros de contexte',
                     'adapte le retour au student_pedagogical_context quand il est fourni, sans mentionner d identite personnelle',
+                    'si program_guardrail est renseigne, signale la prudence programme sans sanctionner abusivement une reponse attendue par le sujet',
+                    'si verdict=correct, propose surtout une consolidation courte',
+                    'si verdict=partial, propose une etape precise pour terminer',
+                    'si verdict=incorrect, donne une piste de depart sans fournir toute la correction',
                     'verdict correct seulement si la reponse est suffisante pour la question',
                     'verdict partial si la demarche est pertinente mais incomplete ou imprecise',
                     'verdict incorrect si la reponse est hors sujet, absente ou conceptuellement fausse',
@@ -996,13 +1153,19 @@ final class WrittenSubjectRoutes
                     'question_label' => (string) (($exercise['title'] ?? 'Exercice') . ' - Question ' . ($question['question_label'] ?? '')),
                     'exercise_context' => self::excerpt((string) ($exercise['intro_html'] ?? ''), 2200),
                     'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 1500),
+                    'ai_rubric' => self::excerpt((string) (($question['ai_rubric'] ?? '') ?: ($question['correction_guidance'] ?? '')), 1000),
                     'answer' => self::excerpt_user_text($answer, 2000),
                     'previous_answers' => $previous_answers,
                     'used_hints' => $used_hints,
                     'competencies' => array_values(array_filter($competencies)),
                     'course_context' => $course_context,
                     'student_pedagogical_context' => $student_context,
+                    'program_guardrail' => $program_guardrail,
                 ],
+                'exemples' => [[
+                    'situation' => 'Question precedente: l eleve definit une fonction Z incorrecte. Question courante: il applique ensuite correctement cette fonction Z selon sa definition locale.',
+                    'attendu' => 'verdict=correct si la question courante demandait seulement l utilisation coherente de Z; renseigner inherited_issue_note pour rappeler que la definition de Z doit etre corrigee.',
+                ]],
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]];
 
@@ -1072,7 +1235,11 @@ final class WrittenSubjectRoutes
                     'question_label' => $exercise_title . ' - Question ' . (string) ($question['question_label'] ?? ''),
                     'exercise_context' => self::excerpt((string) ($exercise['intro_html'] ?? ''), 1800),
                     'prompt' => self::excerpt((string) ($question['prompt_html'] ?? ''), 1200),
+                    'ai_rubric' => self::excerpt((string) (($question['ai_rubric'] ?? '') ?: ($question['correction_guidance'] ?? '')), 1000),
                     'answer' => $answer,
+                    'attempt_count' => max(0, (int) ($question['student_attempt_count'] ?? 0)),
+                    'attempt_count_before_success' => (string) ($question['student_status'] ?? 'none') === 'solved' ? max(0, (int) ($question['student_attempt_count'] ?? 0)) : 0,
+                    'status' => (string) ($question['student_status'] ?? 'none'),
                     'used_hints' => $hints,
                     'competencies' => array_values(array_filter($competencies)),
                 ];
@@ -1135,6 +1302,7 @@ final class WrittenSubjectRoutes
                 'advice' => trim(wp_strip_all_tags((string) (self::first_value($item, ['advice', 'conseil', 'feedback', 'commentaire']) ?? ''))),
                 'next_step' => trim(wp_strip_all_tags((string) (self::first_value($item, ['next_step', 'prochaine_etape', 'action', 'a_faire']) ?? ''))),
                 'used_hints_note' => trim(wp_strip_all_tags((string) (self::first_value($item, ['used_hints_note', 'aides_utilisees', 'hint_usage_note']) ?? ''))),
+                'attempt_note' => trim(wp_strip_all_tags((string) (self::first_value($item, ['attempt_note', 'essais_note', 'attempts_note']) ?? ''))),
             ];
         }
 
@@ -1175,6 +1343,13 @@ final class WrittenSubjectRoutes
                 'advice' => 'Ta reponse est bien enregistree. Pour progresser, compare chaque affirmation avec les mots-cles de l enonce et les notions de cours associees.',
                 'next_step' => 'Demande une evaluation IA sur cette question pour obtenir un retour plus precis.',
                 'used_hints_note' => !empty($question['used_hints']) ? 'Reprends les aides cochees et verifie que ta reponse exploite explicitement leurs indications.' : '',
+                'attempt_note' => !empty($question['attempt_count'])
+                    ? (
+                        (string) ($question['status'] ?? '') === 'solved'
+                            ? 'Question reussie apres ' . (int) $question['attempt_count'] . ' essai(s) IA.'
+                            : 'Nombre d essais IA deja realises : ' . (int) $question['attempt_count'] . '.'
+                    )
+                    : '',
             ];
         }
 
@@ -1233,6 +1408,7 @@ final class WrittenSubjectRoutes
         $strengths = $list(self::first_value($advice, ['strengths', 'points_forts', 'reussites']) ?? [], 3);
         $improvements = $list(self::first_value($advice, ['improvements', 'ameliorations', 'points_a_ameliorer', 'priorities', 'priorites', 'axes_de_travail']) ?? [], 3);
         $hint_usage_note = trim(wp_strip_all_tags((string) (self::first_value($advice, ['hint_usage_note', 'used_hints_note', 'aides_utilisees']) ?? '')));
+        $inherited_issue_note = trim(wp_strip_all_tags((string) (self::first_value($advice, ['inherited_issue_note', 'erreur_heritee', 'rappel_erreur_precedente']) ?? '')));
         $safe_to_mark_solved = self::truthy(self::first_value($advice, ['safe_to_mark_solved', 'validation_possible', 'peut_valider']))
             || ($verdict === 'correct' && $confidence >= 0.75);
 
@@ -1249,6 +1425,7 @@ final class WrittenSubjectRoutes
             'strengths' => $strengths,
             'improvements' => $improvements,
             'hint_usage_note' => $hint_usage_note,
+            'inherited_issue_note' => $inherited_issue_note,
         ];
     }
 
@@ -1468,6 +1645,7 @@ final class WrittenSubjectRoutes
 
                 $question['student_answer'] = '';
                 $question['student_status'] = 'none';
+                $question['student_attempt_count'] = 0;
                 $question['used_hint_ids'] = [];
 
                 if ($user_id > 0) {
@@ -1477,11 +1655,16 @@ final class WrittenSubjectRoutes
                         $question_id
                     )) ?? '');
 
-                    $question['student_status'] = (string) ($wpdb->get_var($wpdb->prepare(
-                        "SELECT status FROM {$tStatus} WHERE user_id = %d AND question_id = %d LIMIT 1",
+                    $status_row = $wpdb->get_row($wpdb->prepare(
+                        "SELECT status, attempt_count FROM {$tStatus} WHERE user_id = %d AND question_id = %d LIMIT 1",
                         $user_id,
                         $question_id
-                    )) ?? 'none');
+                    ), ARRAY_A);
+
+                    if (is_array($status_row)) {
+                        $question['student_status'] = (string) ($status_row['status'] ?? 'none');
+                        $question['student_attempt_count'] = max(0, (int) ($status_row['attempt_count'] ?? 0));
+                    }
 
                     $question['used_hint_ids'] = array_map('intval', $wpdb->get_col($wpdb->prepare(
                         "SELECT hint_id FROM {$tUsedHints} WHERE user_id = %d AND question_id = %d ORDER BY hint_id ASC",

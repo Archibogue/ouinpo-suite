@@ -2105,6 +2105,7 @@ public static function render_written_subject($atts = array(), $content = '') {
         <?php foreach ((array) ($exercise['questions'] ?? []) as $question): ?>
           <?php
           $question_status = (string) ($question['student_status'] ?? 'none');
+          $question_attempt_count = max(0, (int) ($question['student_attempt_count'] ?? 0));
           $has_answer = trim((string) ($question['student_answer'] ?? '')) !== '';
           $question_tag = '';
           $question_tag_class = '';
@@ -2125,6 +2126,11 @@ public static function render_written_subject($atts = array(), $content = '') {
                   data-written-question-progress-tag
                   data-written-question-status="<?php echo esc_attr($question_status); ?>"
                 ><?php echo esc_html($question_tag); ?></span>
+                <span
+                  class="ouinpo-badge ouinpo-written-question-attempts<?php echo $question_attempt_count <= 0 ? ' is-hidden' : ''; ?>"
+                  data-written-question-attempts-tag
+                  data-written-question-attempts="<?php echo esc_attr((string) $question_attempt_count); ?>"
+                ><?php echo esc_html($question_attempt_count > 1 ? $question_attempt_count . ' essais IA' : $question_attempt_count . ' essai IA'); ?></span>
               <?php endif; ?>
             </h4>
             <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) ($question['prompt_html'] ?? '')); ?></div>

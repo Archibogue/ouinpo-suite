@@ -195,6 +195,7 @@
                 ${item.advice ? `<p>${escapeHtml(item.advice)}</p>` : ''}
                 ${item.next_step ? `<p><strong>Prochaine etape :</strong> ${escapeHtml(item.next_step)}</p>` : ''}
                 ${item.used_hints_note ? `<p><strong>Aides utilisées :</strong> ${escapeHtml(item.used_hints_note)}</p>` : ''}
+                ${item.attempt_note ? `<p><strong>Essais IA :</strong> ${escapeHtml(item.attempt_note)}</p>` : ''}
               </article>
             `).join('')}
           </div>
@@ -233,6 +234,7 @@
     const strengths = renderWrittenReportList('Ce qui va bien', advice && advice.strengths);
     const improvements = renderWrittenReportList('A ameliorer', advice && advice.improvements);
     const steps = renderWrittenReportList('A faire maintenant', advice && advice.next_steps);
+    const inheritedIssue = advice && advice.inherited_issue_note ? String(advice.inherited_issue_note) : '';
     let confidenceHtml = '';
 
     if (advice && typeof advice.confidence !== 'undefined' && advice.confidence !== null && advice.confidence !== '') {
@@ -249,6 +251,7 @@
         ${strengths}
         ${improvements}
         ${steps}
+        ${inheritedIssue ? `<p><strong>Point a reprendre dans une question precedente :</strong> ${escapeHtml(inheritedIssue)}</p>` : ''}
         ${advice && advice.hint_usage_note ? `<p><strong>Aides utilisées :</strong> ${escapeHtml(advice.hint_usage_note)}</p>` : ''}
         ${advice && advice.safe_to_mark_solved === false && verdict === 'correct' ? '<p><em>Réponse encourageante, mais non validée officiellement pour le moment.</em></p>' : ''}
         ${confidenceHtml}
@@ -368,6 +371,25 @@
     tag.setAttribute('data-written-question-status', 'none');
   }
 
+  function updateWrittenQuestionAttemptTag(questionRoot, count) {
+    if (!questionRoot) return;
+
+    const tag = questionRoot.querySelector('[data-written-question-attempts-tag]');
+    if (!tag) return;
+
+    const attempts = Math.max(0, parseInt(count, 10) || 0);
+    tag.setAttribute('data-written-question-attempts', String(attempts));
+
+    if (attempts <= 0) {
+      tag.textContent = '';
+      tag.classList.add('is-hidden');
+      return;
+    }
+
+    tag.textContent = attempts > 1 ? attempts + ' essais IA' : attempts + ' essai IA';
+    tag.classList.remove('is-hidden');
+  }
+
   function bindWrittenQuestionAdvice() {
     let didWork = false;
 
@@ -405,10 +427,11 @@
             collected = collectWrittenQuestionPayload(questionRoot);
           }
 
-          renderMessage(status, 'Analyse de ta réponse en cours...', 'ouinpo-empty');
+          renderMessage(status, 'Analyse de ta réponse en cours avec les réponses précédentes de cet exercice...', 'ouinpo-empty');
           const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/student-advice', collected.payload);
           renderMessage(status, 'Évaluation IA générée. Ta réponse et les aides cochées ont été enregistrées.', 'ouinpo-success');
           renderWrittenQuestionAdvice(output, data && data.advice ? data.advice : {});
+          updateWrittenQuestionAttemptTag(questionRoot, data && typeof data.attempt_count !== 'undefined' ? data.attempt_count : (data && data.advice ? data.advice.attempt_count : 0));
           updateWrittenQuestionProgressTag(questionRoot, data && data.advice && data.advice.safe_to_mark_solved ? 'solved' : null);
         } catch (err) {
           renderMessage(status, err && err.message ? err.message : 'Évaluation impossible pour le moment.', 'ouinpo-error');
@@ -564,6 +587,7 @@
             });
             root.querySelectorAll('.ouinpo-written-question-front').forEach(function (questionRoot) {
               updateWrittenQuestionProgressTag(questionRoot, 'none');
+              updateWrittenQuestionAttemptTag(questionRoot, 0);
             });
 
             renderMessage(status, 'Sujet remis à zéro pour ton compte.', 'ouinpo-success');
