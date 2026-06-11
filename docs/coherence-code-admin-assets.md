@@ -21,7 +21,7 @@ Ce document fixe les conventions internes pour OuInPo Suite 0.7.0-beta. Il ne d�
 - `ouinpo-projects` : hub **Projets** métier conservé sous son slug hérité, exposé depuis les parcours/IA quand le module Projects est actif.
 - `ouinpo-suite-ai` : IA et parcours, seulement si au moins un module concerné est actif.
 - `ouinpo-suite-settings` : modules, apparence, IA, pages, droits, import, diagnostic et maintenance.
-- Les usages IA detailles, dont les options des annales ecrites, se reglent dans l'ecran historique SegFault ; `OuInPo Suite > Reglages > IA` affiche un resume de statut.
+- Les usages IA detailles et les acces publics, dont les options des annales ecrites, se reglent dans l'ecran historique SegFault ; `OuInPo Suite > Reglages > IA` affiche un resume de statut.
 - `ouinpo-suite-revisions` peut rester disponible pour compatibilité lorsque Flashcards est actif, mais Flashcards doit aussi être accessible depuis Préparer.
 - `ouinpo-suite-badges` reste enregistré pour compatibilité, mais les accès enseignant aux badges passent par Suivre.
 

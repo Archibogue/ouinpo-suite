@@ -2038,9 +2038,19 @@ public static function render_written_subject($atts = array(), $content = '') {
     return '<p>Annale écrite introuvable.</p>';
   }
 
+  $is_logged = is_user_logged_in();
+  $public_answer_zones = !$is_logged
+    && class_exists('\Ouinpo\Suite\Core\AiSettings')
+    && \Ouinpo\Suite\Core\AiSettings::public_written_answer_zones_enabled();
+  $can_show_answer_zones = $is_logged || $public_answer_zones;
   $written_subject_answers_ai_enabled = class_exists('\Ouinpo\Suite\Core\AiSettings')
-    && \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_answers');
-  $written_subject_report_ai_enabled = class_exists('\Ouinpo\Suite\Core\AiSettings')
+    && (
+      $is_logged
+        ? \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_answers')
+        : \Ouinpo\Suite\Core\AiSettings::public_written_ai_enabled()
+    );
+  $written_subject_report_ai_enabled = $is_logged
+    && class_exists('\Ouinpo\Suite\Core\AiSettings')
     && \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_report');
 
   $written_subject_pdf_url = '';
@@ -2057,7 +2067,12 @@ public static function render_written_subject($atts = array(), $content = '') {
 
   ob_start();
   ?>
-  <article class="ouinpo-exercises-page ouinpo-written-subject" data-written-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">
+  <article
+    class="ouinpo-exercises-page ouinpo-written-subject"
+    data-written-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>"
+    data-public-mode="<?php echo $is_logged ? '0' : '1'; ?>"
+    data-local-storage-key="<?php echo esc_attr('ouinpo_written_subject_' . (string) (int) $subject['id']); ?>"
+  >
     <section class="ouinpo-panel">
       <div class="ouinpo-panel-head">
         <h2 class="ouinpo-panel-title"><?php echo esc_html((string) $subject['title']); ?></h2>
@@ -2071,6 +2086,12 @@ public static function render_written_subject($atts = array(), $content = '') {
       <div class="ouinpo-alert ouinpo-written-source-warning">
         Vérifie aussi le sujet officiel dans le PDF : l’import automatique peut ne pas reprendre parfaitement tous les éléments du document.
       </div>
+
+      <?php if ($public_answer_zones): ?>
+        <div class="ouinpo-alert ouinpo-written-public-mode-notice">
+          Mode visiteur : tes réponses restent dans ce navigateur et ne sont pas enregistrées sur le site.
+        </div>
+      <?php endif; ?>
 
       <?php if (!empty($subject['files']) && is_array($subject['files'])): ?>
         <div class="ouinpo-practical-files">
@@ -2143,7 +2164,7 @@ public static function render_written_subject($atts = array(), $content = '') {
           <article class="ouinpo-written-question-front">
             <h4 class="ouinpo-written-question-title">
               <span><?php echo esc_html('Question ' . (string) ($question['question_label'] ?? '')); ?></span>
-              <?php if (is_user_logged_in()): ?>
+              <?php if ($is_logged): ?>
                 <span
                   class="ouinpo-badge ouinpo-written-question-progress <?php echo esc_attr($question_tag_class); ?><?php echo $question_tag === '' ? ' is-hidden' : ''; ?>"
                   data-written-question-progress-tag
@@ -2166,7 +2187,7 @@ public static function render_written_subject($atts = array(), $content = '') {
               </div>
             <?php endif; ?>
 
-            <?php if (is_user_logged_in()): ?>
+            <?php if ($can_show_answer_zones): ?>
               <?php if ($written_subject_pdf_url !== ''): ?>
                 <div class="ouinpo-written-question-subject-link">
                   <a class="button" href="<?php echo esc_url($written_subject_pdf_url); ?>" target="_blank" rel="noopener">Voir le sujet</a>
@@ -2199,6 +2220,7 @@ public static function render_written_subject($atts = array(), $content = '') {
                 <?php endif; ?>
               </div>
 
+              <?php if ($is_logged): ?>
               <div class="ouinpo-written-status-actions">
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form" data-written-question-status-form>
                   <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
@@ -2209,6 +2231,7 @@ public static function render_written_subject($atts = array(), $content = '') {
                   <button type="submit" class="button">Réussie</button>
                 </form>
               </div>
+              <?php endif; ?>
             <?php endif; ?>
 
             <?php if (!empty($question['hints'])): ?>
@@ -2218,7 +2241,7 @@ public static function render_written_subject($atts = array(), $content = '') {
                     <summary><?php echo esc_html((string) (($hint['title'] ?? '') ?: 'Aide IA')); ?></summary>
                     <div><?php echo wp_kses_post((string) ($hint['content'] ?? '')); ?></div>
                   </details>
-                  <?php if (is_user_logged_in()): ?>
+                  <?php if ($is_logged): ?>
                     <label class="ouinpo-written-hint-used">
                       <input
                         type="checkbox"
@@ -2238,7 +2261,7 @@ public static function render_written_subject($atts = array(), $content = '') {
       </section>
     <?php endforeach; ?>
 
-    <?php if (is_user_logged_in()): ?>
+    <?php if ($is_logged): ?>
       <section class="ouinpo-panel ouinpo-written-report-panel">
         <h3 class="ouinpo-panel-title">Rapport de travail</h3>
         <?php if ($written_subject_report_ai_enabled): ?>
@@ -2254,7 +2277,11 @@ public static function render_written_subject($atts = array(), $content = '') {
       </section>
     <?php else: ?>
       <section class="ouinpo-panel ouinpo-written-report-panel">
-        <p>Connecte-toi pour enregistrer tes réponses, indiquer les aides utilisées et générer un rapport de conseils.</p>
+        <p>Connecte-toi pour enregistrer tes réponses et générer un rapport de travail.</p>
+        <?php if ($public_answer_zones): ?>
+          <button type="button" class="button" data-written-reset-action data-public-reset="1" data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Effacer mes réponses locales</button>
+          <div class="ouinpo-written-report-status" data-written-report-status aria-live="polite"></div>
+        <?php endif; ?>
       </section>
     <?php endif; ?>
   </article>

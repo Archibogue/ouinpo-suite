@@ -2719,6 +2719,10 @@ final class SuiteAdmin
                 <p>
                     <?php self::statusBadge(((int) get_option('ouinpo_public_exercises_enabled', 0) === 1), 'Exercices publics', 'Exercices connectes'); ?>
                     <?php self::statusBadge(((int) get_option('ouinpo_public_solutions_enabled', 0) === 1), 'Solutions publiques', 'Solutions connectees'); ?>
+                    <?php self::statusBadge(AiSettings::public_written_subjects_enabled(), 'Annales écrites publiques', 'Annales écrites connectées'); ?>
+                    <?php self::statusBadge(AiSettings::public_written_files_enabled(), 'Fichiers annales publics', 'Fichiers annales fermés'); ?>
+                    <?php self::statusBadge(AiSettings::public_written_answer_zones_enabled(), 'Réponses anonymes visibles', 'Réponses anonymes fermées'); ?>
+                    <?php self::statusBadge(AiSettings::public_written_ai_enabled(), 'IA publique annales active', 'IA publique annales désactivée'); ?>
                 </p>
             </div>
         </div>

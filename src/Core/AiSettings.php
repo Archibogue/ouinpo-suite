@@ -101,6 +101,10 @@ final class AiSettings
             'ouinpo_public_solutions_enabled' => 0,
             'ouinpo_public_practical_subjects_enabled' => 0,
             'ouinpo_public_practical_files_enabled' => 0,
+            'ouinpo_public_written_subjects_enabled' => 0,
+            'ouinpo_public_written_files_enabled' => 0,
+            'ouinpo_public_written_answer_zones_enabled' => 0,
+            'ouinpo_public_written_ai_enabled' => 0,
             'ouinpo_sf_openai_api_key' => '',
             'ouinpo_sf_model' => 'gpt-5-mini',
             'ouinpo_sf_embed_model' => 'text-embedding-3-large',
@@ -215,6 +219,31 @@ final class AiSettings
     public static function public_access_enabled(string $option): bool
     {
         return (int) self::get($option) === 1;
+    }
+
+    public static function public_written_subjects_enabled(): bool
+    {
+        return self::public_access_enabled('ouinpo_public_written_subjects_enabled');
+    }
+
+    public static function public_written_files_enabled(): bool
+    {
+        return self::public_written_subjects_enabled()
+            && self::public_access_enabled('ouinpo_public_written_files_enabled');
+    }
+
+    public static function public_written_answer_zones_enabled(): bool
+    {
+        return self::public_written_subjects_enabled()
+            && self::public_access_enabled('ouinpo_public_written_answer_zones_enabled');
+    }
+
+    public static function public_written_ai_enabled(): bool
+    {
+        return self::public_enabled()
+            && self::enabled_for_usage('written_subject_answers')
+            && self::public_written_answer_zones_enabled()
+            && self::public_access_enabled('ouinpo_public_written_ai_enabled');
     }
 
     public static function debug_logs_enabled(): bool
@@ -543,6 +572,10 @@ final class AiSettings
             'ouinpo_public_solutions_enabled' => 'bool',
             'ouinpo_public_practical_subjects_enabled' => 'bool',
             'ouinpo_public_practical_files_enabled' => 'bool',
+            'ouinpo_public_written_subjects_enabled' => 'bool',
+            'ouinpo_public_written_files_enabled' => 'bool',
+            'ouinpo_public_written_answer_zones_enabled' => 'bool',
+            'ouinpo_public_written_ai_enabled' => 'bool',
             'ouinpo_sf_openai_api_key' => 'secret',
             'ouinpo_sf_model' => 'model',
             'ouinpo_sf_embed_model' => 'model',

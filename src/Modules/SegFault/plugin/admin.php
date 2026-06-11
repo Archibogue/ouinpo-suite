@@ -4250,6 +4250,16 @@ try {
               ] as $option => $label): ?>
                 <label><input type="checkbox" name="<?php echo esc_attr($option); ?>" value="1" <?php checked(1, (int)get_option($option, 0)); ?> /> <?php echo esc_html($label); ?></label><br>
               <?php endforeach; ?>
+              <h3>Annales écrites publiques</h3>
+              <?php foreach ([
+                'ouinpo_public_written_subjects_enabled' => 'Accès public aux annales écrites',
+                'ouinpo_public_written_files_enabled' => 'Accès public aux fichiers des annales écrites',
+                'ouinpo_public_written_answer_zones_enabled' => 'Afficher les zones de réponse aux visiteurs anonymes',
+                'ouinpo_public_written_ai_enabled' => 'Autoriser l’IA publique sur les réponses des annales écrites',
+              ] as $option => $label): ?>
+                <label><input type="checkbox" name="<?php echo esc_attr($option); ?>" value="1" <?php checked(1, (int)get_option($option, 0)); ?> /> <?php echo esc_html($label); ?></label><br>
+              <?php endforeach; ?>
+              <p class="description">En mode anonyme, les réponses ne sont pas associées à un compte et ne servent pas au suivi pédagogique.</p>
               <p class="description">Sur une nouvelle installation, ces acces sont fermes par defaut. Une migration conserve les acces publics des sites deja installes.</p>
             </td>
           </tr>

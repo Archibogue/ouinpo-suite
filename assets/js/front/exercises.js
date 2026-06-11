@@ -336,6 +336,71 @@
     };
   }
 
+  function isWrittenPublicMode(root) {
+    return !!(root && String(root.getAttribute('data-public-mode') || '0') === '1');
+  }
+
+  function writtenLocalStorageKey(root) {
+    const explicitKey = root ? String(root.getAttribute('data-local-storage-key') || '').trim() : '';
+    const subjectId = root ? String(root.getAttribute('data-written-subject-id') || '').trim() : '';
+
+    return explicitKey || (subjectId ? 'ouinpo_written_subject_' + subjectId : '');
+  }
+
+  function readWrittenLocalAnswers(root) {
+    const key = writtenLocalStorageKey(root);
+    if (!key || !window.localStorage) return {};
+
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(key) || '{}');
+      return parsed && typeof parsed === 'object' && parsed.answers && typeof parsed.answers === 'object'
+        ? parsed.answers
+        : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function writeWrittenLocalAnswers(root) {
+    const key = writtenLocalStorageKey(root);
+    if (!key || !window.localStorage) return;
+
+    const answers = {};
+    root.querySelectorAll('[data-written-question-id].ouinpo-written-answer').forEach(function (textarea) {
+      const questionId = String(textarea.getAttribute('data-written-question-id') || '').trim();
+      if (!questionId) return;
+
+      answers[questionId] = String(textarea.value || '');
+    });
+
+    try {
+      window.localStorage.setItem(key, JSON.stringify({ answers: answers, updated_at: Date.now() }));
+    } catch (_) {
+      // Stockage local indisponible : on laisse simplement la saisie en memoire de page.
+    }
+  }
+
+  function loadWrittenLocalAnswers(root) {
+    if (!isWrittenPublicMode(root)) return;
+
+    const answers = readWrittenLocalAnswers(root);
+    root.querySelectorAll('[data-written-question-id].ouinpo-written-answer').forEach(function (textarea) {
+      const questionId = String(textarea.getAttribute('data-written-question-id') || '').trim();
+      if (questionId && Object.prototype.hasOwnProperty.call(answers, questionId)) {
+        textarea.value = String(answers[questionId] || '');
+      }
+    });
+  }
+
+  function clearWrittenLocalAnswers(root) {
+    const key = writtenLocalStorageKey(root);
+    if (key && window.localStorage) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch (_) {}
+    }
+  }
+
   function updateWrittenQuestionProgressTag(questionRoot, forcedStatus) {
     if (!questionRoot) return;
 
@@ -405,6 +470,7 @@
       const subjectRoot = questionRoot
         ? questionRoot.closest('.ouinpo-written-subject[data-written-subject-id]')
         : null;
+      const isPublicMode = isWrittenPublicMode(subjectRoot);
       const subjectId = String(subjectRoot ? (subjectRoot.getAttribute('data-written-subject-id') || '') : '').trim();
       const questionId = String(button.getAttribute('data-question-id') || '').trim();
 
@@ -421,7 +487,11 @@
         renderMessage(status, 'Analyse de ta réponse en cours...', 'ouinpo-empty');
 
         try {
-          if (subjectRoot && subjectId) {
+          if (isPublicMode && subjectRoot) {
+            writeWrittenLocalAnswers(subjectRoot);
+          }
+
+          if (!isPublicMode && subjectRoot && subjectId) {
             renderMessage(status, 'Sauvegarde de tes réponses en cours...', 'ouinpo-empty');
             await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/save-progress', collectWrittenReportPayload(subjectRoot).payload);
             collected = collectWrittenQuestionPayload(questionRoot);
@@ -429,10 +499,16 @@
 
           renderMessage(status, 'Analyse de ta réponse en cours avec les réponses précédentes de cet exercice...', 'ouinpo-empty');
           const data = await apiPOST('/written-questions/' + encodeURIComponent(questionId) + '/student-advice', collected.payload);
-          renderMessage(status, 'Évaluation IA générée. Ta réponse et les aides cochées ont été enregistrées.', 'ouinpo-success');
+          if (isPublicMode) {
+            renderMessage(status, 'Conseil IA généré. Ta réponse reste dans ce navigateur et n’est pas enregistrée sur le site.', 'ouinpo-success');
+          } else {
+            renderMessage(status, 'Évaluation IA générée. Ta réponse et les aides cochées ont été enregistrées.', 'ouinpo-success');
+          }
           renderWrittenQuestionAdvice(output, data && data.advice ? data.advice : {});
-          updateWrittenQuestionAttemptTag(questionRoot, data && typeof data.attempt_count !== 'undefined' ? data.attempt_count : (data && data.advice ? data.advice.attempt_count : 0));
-          updateWrittenQuestionProgressTag(questionRoot, data && data.advice && data.advice.safe_to_mark_solved ? 'solved' : null);
+          if (!isPublicMode) {
+            updateWrittenQuestionAttemptTag(questionRoot, data && typeof data.attempt_count !== 'undefined' ? data.attempt_count : (data && data.advice ? data.advice.attempt_count : 0));
+            updateWrittenQuestionProgressTag(questionRoot, data && data.advice && data.advice.safe_to_mark_solved ? 'solved' : null);
+          }
         } catch (err) {
           renderMessage(status, err && err.message ? err.message : 'Évaluation impossible pour le moment.', 'ouinpo-error');
         } finally {
@@ -508,6 +584,7 @@
       const resetButton = root.querySelector('[data-written-reset-action]');
       if (!button && !resetButton) return;
 
+      const isPublicMode = isWrittenPublicMode(root);
       const status = root.querySelector('[data-written-report-status]');
       const output = root.querySelector('[data-written-report-output]');
       const subjectId = String(
@@ -520,7 +597,14 @@
       let saveInFlight = false;
       let savePending = false;
 
+      loadWrittenLocalAnswers(root);
+
       async function saveProgressQuietly() {
+        if (isPublicMode) {
+          writeWrittenLocalAnswers(root);
+          return;
+        }
+
         if (!subjectId) return;
 
         if (saveInFlight) {
@@ -566,14 +650,32 @@
 
       if (resetButton) {
         resetButton.addEventListener('click', async function () {
-          if (!window.confirm('Remettre à zéro tes réponses, aides cochées et statuts pour ce sujet ?')) {
+          const confirmText = isPublicMode
+            ? 'Effacer tes réponses locales pour ce sujet ?'
+            : 'Remettre à zéro tes réponses, aides cochées et statuts pour ce sujet ?';
+
+          if (!window.confirm(confirmText)) {
             return;
           }
 
           resetButton.disabled = true;
-          renderMessage(status, 'Remise à zéro en cours...', 'ouinpo-empty');
+          renderMessage(status, isPublicMode ? 'Effacement local en cours...' : 'Remise à zéro en cours...', 'ouinpo-empty');
 
           try {
+            if (isPublicMode) {
+              clearWrittenLocalAnswers(root);
+
+              root.querySelectorAll('.ouinpo-written-answer').forEach(function (textarea) {
+                textarea.value = '';
+              });
+              root.querySelectorAll('[data-written-question-advice-status], [data-written-question-advice-output], [data-written-report-output]').forEach(function (node) {
+                node.innerHTML = '';
+              });
+
+              renderMessage(status, 'Tes réponses locales ont été effacées.', 'ouinpo-success');
+              return;
+            }
+
             await apiPOST('/written-subjects/' + encodeURIComponent(subjectId) + '/reset-progress', {});
 
             root.querySelectorAll('.ouinpo-written-answer').forEach(function (textarea) {

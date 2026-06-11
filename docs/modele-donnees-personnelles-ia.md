@@ -10,6 +10,12 @@ Les fonctions IA sont optionnelles. Lorsqu'elles sont activees, il faut eviter d
 
 Les annales ecrites peuvent proposer une aide IA sur les reponses d'eleves et un rapport de travail, uniquement si les options IA correspondantes sont activees par l'administrateur. Les eleves ne doivent pas saisir de donnees personnelles dans les reponses envoyees a l'IA.
 
+Pour un eleve connecte, les reponses saisies dans les annales ecrites peuvent etre enregistrees afin de reprendre le travail, suivre l'avancement et generer un rapport de conseils si l'option IA est activee.
+
+Pour un visiteur anonyme, les zones de reponse des annales ecrites ne sont affichees que si l'administrateur les active explicitement. Dans ce mode, les reponses restent locales au navigateur et ne sont pas stockees en base, sauf choix explicite futur documente separement.
+
+L'IA publique sur les annales ecrites, si elle est activee, applique les quotas publics par adresse IP hachee. Elle ne cree ni progression nominative, ni statut de question, ni badge, ni compteur d'essais associe a un compte.
+
 Les reponses IA sont des aides. Elles peuvent etre fausses ou incompletes et doivent etre relues par l'enseignant avant usage pedagogique.
 
 Les cles API ne doivent jamais etre placees dans les packs pedagogiques, le depot GitHub ou un document partage.

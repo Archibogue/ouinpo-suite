@@ -61,9 +61,7 @@ final class WrittenSubjectRoutes
         register_rest_route(self::NS, '/written-questions/(?P<id>\d+)/student-advice', [[
             'methods' => 'POST',
             'callback' => [__CLASS__, 'student_question_advice'],
-            'permission_callback' => static function () {
-                return is_user_logged_in();
-            },
+            'permission_callback' => '__return_true',
         ]]);
 
         register_rest_route(self::NS, '/written-questions/(?P<id>\d+)/status', [[
@@ -86,7 +84,7 @@ final class WrittenSubjectRoutes
             return true;
         }
 
-        return \Ouinpo\Suite\Core\AiSettings::public_access_enabled('ouinpo_public_exercises_enabled')
+        return \Ouinpo\Suite\Core\AiSettings::public_written_subjects_enabled()
             ? true
             : new \WP_Error('ouinpo_login_required', 'Connexion requise pour consulter les annales écrites.', ['status' => 401]);
     }
@@ -392,6 +390,7 @@ final class WrittenSubjectRoutes
 
     public static function student_question_advice(\WP_REST_Request $request)
     {
+        $is_logged = is_user_logged_in();
         $question_id = (int) $request['id'];
         if ($question_id <= 0) {
             return new \WP_Error('invalid_id', 'Identifiant invalide.', ['status' => 400]);
@@ -402,7 +401,11 @@ final class WrittenSubjectRoutes
             return new \WP_Error('not_found', 'Question introuvable.', ['status' => 404]);
         }
 
-        if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_answers')) {
+        if ($is_logged && !\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_answers')) {
+            return new \WP_Error('ai_disabled', (string) \Ouinpo\Suite\Core\AiSettings::get('ouinpo_ai_disabled_message'), ['status' => 503]);
+        }
+
+        if (!$is_logged && !\Ouinpo\Suite\Core\AiSettings::public_written_ai_enabled()) {
             return new \WP_Error('ai_disabled', (string) \Ouinpo\Suite\Core\AiSettings::get('ouinpo_ai_disabled_message'), ['status' => 503]);
         }
 
@@ -422,22 +425,32 @@ final class WrittenSubjectRoutes
 
         $used_hints = self::normalize_question_hint_ids($params['used_hints'] ?? [], $context);
 
-        $quota = self::consume_report_quota();
+        $quota = $is_logged ? self::consume_report_quota() : self::consume_public_written_advice_quota();
         if (is_wp_error($quota)) {
             return $quota;
         }
 
-        self::save_report_input(get_current_user_id(), [
-            'answers' => [$question_id => $answer],
-            'used_hints' => [$question_id => $used_hints],
-            'question_ids' => [$question_id],
-        ]);
+        if ($is_logged) {
+            self::save_report_input(get_current_user_id(), [
+                'answers' => [$question_id => $answer],
+                'used_hints' => [$question_id => $used_hints],
+                'question_ids' => [$question_id],
+            ]);
+        }
 
         $previous_answers = self::build_previous_answer_context($context, $params['context_answers'] ?? []);
 
         $advice = self::generate_question_advice($context, $answer, $used_hints, $previous_answers);
         if (is_wp_error($advice)) {
             return $advice;
+        }
+
+        if (!$is_logged) {
+            return rest_ensure_response([
+                'ok' => true,
+                'stored' => false,
+                'advice' => $advice,
+            ]);
         }
 
         $attempt_count = self::increment_question_attempt_if_open(get_current_user_id(), $question_id);
@@ -580,6 +593,10 @@ final class WrittenSubjectRoutes
 
         if ((int) ($file['subject_active'] ?? 0) !== 1) {
             return new \WP_Error('file_not_found', 'Fichier introuvable.', ['status' => 404]);
+        }
+
+        if (!is_user_logged_in() && !\Ouinpo\Suite\Core\AiSettings::public_written_files_enabled()) {
+            return new \WP_Error('ouinpo_login_required', 'Connexion requise pour telecharger les fichiers des annales ecrites.', ['status' => 401]);
         }
 
         $permission = self::can_view();
@@ -981,6 +998,20 @@ final class WrittenSubjectRoutes
             get_current_user_id(),
             $teacher_quota ? \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_teacher_per_minute') : \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_exercise_ai_per_minute'),
             $teacher_quota ? \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_teacher_per_day') : \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_exercise_ai_per_day')
+        );
+    }
+
+    private static function consume_public_written_advice_quota()
+    {
+        $minute = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_exercise_ai_per_minute');
+        $day = \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_exercise_ai_per_day');
+
+        return \Ouinpo\Suite\Core\AiSettings::consumePublicRateLimit(
+            'written_subject_answers',
+            min($minute, \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_ip_per_minute')),
+            min($day, \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_ip_per_day')),
+            \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_global_per_day'),
+            \Ouinpo\Suite\Core\AiSettings::quota('ouinpo_ai_public_global_per_minute')
         );
     }
 
@@ -1755,7 +1786,9 @@ final class WrittenSubjectRoutes
             ORDER BY file_order ASC, id ASC
         ", $id), ARRAY_A) ?: [];
         foreach ($subject['files'] as &$file) {
-            $download_url = \Ouinpo\Exercises\WrittenFiles::download_url((int) ($file['id'] ?? 0));
+            $download_url = (!is_user_logged_in() && !\Ouinpo\Suite\Core\AiSettings::public_written_files_enabled())
+                ? ''
+                : \Ouinpo\Exercises\WrittenFiles::download_url((int) ($file['id'] ?? 0));
             $file['download_url'] = $download_url;
             $file['file_url'] = $download_url;
         }
