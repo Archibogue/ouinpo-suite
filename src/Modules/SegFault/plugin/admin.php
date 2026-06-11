@@ -4155,7 +4155,8 @@ try {
             <th>API, modeles et limites</th>
             <td>
               <label>URL de base <input name="ouinpo_ai_api_base_url" class="regular-text" value="<?php echo esc_attr(get_option('ouinpo_ai_api_base_url', 'https://albert.api.etalab.gouv.fr/v1')); ?>" /></label><br>
-              <label>Cle API <input type="password" name="ouinpo_ai_api_key" class="regular-text" autocomplete="off" value="<?php echo esc_attr(get_option('ouinpo_ai_api_key', '')); ?>" /></label><br>
+              <label>Cle API <input type="password" name="ouinpo_ai_api_key" class="regular-text" autocomplete="off" value="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_input_value('ouinpo_ai_api_key')); ?>" placeholder="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_configured('ouinpo_ai_api_key') ? 'Cle configuree' : ''); ?>" /></label><br>
+              <p class="description"><?php echo esc_html(\Ouinpo\Suite\Core\AiSettings::secret_status_label('ouinpo_ai_api_key')); ?>. Laisser la valeur masquee conserve la cle existante.</p>
               <?php $ocrProvider = (string)get_option('ouinpo_ai_ocr_provider', 'albert'); ?>
               <label>API OCR
                 <select name="ouinpo_ai_ocr_provider">
@@ -4357,9 +4358,9 @@ try {
 
               <input type="password" name="ouinpo_sf_albert_api_key"
 
-                value="<?php echo esc_attr(get_option('ouinpo_sf_albert_api_key', '')); ?>"
+                value="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_input_value('ouinpo_sf_albert_api_key')); ?>"
 
-                class="regular-text" autocomplete="off" />
+                class="regular-text" autocomplete="off" placeholder="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_configured('ouinpo_sf_albert_api_key') ? 'Cle configuree' : ''); ?>" />
 
               <p class="description">
 
@@ -4489,9 +4490,9 @@ try {
 
               <input type="password" name="ouinpo_sf_openai_api_key"
 
-                value="<?php echo esc_attr(get_option('ouinpo_sf_openai_api_key')); ?>"
+                value="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_input_value('ouinpo_sf_openai_api_key')); ?>"
 
-                class="regular-text" autocomplete="off" />
+                class="regular-text" autocomplete="off" placeholder="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_configured('ouinpo_sf_openai_api_key') ? 'Cle configuree' : ''); ?>" />
 
               <p class="description">
 

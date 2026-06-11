@@ -8,6 +8,7 @@ final class AiSettings
 {
     public const DEFAULT_PROVIDER = 'albert';
     public const PROVIDERS = ['albert', 'openai'];
+    public const SECRET_UNCHANGED_PLACEHOLDER = '__ouinpo_secret_unchanged__';
 
     private static bool $initialized = false;
 
@@ -127,17 +128,71 @@ final class AiSettings
     public static function register_settings(string $group = 'ouinpo_sf'): void
     {
         foreach (self::schema() as $option => $type) {
+            $sanitizeCallback = $type === 'secret'
+                ? static fn($value): string => self::sanitize_secret_option($option, $value)
+                : [self::class, 'sanitize_' . $type];
+
             register_setting($group, $option, [
                 'default' => self::defaults()[$option] ?? '',
-                'sanitize_callback' => [self::class, 'sanitize_' . $type],
+                'sanitize_callback' => $sanitizeCallback,
             ]);
         }
     }
 
     public static function get(string $option)
     {
+        if (isset(self::secretConstants()[$option])) {
+            return self::secret($option);
+        }
+
         $defaults = self::defaults();
         return get_option($option, $defaults[$option] ?? '');
+    }
+
+    public static function secret(string $option): string
+    {
+        $constants = self::secretConstants();
+        foreach ($constants[$option] ?? [] as $constant) {
+            if (defined($constant)) {
+                $value = trim((string) constant($constant));
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        }
+
+        return trim((string) get_option($option, self::defaults()[$option] ?? ''));
+    }
+
+    public static function secret_configured(string $option): bool
+    {
+        return self::secret($option) !== '';
+    }
+
+    public static function secret_uses_constant(string $option): bool
+    {
+        $constants = self::secretConstants();
+        foreach ($constants[$option] ?? [] as $constant) {
+            if (defined($constant) && trim((string) constant($constant)) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function secret_input_value(string $option): string
+    {
+        return self::secret_configured($option) ? self::SECRET_UNCHANGED_PLACEHOLDER : '';
+    }
+
+    public static function secret_status_label(string $option): string
+    {
+        if (self::secret_uses_constant($option)) {
+            return 'Presente via constante wp-config.php, valeur masquee';
+        }
+
+        return self::secret_configured($option) ? 'Presente, valeur masquee' : 'Absente';
     }
 
     public static function enabled_for_usage(string $usage): bool
@@ -550,6 +605,16 @@ final class AiSettings
         return trim(sanitize_text_field((string) $value));
     }
 
+    public static function sanitize_secret_option(string $option, $value): string
+    {
+        $value = trim(sanitize_text_field((string) $value));
+        if ($value === self::SECRET_UNCHANGED_PLACEHOLDER) {
+            return trim((string) get_option($option, self::defaults()[$option] ?? ''));
+        }
+
+        return $value;
+    }
+
     public static function sanitize_model($value): string
     {
         $value = trim(sanitize_text_field((string) $value));
@@ -646,5 +711,14 @@ final class AiSettings
     private static function default_guardrails(): string
     {
         return 'Si la question depasse le niveau scolaire indique, signale que la notion n\'est pas exigible, donne seulement une intuition courte et ne propose pas d\'exercice hors programme.';
+    }
+
+    private static function secretConstants(): array
+    {
+        return [
+            'ouinpo_ai_api_key' => ['OUINPO_AI_API_KEY', 'OUINPO_ALBERT_API_KEY'],
+            'ouinpo_sf_albert_api_key' => ['OUINPO_SF_ALBERT_API_KEY', 'OUINPO_ALBERT_API_KEY', 'OUINPO_AI_API_KEY'],
+            'ouinpo_sf_openai_api_key' => ['OUINPO_SF_OPENAI_API_KEY', 'OUINPO_OPENAI_API_KEY'],
+        ];
     }
 }

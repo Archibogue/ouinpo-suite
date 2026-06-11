@@ -57,6 +57,7 @@ final class Plugin
     {
         Capabilities::init();
         AiSettings::init();
+        Installer::maybeUpgrade();
 
         if (is_admin()) {
             \Ouinpo\Suite\Core\Admin\SuiteAdmin::init();
@@ -74,8 +75,6 @@ final class Plugin
 
             $module->boot();
         }
-
-        Installer::maybeUpgrade();
     }
 
 }

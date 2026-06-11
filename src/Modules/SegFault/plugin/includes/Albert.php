@@ -88,9 +88,9 @@ class Albert {
 
   static function api_key(): string {
 
-    $key = trim((string) get_option('ouinpo_sf_albert_api_key', ''));
+    $key = \Ouinpo\Suite\Core\AiSettings::secret('ouinpo_sf_albert_api_key');
     if ($key === '') {
-      $key = trim((string) get_option('ouinpo_ai_api_key', ''));
+      $key = \Ouinpo\Suite\Core\AiSettings::secret('ouinpo_ai_api_key');
     }
 
     return $key;

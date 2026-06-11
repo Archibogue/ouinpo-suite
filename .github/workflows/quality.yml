@@ -1,0 +1,98 @@
+name: Quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  php-lint:
+    name: PHP lint ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            php -l "$file" >/dev/null
+          done < <(find . -path './.git' -prune -o -type f -name '*.php' -print0)
+
+  repository-quality:
+    name: Repository quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+
+      - name: Forbidden files
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden="$(find . -path './.git' -prune -o -path './dist' -prune -o -type f \( \
+            -name '*.sql' -o -name '*.sqlite' -o -name '*.db' -o -name '*.log' -o \
+            -name '*.zip' -o -name '*.wxr' -o -name '*.xml' -o \
+            -name '.env' -o -name 'wp-config.php' -o -name 'secrets.php' -o -name 'auth.json' \
+          \) -print)"
+          if [ -n "$forbidden" ]; then
+            echo "$forbidden"
+            exit 1
+          fi
+
+      - name: Secret patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE '(sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|AIza[0-9A-Za-z_-]{20,})' \
+            --exclude-dir=.git --exclude-dir=dist --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' --exclude='*.gif' .; then
+            exit 1
+          fi
+
+      - name: Verify packs
+        shell: bash
+        run: php tools/verify-packs.php
+
+      - name: Distribution smoke test
+        shell: pwsh
+        run: ./scripts/test-dist.ps1
+
+      - name: Check test packs excluded from zip
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = Get-ChildItem -Path dist -Filter 'ouinpo-suite-*.zip' -File |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if ($null -eq $zip) {
+            throw 'Aucun zip de distribution trouve.'
+          }
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
+          try {
+            $bad = @($archive.Entries | Where-Object { $_.FullName -like 'ouinpo-suite/packs/ouinpo-pack-test-*.json' })
+            if ($bad.Count -gt 0) {
+              $bad | ForEach-Object { Write-Host $_.FullName }
+              throw 'Pack(s) de test presents dans le zip.'
+            }
+          } finally {
+            $archive.Dispose()
+          }

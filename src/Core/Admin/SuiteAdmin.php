@@ -223,7 +223,8 @@ final class SuiteAdmin
     {
         return ModuleSettings::isEnabled('segfault')
             || ModuleSettings::isEnabled('gate')
-            || ModuleSettings::isEnabled('rechtext');
+            || ModuleSettings::isEnabled('rechtext')
+            || ModuleSettings::isEnabled('projects');
     }
 
     private static function mainTabs(): array
@@ -2547,6 +2548,10 @@ final class SuiteAdmin
             $aiTabs['rechtext'] = 'Recherche textuelle';
         }
 
+        if (ModuleSettings::isEnabled('projects')) {
+            $aiTabs['projects'] = 'Projects';
+        }
+
         $defaultTab = array_key_first($aiTabs) ?: 'none';
         $tab = self::currentTab($defaultTab);
 
@@ -2647,6 +2652,33 @@ final class SuiteAdmin
                 </div>
             </div>
             <?php
+        } elseif ($tab === 'projects') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <div class="card ouinpo-suite-card">
+                    <h3 class="ouinpo-suite-card-title">Projects</h3>
+                    <p>
+                        Les assistants Projects restent optionnels : l'IA globale et l'IA eleve Projects
+                        doivent etre activees explicitement avant usage.
+                    </p>
+                    <p>
+                        <?php self::statusBadge(((int) get_option('ouinpo_ai_enabled', 0) === 1), 'IA active', 'IA desactivee'); ?>
+                        <?php self::statusBadge(((int) get_option('ouinpo_projects_student_ai_enabled', 0) === 1), 'IA eleve active', 'IA eleve fermee'); ?>
+                    </p>
+                    <p class="ouinpo-suite-bottomless">
+                        <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-projects')); ?>">Ouvrir Projects</a>
+                        <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=ouinpo-suite-settings&tab=ai')); ?>">Reglages IA</a>
+                    </p>
+                </div>
+                <div class="card ouinpo-suite-card">
+                    <h3 class="ouinpo-suite-card-title">Confirmation</h3>
+                    <p>
+                        Les suggestions enseignant peuvent creer des taches, livrables ou liens competence
+                        uniquement apres selection et confirmation dans l'interface Projects.
+                    </p>
+                </div>
+            </div>
+            <?php
         }
 
         self::endPage();
@@ -2735,8 +2767,9 @@ final class SuiteAdmin
             'Version BD flashcards'  => (string) get_option('ouinpo_flashcards_db_version', 'non installée'),
             'IA Albert'              => ((int) get_option('ouinpo_sf_albert_enabled', 0) === 1) ? 'Activée' : 'Désactivée',
             'IA publique Albert'     => ((int) get_option('ouinpo_sf_public_albert_enabled', 0) === 1) ? 'Activée' : 'Désactivée',
-            'Clé Albert'             => trim((string) get_option('ouinpo_sf_albert_api_key', '')) !== '' ? 'Présente, valeur masquée' : 'Absente',
-            'Clé OpenAI'             => trim((string) get_option('ouinpo_sf_openai_api_key', '')) !== '' ? 'Présente, valeur masquée' : 'Absente',
+            'Clé IA unifiée'         => AiSettings::secret_status_label('ouinpo_ai_api_key'),
+            'Clé Albert'             => AiSettings::secret_status_label('ouinpo_sf_albert_api_key'),
+            'Clé OpenAI'             => AiSettings::secret_status_label('ouinpo_sf_openai_api_key'),
             'Index WXR SegFault'     => trim((string) get_option('ouinpo_sf_wxr_path', '')) !== '' ? 'Chemin configuré' : 'Non configuré',
         ];
         ?>
@@ -2759,6 +2792,7 @@ final class SuiteAdmin
         <?php
         self::renderAiQuotaWarnings();
         self::renderTablesDiagnostic();
+        self::renderProjectsIntegrityDiagnostic();
         self::renderDistributionWarnings();
     }
 
@@ -2909,6 +2943,18 @@ final class SuiteAdmin
                 $p . 'ouin_fc_user_cards'      => 'État des cartes par élève',
                 $p . 'ouin_fc_reviews'         => 'Historique de révision',
             ],
+            'Projects' => [
+                $p . 'ouinpo_projects'                 => 'Projets BTS SIO',
+                $p . 'ouinpo_project_members'          => 'Membres des projets',
+                $p . 'ouinpo_project_columns'          => 'Colonnes Kanban',
+                $p . 'ouinpo_project_tasks'            => 'Taches',
+                $p . 'ouinpo_project_task_comments'    => 'Commentaires',
+                $p . 'ouinpo_project_checklist_items'  => 'Checklist',
+                $p . 'ouinpo_project_logs'             => 'Journaux de bord',
+                $p . 'ouinpo_project_deliverables'     => 'Livrables',
+                $p . 'ouinpo_project_evidence'         => 'Preuves',
+                $p . 'ouinpo_project_competency_links' => 'Liens competences',
+            ],
         ];
     }
 
@@ -2952,6 +2998,158 @@ final class SuiteAdmin
         <?php
     }
 
+    private static function projectsIntegrityChecks(): array
+    {
+        global $wpdb;
+
+        $p = $wpdb->prefix;
+        $projects = $p . 'ouinpo_projects';
+        $columns = $p . 'ouinpo_project_columns';
+        $tasks = $p . 'ouinpo_project_tasks';
+        $deliverables = $p . 'ouinpo_project_deliverables';
+        $evidence = $p . 'ouinpo_project_evidence';
+        $links = $p . 'ouinpo_project_competency_links';
+
+        return [
+            [
+                'label' => 'Taches dont le projet n existe plus',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$tasks} t LEFT JOIN {$projects} p ON p.id = t.project_id WHERE p.id IS NULL",
+                    [$tasks, $projects]
+                ),
+                'action' => 'Verifier le projet d origine avant archivage ou rattachement manuel.',
+            ],
+            [
+                'label' => 'Taches dont la colonne n existe plus',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$tasks} t LEFT JOIN {$columns} c ON c.id = t.column_id WHERE c.id IS NULL",
+                    [$tasks, $columns]
+                ),
+                'action' => 'Recreer une colonne Kanban puis deplacer les taches concernees.',
+            ],
+            [
+                'label' => 'Colonnes sans projet',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$columns} c LEFT JOIN {$projects} p ON p.id = c.project_id WHERE p.id IS NULL",
+                    [$columns, $projects]
+                ),
+                'action' => 'Controler le projet attendu avant nettoyage manuel.',
+            ],
+            [
+                'label' => 'Livrables sans projet',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$deliverables} d LEFT JOIN {$projects} p ON p.id = d.project_id WHERE p.id IS NULL",
+                    [$deliverables, $projects]
+                ),
+                'action' => 'Rattacher ou archiver apres verification pedagogique.',
+            ],
+            [
+                'label' => 'Preuves sans projet',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$evidence} e LEFT JOIN {$projects} p ON p.id = e.project_id WHERE p.id IS NULL",
+                    [$evidence, $projects]
+                ),
+                'action' => 'Verifier les fichiers et le contexte avant toute action.',
+            ],
+            [
+                'label' => 'Liens competences sans projet',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$links} l LEFT JOIN {$projects} p ON p.id = l.project_id WHERE p.id IS NULL",
+                    [$links, $projects]
+                ),
+                'action' => 'Recreer le rattachement projet ou supprimer manuellement le lien obsolete.',
+            ],
+            [
+                'label' => 'Liens competences sans objet',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*)
+                     FROM {$links} l
+                     LEFT JOIN {$projects} op ON l.object_type = 'project' AND op.id = l.object_id
+                     LEFT JOIN {$tasks} ot ON l.object_type = 'task' AND ot.id = l.object_id
+                     LEFT JOIN {$deliverables} od ON l.object_type = 'deliverable' AND od.id = l.object_id
+                     LEFT JOIN {$evidence} oe ON l.object_type = 'evidence' AND oe.id = l.object_id
+                     WHERE (l.object_type = 'project' AND op.id IS NULL)
+                        OR (l.object_type = 'task' AND ot.id IS NULL)
+                        OR (l.object_type = 'deliverable' AND od.id IS NULL)
+                        OR (l.object_type = 'evidence' AND oe.id IS NULL)
+                        OR l.object_type NOT IN ('project', 'task', 'deliverable', 'evidence')",
+                    [$links, $projects, $tasks, $deliverables, $evidence]
+                ),
+                'action' => 'Ouvrir le projet et recreer le lien competence correct.',
+            ],
+            [
+                'label' => 'Projets sans colonne Kanban',
+                'count' => self::projectsIntegrityCount(
+                    "SELECT COUNT(*) FROM {$projects} p LEFT JOIN {$columns} c ON c.project_id = p.id WHERE c.id IS NULL",
+                    [$projects, $columns]
+                ),
+                'action' => 'Recreer les colonnes par defaut depuis l administration Projects.',
+            ],
+        ];
+    }
+
+    private static function projectsIntegrityCount(string $sql, array $tables): ?int
+    {
+        global $wpdb;
+
+        foreach ($tables as $table) {
+            if (!self::tableExists((string) $table)) {
+                return null;
+            }
+        }
+
+        $value = $wpdb->get_var($sql);
+
+        return ($value === null) ? null : (int) $value;
+    }
+
+    private static function renderProjectsIntegrityDiagnostic(): void
+    {
+        if (!ModuleSettings::isEnabled('projects')) {
+            return;
+        }
+
+        $checks = self::projectsIntegrityChecks();
+        ?>
+        <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
+            <h2 class="ouinpo-suite-card-title">Integrite Projects</h2>
+            <p class="ouinpo-suite-muted">
+                Ce diagnostic signale uniquement les incoherences relationnelles. Aucune donnee projet n est modifiee automatiquement.
+            </p>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th>Controle</th>
+                        <th class="ouinpo-suite-col-12">Anomalies</th>
+                        <th>Action recommandee</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($checks as $check): ?>
+                        <?php $count = $check['count']; ?>
+                        <tr>
+                            <td><?php echo esc_html((string) $check['label']); ?></td>
+                            <td><?php echo $count === null ? '—' : esc_html(number_format_i18n((int) $count)); ?></td>
+                            <td>
+                                <?php
+                                if ($count === null) {
+                                    self::statusBadge(false, 'Table absente', 'Table absente');
+                                } elseif ((int) $count === 0) {
+                                    self::statusBadge(true, 'OK', 'OK');
+                                } else {
+                                    self::statusBadge(false, 'A verifier', 'A verifier');
+                                    echo '<br><span class="ouinpo-suite-muted">' . esc_html((string) $check['action']) . '</span>';
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
     private static function renderDistributionWarnings(): void
     {
         global $wpdb;
@@ -2971,6 +3169,9 @@ final class SuiteAdmin
             $wpdb->prefix . 'ouin_fc_user_cards'             => 'état des flashcards par élève',
             $wpdb->prefix . 'ouin_fc_reviews'                => 'historique des révisions',
             $wpdb->prefix . 'ouin_sf_suggestions'            => 'suggestions personnalisées',
+            $wpdb->prefix . 'ouinpo_project_members'         => 'membres des projets',
+            $wpdb->prefix . 'ouinpo_project_logs'            => 'journaux de bord projets',
+            $wpdb->prefix . 'ouinpo_project_evidence'        => 'preuves et traces projets',
         ];
         ?>
         <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
@@ -3007,14 +3208,19 @@ final class SuiteAdmin
                         </tr>
                     <?php endforeach; ?>
                     <tr>
+                        <td><code>ouinpo_ai_api_key</code><br><span class="ouinpo-suite-muted">clé API IA unifiée</span></td>
+                        <td>—</td>
+                        <td><?php self::statusBadge(!AiSettings::secret_configured('ouinpo_ai_api_key'), 'Absente', 'Présente : ne pas exporter'); ?></td>
+                    </tr>
+                    <tr>
                         <td><code>ouinpo_sf_albert_api_key</code><br><span class="ouinpo-suite-muted">clé API Albert</span></td>
                         <td>—</td>
-                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_albert_api_key', '')) === '', 'Absente', 'Présente : ne pas exporter'); ?></td>
+                        <td><?php self::statusBadge(!AiSettings::secret_configured('ouinpo_sf_albert_api_key'), 'Absente', 'Présente : ne pas exporter'); ?></td>
                     </tr>
                     <tr>
                         <td><code>ouinpo_sf_openai_api_key</code><br><span class="ouinpo-suite-muted">clé API OpenAI</span></td>
                         <td>—</td>
-                        <td><?php self::statusBadge(trim((string) get_option('ouinpo_sf_openai_api_key', '')) === '', 'Absente', 'Présente : ne pas exporter'); ?></td>
+                        <td><?php self::statusBadge(!AiSettings::secret_configured('ouinpo_sf_openai_api_key'), 'Absente', 'Présente : ne pas exporter'); ?></td>
                     </tr>
                     <tr>
                         <td><code>ouinpo_sf_wxr_path</code><br><span class="ouinpo-suite-muted">chemin local vers un export WordPress / RAG</span></td>

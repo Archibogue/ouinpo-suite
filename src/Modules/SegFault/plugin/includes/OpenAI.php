@@ -14,7 +14,7 @@ class OpenAI {
 
   static function api_key(): string {
 
-    return (string) get_option('ouinpo_sf_openai_api_key');
+    return \Ouinpo\Suite\Core\AiSettings::secret('ouinpo_sf_openai_api_key');
 
   }
 
