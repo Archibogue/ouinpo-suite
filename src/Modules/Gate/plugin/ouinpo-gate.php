@@ -1202,9 +1202,7 @@ function ouinpo_certificate(){
 
 /* ================= Admin : suivi & export ================= */
 add_action('admin_menu', function(){
-  $parent = defined('OUINPO_SUITE_ADMIN_SLUG')
-    ? OUINPO_SUITE_ADMIN_SLUG
-    : 'ouinpo';
+  $parent = \Ouinpo\Suite\Core\Admin\AdminMenuRegistry::legacyParent('ouinpo');
 
   if (!defined('OUINPO_SUITE_ADMIN_SLUG')) {
     add_menu_page(

@@ -1,3 +1,22 @@
+.ouinpo-projects-list,
+.ouinpo-projects-teacher,
+.ouinpo-projects-kanban,
+.ouinpo-projects-journal,
+.ouinpo-projects-deliverables,
+.ouinpo-projects-evidence,
+.ouinpo-projects-sheet,
+.ouinpo-projects-bts-situation,
+.ouinpo-projects-ai,
+.ouinpo-projects-student-ai {
+  --ouinpo-color-text: #24313a;
+  --ouinpo-color-muted: #5f6d76;
+  --ouinpo-color-primary: #2f6f4e;
+  --ouinpo-color-border: #d8dee4;
+  --ouinpo-color-panel: #fff;
+}
+
+/* base */
+
 .ouinpo-projects-notice,
 .ouinpo-projects-empty {
   padding: 0.9rem 1rem;
@@ -41,6 +60,8 @@
   gap: 1rem;
 }
 
+/* cards */
+
 .ouinpo-projects-project-card,
 .ouinpo-projects-log,
 .ouinpo-projects-task,
@@ -83,6 +104,8 @@
   background: #fff1e8;
   color: #9b3a25;
 }
+
+/* buttons */
 
 .ouinpo-projects-button,
 .ouinpo-projects-task-actions button,
@@ -157,6 +180,8 @@
   flex-wrap: wrap;
   gap: 0.45rem;
 }
+
+/* ai */
 
 .ouinpo-projects-ai,
 .ouinpo-projects-student-ai {
@@ -289,6 +314,8 @@
   font-size: 1rem;
 }
 
+/* kanban */
+
 .ouinpo-projects-board {
   display: grid;
   grid-auto-flow: column;
@@ -338,6 +365,8 @@
   cursor: not-allowed;
   opacity: 0.45;
 }
+
+/* forms */
 
 .ouinpo-projects-task-form,
 .ouinpo-projects-journal-form,
@@ -399,6 +428,8 @@
   overflow-x: auto;
 }
 
+/* tables */
+
 .ouinpo-projects-table {
   width: 100%;
   border-collapse: collapse;
@@ -448,6 +479,8 @@
   padding-left: 1.2rem;
   overflow-wrap: anywhere;
 }
+
+/* exports */
 
 .ouinpo-projects-sheet {
   background: #fff;
@@ -540,6 +573,8 @@
 }
 
 @media print {
+  /* print */
+
   .ouinpo-projects-button,
   .ouinpo-projects-sheet-toolbar,
   .ouinpo-projects-task-form,

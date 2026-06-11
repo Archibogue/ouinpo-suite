@@ -2,6 +2,8 @@
 namespace Ouinpo\Flashcards\Admin;
 
 use Ouinpo\Flashcards\Service;
+use Ouinpo\Suite\Core\Admin\AdminMenuRegistry;
+use Ouinpo\Suite\Core\Assets;
 use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
@@ -16,28 +18,13 @@ final class AdminMenu
             return;
         }
 
-        $rel = 'assets/css/admin/flashcards-admin.css';
-        $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
-        $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
-
-        if ($base_url === '') {
-            return;
-        }
-
-        $file = $base_dir !== '' ? $base_dir . $rel : '';
-        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-        if ($file !== '' && file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
-
-        wp_enqueue_style('ouinpo-flashcards-admin', $base_url . $rel, [], $version);
+        Assets::enqueueStyle('ouinpo-flashcards-admin', 'assets/css/admin/flashcards-admin.css');
     }
 
     public static function register_menu(): void
     {
         add_submenu_page(
-            'ouinpo-suite',
+            AdminMenuRegistry::legacyParent('ouinpo-suite'),
             'Flashcards',
             'Flashcards',
             Capabilities::MANAGE_EXERCISES,

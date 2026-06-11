@@ -3,6 +3,8 @@
 
   const cfg = window.OuinpoProjects || {};
 
+  /* rest */
+
   function request(path, options) {
     if (!cfg.nonce) {
       return Promise.reject(new Error('Session WordPress expiree ou nonce REST absent.'));
@@ -94,6 +96,8 @@
       }
     });
   }
+
+  /* board */
 
   function renderTask(task, columnIndex, columnCount, canEdit) {
     const card = el('article', 'ouinpo-projects-task');
@@ -269,6 +273,8 @@
     });
   }
 
+  /* journal */
+
   function bindJournal(journal) {
     const form = journal.querySelector('[data-ouinpo-projects-journal-form]');
     if (!form) {
@@ -288,6 +294,8 @@
       });
     });
   }
+
+  /* deliverables */
 
   function bindDeliverables(root) {
     const form = root.querySelector('[data-ouinpo-projects-deliverable-form]');
@@ -344,6 +352,8 @@
     });
   }
 
+  /* evidence */
+
   function bindEvidence(root) {
     const form = root.querySelector('[data-ouinpo-projects-evidence-form]');
 
@@ -388,6 +398,8 @@
     });
   }
 
+  /* exports */
+
   function bindExports(root) {
     const button = root.querySelector('[data-ouinpo-projects-copy-markdown]');
     const output = root.querySelector('[data-ouinpo-projects-export-output]');
@@ -430,6 +442,8 @@
   function aiDescriptionForItem(item) {
     return text(item.reason || item.description || item.explanation || item.suggested_action || item.confidence || '');
   }
+
+  /* aiTeacher */
 
   function renderAiList(root, payload, key, canApply) {
     const preview = root.querySelector('[data-ouinpo-projects-ai-preview]');
@@ -628,6 +642,8 @@
     }
   }
 
+  /* aiStudent */
+
   function collectStudentAiInput(root) {
     const body = {};
     root.querySelectorAll('[data-ouinpo-projects-student-ai-field]').forEach(function (field) {
@@ -793,6 +809,8 @@
       });
     }
   }
+
+  /* boot */
 
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-ouinpo-projects-board]').forEach(bindBoard);

@@ -13,43 +13,15 @@ add_action('admin_enqueue_scripts', function (string $hook = ''): void {
     return;
   }
 
-  $rel = 'assets/css/admin/segfault-admin.css';
-  $base_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
-  $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
-
-  if ($base_url === '') {
-    return;
-  }
-
-  $file = $base_dir !== '' ? $base_dir . $rel : '';
-  $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-  if ($file !== '' && file_exists($file)) {
-    $version = (string) filemtime($file);
-  }
-
-  wp_enqueue_style('ouinpo-segfault-admin', $base_url . $rel, [], $version);
-
-  $js_rel = 'assets/js/admin/segfault-admin.js';
-  $js_file = $base_dir !== '' ? $base_dir . $js_rel : '';
-  $js_version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-  if ($js_file !== '' && file_exists($js_file)) {
-    $js_version = (string) filemtime($js_file);
-  }
-
-  wp_enqueue_script('ouinpo-segfault-admin-js', $base_url . $js_rel, [], $js_version, true);
+  \Ouinpo\Suite\Core\Assets::enqueueStyle('ouinpo-segfault-admin', 'assets/css/admin/segfault-admin.css');
+  \Ouinpo\Suite\Core\Assets::enqueueScript('ouinpo-segfault-admin-js', 'assets/js/admin/segfault-admin.js');
 });
 
 
 
 add_action('admin_menu', function () {
 
-  $parent = defined('OUINPO_SUITE_ADMIN_SLUG')
-
-    ? OUINPO_SUITE_ADMIN_SLUG
-
-    : 'ouinpo-segfault';
+  $parent = \Ouinpo\Suite\Core\Admin\AdminMenuRegistry::legacyParent('ouinpo-segfault');
 
 
 

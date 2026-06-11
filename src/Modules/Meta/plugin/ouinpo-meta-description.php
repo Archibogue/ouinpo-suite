@@ -764,7 +764,7 @@ final class Ouinpo_Meta_Social {
 
             add_submenu_page(
 
-                OUINPO_SUITE_ADMIN_SLUG,
+                \Ouinpo\Suite\Core\Admin\AdminMenuRegistry::legacyParent(OUINPO_SUITE_ADMIN_SLUG),
 
                 'OuInPo Meta & Social',
 

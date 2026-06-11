@@ -1,6 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Admin;
 
+use Ouinpo\Suite\Core\Assets;
+use Ouinpo\Suite\Core\Admin\AdminMenuRegistry;
 use Ouinpo\Suite\Core\Capabilities;
 
 if (!defined('ABSPATH')) exit;
@@ -112,67 +114,16 @@ class AdminMenu {
 
     private static function enqueue_admin_css(string $handle, string $relativePath): void
     {
-        $baseUrl = defined('OUINPO_SUITE_URL')
-            ? OUINPO_SUITE_URL
-            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_url(OUINPO_EXO_PLUGIN_FILE) : '');
-
-        if ($baseUrl === '') {
-            return;
-        }
-
-        $baseDir = defined('OUINPO_SUITE_DIR')
-            ? OUINPO_SUITE_DIR
-            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_path(OUINPO_EXO_PLUGIN_FILE) : '');
-
-        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
-
-        if ($file !== '' && file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
-
-        wp_enqueue_style(
-            $handle,
-            $baseUrl . $relativePath,
-            [],
-            $version
-        );
+        Assets::enqueueStyle($handle, $relativePath);
     }
 
     private static function enqueue_admin_js(string $handle, string $relativePath): void
     {
-        $baseUrl = defined('OUINPO_SUITE_URL')
-            ? OUINPO_SUITE_URL
-            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_url(OUINPO_EXO_PLUGIN_FILE) : '');
-
-        if ($baseUrl === '') {
-            return;
-        }
-
-        $baseDir = defined('OUINPO_SUITE_DIR')
-            ? OUINPO_SUITE_DIR
-            : (defined('OUINPO_EXO_PLUGIN_FILE') ? plugin_dir_path(OUINPO_EXO_PLUGIN_FILE) : '');
-
-        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
-
-        if ($file !== '' && file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
-
-        wp_enqueue_script(
-            $handle,
-            $baseUrl . $relativePath,
-            [],
-            $version,
-            true
-        );
+        Assets::enqueueScript($handle, $relativePath);
     }
 
     public static function register_menu() {
-        $parent = defined('OUINPO_SUITE_ADMIN_SLUG')
-            ? OUINPO_SUITE_ADMIN_SLUG
-            : 'ouinpo-exercices';
+        $parent = AdminMenuRegistry::legacyParent('ouinpo-exercices');
     
         if (!defined('OUINPO_SUITE_ADMIN_SLUG')) {
             add_menu_page(

@@ -999,7 +999,7 @@ class Ouinpo_Submissions_Plugin {
 
         $submission_show_in_menu = defined('OUINPO_SUITE_ADMIN_SLUG')
 
-            ? OUINPO_SUITE_ADMIN_SLUG
+            ? false
 
             : true;
 
@@ -1007,7 +1007,7 @@ class Ouinpo_Submissions_Plugin {
 
         $resource_show_in_menu = defined('OUINPO_SUITE_ADMIN_SLUG')
 
-            ? OUINPO_SUITE_ADMIN_SLUG
+            ? false
 
             : true;
 

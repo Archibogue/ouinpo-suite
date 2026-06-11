@@ -3,6 +3,7 @@
 namespace Ouinpo\Suite\Core\Admin;
 
 use Ouinpo\Suite\Core\Bootstrap;
+use Ouinpo\Suite\Core\Assets;
 use Ouinpo\Suite\Core\AiSettings;
 use Ouinpo\Suite\Core\Capabilities;
 use Ouinpo\Suite\Core\ModuleSettings;
@@ -30,11 +31,6 @@ final class SuiteAdmin
 
     public static function enqueueAdminStyles(string $hook = ''): void
     {
-        self::enqueueCss(
-            'ouinpo-suite-admin',
-            'assets/css/admin/suite-admin.css'
-        );
-
         $page = isset($_GET['page'])
             ? sanitize_key(wp_unslash((string) $_GET['page']))
             : '';
@@ -43,68 +39,14 @@ final class SuiteAdmin
             return;
         }
 
-        self::enqueueJs(
+        Assets::enqueueStyle(
+            'ouinpo-suite-admin',
+            'assets/css/admin/suite-admin.css'
+        );
+
+        Assets::enqueueScript(
             'ouinpo-suite-admin-js',
             'assets/js/admin/suite-admin.js'
-        );
-    }
-
-    private static function enqueueCss(string $handle, string $relativePath): void
-    {
-        $baseUrl = defined('OUINPO_SUITE_URL')
-            ? OUINPO_SUITE_URL
-            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_url(OUINPO_SUITE_FILE) : '');
-
-        if ($baseUrl === '') {
-            return;
-        }
-
-        $baseDir = defined('OUINPO_SUITE_DIR')
-            ? OUINPO_SUITE_DIR
-            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_path(OUINPO_SUITE_FILE) : '');
-
-        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
-
-        if ($file !== '' && file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
-
-        wp_enqueue_style(
-            $handle,
-            $baseUrl . $relativePath,
-            [],
-            $version
-        );
-    }
-
-    private static function enqueueJs(string $handle, string $relativePath): void
-    {
-        $baseUrl = defined('OUINPO_SUITE_URL')
-            ? OUINPO_SUITE_URL
-            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_url(OUINPO_SUITE_FILE) : '');
-
-        if ($baseUrl === '') {
-            return;
-        }
-
-        $baseDir = defined('OUINPO_SUITE_DIR')
-            ? OUINPO_SUITE_DIR
-            : (defined('OUINPO_SUITE_FILE') ? plugin_dir_path(OUINPO_SUITE_FILE) : '');
-
-        $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-        $file = $baseDir !== '' ? $baseDir . $relativePath : '';
-
-        if ($file !== '' && file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
-
-        wp_enqueue_script(
-            $handle,
-            $baseUrl . $relativePath,
-            [],
-            $version,
-            true
         );
     }
 

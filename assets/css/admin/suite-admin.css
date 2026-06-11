@@ -4,31 +4,15 @@
 
 /* Masquage des anciens sous-menus déjà regroupés dans OuInPo Suite */
 
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-exercices"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-badges"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assessments"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-import-exercises"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-competencies"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-groups"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assignments"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-courses-competencies"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="edit.php?post_type=ouinpo_submission"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="edit.php?post_type=ouinpo_resource"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-segfault"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-segfault-progress"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-meta-social"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-years"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-badge-assignments"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-paths"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-assessment-builder"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-practical-subjects"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-flashcards"],
-#toplevel_page_ouinpo-suite .wp-submenu a[href="admin.php?page=ouinpo-exercises-settings"] {
-    display: none !important;
-}
-
 /* Interface admin OuInPo Suite */
+
+:root {
+    --ouinpo-color-text: #1d2327;
+    --ouinpo-color-muted: #50575e;
+    --ouinpo-color-primary: #2271b1;
+    --ouinpo-color-border: #dcdcde;
+    --ouinpo-color-panel: #fff;
+}
 
 .ouinpo-suite-wrap .card {
     border-radius: 10px;
@@ -56,7 +40,7 @@
 }
 
 .ouinpo-suite-wrap .ouinpo-suite-muted {
-    color: #50575e;
+    color: var(--ouinpo-color-muted);
 }
 
 .ouinpo-suite-wrap .ouinpo-suite-section {
@@ -70,8 +54,8 @@
 
 .ouinpo-suite-wrap .ouinpo-suite-empty {
     padding: 16px;
-    background: #fff;
-    border: 1px solid #dcdcde;
+    background: var(--ouinpo-color-panel);
+    border: 1px solid var(--ouinpo-color-border);
     border-radius: 10px;
     max-width: 1200px;
 }

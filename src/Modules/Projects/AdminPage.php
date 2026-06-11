@@ -2,6 +2,7 @@
 
 namespace Ouinpo\Suite\Modules\Projects;
 
+use Ouinpo\Suite\Core\Admin\AdminMenuRegistry;
 use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
@@ -31,10 +32,8 @@ final class AdminPage
             return;
         }
 
-        $parent = defined('OUINPO_SUITE_ADMIN_SLUG') ? OUINPO_SUITE_ADMIN_SLUG : 'ouinpo-suite';
-
         add_submenu_page(
-            $parent,
+            AdminMenuRegistry::legacyParent('ouinpo-suite'),
             'OuinPo Projects',
             'Projects',
             'read',

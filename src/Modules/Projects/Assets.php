@@ -2,12 +2,12 @@
 
 namespace Ouinpo\Suite\Modules\Projects;
 
+use Ouinpo\Suite\Core\Assets as CoreAssets;
+
 defined('ABSPATH') || exit;
 
 final class Assets
 {
-    private const VERSION = '1.0.0';
-
     public static function init(): void
     {
         add_action('wp_enqueue_scripts', [self::class, 'register']);
@@ -16,29 +16,18 @@ final class Assets
 
     public static function register(): void
     {
-        $baseUrl = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
-        $baseDir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
-
-        if ($baseUrl === '') {
-            return;
-        }
-
         $css = 'assets/css/front/projects.css';
         $js = 'assets/js/front/projects.js';
 
-        wp_register_style(
+        CoreAssets::registerStyle(
             'ouinpo-projects',
-            $baseUrl . $css,
-            wp_style_is('ouinpo-core-css', 'registered') ? ['ouinpo-core-css'] : [],
-            self::version($baseDir . $css)
+            $css,
+            wp_style_is('ouinpo-core-css', 'registered') ? ['ouinpo-core-css'] : []
         );
 
-        wp_register_script(
+        CoreAssets::registerScript(
             'ouinpo-projects',
-            $baseUrl . $js,
-            [],
-            self::version($baseDir . $js),
-            true
+            $js
         );
 
         wp_localize_script('ouinpo-projects', 'OuinpoProjects', [
@@ -63,13 +52,7 @@ final class Assets
             return;
         }
 
-        $baseUrl = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : '';
-        $baseDir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
-        $css = 'assets/css/admin/projects-admin.css';
-
-        if ($baseUrl !== '') {
-            wp_enqueue_style('ouinpo-projects-admin', $baseUrl . $css, [], self::version($baseDir . $css));
-        }
+        CoreAssets::enqueueStyle('ouinpo-projects-admin', 'assets/css/admin/projects-admin.css');
     }
 
     public static function enqueueFront(): void
@@ -82,10 +65,4 @@ final class Assets
         }
     }
 
-    private static function version(string $path): string
-    {
-        return $path !== '' && file_exists($path)
-            ? (string) filemtime($path)
-            : self::VERSION;
-    }
 }
