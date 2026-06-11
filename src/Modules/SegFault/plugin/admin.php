@@ -4156,9 +4156,18 @@ try {
             <td>
               <label>URL de base <input name="ouinpo_ai_api_base_url" class="regular-text" value="<?php echo esc_attr(get_option('ouinpo_ai_api_base_url', 'https://albert.api.etalab.gouv.fr/v1')); ?>" /></label><br>
               <label>Cle API <input type="password" name="ouinpo_ai_api_key" class="regular-text" autocomplete="off" value="<?php echo esc_attr(get_option('ouinpo_ai_api_key', '')); ?>" /></label><br>
+              <?php $ocrProvider = (string)get_option('ouinpo_ai_ocr_provider', 'albert'); ?>
+              <label>API OCR
+                <select name="ouinpo_ai_ocr_provider">
+                  <option value="albert" <?php selected($ocrProvider, 'albert'); ?>>Albert OCR</option>
+                  <option value="none" <?php selected($ocrProvider, 'none'); ?>>Desactivee</option>
+                </select>
+              </label><br>
               <label>Modele chat <input name="ouinpo_ai_chat_model" value="<?php echo esc_attr(get_option('ouinpo_ai_chat_model', 'openai/gpt-oss-120b')); ?>" /></label>
               <label>Modele code <input name="ouinpo_ai_code_model" value="<?php echo esc_attr(get_option('ouinpo_ai_code_model', 'openweight-code')); ?>" /></label>
-              <label>Modele embeddings <input name="ouinpo_ai_embedding_model" value="<?php echo esc_attr(get_option('ouinpo_ai_embedding_model', 'BAAI/bge-m3')); ?>" /></label><br>
+              <label>Modele embeddings <input name="ouinpo_ai_embedding_model" value="<?php echo esc_attr(get_option('ouinpo_ai_embedding_model', 'BAAI/bge-m3')); ?>" /></label>
+              <label>Modele OCR <input name="ouinpo_ai_ocr_model" value="<?php echo esc_attr(get_option('ouinpo_ai_ocr_model', '')); ?>" placeholder="defaut Albert" /></label><br>
+              <p class="description">L OCR Albert envoie au fournisseur un lien temporaire vers le PDF scanne. A utiliser uniquement pour des sujets non sensibles, avec IA activee volontairement, cle API configuree, quotas et timeout adaptes.</p>
               <label>Timeout <input type="number" min="5" max="120" name="ouinpo_ai_timeout" value="<?php echo esc_attr((int)get_option('ouinpo_ai_timeout', 45)); ?>" class="ouinpo-sf-input-small" /></label>
               <label>Max tokens <input type="number" min="128" max="8000" name="ouinpo_ai_max_tokens" value="<?php echo esc_attr((int)get_option('ouinpo_ai_max_tokens', 800)); ?>" class="ouinpo-sf-input-medium" /></label>
               <label>Temperature <input type="number" min="0" max="2" step="0.1" name="ouinpo_ai_temperature" value="<?php echo esc_attr((float)get_option('ouinpo_ai_temperature', 0.3)); ?>" class="ouinpo-sf-input-small" /></label>
@@ -4409,6 +4418,28 @@ try {
             </td>
 
           </tr>
+
+
+
+        <tr>
+
+          <th>Modele Albert - OCR</th>
+
+          <td>
+
+            <input name="ouinpo_sf_albert_ocr_model" class="regular-text"
+
+              value="<?php echo esc_attr(get_option('ouinpo_sf_albert_ocr_model', '')); ?>" placeholder="defaut Albert" />
+
+            <p class="description">
+
+              Modele Albert utilise par l endpoint OCR pour lire les PDF scannes avant le decoupage des annales. Laisse vide pour utiliser le modele par defaut de l API. Le PDF est transmis au fournisseur via un lien temporaire : utiliser uniquement des sujets non sensibles et partageables.
+
+            </p>
+
+          </td>
+
+        </tr>
 
 
 

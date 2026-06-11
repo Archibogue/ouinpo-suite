@@ -18,8 +18,13 @@ require_once __DIR__ . '/inc/Titles.php';
 require_once __DIR__ . '/inc/BadgeEngine.php';
 require_once __DIR__ . '/inc/RevisionBand.php';
 require_once __DIR__ . '/inc/PracticalAiBridge.php';
-require_once __DIR__ . '/admin/screens/screen-practical.php';
-
+require_once __DIR__ . '/admin/screens/screen-practical.php';
+require_once __DIR__ . '/admin/screens/screen-written.php';
+
+add_action('init', function () {
+    \Ouinpo\Exercises\WrittenFiles::ensure_storage_protection();
+});
+
 // Les migrations sont pilotées par le module parent de la suite.
 
 
@@ -37,6 +42,7 @@ add_action('rest_api_init', function () {
     \Ouinpo\Exercises\Rest\AssessmentsCompetencyRoutes::register();
     \Ouinpo\Exercises\Rest\MeRoutes::register();
     \Ouinpo\Exercises\Rest\PracticalRoutes::register();
+    \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::register();
     \Ouinpo\Exercises\Rest\AiExerciseBuilderRoutes::register();
     \Ouinpo\Exercises\Rest\AiAssessmentBuilderRoutes::register();
     \Ouinpo\Exercises\Rest\AiCorrectionRoutes::register();
@@ -110,6 +116,12 @@ if (is_admin()) {
     add_action('admin_post_ouinpo_save_practical_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_save']);
     add_action('admin_post_ouinpo_toggle_practical_subject_visibility', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_toggle_visibility']);
     add_action('admin_post_ouinpo_delete_practical_file', ['\\Ouinpo\\Exercises\\Admin\\ScreenPractical', 'handle_delete_file']);
+    add_action('admin_post_ouinpo_save_written_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_save']);
+    add_action('admin_post_ouinpo_delete_written_file', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_delete_file']);
+    add_action('admin_post_ouinpo_delete_written_subject', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_delete_subject']);
+    add_action('admin_post_ouinpo_written_subject_bulk', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_bulk_action']);
+    add_action('admin_post_ouinpo_import_written_pdf', ['\\Ouinpo\\Exercises\\Admin\\ScreenWritten', 'handle_import_pdf']);
+    add_action('admin_post_ouinpo_written_question_status', ['\\Ouinpo\\Exercises\\Rest\\WrittenSubjectRoutes', 'handle_status_form']);
 
     add_action('admin_notices', function () {
         if (!class_exists('\\Ouinpo\\Exercises\\Admin\\AdminMenu')) {

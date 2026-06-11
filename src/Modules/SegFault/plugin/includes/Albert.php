@@ -180,6 +180,143 @@ static function code_model(): string {
 
 
 
+    static function ocr_model(): string {
+
+      $m = trim((string) get_option('ouinpo_sf_albert_ocr_model', ''));
+      if ($m === '') {
+        $m = trim((string) get_option('ouinpo_ai_ocr_model', ''));
+      }
+
+      return $m;
+
+    }
+
+
+
+static function ocr_document(string $document_url, array $options = []): array|\WP_Error {
+
+  $api_key = self::api_key();
+
+  if ($api_key === '') {
+
+    return new \WP_Error('albert_ocr_key_missing', 'Cle Albert API manquante pour l OCR.');
+
+  }
+
+
+
+  $document_url = esc_url_raw(trim($document_url));
+
+  if ($document_url === '') {
+
+    return new \WP_Error('albert_ocr_missing_url', 'URL du document OCR manquante.');
+
+  }
+
+
+
+  $payload = [
+
+    'document' => [
+
+      'type' => 'document_url',
+
+      'document_url' => $document_url,
+
+    ],
+
+  ];
+
+
+
+  $model = self::ocr_model();
+
+  if ($model !== '') {
+
+    $payload['model'] = $model;
+
+  }
+
+
+
+  foreach (['pages', 'image_limit', 'image_min_size', 'include_image_base64', 'document_annotation_format'] as $key) {
+
+    if (array_key_exists($key, $options)) {
+
+      $payload[$key] = $options[$key];
+
+    }
+
+  }
+
+
+
+  $resp = wp_remote_post(self::base_url() . '/ocr', [
+
+    'headers' => [
+
+      'Authorization' => 'Bearer ' . $api_key,
+
+      'Content-Type'  => 'application/json',
+
+      'Accept'        => 'application/json',
+
+    ],
+
+    'body'       => wp_json_encode($payload),
+
+    'timeout'    => max(60, (int) get_option('ouinpo_ai_timeout', 45)),
+
+    'user-agent' => self::user_agent('OCR'),
+
+  ]);
+
+
+
+  if (is_wp_error($resp)) {
+
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert OCR HTTP error', ['provider' => 'albert', 'error' => $resp->get_error_message()]);
+
+    return $resp;
+
+  }
+
+
+
+  $code = (int) wp_remote_retrieve_response_code($resp);
+
+  $raw  = (string) wp_remote_retrieve_body($resp);
+
+  $body = json_decode($raw, true);
+
+
+
+  if ($code < 200 || $code >= 300) {
+
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert OCR non-200', ['provider' => 'albert', 'http_code' => $code]);
+
+    return new \WP_Error('albert_ocr_http_error', 'OCR Albert indisponible pour ce PDF.');
+
+  }
+
+
+
+  if (!is_array($body)) {
+
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Albert OCR unexpected response', ['provider' => 'albert']);
+
+    return new \WP_Error('albert_ocr_invalid_response', 'Reponse OCR Albert invalide.');
+
+  }
+
+
+
+  return $body;
+
+}
+
+
+
 static function embed(string $text): array {
 
   $api_key = self::api_key();

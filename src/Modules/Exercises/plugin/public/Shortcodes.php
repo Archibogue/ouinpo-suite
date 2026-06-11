@@ -84,6 +84,14 @@ final class Shortcodes {
 
     add_shortcode('ouinpo-practical-subject', [__CLASS__, 'render_practical_subject']); 
 
+    add_shortcode('ouinpo_written_subjects', [__CLASS__, 'render_written_subjects']);
+
+    add_shortcode('ouinpo-written-subjects', [__CLASS__, 'render_written_subjects']);
+
+    add_shortcode('ouinpo_written_subject', [__CLASS__, 'render_written_subject']);
+
+    add_shortcode('ouinpo-written-subject', [__CLASS__, 'render_written_subject']);
+
     
 
   }
@@ -1446,11 +1454,87 @@ private static function practical_subject_list_fallback_html(string $page, strin
 private static function source_type_label(string $source_type): string {
   $labels = [
     'annale'   => 'Annale',
-    'inspired' => 'Inspire annale',
+    'inspired' => 'Inspiré annale',
     'type_bac' => 'Type bac',
   ];
 
   return $labels[strtolower($source_type)] ?? '';
+}
+
+private static function written_subject_filter_domains(string $level_slug): array {
+  if ($level_slug === '') {
+    return [];
+  }
+
+  global $wpdb;
+
+  $p = $wpdb->prefix . 'ouin_exo_';
+  $rows = $wpdb->get_results($wpdb->prepare(
+    "SELECT DISTINCT c.domain_slug AS slug, c.domain AS label
+       FROM {$p}written_subjects s
+       INNER JOIN {$p}written_subject_school_level wsl ON wsl.subject_id = s.id
+       INNER JOIN {$p}school_levels sl ON sl.id = wsl.school_level_id
+       INNER JOIN {$p}written_exercises e ON e.subject_id = s.id AND e.is_active = 1
+       INNER JOIN {$p}written_questions q ON q.exercise_id = e.id AND q.is_active = 1
+       INNER JOIN {$p}written_question_competency wqc ON wqc.question_id = q.id
+       INNER JOIN {$p}competencies c ON c.id = wqc.competency_id
+      WHERE s.is_active = 1
+        AND sl.slug = %s
+        AND c.active = 1
+        AND c.domain_slug IS NOT NULL
+        AND c.domain_slug <> ''
+      ORDER BY c.domain ASC, c.domain_slug ASC",
+    $level_slug
+  ), ARRAY_A);
+
+  $options = [];
+  foreach ((array) $rows as $row) {
+    $slug = sanitize_key((string) ($row['slug'] ?? ''));
+    $label = trim((string) ($row['label'] ?? ''));
+    if ($slug !== '' && $label !== '') {
+      $options[$slug] = $label;
+    }
+  }
+
+  return $options;
+}
+
+private static function written_subject_filter_competencies(string $level_slug, string $domain_slug): array {
+  if ($level_slug === '' || $domain_slug === '') {
+    return [];
+  }
+
+  global $wpdb;
+
+  $p = $wpdb->prefix . 'ouin_exo_';
+  $rows = $wpdb->get_results($wpdb->prepare(
+    "SELECT DISTINCT c.id, COALESCE(NULLIF(c.label, ''), c.competency) AS label
+       FROM {$p}written_subjects s
+       INNER JOIN {$p}written_subject_school_level wsl ON wsl.subject_id = s.id
+       INNER JOIN {$p}school_levels sl ON sl.id = wsl.school_level_id
+       INNER JOIN {$p}written_exercises e ON e.subject_id = s.id AND e.is_active = 1
+       INNER JOIN {$p}written_questions q ON q.exercise_id = e.id AND q.is_active = 1
+       INNER JOIN {$p}written_question_competency wqc ON wqc.question_id = q.id
+       INNER JOIN {$p}competencies c ON c.id = wqc.competency_id
+      WHERE s.is_active = 1
+        AND sl.slug = %s
+        AND c.active = 1
+        AND c.domain_slug = %s
+      ORDER BY label ASC, c.id ASC",
+    $level_slug,
+    $domain_slug
+  ), ARRAY_A);
+
+  $options = [];
+  foreach ((array) $rows as $row) {
+    $id = (int) ($row['id'] ?? 0);
+    $label = trim((string) ($row['label'] ?? ''));
+    if ($id > 0 && $label !== '') {
+      $options[$id] = $label;
+    }
+  }
+
+  return $options;
 }
 
 private static function theme_bac_label(string $theme): string {
@@ -1742,6 +1826,428 @@ JS,
 }
 
 /** Liste des sujets d’épreuve pratique */
+
+public static function render_written_subjects($atts = array(), $content = '') {
+  wp_enqueue_style('ouinpo-exo-css');
+  wp_enqueue_script('ouinpo-exo-js');
+
+  $atts = shortcode_atts([
+    'page'        => '',
+    'source_type' => '',
+  ], $atts, 'ouinpo_written_subjects');
+
+  if (!class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes')) {
+    return '<p>Le module des annales ecrites est indisponible.</p>';
+  }
+
+  $permission = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::can_current_user_view_written_subjects();
+  if (is_wp_error($permission)) {
+    return '<p>Connecte-toi pour consulter les annales ecrites.</p>';
+  }
+
+  $page = trim((string) $atts['page']);
+  if ($page === '') {
+    $page = self::page_url_or_fallback('annale-nsi-sujet', '/annale-nsi-sujet/');
+  }
+
+  $level_options = self::school_level_options();
+  $selected_level = isset($_GET['written_level']) ? sanitize_key((string) $_GET['written_level']) : '';
+  if ($selected_level !== '' && !isset($level_options[$selected_level])) {
+    $selected_level = '';
+  }
+
+  $domain_options = self::written_subject_filter_domains($selected_level);
+  $selected_domain = isset($_GET['written_domain']) ? sanitize_key((string) $_GET['written_domain']) : '';
+  if ($selected_level === '' || $selected_domain === '' || !isset($domain_options[$selected_domain])) {
+    $selected_domain = '';
+  }
+
+  $competency_options = self::written_subject_filter_competencies($selected_level, $selected_domain);
+  $selected_competency = isset($_GET['written_competency']) ? max(0, (int) $_GET['written_competency']) : 0;
+  if ($selected_domain === '' || $selected_competency <= 0 || !isset($competency_options[$selected_competency])) {
+    $selected_competency = 0;
+  }
+
+  $items = [];
+  if (class_exists('\WP_REST_Request')) {
+    $request = new \WP_REST_Request('GET', '/ouinpo/v1/written-subjects');
+    if ($selected_level !== '') {
+      $request->set_param('school_level', $selected_level);
+    }
+    if ($selected_domain !== '') {
+      $request->set_param('domain_slug', $selected_domain);
+    }
+    if ($selected_competency > 0) {
+      $request->set_param('competency_id', $selected_competency);
+    }
+    $source_type = sanitize_key((string) $atts['source_type']);
+    if ($source_type !== '') {
+      $request->set_param('source_type', $source_type);
+    }
+    $response = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::index($request);
+    if (!is_wp_error($response)) {
+      $items = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+    }
+  }
+
+  $filter_action = remove_query_arg(['written_level', 'written_domain', 'written_competency']);
+  $has_filters = $selected_level !== '' || $selected_domain !== '' || $selected_competency > 0;
+
+  ob_start();
+  ?>
+  <div class="ouinpo-exercises-page ouinpo-written-page">
+    <div class="ouinpo-exercises-shell">
+      <section class="ouinpo-panel ouinpo-panel--filters ouinpo-written-filters" data-written-subject-filters>
+        <h2 class="ouinpo-panel-title">Filtrer les sujets</h2>
+        <form method="get" action="<?php echo esc_url($filter_action); ?>" class="ouinpo-written-filter-form">
+          <div class="ouinpo-filters-grid">
+            <div class="ouinpo-field">
+              <label for="ouinpo-written-level">Niveau</label>
+              <select id="ouinpo-written-level" name="written_level" class="ouinpo-select" data-written-filter-level>
+                <option value="" <?php selected($selected_level, ''); ?>>Tous les niveaux</option>
+                <?php foreach ($level_options as $slug => $label): ?>
+                  <option value="<?php echo esc_attr($slug); ?>" <?php selected($selected_level, $slug); ?>><?php echo esc_html($label); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="ouinpo-field">
+              <label for="ouinpo-written-domain">Domaine</label>
+              <select id="ouinpo-written-domain" name="written_domain" class="ouinpo-select" data-written-filter-domain <?php disabled($selected_level === ''); ?>>
+                <option value=""><?php echo $selected_level === '' ? esc_html('Choisis un niveau') : esc_html('Tous les domaines'); ?></option>
+                <?php foreach ($domain_options as $slug => $label): ?>
+                  <option value="<?php echo esc_attr($slug); ?>" <?php selected($selected_domain, $slug); ?>><?php echo esc_html($label); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="ouinpo-field">
+              <label for="ouinpo-written-competency">Compétence</label>
+              <select id="ouinpo-written-competency" name="written_competency" class="ouinpo-select" data-written-filter-competency <?php disabled($selected_domain === ''); ?>>
+                <option value=""><?php echo $selected_domain === '' ? esc_html('Choisis un domaine') : esc_html('Toutes les compétences'); ?></option>
+                <?php foreach ($competency_options as $id => $label): ?>
+                  <option value="<?php echo esc_attr((string) (int) $id); ?>" <?php selected($selected_competency, (int) $id); ?>><?php echo esc_html($label); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+
+          <div class="ouinpo-written-filter-actions">
+            <button type="submit" class="button button-primary">Filtrer</button>
+            <?php if ($has_filters): ?>
+              <a class="button" href="<?php echo esc_url(remove_query_arg(['written_level', 'written_domain', 'written_competency'])); ?>">Réinitialiser</a>
+            <?php endif; ?>
+          </div>
+        </form>
+      </section>
+
+      <section class="ouinpo-panel ouinpo-panel--results">
+        <div class="ouinpo-panel-head">
+          <h2 class="ouinpo-panel-title">Annales du bac NSI écrit</h2>
+          <p class="ouinpo-panel-intro">Choisis un sujet, puis travaille les exercices et sous-questions avec leurs aides IA ciblées.</p>
+        </div>
+
+        <?php if (empty($items) || !is_array($items)): ?>
+          <div class="ouinpo-empty">Aucune annale écrite disponible.</div>
+        <?php else: ?>
+          <ul class="ouinpo-exercises-list ouinpo-exo-list">
+            <?php foreach ($items as $item): ?>
+              <?php
+              $item = is_object($item) ? (array) $item : (array) $item;
+              $id = (int) ($item['id'] ?? 0);
+              if ($id <= 0) {
+                continue;
+              }
+              $url = add_query_arg('written', $id, $page);
+              $meta = array_filter([
+                (string) ($item['session_label'] ?? ''),
+                (string) ($item['year_label'] ?? ''),
+                (string) ($item['center_label'] ?? ''),
+              ]);
+              $questions_count = (int) ($item['questions_count'] ?? 0);
+              $started_count = (int) ($item['started_questions_count'] ?? 0);
+              $solved_count = (int) ($item['solved_questions_count'] ?? 0);
+              $student_tag = '';
+              $student_tag_class = '';
+              if (is_user_logged_in() && $questions_count > 0 && $solved_count >= $questions_count) {
+                $student_tag = 'Terminé';
+              } elseif (is_user_logged_in() && $started_count > 0) {
+                $student_tag = 'En cours';
+              }
+              $student_tag_class = $student_tag === ''
+                ? ''
+                : ($student_tag === 'En cours' ? 'ouinpo-badge--attempted' : 'ouinpo-badge--solved');
+              ?>
+              <li class="ouinpo-exercise-item ouin-exo-li">
+                <div class="ouinpo-exercise-main ouin-exo-main">
+                  <a class="ouinpo-exercise-link ouin-exo-link" href="<?php echo esc_url($url); ?>">
+                    <?php echo esc_html((string) ($item['title'] ?? 'Annale écrite')); ?>
+                  </a>
+                  <?php if ($meta): ?>
+                    <div class="ouinpo-exercise-sub"><?php echo esc_html(implode(' - ', $meta)); ?></div>
+                  <?php endif; ?>
+                </div>
+                <div class="ouinpo-badges ouin-exo-status">
+                  <?php if ($student_tag !== ''): ?>
+                    <span class="ouinpo-badge ouinpo-badge--student-progress <?php echo esc_attr($student_tag_class); ?>"><?php echo esc_html($student_tag); ?></span>
+                  <?php endif; ?>
+                  <span class="ouinpo-badge ouinpo-badge--exam"><?php echo esc_html(self::source_type_label((string) ($item['source_type'] ?? 'annale'))); ?></span>
+                  <span class="ouinpo-badge"><?php echo esc_html((string) (int) ($item['exercises_count'] ?? 0)); ?> exercice<?php echo ((int) ($item['exercises_count'] ?? 0) > 1) ? 's' : ''; ?></span>
+                  <span class="ouinpo-badge"><?php echo esc_html((string) $questions_count); ?> question<?php echo ($questions_count > 1) ? 's' : ''; ?></span>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </section>
+    </div>
+  </div>
+  <?php
+  return ob_get_clean();
+}
+
+public static function render_written_subject($atts = array(), $content = '') {
+  wp_enqueue_style('ouinpo-exo-css');
+  wp_enqueue_script('ouinpo-exo-js');
+
+  $atts = shortcode_atts([
+    'id'   => 0,
+    'auto' => '1',
+  ], $atts, 'ouinpo_written_subject');
+
+  $id = (int) $atts['id'];
+  if ($id <= 0 && $atts['auto'] === '1' && isset($_GET['written'])) {
+    $id = (int) $_GET['written'];
+  }
+
+  if ($id <= 0) {
+    return '<p>Annale écrite non spécifiée. Utilise <code>[ouinpo_written_subject id="123"]</code> ou ajoute <code>?written=123</code> à l’URL.</p>';
+  }
+
+  if (!class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes')) {
+    return '<p>Le module des annales écrites est indisponible.</p>';
+  }
+
+  $permission = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::can_current_user_view_written_subjects();
+  if (is_wp_error($permission)) {
+    return '<p>Connecte-toi pour consulter les annales ecrites.</p>';
+  }
+
+  $subject = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::get_subject($id);
+  if (!$subject) {
+    return '<p>Annale écrite introuvable.</p>';
+  }
+
+  $written_subject_pdf_url = '';
+  foreach ((array) ($subject['files'] ?? []) as $file) {
+    $file_url = (string) ($file['download_url'] ?? '');
+    $file_name = (string) ($file['file_name'] ?? $file['label'] ?? $file_url);
+    if ($file_url !== '' && strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf') {
+      $written_subject_pdf_url = $file_url;
+      if ((string) ($file['file_kind'] ?? '') === 'subject') {
+        break;
+      }
+    }
+  }
+
+  ob_start();
+  ?>
+  <article class="ouinpo-exercises-page ouinpo-written-subject" data-written-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">
+    <section class="ouinpo-panel">
+      <div class="ouinpo-panel-head">
+        <h2 class="ouinpo-panel-title"><?php echo esc_html((string) $subject['title']); ?></h2>
+        <div class="ouinpo-badges">
+          <?php foreach (array_filter([(string) ($subject['session_label'] ?? ''), (string) ($subject['year_label'] ?? ''), (string) ($subject['center_label'] ?? '')]) as $meta): ?>
+            <span class="ouinpo-badge"><?php echo esc_html($meta); ?></span>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <div class="ouinpo-alert ouinpo-written-source-warning">
+        Vérifie aussi le sujet officiel dans le PDF : l’import automatique peut ne pas reprendre parfaitement tous les éléments du document.
+      </div>
+
+      <?php if (!empty($subject['files']) && is_array($subject['files'])): ?>
+        <div class="ouinpo-practical-files">
+          <h3>Fichiers du sujet</h3>
+          <ul class="ouinpo-practical-files-list">
+            <?php foreach ($subject['files'] as $file): ?>
+              <?php
+              $file_url = (string) ($file['download_url'] ?? '');
+              $file_label = (string) ($file['label'] ?? 'Fichier');
+              $file_name = (string) ($file['file_name'] ?? $file_label);
+              $is_pdf = $file_url !== '' && strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf';
+              $preview_id = 'ouinpo-written-file-preview-' . (int) ($file['id'] ?? 0);
+              ?>
+              <li class="ouinpo-written-file-item">
+                <div class="ouinpo-written-file-actions">
+                  <?php if ($file_url !== ''): ?>
+                    <a href="<?php echo esc_url($file_url); ?>" target="_blank" rel="noopener"><?php echo esc_html($file_label); ?></a>
+                  <?php else: ?>
+                    <span><?php echo esc_html($file_label); ?></span>
+                  <?php endif; ?>
+                  <?php if ($is_pdf): ?>
+                    <button
+                      type="button"
+                      class="button ouinpo-written-file-preview-button"
+                      data-written-file-preview-toggle
+                      data-preview-target="<?php echo esc_attr($preview_id); ?>"
+                      aria-controls="<?php echo esc_attr($preview_id); ?>"
+                      aria-expanded="false"
+                    >Aperçu</button>
+                  <?php endif; ?>
+                </div>
+                <?php if ($is_pdf): ?>
+                  <div id="<?php echo esc_attr($preview_id); ?>" class="ouinpo-written-file-preview" data-written-file-preview hidden>
+                    <iframe
+                      title="<?php echo esc_attr('Aperçu du fichier ' . $file_label); ?>"
+                      data-src="<?php echo esc_url($file_url); ?>"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                <?php endif; ?>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
+    </section>
+
+    <?php foreach ((array) ($subject['exercises'] ?? []) as $exercise): ?>
+      <section class="ouinpo-panel ouinpo-written-exercise-front">
+        <h3 class="ouinpo-panel-title"><?php echo esc_html((string) (($exercise['title'] ?? '') ?: 'Exercice ' . (int) ($exercise['exercise_order'] ?? 1))); ?></h3>
+        <?php if (!empty($exercise['intro_html'])): ?>
+          <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) $exercise['intro_html']); ?></div>
+        <?php endif; ?>
+
+        <?php foreach ((array) ($exercise['questions'] ?? []) as $question): ?>
+          <?php
+          $question_status = (string) ($question['student_status'] ?? 'none');
+          $question_attempt_count = max(0, (int) ($question['student_attempt_count'] ?? 0));
+          $has_answer = trim((string) ($question['student_answer'] ?? '')) !== '';
+          $question_tag = '';
+          $question_tag_class = '';
+          if ($question_status === 'solved') {
+            $question_tag = 'Réussie';
+            $question_tag_class = 'ouinpo-badge--solved';
+          } elseif ($has_answer || $question_status === 'attempted') {
+            $question_tag = 'En cours';
+            $question_tag_class = 'ouinpo-badge--attempted';
+          }
+          ?>
+          <article class="ouinpo-written-question-front">
+            <h4 class="ouinpo-written-question-title">
+              <span><?php echo esc_html('Question ' . (string) ($question['question_label'] ?? '')); ?></span>
+              <?php if (is_user_logged_in()): ?>
+                <span
+                  class="ouinpo-badge ouinpo-written-question-progress <?php echo esc_attr($question_tag_class); ?><?php echo $question_tag === '' ? ' is-hidden' : ''; ?>"
+                  data-written-question-progress-tag
+                  data-written-question-status="<?php echo esc_attr($question_status); ?>"
+                ><?php echo esc_html($question_tag); ?></span>
+                <span
+                  class="ouinpo-badge ouinpo-written-question-attempts<?php echo $question_attempt_count <= 0 ? ' is-hidden' : ''; ?>"
+                  data-written-question-attempts-tag
+                  data-written-question-attempts="<?php echo esc_attr((string) $question_attempt_count); ?>"
+                ><?php echo esc_html($question_attempt_count > 1 ? $question_attempt_count . ' essais IA' : $question_attempt_count . ' essai IA'); ?></span>
+              <?php endif; ?>
+            </h4>
+            <div class="ouinpo-exercise-statement"><?php echo wp_kses_post((string) ($question['prompt_html'] ?? '')); ?></div>
+
+            <?php if (!empty($question['competencies'])): ?>
+              <div class="ouinpo-badges">
+                <?php foreach ((array) $question['competencies'] as $competency): ?>
+                  <span class="ouinpo-badge ouinpo-badge--competency"><?php echo esc_html(trim((string) ($competency['domain'] ?? '') . ' - ' . (string) ($competency['competency'] ?? ''))); ?></span>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+
+            <?php if (is_user_logged_in()): ?>
+              <?php if ($written_subject_pdf_url !== ''): ?>
+                <div class="ouinpo-written-question-subject-link">
+                  <a class="button" href="<?php echo esc_url($written_subject_pdf_url); ?>" target="_blank" rel="noopener">Voir le sujet</a>
+                </div>
+              <?php endif; ?>
+
+              <div class="ouinpo-written-answer-block">
+                <label for="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">Ta réponse</label>
+                <textarea
+                  id="ouinpo-written-answer-<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                  class="ouinpo-answer ouinpo-written-answer"
+                  data-written-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                  rows="7"
+                  placeholder="Rédige ta réponse pour cette question. Évite les données personnelles."
+                ><?php echo esc_textarea((string) ($question['student_answer'] ?? '')); ?></textarea>
+              </div>
+
+              <div class="ouinpo-written-question-ai">
+                <button
+                  type="button"
+                  class="button"
+                  data-written-question-advice-action
+                  data-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                >Soumettre ma réponse à l’IA</button>
+                <div class="ouinpo-written-question-advice-status" data-written-question-advice-status aria-live="polite"></div>
+                <div class="ouinpo-written-question-advice-output" data-written-question-advice-output></div>
+              </div>
+
+              <div class="ouinpo-written-status-actions">
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form" data-written-question-status-form>
+                  <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
+                  <input type="hidden" name="action" value="ouinpo_written_question_status">
+                  <input type="hidden" name="question_id" value="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">
+                  <input type="hidden" name="status" value="solved">
+                  <input type="hidden" name="redirect_to" value="<?php echo esc_url((string) ($_SERVER['REQUEST_URI'] ?? '')); ?>">
+                  <button type="submit" class="button">Réussie</button>
+                </form>
+              </div>
+            <?php endif; ?>
+
+            <?php if (!empty($question['hints'])): ?>
+              <div class="ouinpo-written-hints-front">
+                <?php foreach ((array) $question['hints'] as $hint): ?>
+                  <details class="ai-feedback-block">
+                    <summary><?php echo esc_html((string) (($hint['title'] ?? '') ?: 'Aide IA')); ?></summary>
+                    <div><?php echo wp_kses_post((string) ($hint['content'] ?? '')); ?></div>
+                  </details>
+                  <?php if (is_user_logged_in()): ?>
+                    <label class="ouinpo-written-hint-used">
+                      <input
+                        type="checkbox"
+                        value="<?php echo esc_attr((string) (int) ($hint['id'] ?? 0)); ?>"
+                        data-written-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                        data-written-hint-used
+                        <?php checked(in_array((int) ($hint['id'] ?? 0), array_map('intval', (array) ($question['used_hint_ids'] ?? [])), true)); ?>
+                      >
+                      Aide utilisée pour ma réponse
+                    </label>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+          </article>
+        <?php endforeach; ?>
+      </section>
+    <?php endforeach; ?>
+
+    <?php if (is_user_logged_in()): ?>
+      <section class="ouinpo-panel ouinpo-written-report-panel">
+        <h3 class="ouinpo-panel-title">Rapport de travail</h3>
+        <?php echo self::render_ai_notice('exercise'); ?>
+        <p>Quand tu as saisi tes réponses et coché les aides utilisées, génère un rapport de conseils pour orienter tes révisions.</p>
+        <button type="button" class="button button-primary" data-written-report-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Générer mon rapport</button>
+        <button type="button" class="button" data-written-reset-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Remettre à zéro le sujet</button>
+        <div class="ouinpo-written-report-status" data-written-report-status aria-live="polite"></div>
+        <div class="ouinpo-written-report-output" data-written-report-output></div>
+      </section>
+    <?php else: ?>
+      <section class="ouinpo-panel ouinpo-written-report-panel">
+        <p>Connecte-toi pour enregistrer tes réponses, indiquer les aides utilisées et générer un rapport de conseils.</p>
+      </section>
+    <?php endif; ?>
+  </article>
+  <?php
+  return ob_get_clean();
+}
 
 public static function render_practical_subjects($atts = array(), $content = '') {
 

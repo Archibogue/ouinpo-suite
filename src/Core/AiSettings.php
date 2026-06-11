@@ -47,9 +47,11 @@ final class AiSettings
             'ouinpo_ai_logged_provider' => 'albert',
             'ouinpo_ai_api_base_url' => 'https://albert.api.etalab.gouv.fr/v1',
             'ouinpo_ai_api_key' => '',
+            'ouinpo_ai_ocr_provider' => 'albert',
             'ouinpo_ai_chat_model' => 'openai/gpt-oss-120b',
             'ouinpo_ai_code_model' => 'openweight-code',
             'ouinpo_ai_embedding_model' => 'BAAI/bge-m3',
+            'ouinpo_ai_ocr_model' => '',
             'ouinpo_ai_timeout' => 45,
             'ouinpo_ai_max_tokens' => 800,
             'ouinpo_ai_temperature' => 0.3,
@@ -110,6 +112,7 @@ final class AiSettings
             'ouinpo_sf_albert_code_model' => 'openweight-code',
             'ouinpo_sf_albert_embedding_model' => 'BAAI/bge-m3',
             'ouinpo_sf_albert_reranker_model' => 'BAAI/bge-reranker-v2-m3',
+            'ouinpo_sf_albert_ocr_model' => '',
             'ouinpo_sf_rag_embedding_provider' => 'openai',
             'ouinpo_sf_public_hourly_limit' => 5,
             'ouinpo_sf_public_daily_limit' => 100,
@@ -430,9 +433,11 @@ final class AiSettings
             'ouinpo_ai_logged_provider' => 'provider',
             'ouinpo_ai_api_base_url' => 'url',
             'ouinpo_ai_api_key' => 'secret',
+            'ouinpo_ai_ocr_provider' => 'ocr_provider',
             'ouinpo_ai_chat_model' => 'model',
             'ouinpo_ai_code_model' => 'model',
             'ouinpo_ai_embedding_model' => 'model',
+            'ouinpo_ai_ocr_model' => 'model',
             'ouinpo_ai_timeout' => 'timeout',
             'ouinpo_ai_max_tokens' => 'max_tokens',
             'ouinpo_ai_temperature' => 'temperature',
@@ -493,6 +498,7 @@ final class AiSettings
             'ouinpo_sf_albert_code_model' => 'model',
             'ouinpo_sf_albert_embedding_model' => 'model',
             'ouinpo_sf_albert_reranker_model' => 'model',
+            'ouinpo_sf_albert_ocr_model' => 'model',
             'ouinpo_sf_rag_embedding_provider' => 'provider',
             'ouinpo_sf_public_hourly_limit' => 'quota',
             'ouinpo_sf_public_daily_limit' => 'quota',
@@ -513,6 +519,12 @@ final class AiSettings
     {
         $provider = sanitize_key((string) $value);
         return in_array($provider, self::PROVIDERS, true) ? $provider : self::DEFAULT_PROVIDER;
+    }
+
+    public static function sanitize_ocr_provider($value): string
+    {
+        $provider = sanitize_key((string) $value);
+        return in_array($provider, ['albert', 'none'], true) ? $provider : 'albert';
     }
 
     public static function sanitize_url($value): string

@@ -64,7 +64,12 @@ class BadgeEngine {
         $t_ex      = $wpdb->prefix . 'ouin_exo_exercises';
         $t_status  = $wpdb->prefix . 'ouin_exo_user_status';
         $t_ex_comp = $wpdb->prefix . 'ouin_exo_exercise_competency';
-        $t_exam_meta = $wpdb->prefix . 'ouin_exo_exam_meta';
+        $t_exam_meta = $wpdb->prefix . 'ouin_exo_exam_meta';
+        $t_written_status = $wpdb->prefix . 'ouin_exo_written_question_status';
+        $t_written_qc = $wpdb->prefix . 'ouin_exo_written_question_competency';
+        $t_written_q = $wpdb->prefix . 'ouin_exo_written_questions';
+        $t_written_ex = $wpdb->prefix . 'ouin_exo_written_exercises';
+        $t_written_s = $wpdb->prefix . 'ouin_exo_written_subjects';
 
         // difficulty_id : 1 = débutant, 2 = confirmé, 3 = expert
         $rows = $wpdb->get_results(
@@ -92,7 +97,7 @@ class BadgeEngine {
 
 
         if (!$rows) {
-            return [];
+            $rows = [];
         }
 
         $levels = [];
@@ -114,7 +119,38 @@ class BadgeEngine {
             ];
         }
 
-        return $levels;
+        $written_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT
+                    qc.competency_id,
+                    COUNT(DISTINCT qs.question_id) AS total_success
+                 FROM {$t_written_status} qs
+                 JOIN {$t_written_qc} qc ON qc.question_id = qs.question_id
+                 JOIN {$t_written_q} q ON q.id = qs.question_id AND q.is_active = 1
+                 JOIN {$t_written_ex} we ON we.id = q.exercise_id AND we.is_active = 1
+                 JOIN {$t_written_s} ws ON ws.id = we.subject_id AND ws.is_active = 1
+                 WHERE qs.user_id = %d
+                   AND qs.status = 'solved'
+                 GROUP BY qc.competency_id",
+                $user_id
+            )
+        );
+
+        foreach ((array) $written_rows as $r) {
+            $cid = (int) $r->competency_id;
+            $total = (int) $r->total_success;
+            $bronze = $total >= 1;
+            $argent = $total >= 3;
+
+            if (!isset($levels[$cid])) {
+                $levels[$cid] = ['bronze' => false, 'argent' => false, 'or' => false];
+            }
+
+            $levels[$cid]['bronze'] = $levels[$cid]['bronze'] || $bronze;
+            $levels[$cid]['argent'] = $levels[$cid]['argent'] || $argent;
+        }
+
+        return $levels;
     }
 
     /* ============================================================
@@ -131,6 +167,11 @@ class BadgeEngine {
         $t_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';
         $t_exam_meta   = $wpdb->prefix . 'ouin_exo_exam_meta';
         $t_comp_level  = $wpdb->prefix . 'ouin_exo_competency_school_level';
+        $t_written_status = $wpdb->prefix . 'ouin_exo_written_question_status';
+        $t_written_qc = $wpdb->prefix . 'ouin_exo_written_question_competency';
+        $t_written_q = $wpdb->prefix . 'ouin_exo_written_questions';
+        $t_written_ex = $wpdb->prefix . 'ouin_exo_written_exercises';
+        $t_written_s = $wpdb->prefix . 'ouin_exo_written_subjects';
 
         // On ne calcule les badges de domaine que sur le niveau courant de l'élève.
         // Cela évite qu'un élève de Terminale gagne des badges de Première,
@@ -228,7 +269,54 @@ class BadgeEngine {
             )
         );
 
-        // 4) Construction des stats par domaine
+        $written_rows_ex = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT
+                    c.domain_slug,
+                    qs.question_id AS exercise_id,
+                    1 AS has_confirmed,
+                    0 AS has_expert
+                 FROM {$t_written_status} qs
+                 JOIN {$t_written_qc} qc ON qc.question_id = qs.question_id
+                 JOIN {$t_comp} c ON c.id = qc.competency_id AND c.active = 1 AND c.domain_slug <> ''
+                 JOIN {$t_comp_level} csl ON csl.competency_id = c.id AND csl.school_level_id IN ($level_placeholders)
+                 JOIN {$t_written_q} q ON q.id = qs.question_id AND q.is_active = 1
+                 JOIN {$t_written_ex} we ON we.id = q.exercise_id AND we.is_active = 1
+                 JOIN {$t_written_s} ws ON ws.id = we.subject_id AND ws.is_active = 1
+                 WHERE qs.user_id = %d
+                   AND qs.status = 'solved'
+                 GROUP BY c.domain_slug, qs.question_id",
+                array_merge($user_level_ids, [$user_id])
+            )
+        );
+
+        if ($written_rows_ex) {
+            $rows_ex = array_merge((array) $rows_ex, (array) $written_rows_ex);
+        }
+
+        $written_rows_cov = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DISTINCT
+                    c.domain_slug,
+                    c.id AS competency_id
+                 FROM {$t_written_status} qs
+                 JOIN {$t_written_qc} qc ON qc.question_id = qs.question_id
+                 JOIN {$t_comp} c ON c.id = qc.competency_id AND c.active = 1 AND c.domain_slug <> ''
+                 JOIN {$t_comp_level} csl ON csl.competency_id = c.id AND csl.school_level_id IN ($level_placeholders)
+                 JOIN {$t_written_q} q ON q.id = qs.question_id AND q.is_active = 1
+                 JOIN {$t_written_ex} we ON we.id = q.exercise_id AND we.is_active = 1
+                 JOIN {$t_written_s} ws ON ws.id = we.subject_id AND ws.is_active = 1
+                 WHERE qs.user_id = %d
+                   AND qs.status = 'solved'",
+                array_merge($user_level_ids, [$user_id])
+            )
+        );
+
+        if ($written_rows_cov) {
+            $rows_cov = array_merge((array) $rows_cov, (array) $written_rows_cov);
+        }
+
+        // 4) Construction des stats par domaine
         $domain_stats = [];
 
         foreach ($rows_total as $dom => $r) {

@@ -81,11 +81,11 @@ class Screen_Exercises {
 
     if ($exercise_id > 0) {
       $rows = $wpdb->get_results(
-        $wpdb->prepare("SELECT hint_order, content FROM {$t} WHERE exercise_id=%d", $exercise_id)
+        $wpdb->prepare("SELECT hint_order, content FROM {$t} WHERE exercise_id=%d ORDER BY hint_order ASC", $exercise_id)
       );
       foreach ($rows as $r) {
         $ord = (int) $r->hint_order;
-        if ($ord >= 1 && $ord <= 3) {
+        if ($ord >= 1) {
           // Confort d'affichage dans le formulaire : on enlève d’éventuels slashes résiduels
           $map[$ord] = stripslashes((string) $r->content);
         }
@@ -784,10 +784,16 @@ class Screen_Exercises {
 
         <h2>Indices (cachés par défaut)</h2>
         <table class="form-table">
-          <?php for ($i = 1; $i <= 3; $i++): ?>
+          <tbody id="ouin-hints-tbody">
+          <?php
+          $hint_orders = array_keys($hints);
+          sort($hint_orders, SORT_NUMERIC);
+          foreach ($hint_orders as $i):
+          ?>
             <tr>
               <th scope="row"><label for="hint_<?php echo $i; ?>">Indice <?php echo $i; ?></label></th>
               <td>
+                <p><label>Ordre <input type="number" min="1" name="hint_orders[<?php echo $i; ?>]" value="<?php echo (int) $i; ?>" class="small-text"></label></p>
                 <textarea id="hint_<?php echo $i; ?>"
                           name="hints[<?php echo $i; ?>]"
                           rows="6"
@@ -795,8 +801,11 @@ class Screen_Exercises {
                 <p class="description">Tu peux saisir du HTML simple (bold, listes, liens).</p>
               </td>
             </tr>
-          <?php endfor; ?>
+          <?php endforeach; ?>
+          </tbody>
         </table>
+
+        <p><button type="button" class="button" id="ouin-add-hint" data-hints-target="#ouin-hints-tbody" data-next-index="<?php echo esc_attr((string) (max($hint_orders ?: [0]) + 1)); ?>">+ Ajouter une aide IA</button></p>
 
         <h2>Corrigés possibles (cachés par défaut)</h2>
         <p class="description">Tu peux proposer plusieurs corrigés (un “officiel”, d’autres alternatifs).</p>
@@ -969,11 +978,13 @@ class Screen_Exercises {
       }
     }
 
-    // Indices (1..3)
+    // Indices / aides IA, sans limite fixe.
     $hints = isset($_POST['hints']) ? (array)$_POST['hints'] : [];
+    $hint_orders = isset($_POST['hint_orders']) ? (array) $_POST['hint_orders'] : [];
     $wpdb->delete($p_hint, ['exercise_id'=>$id], ['%d']);
-    foreach ([1,2,3] as $ord) {
-      $raw = isset($hints[$ord]) ? wp_unslash((string)$hints[$ord]) : '';
+    foreach ($hints as $key => $raw_hint) {
+      $ord = isset($hint_orders[$key]) ? max(1, (int) $hint_orders[$key]) : max(1, (int) $key);
+      $raw = wp_unslash((string)$raw_hint);
       $content = $allowed ? wp_kses($raw, $allowed) : wp_kses_post($raw);
       if (trim($content) !== '') {
         $wpdb->insert($p_hint, [

@@ -309,13 +309,13 @@ final class AiExerciseGenerator
             }
             $rank = (int) ($hint['rank'] ?? ($index + 1));
             $html = ExerciseInsertService::clean_html((string) ($hint['html'] ?? ''));
-            if ($rank >= 1 && $rank <= 3 && $html !== '') {
+            if ($rank >= 1 && $html !== '') {
                 $hints[$rank] = ['rank' => $rank, 'html' => $html];
             }
         }
 
-        if (count($hints) < 3) {
-            return new \WP_Error('invalid_hints', 'La proposition IA doit contenir trois indices.');
+        if (count($hints) < 1) {
+            return new \WP_Error('invalid_hints', 'La proposition IA doit contenir au moins un indice.');
         }
         ksort($hints);
 

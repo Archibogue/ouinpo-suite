@@ -2,10 +2,14 @@
 
 namespace Ouinpo\Exercises\Services;
 
+use Ouinpo\Suite\Core\AiSettings;
+
 defined('ABSPATH') || exit;
 
 final class CorrectionBatchService
 {
+    private const CLEANUP_HOOK = 'ouinpo_exercises_correction_files_cleanup';
+
     private static function table(string $suffix): string
     {
         global $wpdb;
@@ -17,6 +21,120 @@ final class CorrectionBatchService
         if (class_exists(\Ouinpo\Exercises\InstallV2::class)) {
             \Ouinpo\Exercises\InstallV2::maybe_upgrade();
         }
+    }
+
+    public static function init_cleanup_hooks(): void
+    {
+        add_action(self::CLEANUP_HOOK, [self::class, 'cleanup_expired_files']);
+
+        if (!wp_next_scheduled(self::CLEANUP_HOOK)) {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', self::CLEANUP_HOOK);
+        }
+    }
+
+    public static function unschedule_cleanup(): void
+    {
+        wp_clear_scheduled_hook(self::CLEANUP_HOOK);
+    }
+
+    public static function cleanup_expired_files(int $limit = 500): int
+    {
+        global $wpdb;
+        self::ensure_schema();
+
+        $days = max(0, (int) AiSettings::get('ouinpo_ai_file_correction_retention_days'));
+        if ($days <= 0) {
+            return 0;
+        }
+
+        $limit = max(1, min(2000, $limit));
+        $cutoff = date('Y-m-d H:i:s', current_time('timestamp') - ($days * DAY_IN_SECONDS));
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, file_path
+             FROM " . self::table('correction_copies') . "
+             WHERE source_type IN ('scan','file')
+               AND file_path IS NOT NULL
+               AND file_path <> ''
+               AND created_at < %s
+             ORDER BY created_at ASC
+             LIMIT %d",
+            $cutoff,
+            $limit
+        ), ARRAY_A) ?: [];
+
+        $deleted = 0;
+        $processed = [];
+
+        foreach ($rows as $row) {
+            $stored_path = (string) ($row['file_path'] ?? '');
+            if ($stored_path === '' || isset($processed[$stored_path])) {
+                continue;
+            }
+            $processed[$stored_path] = true;
+
+            $path = self::managed_correction_file_path($stored_path);
+            if ($path === '') {
+                continue;
+            }
+
+            $newer_refs = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*)
+                 FROM " . self::table('correction_copies') . "
+                 WHERE file_path = %s
+                   AND created_at >= %s",
+                $stored_path,
+                $cutoff
+            ));
+            if ($newer_refs > 0) {
+                continue;
+            }
+
+            if (is_file($path) && @unlink($path)) {
+                $deleted++;
+            }
+
+            if (!is_file($path)) {
+                $wpdb->update(
+                    self::table('correction_copies'),
+                    ['file_path' => null, 'file_url' => ''],
+                    ['file_path' => $stored_path],
+                    ['%s', '%s'],
+                    ['%s']
+                );
+            }
+        }
+
+        return $deleted;
+    }
+
+    private static function managed_correction_file_path(string $path): string
+    {
+        $path = wp_normalize_path(trim($path));
+        if ($path === '' || str_contains($path, '..')) {
+            return '';
+        }
+
+        $uploads = wp_upload_dir();
+        $base = wp_normalize_path((string) ($uploads['basedir'] ?? ''));
+        if ($base === '') {
+            return '';
+        }
+
+        $root = trailingslashit($base) . 'ouinpo/';
+        $allowed = [
+            $root . 'corrections-scan/',
+            $root . 'corrections-file/',
+            $root . 'corrections/',
+        ];
+
+        foreach ($allowed as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return $path;
+            }
+        }
+
+        return '';
     }
 
     public static function assessments(): array
@@ -119,7 +237,7 @@ final class CorrectionBatchService
         return $ok ? (int) $wpdb->insert_id : new \WP_Error('batch_create_failed', 'Impossible de créer le lot.');
     }
 
-    public static function get_batch(int $batch_id): ?array
+    public static function get_batch(int $batch_id, bool $include_private_paths = false): ?array
     {
         global $wpdb;
         if ($batch_id <= 0) {
@@ -140,14 +258,14 @@ final class CorrectionBatchService
             return null;
         }
 
-        $batch['copies'] = self::copies($batch_id);
+        $batch['copies'] = self::copies($batch_id, $include_private_paths);
         return $batch;
     }
 
-    public static function copies(int $batch_id): array
+    public static function copies(int $batch_id, bool $include_private_paths = false): array
     {
         global $wpdb;
-        return $wpdb->get_results($wpdb->prepare(
+        $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT id, batch_id, student_user_id, student_ref, source_type, file_name, file_path, file_url, mime_type, file_size, pages_count, ocr_text,
                     extraction_type, file_manifest, extracted_content, extraction_warnings,
                     status, error_message, ai_proposal, validated_correction, created_at, updated_at
@@ -156,12 +274,22 @@ final class CorrectionBatchService
              ORDER BY id ASC",
             $batch_id
         ), ARRAY_A) ?: [];
+
+        if (!$include_private_paths) {
+            foreach ($rows as &$row) {
+                unset($row['file_path']);
+                unset($row['file_url']);
+            }
+            unset($row);
+        }
+
+        return $rows;
     }
 
     public static function delete_batch(int $batch_id): bool
     {
         global $wpdb;
-        $batch = self::get_batch($batch_id);
+        $batch = self::get_batch($batch_id, true);
         if (!$batch) {
             return false;
         }

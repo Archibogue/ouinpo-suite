@@ -160,13 +160,13 @@ final class ExerciseInsertService
 
             $rank = (int) ($hint['rank'] ?? ($index + 1));
             $html = self::clean_html((string) ($hint['html'] ?? ''));
-            if ($rank >= 1 && $rank <= 3 && $html !== '') {
+            if ($rank >= 1 && $html !== '') {
                 $hints[$rank] = ['rank' => $rank, 'html' => $html];
             }
         }
 
-        if (count($hints) < 3) {
-            return new \WP_Error('invalid_hints', 'Trois indices sont requis.');
+        if (count($hints) < 1) {
+            return new \WP_Error('invalid_hints', 'Au moins un indice est requis.');
         }
 
         ksort($hints);

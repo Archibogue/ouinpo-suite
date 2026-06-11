@@ -2,6 +2,14 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.6.5-beta] - 2026-06-10
+
+- Sujets ecrits : contexte IA enrichi avec les reponses precedentes du meme exercice, les extraits de cours/RAG filtres, le contexte pedagogique anonymise et les competences BO.
+- Evaluation IA question par question : gestion explicite des erreurs heritees via `inherited_issue_note`, garde-fou programme, consignes de verdict plus stables et sauvegarde complete avant analyse.
+- Ajout du compteur d'essais IA par question ecrite, affiche cote eleve, pris en compte dans le rapport et remis a zero avec la reinitialisation du sujet.
+- Migration Exercices `2.7.2` : ajout de `attempt_count` et `last_attempt_at` sur `written_question_status`.
+- Journalisation debug du contexte IA des sujets ecrits : nombre de reponses precedentes, sources RAG retenues, taille des contextes et garde-fou programme.
+
 ## [0.6.4-beta] - 2026-06-06
 
 - Lot 5.1 Projects : stabilisation securite/runtime de l'assistant IA eleve Projects.

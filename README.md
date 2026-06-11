@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.6.4-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.6.5-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -521,6 +521,16 @@ Les fonctions IA sont optionnelles.
 Aucune clé API n’est fournie avec le plugin. Chaque enseignant doit configurer ses propres accès, s’il souhaite utiliser un fournisseur d’IA.
 
 Le lien "En savoir plus" des notices IA est vide par defaut. L'enseignant peut renseigner une URL complete ou un chemin relatif dans les reglages SegFault.
+
+### OCR Albert pour les annales ecrites
+
+L'import des annales ecrites par PDF est reserve aux enseignants autorises. Il utilise d'abord l'extraction locale du texte. Si le PDF semble scanne, si l'IA est activee pour les suggestions pedagogiques et si l'OCR Albert est configuree, le plugin peut envoyer au fournisseur un lien temporaire signe vers le PDF afin d'obtenir le texte OCR.
+
+Cet usage doit rester opt-in : aucune cle API n'est fournie, les quotas enseignants et le timeout IA s'appliquent, et les erreurs fournisseur doivent etre traitees comme des echecs d'import. N'utiliser cette OCR que pour des sujets officiels ou non sensibles, sans donnees personnelles, copies d'eleves, corrections privees ni documents reserves.
+
+Les fichiers des annales ecrites sont stockes sous `uploads/ouinpo/written/` mais servis par une route OuInPo qui verifie les droits de consultation. Sur Apache, un `.htaccess` bloque l'acces direct au dossier ; sur les autres serveurs, il faut appliquer une regle equivalente si l'hebergement ne lit pas les `.htaccess`.
+
+Supprimer une annale ecrite supprime aussi ses fichiers, questions, reponses enregistrees, statuts, aides utilisees et progressions eleves associes. Cette action doit rester limitee aux administrateurs pedagogiques et confirmee explicitement dans l'interface.
 
 ### Prudence sur les contenus indexés par le RAG
 
