@@ -3134,7 +3134,10 @@ function enableTabInAnswerTextareas() {
 
     return element instanceof HTMLTextAreaElement
 
-      && element.classList.contains('exo-answer-text');
+      && (
+        element.classList.contains('exo-answer-text')
+        || element.classList.contains('ouinpo-written-answer')
+      );
 
   }
 
