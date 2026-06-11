@@ -1836,6 +1836,15 @@ public static function render_written_subjects($atts = array(), $content = '') {
     'source_type' => '',
   ], $atts, 'ouinpo_written_subjects');
 
+  if (!class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes')) {
+    return '<p>Le module des annales ecrites est indisponible.</p>';
+  }
+
+  $permission = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::can_current_user_view_written_subjects();
+  if (is_wp_error($permission)) {
+    return '<p>Connecte-toi pour consulter les annales ecrites.</p>';
+  }
+
   $page = trim((string) $atts['page']);
   if ($page === '') {
     $page = self::page_url_or_fallback('annale-nsi-sujet', '/annale-nsi-sujet/');
@@ -1860,7 +1869,7 @@ public static function render_written_subjects($atts = array(), $content = '') {
   }
 
   $items = [];
-  if (class_exists('\Ouinpo\Exercises\Rest\WrittenSubjectRoutes') && class_exists('\WP_REST_Request')) {
+  if (class_exists('\WP_REST_Request')) {
     $request = new \WP_REST_Request('GET', '/ouinpo/v1/written-subjects');
     if ($selected_level !== '') {
       $request->set_param('school_level', $selected_level);
@@ -2019,6 +2028,11 @@ public static function render_written_subject($atts = array(), $content = '') {
     return '<p>Le module des annales écrites est indisponible.</p>';
   }
 
+  $permission = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::can_current_user_view_written_subjects();
+  if (is_wp_error($permission)) {
+    return '<p>Connecte-toi pour consulter les annales ecrites.</p>';
+  }
+
   $subject = \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::get_subject($id);
   if (!$subject) {
     return '<p>Annale écrite introuvable.</p>';
@@ -2026,7 +2040,7 @@ public static function render_written_subject($atts = array(), $content = '') {
 
   $written_subject_pdf_url = '';
   foreach ((array) ($subject['files'] ?? []) as $file) {
-    $file_url = (string) ($file['download_url'] ?? $file['file_url'] ?? '');
+    $file_url = (string) ($file['download_url'] ?? '');
     $file_name = (string) ($file['file_name'] ?? $file['label'] ?? $file_url);
     if ($file_url !== '' && strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf') {
       $written_subject_pdf_url = $file_url;
@@ -2059,15 +2073,19 @@ public static function render_written_subject($atts = array(), $content = '') {
           <ul class="ouinpo-practical-files-list">
             <?php foreach ($subject['files'] as $file): ?>
               <?php
-              $file_url = (string) ($file['download_url'] ?? $file['file_url'] ?? '');
+              $file_url = (string) ($file['download_url'] ?? '');
               $file_label = (string) ($file['label'] ?? 'Fichier');
               $file_name = (string) ($file['file_name'] ?? $file_label);
-              $is_pdf = strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf';
+              $is_pdf = $file_url !== '' && strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf';
               $preview_id = 'ouinpo-written-file-preview-' . (int) ($file['id'] ?? 0);
               ?>
               <li class="ouinpo-written-file-item">
                 <div class="ouinpo-written-file-actions">
-                  <a href="<?php echo esc_url($file_url); ?>" target="_blank" rel="noopener"><?php echo esc_html($file_label); ?></a>
+                  <?php if ($file_url !== ''): ?>
+                    <a href="<?php echo esc_url($file_url); ?>" target="_blank" rel="noopener"><?php echo esc_html($file_label); ?></a>
+                  <?php else: ?>
+                    <span><?php echo esc_html($file_label); ?></span>
+                  <?php endif; ?>
                   <?php if ($is_pdf): ?>
                     <button
                       type="button"

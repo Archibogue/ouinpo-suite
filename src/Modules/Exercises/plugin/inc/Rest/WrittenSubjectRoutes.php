@@ -77,6 +77,11 @@ final class WrittenSubjectRoutes
 
     public static function can_view()
     {
+        return self::can_current_user_view_written_subjects();
+    }
+
+    public static function can_current_user_view_written_subjects()
+    {
         if (is_user_logged_in()) {
             return true;
         }
@@ -465,7 +470,12 @@ final class WrittenSubjectRoutes
 
         check_admin_referer('ouinpo_written_question_status_' . $question_id);
 
-        self::save_question_status(get_current_user_id(), $question_id, $status);
+        $result = self::save_question_status(get_current_user_id(), $question_id, $status);
+        if (is_wp_error($result)) {
+            $error_data = $result->get_error_data();
+            $status_code = is_array($error_data) ? (int) ($error_data['status'] ?? 403) : 403;
+            wp_die(esc_html($result->get_error_message()), '', ['response' => $status_code]);
+        }
 
         wp_safe_redirect($redirect ?: home_url('/'));
         exit;
@@ -484,15 +494,28 @@ final class WrittenSubjectRoutes
         global $wpdb;
 
         $tQ = self::table('written_questions');
+        $tE = self::table('written_exercises');
+        $tSub = self::table('written_subjects');
         $tS = self::table('written_question_status');
 
-        $exists = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$tQ} WHERE id = %d AND is_active = 1",
+        $subject_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT sub.id
+             FROM {$tQ} q
+             INNER JOIN {$tE} e ON e.id = q.exercise_id AND e.is_active = 1
+             INNER JOIN {$tSub} sub ON sub.id = e.subject_id AND sub.is_active = 1
+             WHERE q.id = %d
+               AND q.is_active = 1
+             LIMIT 1",
             $question_id
         ));
 
-        if ($exists <= 0) {
-            return new \WP_Error('not_found', 'Question introuvable.', ['status' => 404]);
+        if ($subject_id <= 0) {
+            return new \WP_Error('forbidden_status_target', 'Question non accessible.', ['status' => 403]);
+        }
+
+        $permission = self::can_current_user_view_written_subjects();
+        if (is_wp_error($permission)) {
+            return $permission;
         }
 
         $existing = $wpdb->get_row($wpdb->prepare(
@@ -583,9 +606,10 @@ final class WrittenSubjectRoutes
         }
 
         status_header(200);
+        $disposition = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION)) === 'zip' ? 'attachment' : 'inline';
         header('Content-Type: ' . $mime);
         header('Content-Length: ' . (string) filesize($path));
-        header('Content-Disposition: inline; filename="' . str_replace('"', '', $filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
+        header('Content-Disposition: ' . $disposition . '; filename="' . str_replace('"', '', $filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
         header('X-Content-Type-Options: nosniff');
         readfile($path);
         exit;
@@ -1733,9 +1757,7 @@ final class WrittenSubjectRoutes
         foreach ($subject['files'] as &$file) {
             $download_url = \Ouinpo\Exercises\WrittenFiles::download_url((int) ($file['id'] ?? 0));
             $file['download_url'] = $download_url;
-            if ($download_url !== '') {
-                $file['file_url'] = $download_url;
-            }
+            $file['file_url'] = $download_url;
         }
         unset($file);
 

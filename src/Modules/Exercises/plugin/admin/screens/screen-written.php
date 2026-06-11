@@ -192,27 +192,7 @@ final class ScreenWritten
 
     private static function local_path_from_upload_url(string $file_url): string
     {
-        $file_url = esc_url_raw(trim($file_url));
-        if ($file_url === '') {
-            return '';
-        }
-
-        $uploads = wp_upload_dir();
-        $base_url = rtrim((string) ($uploads['baseurl'] ?? ''), '/');
-        $base_dir = wp_normalize_path((string) ($uploads['basedir'] ?? ''));
-        if ($base_url === '' || $base_dir === '' || !str_starts_with($file_url, $base_url . '/')) {
-            return '';
-        }
-
-        $relative = rawurldecode(ltrim(substr($file_url, strlen($base_url)), '/'));
-        if ($relative === '' || str_contains($relative, '..')) {
-            return '';
-        }
-
-        $path = wp_normalize_path(trailingslashit($base_dir) . $relative);
-        $safe_base = trailingslashit($base_dir);
-
-        return str_starts_with($path, $safe_base) ? $path : '';
+        return WrittenFiles::local_path_from_upload_url($file_url);
     }
 
     private static function find_existing_subject_by_file_identity(array $identity): ?array
@@ -480,9 +460,6 @@ final class ScreenWritten
                 echo '<table class="widefat striped"><thead><tr><th>Ordre</th><th>Type</th><th>Fichier</th><th>Action</th></tr></thead><tbody>';
                 foreach ($files as $file) {
                     $file_url = WrittenFiles::download_url((int) $file['id']);
-                    if ($file_url === '') {
-                        $file_url = (string) $file['file_url'];
-                    }
                     $delete_url = wp_nonce_url(
                         add_query_arg([
                             'action' => 'ouinpo_delete_written_file',
@@ -494,7 +471,13 @@ final class ScreenWritten
                     echo '<tr>';
                     echo '<td>' . esc_html((string) (int) $file['file_order']) . '</td>';
                     echo '<td>' . esc_html((string) $file['file_kind']) . '</td>';
-                    echo '<td><a href="' . esc_url($file_url) . '" target="_blank" rel="noopener">' . esc_html((string) $file['label']) . '</a></td>';
+                    echo '<td>';
+                    if ($file_url !== '') {
+                        echo '<a href="' . esc_url($file_url) . '" target="_blank" rel="noopener">' . esc_html((string) $file['label']) . '</a>';
+                    } else {
+                        echo esc_html((string) $file['label']) . ' <span class="description">(lien indisponible)</span>';
+                    }
+                    echo '</td>';
                     echo '<td><a class="button-link-delete" href="' . esc_url($delete_url) . '">Supprimer</a></td>';
                     echo '</tr>';
                 }
@@ -1146,26 +1129,8 @@ final class ScreenWritten
 
     private static function delete_uploaded_file_by_url(string $file_url): void
     {
-        $file_url = esc_url_raw(trim($file_url));
-        if ($file_url === '') {
-            return;
-        }
-
-        $uploads = wp_upload_dir();
-        $base_url = rtrim((string) ($uploads['baseurl'] ?? ''), '/');
-        $base_dir = wp_normalize_path((string) ($uploads['basedir'] ?? ''));
-        if ($base_url === '' || $base_dir === '' || !str_starts_with($file_url, $base_url . '/')) {
-            return;
-        }
-
-        $relative = rawurldecode(ltrim(substr($file_url, strlen($base_url)), '/'));
-        if ($relative === '' || str_contains($relative, '..')) {
-            return;
-        }
-
-        $path = wp_normalize_path(trailingslashit($base_dir) . $relative);
-        $safe_base = trailingslashit($base_dir);
-        if (!str_starts_with($path, $safe_base) || !is_file($path)) {
+        $path = WrittenFiles::local_path_from_upload_url($file_url);
+        if ($path === '' || !is_file($path)) {
             return;
         }
 
