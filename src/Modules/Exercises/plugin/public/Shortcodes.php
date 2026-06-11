@@ -2026,9 +2026,9 @@ public static function render_written_subject($atts = array(), $content = '') {
 
   $written_subject_pdf_url = '';
   foreach ((array) ($subject['files'] ?? []) as $file) {
-    $file_url = (string) ($file['file_url'] ?? '');
-    $file_path = (string) (wp_parse_url($file_url, PHP_URL_PATH) ?: '');
-    if ($file_url !== '' && strtolower((string) pathinfo($file_path, PATHINFO_EXTENSION)) === 'pdf') {
+    $file_url = (string) ($file['download_url'] ?? $file['file_url'] ?? '');
+    $file_name = (string) ($file['file_name'] ?? $file['label'] ?? $file_url);
+    if ($file_url !== '' && strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf') {
       $written_subject_pdf_url = $file_url;
       if ((string) ($file['file_kind'] ?? '') === 'subject') {
         break;
@@ -2059,10 +2059,10 @@ public static function render_written_subject($atts = array(), $content = '') {
           <ul class="ouinpo-practical-files-list">
             <?php foreach ($subject['files'] as $file): ?>
               <?php
-              $file_url = (string) ($file['file_url'] ?? '');
+              $file_url = (string) ($file['download_url'] ?? $file['file_url'] ?? '');
               $file_label = (string) ($file['label'] ?? 'Fichier');
-              $file_path = (string) (wp_parse_url($file_url, PHP_URL_PATH) ?: '');
-              $is_pdf = strtolower((string) pathinfo($file_path, PATHINFO_EXTENSION)) === 'pdf';
+              $file_name = (string) ($file['file_name'] ?? $file_label);
+              $is_pdf = strtolower((string) pathinfo($file_name, PATHINFO_EXTENSION)) === 'pdf';
               $preview_id = 'ouinpo-written-file-preview-' . (int) ($file['id'] ?? 0);
               ?>
               <li class="ouinpo-written-file-item">

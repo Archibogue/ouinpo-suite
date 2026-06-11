@@ -383,6 +383,7 @@ final class ScreenWritten
         wp_nonce_field('ouinpo_import_written_pdf');
         echo '<input type="hidden" name="action" value="ouinpo_import_written_pdf">';
         echo '<p><label for="written-import-pdf">PDF du sujet officiel</label><br><input id="written-import-pdf" type="file" name="written_subject_pdf" accept=".pdf" required></p>';
+        echo '<p class="description">Si l OCR Albert est active, le fournisseur recoit un lien temporaire vers le PDF pour extraire le texte. A reserver a des sujets non sensibles et partageables.</p>';
         echo '<p><label>Titre de secours <input type="text" name="fallback_title" class="regular-text" placeholder="Annale NSI"></label></p>';
         echo '<p><label>Origine <select name="source_type"><option value="annale">Annale</option><option value="inspired">Inspire annale</option><option value="type_bac">Type bac</option></select></label></p>';
         if ($levels) {
@@ -400,6 +401,7 @@ final class ScreenWritten
         echo '<div>';
         echo '<h2>Annales</h2>';
         echo '<p><a class="button button-primary" href="' . esc_url(self::redirect_url()) . '">Nouvelle annale</a></p>';
+        echo '<p class="description">La suppression d une annale supprime aussi ses fichiers, reponses, statuts, aides utilisees et progressions eleves associes.</p>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return this.bulk_action.value !== \'delete\' || confirm(\'Supprimer les annales selectionnees et toutes les donnees eleves associees ?\');">';
         wp_nonce_field('ouinpo_written_subject_bulk');
         echo '<input type="hidden" name="action" value="ouinpo_written_subject_bulk">';
@@ -477,6 +479,10 @@ final class ScreenWritten
             if ($files) {
                 echo '<table class="widefat striped"><thead><tr><th>Ordre</th><th>Type</th><th>Fichier</th><th>Action</th></tr></thead><tbody>';
                 foreach ($files as $file) {
+                    $file_url = WrittenFiles::download_url((int) $file['id']);
+                    if ($file_url === '') {
+                        $file_url = (string) $file['file_url'];
+                    }
                     $delete_url = wp_nonce_url(
                         add_query_arg([
                             'action' => 'ouinpo_delete_written_file',
@@ -488,7 +494,7 @@ final class ScreenWritten
                     echo '<tr>';
                     echo '<td>' . esc_html((string) (int) $file['file_order']) . '</td>';
                     echo '<td>' . esc_html((string) $file['file_kind']) . '</td>';
-                    echo '<td><a href="' . esc_url((string) $file['file_url']) . '" target="_blank" rel="noopener">' . esc_html((string) $file['label']) . '</a></td>';
+                    echo '<td><a href="' . esc_url($file_url) . '" target="_blank" rel="noopener">' . esc_html((string) $file['label']) . '</a></td>';
                     echo '<td><a class="button-link-delete" href="' . esc_url($delete_url) . '">Supprimer</a></td>';
                     echo '</tr>';
                 }
@@ -496,6 +502,7 @@ final class ScreenWritten
             }
             $accepted_extensions = array_map(static fn(string $ext): string => '.' . $ext, array_keys(WrittenFiles::allowed_mimes()));
             echo '<p><label for="written-files">Ajouter des fichiers</label><br><input type="file" id="written-files" name="written_files[]" multiple accept="' . esc_attr(implode(',', $accepted_extensions)) . '"></p>';
+            echo '<p class="description">Taille maximale par fichier : ' . esc_html(number_format_i18n(WrittenFiles::max_upload_bytes() / 1048576, 1)) . ' Mo. Les fichiers sont servis par une route OuInPo plutot que par leur URL directe dans uploads.</p>';
         }
 
         echo '<h2>Exercices, questions et aides IA</h2>';

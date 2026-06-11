@@ -22,6 +22,18 @@ final class WrittenSubjectRoutes
             'permission_callback' => [__CLASS__, 'can_view'],
         ]]);
 
+        register_rest_route(self::NS, '/written-files/(?P<id>\d+)/download', [[
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'download_file'],
+            'permission_callback' => '__return_true',
+        ]]);
+
+        register_rest_route(self::NS, '/written-files/download', [[
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'download_signed_file'],
+            'permission_callback' => '__return_true',
+        ]]);
+
         register_rest_route(self::NS, '/written-subjects/(?P<id>\d+)/student-report', [[
             'methods' => 'POST',
             'callback' => [__CLASS__, 'student_report'],
@@ -218,6 +230,43 @@ final class WrittenSubjectRoutes
         }
 
         return rest_ensure_response($subject);
+    }
+
+    public static function download_file(\WP_REST_Request $request)
+    {
+        $file_id = (int) $request['id'];
+        if ($file_id <= 0) {
+            return new \WP_Error('invalid_file', 'Fichier invalide.', ['status' => 400]);
+        }
+
+        $file = self::get_written_file($file_id);
+        if (!$file) {
+            return new \WP_Error('file_not_found', 'Fichier introuvable.', ['status' => 404]);
+        }
+
+        $permission = self::can_download_file($file);
+        if (is_wp_error($permission)) {
+            return $permission;
+        }
+
+        $path = \Ouinpo\Exercises\WrittenFiles::local_path_from_upload_url((string) ($file['file_url'] ?? ''));
+
+        return self::send_file($path, (string) ($file['original_file_name'] ?? $file['file_name'] ?? 'fichier'));
+    }
+
+    public static function download_signed_file(\WP_REST_Request $request)
+    {
+        $relative = rawurldecode((string) $request->get_param('path'));
+        $expires = (int) $request->get_param('expires');
+        $signature = (string) $request->get_param('signature');
+
+        if (!\Ouinpo\Exercises\WrittenFiles::verify_signed_download($relative, $expires, $signature)) {
+            return new \WP_Error('invalid_signature', 'Lien de telechargement expire ou invalide.', ['status' => 403]);
+        }
+
+        $path = \Ouinpo\Exercises\WrittenFiles::local_path_from_relative_path($relative);
+
+        return self::send_file($path, basename($relative));
     }
 
     public static function update_status(\WP_REST_Request $request)
@@ -467,6 +516,79 @@ final class WrittenSubjectRoutes
         }
 
         return true;
+    }
+
+    private static function get_written_file(int $file_id): ?array
+    {
+        if ($file_id <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+
+        $tFiles = self::table('subject_files');
+        $tSubjects = self::table('written_subjects');
+
+        $row = $wpdb->get_row($wpdb->prepare("
+            SELECT
+                f.id,
+                f.subject_id,
+                f.label,
+                f.file_name,
+                f.original_file_name,
+                f.file_url,
+                f.file_kind,
+                s.is_active AS subject_active
+            FROM {$tFiles} f
+            INNER JOIN {$tSubjects} s ON s.id = f.subject_id
+            WHERE f.id = %d
+              AND f.subject_type = 'written'
+            LIMIT 1
+        ", $file_id), ARRAY_A);
+
+        return is_array($row) ? $row : null;
+    }
+
+    private static function can_download_file(array $file)
+    {
+        if (\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::MANAGE_EXERCISES)) {
+            return true;
+        }
+
+        if ((int) ($file['subject_active'] ?? 0) !== 1) {
+            return new \WP_Error('file_not_found', 'Fichier introuvable.', ['status' => 404]);
+        }
+
+        $permission = self::can_view();
+
+        return is_wp_error($permission) ? $permission : true;
+    }
+
+    private static function send_file(string $path, string $filename)
+    {
+        if ($path === '' || !is_file($path) || !is_readable($path)) {
+            return new \WP_Error('file_not_found', 'Fichier introuvable.', ['status' => 404]);
+        }
+
+        $filename = sanitize_file_name($filename) ?: basename($path);
+        $type = wp_check_filetype($filename, \Ouinpo\Exercises\WrittenFiles::allowed_mimes());
+        $mime = !empty($type['type']) ? (string) $type['type'] : 'application/octet-stream';
+
+        if (headers_sent()) {
+            return new \WP_Error('headers_sent', 'Telechargement indisponible.', ['status' => 500]);
+        }
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        status_header(200);
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . (string) filesize($path));
+        header('Content-Disposition: inline; filename="' . str_replace('"', '', $filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
+        header('X-Content-Type-Options: nosniff');
+        readfile($path);
+        exit;
     }
 
     private static function increment_question_attempt_if_open(int $user_id, int $question_id): int
@@ -1602,12 +1724,20 @@ final class WrittenSubjectRoutes
         }
 
         $subject['files'] = $wpdb->get_results($wpdb->prepare("
-            SELECT id, label, file_name, file_url, file_kind, file_order
+            SELECT id, label, file_name, original_file_name, file_url, file_kind, file_order
             FROM {$tFiles}
             WHERE subject_type = 'written'
               AND subject_id = %d
             ORDER BY file_order ASC, id ASC
         ", $id), ARRAY_A) ?: [];
+        foreach ($subject['files'] as &$file) {
+            $download_url = \Ouinpo\Exercises\WrittenFiles::download_url((int) ($file['id'] ?? 0));
+            $file['download_url'] = $download_url;
+            if ($download_url !== '') {
+                $file['file_url'] = $download_url;
+            }
+        }
+        unset($file);
 
         $exercises = $wpdb->get_results($wpdb->prepare("
             SELECT *

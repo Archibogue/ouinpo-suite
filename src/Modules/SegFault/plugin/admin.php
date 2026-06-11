@@ -4167,6 +4167,7 @@ try {
               <label>Modele code <input name="ouinpo_ai_code_model" value="<?php echo esc_attr(get_option('ouinpo_ai_code_model', 'openweight-code')); ?>" /></label>
               <label>Modele embeddings <input name="ouinpo_ai_embedding_model" value="<?php echo esc_attr(get_option('ouinpo_ai_embedding_model', 'BAAI/bge-m3')); ?>" /></label>
               <label>Modele OCR <input name="ouinpo_ai_ocr_model" value="<?php echo esc_attr(get_option('ouinpo_ai_ocr_model', '')); ?>" placeholder="defaut Albert" /></label><br>
+              <p class="description">L OCR Albert envoie au fournisseur un lien temporaire vers le PDF scanne. A utiliser uniquement pour des sujets non sensibles, avec IA activee volontairement, cle API configuree, quotas et timeout adaptes.</p>
               <label>Timeout <input type="number" min="5" max="120" name="ouinpo_ai_timeout" value="<?php echo esc_attr((int)get_option('ouinpo_ai_timeout', 45)); ?>" class="ouinpo-sf-input-small" /></label>
               <label>Max tokens <input type="number" min="128" max="8000" name="ouinpo_ai_max_tokens" value="<?php echo esc_attr((int)get_option('ouinpo_ai_max_tokens', 800)); ?>" class="ouinpo-sf-input-medium" /></label>
               <label>Temperature <input type="number" min="0" max="2" step="0.1" name="ouinpo_ai_temperature" value="<?php echo esc_attr((float)get_option('ouinpo_ai_temperature', 0.3)); ?>" class="ouinpo-sf-input-small" /></label>
@@ -4432,7 +4433,7 @@ try {
 
             <p class="description">
 
-              Modele Albert utilise par l endpoint OCR pour lire les PDF scannes avant le decoupage des annales. Laisse vide pour utiliser le modele par defaut de l API.
+              Modele Albert utilise par l endpoint OCR pour lire les PDF scannes avant le decoupage des annales. Laisse vide pour utiliser le modele par defaut de l API. Le PDF est transmis au fournisseur via un lien temporaire : utiliser uniquement des sujets non sensibles et partageables.
 
             </p>
 

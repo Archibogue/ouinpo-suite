@@ -97,7 +97,7 @@ class BadgeEngine {
 
 
         if (!$rows) {
-            $rows = [];
+            $rows = [];
         }
 
         $levels = [];

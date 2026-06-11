@@ -20,7 +20,11 @@ require_once __DIR__ . '/inc/RevisionBand.php';
 require_once __DIR__ . '/inc/PracticalAiBridge.php';
 require_once __DIR__ . '/admin/screens/screen-practical.php';
 require_once __DIR__ . '/admin/screens/screen-written.php';
-
+
+add_action('init', function () {
+    \Ouinpo\Exercises\WrittenFiles::ensure_storage_protection();
+});
+
 // Les migrations sont pilotées par le module parent de la suite.
 
 

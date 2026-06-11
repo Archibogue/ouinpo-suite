@@ -41,7 +41,8 @@ final class WrittenSubjectPdfImporter
         $text = self::extract_pdf_text($file_path);
         $text_source = 'local_pdf';
         if (mb_strlen(trim($text)) < 500 && $file_url !== '' && (string) AiSettings::get('ouinpo_ai_ocr_provider') === 'albert') {
-            $ocr_text = self::extract_pdf_text_with_albert_ocr($file_url);
+            $ocr_url = \Ouinpo\Exercises\WrittenFiles::signed_download_url_for_upload_url($file_url);
+            $ocr_text = self::extract_pdf_text_with_albert_ocr($ocr_url !== '' ? $ocr_url : $file_url);
             if (mb_strlen(trim($ocr_text)) > mb_strlen(trim($text))) {
                 $text = $ocr_text;
                 $text_source = 'albert_ocr';
