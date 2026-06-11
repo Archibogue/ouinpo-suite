@@ -278,7 +278,7 @@ class AssessmentsService
         return $map;
     }
 
-    public static function save_assessment_attendance(int $assessment_id, array $attendance, ?int $updated_by = null): true|WP_Error
+    public static function save_assessment_attendance(int $assessment_id, array $attendance, ?int $updated_by = null): bool|WP_Error
     {
         global $wpdb;
 
@@ -347,7 +347,7 @@ class AssessmentsService
         return true;
     }
 
-    public static function save_competency_results(int $assessment_id, array $results, bool $apply_progression = false, ?int $updated_by = null): true|WP_Error
+    public static function save_competency_results(int $assessment_id, array $results, bool $apply_progression = false, ?int $updated_by = null): bool|WP_Error
     {
         global $wpdb;
 

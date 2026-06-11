@@ -130,7 +130,7 @@ final class StudentFileUploadService
         return $created;
     }
 
-    public static function validate_request_limits(array $files): true|\WP_Error
+    public static function validate_request_limits(array $files): bool|\WP_Error
     {
         if (count($files) > self::MAX_FILES_PER_REQUEST) {
             return new \WP_Error('too_many_files', 'Trop de fichiers dans la requête.');
