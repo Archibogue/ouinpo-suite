@@ -2038,6 +2038,11 @@ public static function render_written_subject($atts = array(), $content = '') {
     return '<p>Annale écrite introuvable.</p>';
   }
 
+  $written_subject_answers_ai_enabled = class_exists('\Ouinpo\Suite\Core\AiSettings')
+    && \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_answers');
+  $written_subject_report_ai_enabled = class_exists('\Ouinpo\Suite\Core\AiSettings')
+    && \Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_report');
+
   $written_subject_pdf_url = '';
   foreach ((array) ($subject['files'] ?? []) as $file) {
     $file_url = (string) ($file['download_url'] ?? '');
@@ -2180,14 +2185,18 @@ public static function render_written_subject($atts = array(), $content = '') {
               </div>
 
               <div class="ouinpo-written-question-ai">
-                <button
-                  type="button"
-                  class="button"
-                  data-written-question-advice-action
-                  data-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
-                >Soumettre ma réponse à l’IA</button>
-                <div class="ouinpo-written-question-advice-status" data-written-question-advice-status aria-live="polite"></div>
-                <div class="ouinpo-written-question-advice-output" data-written-question-advice-output></div>
+                <?php if ($written_subject_answers_ai_enabled): ?>
+                  <button
+                    type="button"
+                    class="button"
+                    data-written-question-advice-action
+                    data-question-id="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>"
+                  >Soumettre ma réponse à l’IA</button>
+                  <div class="ouinpo-written-question-advice-status" data-written-question-advice-status aria-live="polite"></div>
+                  <div class="ouinpo-written-question-advice-output" data-written-question-advice-output></div>
+                <?php else: ?>
+                  <p class="ouinpo-written-ai-disabled">L’aide IA sur les réponses écrites n’est pas activée pour ce site.</p>
+                <?php endif; ?>
               </div>
 
               <div class="ouinpo-written-status-actions">
@@ -2232,9 +2241,13 @@ public static function render_written_subject($atts = array(), $content = '') {
     <?php if (is_user_logged_in()): ?>
       <section class="ouinpo-panel ouinpo-written-report-panel">
         <h3 class="ouinpo-panel-title">Rapport de travail</h3>
-        <?php echo self::render_ai_notice('exercise'); ?>
-        <p>Quand tu as saisi tes réponses et coché les aides utilisées, génère un rapport de conseils pour orienter tes révisions.</p>
-        <button type="button" class="button button-primary" data-written-report-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Générer mon rapport</button>
+        <?php if ($written_subject_report_ai_enabled): ?>
+          <?php echo self::render_ai_notice('exercise'); ?>
+          <p>Quand tu as saisi tes réponses et coché les aides utilisées, génère un rapport de conseils pour orienter tes révisions.</p>
+          <button type="button" class="button button-primary" data-written-report-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Générer mon rapport</button>
+        <?php else: ?>
+          <p class="ouinpo-written-ai-disabled">Le rapport de travail IA n’est pas activé pour ce site.</p>
+        <?php endif; ?>
         <button type="button" class="button" data-written-reset-action data-subject-id="<?php echo esc_attr((string) (int) $subject['id']); ?>">Remettre à zéro le sujet</button>
         <div class="ouinpo-written-report-status" data-written-report-status aria-live="polite"></div>
         <div class="ouinpo-written-report-output" data-written-report-output></div>

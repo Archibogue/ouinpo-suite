@@ -299,7 +299,7 @@ final class WrittenSubjectRoutes
             return new \WP_Error('not_found', 'Annale écrite introuvable.', ['status' => 404]);
         }
 
-        if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('exercise_correction')) {
+        if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_report')) {
             return new \WP_Error('ai_disabled', (string) \Ouinpo\Suite\Core\AiSettings::get('ouinpo_ai_disabled_message'), ['status' => 503]);
         }
 
@@ -402,7 +402,7 @@ final class WrittenSubjectRoutes
             return new \WP_Error('not_found', 'Question introuvable.', ['status' => 404]);
         }
 
-        if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('exercise_correction')) {
+        if (!\Ouinpo\Suite\Core\AiSettings::enabled_for_usage('written_subject_answers')) {
             return new \WP_Error('ai_disabled', (string) \Ouinpo\Suite\Core\AiSettings::get('ouinpo_ai_disabled_message'), ['status' => 503]);
         }
 

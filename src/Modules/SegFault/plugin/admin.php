@@ -4077,12 +4077,14 @@ try {
                 'chat_rag' => 'Chat / RAG',
                 'exercise_help' => 'Aide aux exercices',
                 'exercise_correction' => 'Correction exercices',
+                'written_subject_answers' => 'Annales écrites — aide IA sur les zones de réponse',
+                'written_subject_report' => 'Annales écrites — rapport de travail IA',
                 'gate_validation' => 'Validation Gate',
                 'practical_correction' => 'Correction sujets pratiques',
                 'feedback_generation' => 'Generation de feedback',
                 'pedagogical_suggestions' => 'Suggestions pedagogiques',
               ] as $usage_key => $usage_label): ?>
-                <?php $usage_default = $usage_key === 'gate_validation' ? 0 : 1; ?>
+                <?php $usage_default = \Ouinpo\Suite\Core\AiSettings::defaults()['ouinpo_ai_usage_' . $usage_key] ?? 0; ?>
                 <label><input type="checkbox" name="<?php echo esc_attr('ouinpo_ai_usage_' . $usage_key); ?>" value="1" <?php checked(1, (int)get_option('ouinpo_ai_usage_' . $usage_key, $usage_default)); ?> /> <?php echo esc_html($usage_label); ?></label><br>
               <?php endforeach; ?>
             </td>

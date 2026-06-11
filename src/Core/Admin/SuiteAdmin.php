@@ -2682,6 +2682,8 @@ final class SuiteAdmin
         $aiEnabled = ((int) get_option('ouinpo_ai_enabled', 0) === 1);
         $publicAiEnabled = ((int) get_option('ouinpo_ai_public_enabled', 0) === 1);
         $projectsStudentAiEnabled = ((int) get_option('ouinpo_projects_student_ai_enabled', 0) === 1);
+        $writtenSubjectAnswersAiEnabled = AiSettings::enabled_for_usage('written_subject_answers');
+        $writtenSubjectReportAiEnabled = AiSettings::enabled_for_usage('written_subject_report');
         ?>
         <div class="ouinpo-suite-grid">
             <div class="card ouinpo-suite-card">
@@ -2695,6 +2697,8 @@ final class SuiteAdmin
                     <?php self::statusBadge($aiEnabled, 'IA active', 'IA desactivee'); ?>
                     <?php self::statusBadge($publicAiEnabled, 'IA publique active', 'IA publique fermee'); ?>
                     <?php self::statusBadge($projectsStudentAiEnabled, 'IA eleve Projects active', 'IA eleve Projects fermee'); ?>
+                    <?php self::statusBadge($writtenSubjectAnswersAiEnabled, 'Annales écrites : aide réponses active', 'Annales écrites : aide réponses désactivée'); ?>
+                    <?php self::statusBadge($writtenSubjectReportAiEnabled, 'Annales écrites : rapport actif', 'Annales écrites : rapport désactivé'); ?>
                 </p>
                 <?php if ($segfaultEnabled): ?>
                     <p class="ouinpo-suite-bottomless">

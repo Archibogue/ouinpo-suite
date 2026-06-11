@@ -8,6 +8,8 @@ Selon les modules actives, le site peut aussi stocker des revisions de flashcard
 
 Les fonctions IA sont optionnelles. Lorsqu'elles sont activees, il faut eviter d'envoyer des donnees personnelles dans les prompts : noms, prenoms, notes, emails, problemes individuels ou informations de sante.
 
+Les annales ecrites peuvent proposer une aide IA sur les reponses d'eleves et un rapport de travail, uniquement si les options IA correspondantes sont activees par l'administrateur. Les eleves ne doivent pas saisir de donnees personnelles dans les reponses envoyees a l'IA.
+
 Les reponses IA sont des aides. Elles peuvent etre fausses ou incompletes et doivent etre relues par l'enseignant avant usage pedagogique.
 
 Les cles API ne doivent jamais etre placees dans les packs pedagogiques, le depot GitHub ou un document partage.

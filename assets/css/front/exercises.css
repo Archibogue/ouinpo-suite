@@ -2780,6 +2780,12 @@
   margin-top: 0.65rem;
 }
 
+.ouinpo-written-ai-disabled {
+  margin: 0;
+  color: var(--ouinpo-color-muted, #6b7280);
+  font-size: 0.92rem;
+}
+
 .ouinpo-written-question-advice-output {
   margin-top: 0.8rem;
 }
