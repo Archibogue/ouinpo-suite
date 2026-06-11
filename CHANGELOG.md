@@ -2,6 +2,19 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.0-beta] - 2026-06-11
+
+- Ajout du module optionnel Projects / SPOPI Projects.
+- Ajout du suivi de projets, Kanban, journal, livrables, exports et fichiers privés.
+- Ajout des assistants IA Projects encadrés et opt-in.
+- Ajout des annales écrites / sujets écrits.
+- Ajout de l’import PDF et du flux OCR Albert optionnel.
+- Ajout des shortcodes et routes REST des sujets écrits.
+- Ajout du suivi de progression élève par question.
+- Ajout de l’aide IA contextualisée pour les sujets écrits.
+- Durcissement des accès fichiers écrits : route contrôlée, URL OCR temporaire signée, pas de fallback durable.
+- Retrait du dossier local `CSS_additionnels/` du dépôt partageable.
+
 ## [0.6.5-beta] - 2026-06-10
 
 - Sujets ecrits : contexte IA enrichi avec les reponses precedentes du meme exercice, les extraits de cours/RAG filtres, le contexte pedagogique anonymise et les competences BO.
