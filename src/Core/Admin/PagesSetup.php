@@ -291,6 +291,19 @@ final class PagesSetup
             ];
         }
 
+        if (ModuleSettings::isEnabled('projects')) {
+            $pages['projects'] = [
+                'title' => 'Mes projets',
+                'slug' => 'mes-projets',
+                'shortcode' => '[ouinpo_my_projects]',
+            ];
+            $pages['teacher_projects'] = [
+                'title' => 'Suivi des projets',
+                'slug' => 'suivi-projets',
+                'shortcode' => '[ouinpo_teacher_projects]',
+            ];
+        }
+
         if (ModuleSettings::isEnabled('gate')) {
             $pages['gate'] = [
                 'title' => 'Gate',

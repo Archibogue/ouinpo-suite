@@ -89,6 +89,39 @@ class Ouinpo_Submissions_Plugin {
 
     const USERMETA_RES_LAST_SEEN = 'ouinpo_res_last_seen_ts';
 
+    const UPLOAD_MAX_BYTES = 26214400;
+
+    const UPLOAD_ALLOWED_MIMES = array(
+        'pdf'  => 'application/pdf',
+        'txt'  => 'text/plain',
+        'md'   => 'text/markdown',
+        'csv'  => 'text/csv',
+        'json' => 'application/json',
+        'sql'  => 'application/sql',
+        'py'   => 'text/x-python',
+        'png'  => 'image/png',
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp',
+        'zip'  => 'application/zip',
+        'doc'  => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls'  => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt'  => 'application/vnd.ms-powerpoint',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'odt'  => 'application/vnd.oasis.opendocument.text',
+        'ods'  => 'application/vnd.oasis.opendocument.spreadsheet',
+        'odp'  => 'application/vnd.oasis.opendocument.presentation',
+    );
+
+    const UPLOAD_BLOCKED_EXTENSIONS = array(
+        'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
+        'html', 'htm', 'svg', 'js', 'mjs', 'css',
+        'exe', 'bat', 'cmd', 'sh', 'com', 'msi',
+        'htaccess', 'env',
+    );
+
 
 
     private string $private_upload_subdir = '';
@@ -167,7 +200,104 @@ class Ouinpo_Submissions_Plugin {
 
 
 
+    private function validate_private_upload_file(string $field) {
+
+        if (empty($_FILES[$field]['name']) || empty($_FILES[$field]['tmp_name'])) {
+
+            return new WP_Error('missing_file', 'Aucun fichier recu.');
+
+        }
+
+        if (!empty($_FILES[$field]['error']) && (int) $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+
+            return new WP_Error('upload_error', 'Erreur upload.');
+
+        }
+
+        $size = isset($_FILES[$field]['size']) ? (int) $_FILES[$field]['size'] : 0;
+        if ($size <= 0) {
+
+            return new WP_Error('empty_file', 'Fichier vide.');
+
+        }
+
+        if ($size > self::UPLOAD_MAX_BYTES) {
+
+            return new WP_Error('file_too_large', 'Fichier trop lourd.');
+
+        }
+
+        $filename = sanitize_file_name(wp_basename((string) $_FILES[$field]['name']));
+        if ($filename === '' || $filename === '.' || $filename === '..' || $filename[0] === '.') {
+
+            return new WP_Error('invalid_filename', 'Nom de fichier invalide.');
+
+        }
+
+        $parts = array_values(array_filter(explode('.', strtolower($filename)), static fn($part) => $part !== ''));
+        $extension = end($parts);
+        if (!is_string($extension) || !isset(self::UPLOAD_ALLOWED_MIMES[$extension])) {
+
+            return new WP_Error('unsupported_file_type', 'Type de fichier non autorise.');
+
+        }
+
+        foreach ($parts as $part) {
+
+            if (in_array($part, self::UPLOAD_BLOCKED_EXTENSIONS, true)) {
+
+                return new WP_Error('dangerous_extension', 'Extension de fichier dangereuse.');
+
+            }
+
+        }
+
+        $check = wp_check_filetype_and_ext((string) $_FILES[$field]['tmp_name'], $filename, self::UPLOAD_ALLOWED_MIMES);
+        if (!empty($check['ext']) && (string) $check['ext'] !== $extension) {
+
+            return new WP_Error('mime_mismatch', 'Le type du fichier ne correspond pas a son extension.');
+
+        }
+
+        if (empty($check['type'])) {
+
+            $declared = isset($_FILES[$field]['type']) ? strtolower((string) $_FILES[$field]['type']) : '';
+            $text_like = array('txt', 'md', 'csv', 'json', 'sql', 'py');
+            $zip_like = array('zip', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp');
+
+            if (in_array($extension, $text_like, true) && in_array($declared, array('', 'text/plain', 'application/octet-stream'), true)) {
+
+                return $filename;
+
+            }
+
+            if (in_array($extension, $zip_like, true) && in_array($declared, array('application/zip', 'application/x-zip-compressed', 'application/octet-stream'), true)) {
+
+                return $filename;
+
+            }
+
+            return new WP_Error('mime_not_allowed', 'Type MIME non autorise.');
+
+        }
+
+        return $filename;
+
+    }
+
+
+
     private function private_handle_upload_as_attachment(string $field, string $subdir, int $parent_post_id) {
+
+        $validated_filename = $this->validate_private_upload_file($field);
+
+        if (is_wp_error($validated_filename)) {
+
+            return $validated_filename;
+
+        }
+
+        $_FILES[$field]['name'] = $validated_filename;
 
         if (empty($_FILES[$field]['name'])) {
 
@@ -192,6 +322,7 @@ class Ouinpo_Submissions_Plugin {
             $uploaded = wp_handle_upload($_FILES[$field], array(
 
                 'test_form' => false,
+                'mimes'     => self::UPLOAD_ALLOWED_MIMES,
 
             ));
 
@@ -233,7 +364,7 @@ class Ouinpo_Submissions_Plugin {
 
             'post_parent'    => $parent_post_id,
 
-            'guid'           => $uploaded['url'],
+            'guid'           => '',
 
         ), $uploaded['file'], $parent_post_id, true);
 

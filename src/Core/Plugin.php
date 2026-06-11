@@ -23,6 +23,7 @@ final class Plugin
     {
         // Source unique de vérité pour le schéma partagé.
         Installer::installOrUpgradeSharedSchema();
+        Installer::ensureProjectsStudentAiSchema();
         Capabilities::install();
 
         foreach ($this->registry->all() as $module) {

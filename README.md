@@ -6,9 +6,9 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.6.0-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.6.4-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
-Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault et RechText, doivent etre actives volontairement depuis l'administration.
+Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
 ## Pour commencer
 
@@ -30,6 +30,7 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Flashcards de révision
 - Concepteur de devoirs
 - Sujets pratiques de type bac NSI
+- Suivi de projets BTS SIO avec Kanban et journal de bord via le module optionnel Projects
 - Tableaux de suivi pour l’enseignant
 - Modules IA optionnels
 - Diagnostic d’installation
@@ -188,6 +189,8 @@ La carte du site dynamique est optionnelle et reflète surtout l'organisation du
 | Dépôt de travaux | `depot-travaux` | `[ouinpo_upload]` |
 | Mes dépôts | `mes-depots` | `[ouinpo_my_submissions]` |
 | Ressources | `ressources` | `[ouinpo_resources]` |
+| Mes projets | `mes-projets` | `[ouinpo_my_projects]` |
+| Suivi des projets | `suivi-projets` | `[ouinpo_teacher_projects]` |
 | Suivi des compétences | `suivi-competences` | `[ouinpo_competences_prof]` |
 
 Les trois premieres pages de ce tableau sont prevues pour des eleves connectes lorsque le module Submissions est active. Le suivi des competences est reserve aux enseignants ou administrateurs ayant les capacites OuInPo necessaires.
@@ -219,6 +222,250 @@ Ces pages supposent le module SegFault active. Le chat peut etre public ou reser
 
 Ces pages correspondent a des modules avances desactives par defaut sur une installation neuve. Les activer seulement si elles sont configurees et utiles au site.
 
+### SPOPI Projects
+
+Le module optionnel `projects` ajoute le suivi pedagogique de projets BTS SIO. Il fournit une gestion simple des projets, des membres, d'un tableau Kanban, d'un journal de bord projet, de livrables, de traces/preuves avec fichiers, de liens vers les competences BO existantes, d'une fiche projet portfolio imprimable et d'une fiche de situation professionnelle BTS SIO.
+
+Depuis `0.6.3-beta`, Projects inclut aussi un assistant IA encadre pour les enseignants : propositions de taches, livrables adaptes, competences liees, analyse de risques, aide portfolio et synthese enseignant. Toutes les reponses IA sont des brouillons/previsualisations. Le serveur n'applique rien sans selection explicite et confirmation par un enseignant ou administrateur autorise.
+
+Les lots 5 et 5.1 ajoutent puis stabilisent un assistant IA eleve distinct et limite a la preparation personnelle du portfolio BTS : questions de recul, synthese personnelle et brouillon portfolio. Il est desactive par defaut, doit etre active globalement puis projet par projet, refuse les projets archives et ne modifie jamais les donnees Projects.
+
+Shortcodes disponibles :
+
+| Shortcode | Usage |
+|---|---|
+| `[ouinpo_my_projects]` | Liste des projets visibles par l'utilisateur connecte, avec acces Kanban et journal |
+| `[ouinpo_project_kanban id="..."]` | Tableau Kanban d'un projet autorise |
+| `[ouinpo_project_journal id="..."]` | Journal de bord d'un projet autorise |
+| `[ouinpo_project_deliverables id="..."]` | Livrables attendus, statuts et validation enseignant |
+| `[ouinpo_project_evidence id="..."]` | Traces/preuves deposees par les membres du projet : texte, lien ou fichier |
+| `[ouinpo_project_sheet id="..."]` | Fiche projet portfolio HTML imprimable avec export Markdown |
+| `[ouinpo_project_bts_situation id="..."]` | Fiche situation professionnelle BTS SIO imprimable avec export Markdown |
+| `[ouinpo_project_ai_assistant id="..."]` | Assistant IA enseignant pour propositions Projects en brouillon |
+| `[ouinpo_project_student_ai id="..."]` | Assistant IA eleve lecture seule pour brouillons portfolio personnels |
+| `[ouinpo_teacher_projects]` | Vue enseignant avec statut, membres, taches, livrables, traces, alertes et acces Kanban/fiche |
+
+Capacites ajoutees :
+
+```text
+ouinpo_projects_manage_all
+ouinpo_projects_manage_class
+ouinpo_projects_create
+ouinpo_projects_view_own
+ouinpo_projects_edit_own_tasks
+ouinpo_projects_comment
+ouinpo_projects_validate
+ouinpo_projects_ai_use
+ouinpo_projects_ai_apply
+ouinpo_projects_ai_student_use
+```
+
+Les capacites IA Projects enseignant (`ouinpo_projects_ai_use`, `ouinpo_projects_ai_apply`) sont attribuees aux administrateurs et enseignants OuInPo lors de l'installation/mise a jour. La capacite `ouinpo_projects_ai_student_use` est aussi attribuee aux eleves, mais les routes eleves exigent en plus l'appartenance actuelle au projet, l'activation globale et l'activation du projet. Les eleves ne recoivent jamais `ouinpo_projects_ai_apply`.
+
+Tables creees :
+
+```text
+{prefix}ouinpo_projects
+{prefix}ouinpo_project_members
+{prefix}ouinpo_project_columns
+{prefix}ouinpo_project_tasks
+{prefix}ouinpo_project_task_comments
+{prefix}ouinpo_project_checklist_items
+{prefix}ouinpo_project_logs
+{prefix}ouinpo_project_deliverables
+{prefix}ouinpo_project_evidence
+{prefix}ouinpo_project_competency_links
+```
+
+Les routes REST utilisent le namespace `ouinpo-projects/v1` et exigent un utilisateur connecte, un nonce REST et les capacites/appartenances adaptees. Les eleves ne voient que les projets dont ils sont membres. Les livrables sont geres/valides par les enseignants du projet ; les membres peuvent deposer des traces si leurs capacites Projects le permettent.
+
+Routes REST principales Projects :
+
+```text
+GET/POST /projects/{id}/deliverables
+PATCH/DELETE /deliverables/{id}
+PATCH /deliverables/{id}/status
+GET/POST /projects/{id}/evidence
+POST /projects/{id}/evidence/upload
+PATCH/DELETE /evidence/{id}
+GET /evidence/{id}/download
+GET/POST /projects/{id}/competencies
+GET/POST /tasks/{id}/competencies
+GET/POST /deliverables/{id}/competencies
+DELETE /competency-links/{id}
+GET /projects/{id}/export/html
+GET /projects/{id}/export/markdown
+GET /projects/{id}/bts-situation/markdown
+POST /projects/{id}/ai/suggest-tasks
+POST /projects/{id}/ai/suggest-deliverables
+POST /projects/{id}/ai/suggest-competencies
+POST /projects/{id}/ai/analyze-risks
+POST /projects/{id}/ai/portfolio-summary
+POST /projects/{id}/ai/teacher-summary
+POST /projects/{id}/ai/apply-suggestion
+POST /projects/{id}/student-ai/reflection-questions
+POST /projects/{id}/student-ai/personal-summary
+POST /projects/{id}/student-ai/portfolio-draft
+```
+
+Les liens de competences utilisent la table existante `ouin_exo_competencies`. Le module ne cree pas un second referentiel : si aucune competence BO n'est importee ou creee, les panneaux de liaison restent vides.
+
+Assistant IA Projects :
+
+- les routes IA exigent utilisateur connecte, nonce REST, capacite `ouinpo_projects_ai_use`, et `ouinpo_projects_ai_apply` en plus pour l'application, avec droits enseignant/admin sur le projet ;
+- aucun appel IA anonyme ou declenche par un eleve n'est prevu dans ce lot ;
+- l'usage IA reutilise `ouinpo_ai_usage_pedagogical_suggestions`, les fournisseurs IA existants et les quotas enseignants `ouinpo_ai_teacher_per_minute` / `ouinpo_ai_teacher_per_day` ;
+- le quota est consomme uniquement lors d'un appel reel au fournisseur IA ; l'application d'une proposition deja recue, les erreurs de permission, les nonces invalides et l'IA desactivee ne consomment pas de quota ;
+- aucun quota dedie Projects n'est ajoute dans ce lot ; TODO possible ulterieur si les usages Projects doivent etre separes des autres usages enseignants ;
+- le contexte transmis a l'IA est minimise : metadonnees de projet, taches, livrables, traces, journal et competences disponibles ; le contenu des fichiers n'est pas lu ;
+- les reponses sont demandees en JSON strict, parsees et revalidees cote serveur ; un JSON vide, incomplet, tronque, hors schema ou visant un objet hors projet est refuse avant toute application ;
+- les identifiants de projet, tache, livrable et competence sont reverifies avant application ; les doublons evidents et titres vides sont refuses ;
+- les logs IA sont synthetiques via les reglages IA existants et ne stockent pas les prompts complets, reponses completes, chemins, traces detaillees, noms ou emails.
+
+Assistant IA eleve Projects :
+
+- activation en deux temps : option globale `ouinpo_projects_student_ai_enabled` dans les reglages IA SegFault, puis case `IA eleve` sur le projet ;
+- routes REST connectees uniquement, avec nonce REST, capacite `ouinpo_projects_ai_student_use`, projet existant non archive, membre actuel du projet, option globale active, option projet active et quota disponible ;
+- champs eleve disponibles dans l'interface : role, travail realise, difficultes, solutions, apprentissages et elements a montrer ; au moins le role ou le travail reel doit etre renseigne ;
+- si le role et le travail reel sont vides, le message attendu est : `Indique d’abord ce que tu as réellement fait dans le projet.` ;
+- quotas dedies : `ouinpo_ai_projects_student_per_minute`, `ouinpo_ai_projects_student_per_day` et `ouinpo_ai_projects_student_max_tokens` ;
+- contexte minimise : titre, description generale, statut, periode, taches liees a l'eleve, livrables en metadata, traces de l'eleve, synthese de traces globales, journal de l'eleve et competences liees ;
+- autres membres non nommes, pas d'emails, pas de chemins prives, pas d'URLs de telechargement, pas de contenu de fichier ;
+- reponses attendues en JSON strict et revalidees cote serveur avec constantes de bornage `MAX_STUDENT_AI_QUESTIONS`, `MAX_STUDENT_AI_TEXT_LENGTH`, `MAX_STUDENT_AI_WARNINGS` et `MAX_STUDENT_CONTEXT_ITEMS` ; un JSON invalide, incomplet ou hors type n'est pas affiche ;
+- les logs IA eleve restent synthetiques : user_id, project_id, action, provider, succes/echec, code, taille approximative et date, sans texte eleve, prompt, reponse, nom, email, URL, chemin ou contenu de fichier ;
+- aucune action d'application : l'IA eleve ne cree, modifie ni supprime tache, livrable, competence, trace ou journal.
+
+Uploads de traces fichier :
+
+- taille maximale par fichier : 10 Mo ;
+- extensions autorisees : `pdf`, `txt`, `md`, `csv`, `json`, `sql`, `py`, `html.txt`, `css.txt`, `js.txt`, `png`, `jpg`, `jpeg`, `webp`, `zip` ;
+- extensions refusees directement : `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `html`, `js`, `css`, `htaccess` ;
+- les fichiers web doivent etre neutralises avant depot, par exemple `index.html.txt`, `style.css.txt`, `script.js.txt` ;
+- les nouveaux fichiers sont stockes dans `wp-content/uploads/ouinpo/projects/`, avec `index.php` et `.htaccess` de refus d'acces direct quand le serveur les applique ;
+- le plugin verifie en administration que les fichiers de protection locaux existent, mais cette verification ne garantit pas qu'un serveur Nginx, IIS ou Apache/LiteSpeed mal configure bloque l'acces HTTP direct ;
+- les fichiers sont crees comme attachments WordPress, rattaches a la table `ouinpo_project_evidence` via `attachment_id`, puis servis par `GET /evidence/{id}/download` avec nonce REST et droits de vue projet ;
+- la suppression d'une trace fichier privee supprime aussi son attachment WordPress et son fichier physique, uniquement si l'attachment est marque comme fichier prive Projects ;
+- une trace ancienne avec attachment public conserve son fichier public ; seule la ligne de trace est supprimee.
+
+Compatibilite : les fichiers Projects uploades avant le stockage protege par route REST ne sont pas migres physiquement. Ils restent affiches via leur URL historique et peuvent rester accessibles directement selon la configuration du site. Pour Nginx, IIS ou un serveur qui ignore `.htaccess`, il faut ajouter une regle serveur refusant l'acces web a `uploads/ouinpo/projects/`. Le stockage dans `uploads/` ne doit pas etre considere comme prive de maniere absolue sans cette regle serveur.
+
+Exports :
+
+- `[ouinpo_project_sheet]` et `[ouinpo_project_bts_situation]` proposent un bouton `Imprimer / Enregistrer en PDF` qui appelle simplement l'impression du navigateur ;
+- les routes Markdown retournent un Markdown serveur nettoye, sans generation PDF serveur et sans dependance externe ;
+- l'export HTML retourne un fragment HTML echappe avec classes prefixees `ouinpo-projects-`.
+
+Limites actuelles : IA Projects limitee a des brouillons enseignants valides manuellement et a des brouillons eleves lecture seule, pas d'export PDF serveur, pas de badge projet, pas d'integration GitHub/GitLab, pas de Gantt, pas de temps passe, pas de messagerie ni notification email.
+
+#### Recette manuelle recommandee
+
+1. Activer le module Projects dans `OuInPo Suite > Reglages > Modules`.
+2. Verifier que la migration a cree les tables `ouinpo_project*`.
+3. Creer un projet depuis l'administration Projects.
+4. Verifier la creation des 7 colonnes par defaut.
+5. Ajouter deux eleves comme membres.
+6. Tester `[ouinpo_my_projects]` avec un eleve membre.
+7. Tester le meme shortcode avec un eleve non membre.
+8. Creer une tache depuis le Kanban.
+9. Deplacer la tache avec les boutons gauche/droite.
+10. Ajouter un commentaire via REST ou outil de test.
+11. Ajouter une entree de journal.
+12. Creer les livrables BTS par defaut depuis l'admin Projects.
+13. Deposer une trace avec un eleve membre.
+14. Lier une competence BO au projet ou a un livrable.
+15. Verifier la fiche `[ouinpo_project_sheet]`.
+16. Verifier la fiche `[ouinpo_project_bts_situation]`.
+17. Verifier la vue `[ouinpo_teacher_projects]` avec un compte professeur.
+18. Avec deux professeurs distincts, verifier que `?page=ouinpo-projects&project_id=` d'un projet non gere renvoie un refus 403.
+
+#### Recette securite lot 2.1
+
+1. Avec un eleve membre, verifier l'acces a `[ouinpo_my_projects]`, au Kanban, aux livrables, aux traces et a la fiche projet.
+2. Avec le meme eleve membre, verifier qu'il peut ajouter une trace et supprimer uniquement sa propre trace.
+3. Avec un eleve non membre, verifier qu'il ne voit pas le projet dans `[ouinpo_my_projects]`.
+4. Avec un eleve non membre, appeler directement une route REST de livrable connue : `GET /projects/{id}/deliverables` doit renvoyer `403`.
+5. Avec un eleve non membre, appeler directement une route REST de trace connue : `PATCH /evidence/{id}` ou `DELETE /evidence/{id}` doit renvoyer `403` ou `404`.
+6. Avec un eleve non membre, appeler directement une route REST de competence liee : `DELETE /competency-links/{id}` doit renvoyer `403` ou `404`.
+7. Avec un eleve membre, verifier que `PATCH /deliverables/{id}/status` ne permet pas de valider un livrable.
+8. Avec un professeur, verifier la validation, le rejet et la demande de reprise d'un livrable.
+9. Avec un professeur, verifier que la fiche `[ouinpo_project_sheet]` reste imprimable sans livrable, sans trace et sans competence liee.
+10. Retirer un eleve du projet, puis verifier que les anciens liens directs vers Kanban, livrables, traces et fiche ne donnent plus acces au projet.
+
+#### Recette securite lot 3
+
+1. Avec un eleve membre, deposer une trace texte, une trace lien et une trace fichier autorisee.
+2. Verifier qu'un fichier `index.html` est refuse et que `index.html.txt` est accepte.
+3. Verifier que `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `js`, `css`, `html` et `.htaccess` sont refuses.
+4. Verifier qu'un fichier de plus de 10 Mo est refuse.
+5. Avec un eleve non membre, appeler directement `POST /projects/{id}/evidence/upload` : la route doit renvoyer `403`.
+6. Avec un eleve membre, fournir un `deliverable_id` ou `task_id` d'un autre projet : la route doit refuser la demande.
+7. Supprimer un attachment WordPress deja rattache et verifier que `[ouinpo_project_evidence]`, `[ouinpo_project_sheet]` et `[ouinpo_project_bts_situation]` ne cassent pas.
+8. Verifier `GET /projects/{id}/export/markdown`, `GET /projects/{id}/export/html` et `GET /projects/{id}/bts-situation/markdown` avec membre, professeur et non membre.
+9. Verifier que les boutons `Copier Markdown` et `Imprimer / Enregistrer en PDF` fonctionnent dans les deux fiches.
+10. Confirmer qu'aucune route Projects n'utilise `__return_true` et qu'aucun fichier `dist/` n'est modifie.
+
+#### Recette stabilisation lot 3.1
+
+1. Avec un eleve membre, verifier `POST /projects/{id}/evidence/upload` avec un fichier autorise.
+2. Avec un eleve non membre, verifier que le meme upload renvoie `403`.
+3. Retirer un ancien membre du projet, puis verifier que l'upload et la suppression de ses anciennes traces sont refuses.
+4. Verifier que `php`, `phtml`, `phar`, `exe`, `bat`, `cmd`, `sh`, `svg`, `html`, `js`, `css`, `htaccess` et `.env` sont refuses.
+5. Verifier qu'un fichier sans extension, un fichier commencant par un point et une double extension dangereuse sont refuses.
+6. Verifier que `index.html.txt`, `style.css.txt` et `script.js.txt` sont acceptes, mais pas `.html`, `.css` ou `.js`.
+7. Verifier qu'un fichier vide, un fichier de plus de 10 Mo et un MIME incoherent sont refuses.
+8. Supprimer manuellement un attachment WordPress lie a une trace, puis verifier que les shortcodes de traces, fiche projet et fiche BTS affichent un message propre.
+9. Simuler un echec de creation de trace apres upload si possible, puis verifier que le fichier et l'attachment ne restent pas orphelins.
+10. Tester les exports Markdown/HTML avec un professeur, un eleve membre, un eleve non membre et un ancien membre retire.
+11. Imprimer la fiche BTS et verifier que les boutons sont masques et que les longues URLs ne debordent pas.
+
+#### Recette securite lot 3.2
+
+1. Avec un eleve membre, deposer une trace fichier autorisee.
+2. Verifier que le fichier physique est cree sous `wp-content/uploads/ouinpo/projects/`.
+3. Verifier que `index.php` et `.htaccess` existent dans `uploads/ouinpo/` et `uploads/ouinpo/projects/`.
+4. Verifier que la trace affiche un lien `GET /ouinpo-projects/v1/evidence/{id}/download` avec nonce REST, et pas l'URL directe du fichier upload.
+5. Avec l'eleve membre ou le professeur autorise, ouvrir ce lien et verifier le telechargement avec `Content-Disposition: attachment` et `X-Content-Type-Options: nosniff`.
+6. Avec un eleve non membre et avec un ancien membre retire du projet, appeler le meme lien : la route doit renvoyer `403` ou `401`.
+7. Supprimer ou alterer la meta `_ouinpo_project_evidence_id` d'un attachment de test, puis verifier que le telechargement est refuse.
+8. Verifier qu'une ancienne trace fichier creee avant le lot 3.2 reste visible via son URL historique, sans migration physique.
+9. Supprimer une nouvelle trace fichier privee et verifier que son attachment et son fichier physique sont supprimes.
+10. Verifier l'URL directe du fichier : elle doit etre refusee seulement si le serveur applique `.htaccess` ou une regle equivalente.
+
+#### Recette IA Projects lot 4
+
+1. Activer l'IA globale et l'usage `pedagogical_suggestions`, puis configurer Albert ou OpenAI dans les reglages IA existants.
+2. Verifier qu'un compte enseignant responsable du projet voit le bouton `IA` dans `[ouinpo_teacher_projects]`.
+3. Verifier qu'un eleve membre ne voit pas ce bouton et que `POST /projects/{id}/ai/suggest-tasks` renvoie `403`.
+4. Generer des propositions de taches, livrables, competences, risques, portfolio et synthese enseignant.
+5. Verifier que les risques et syntheses restent en lecture seule.
+6. Selectionner une partie des taches/livrables/competences puis confirmer l'application.
+7. Verifier que le serveur dedoublonne les titres existants et refuse les identifiants hors projet.
+8. Verifier les logs synthetiques si `WP_DEBUG` et les logs IA OuInPo sont actifs.
+
+#### Recette stabilisation IA Projects lot 4.1
+
+1. Avec l'IA desactivee, verifier qu'une route IA renvoie un message clair et ne consomme pas de quota.
+2. Avec un nonce absent ou invalide, verifier que les appels IA et l'application renvoient `401/403`.
+3. Forcer une reponse IA vide, invalide, tronquee ou avec JSON entoure de texte : le JSON entoure peut etre extrait, les autres cas doivent etre refuses sans application.
+4. Tenter d'appliquer une tache/livrable sans titre, avec type ou priorite invalide, doublon evident, ou competence inconnue : le serveur doit refuser.
+5. Tenter de lier une competence a une tache ou un livrable d'un autre projet : le serveur doit refuser.
+6. Verifier que les boutons IA sont desactives pendant l'appel, que l'aperçu precedent est remplace, et qu'aucune application ne part apres annulation de confirmation.
+7. Verifier que les logs IA ne contiennent ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
+
+
+#### Recette IA eleve Projects lots 5 et 5.1
+
+1. Activer l'IA globale et `ouinpo_projects_student_ai_enabled` dans les reglages IA SegFault, puis cocher `IA eleve` sur un projet de test.
+2. Verifier qu'un eleve membre voit l'acces `IA portfolio` depuis `[ouinpo_my_projects]` ou le shortcode `[ouinpo_project_student_ai]`.
+3. Appeler les trois actions avec les champs vides : la route doit renvoyer exactement `Indique d’abord ce que tu as réellement fait dans le projet.` et ne pas consommer de quota.
+4. Renseigner le role ou le travail realise, puis generer questions de recul, synthese personnelle et brouillon portfolio.
+5. Verifier que le resultat est copiable mais qu'aucun bouton d'application n'existe.
+6. Verifier qu'un eleve non membre, un ancien membre retire, un visiteur anonyme, un nonce invalide, l'option globale desactivee, l'option projet desactivee et un projet archive sont refuses sans appel fournisseur.
+7. Verifier que `/ai/apply-suggestion` reste refuse a un eleve et que les routes `/student-ai/*` ne modifient aucune table de projet.
+8. Verifier que les logs IA ne contiennent ni texte eleve complet, ni prompt, ni reponse complete, ni nom/email, ni chemin prive.
+9. Forcer une reponse IA vide, JSON invalide, JSON liste, objet incomplet ou champ de mauvais type : la route doit refuser avec une erreur de schema sans afficher de brouillon.
+10. Verifier que la copie fonctionne avec et sans `navigator.clipboard`, et que le rappel `Cette aide ne remplace pas ton propre bilan.` apparait dans le shortcode.
+11. Lancer les controles techniques : `php -l` sur les fichiers PHP Projects/Core modifies, `node --check assets/js/front/projects.js`, `git diff --check -- . ':!CSS_additionnels/add._bts.css' ':!dist'`, puis les recherches statiques sur permissions REST, nonces, JSON strict, logs IA, `apply-suggestion`, `student-ai`, `wp_ouinpo` et `dist/`.
 
 ### Gate configurable
 

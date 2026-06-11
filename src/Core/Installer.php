@@ -6,12 +6,15 @@ final class Installer
     public static function maybeUpgrade(): void
     {
         $installed = (string) get_option('ouinpo_suite_version', '0.2.0');
+        self::ensureProjectsStudentAiSchema();
+
         if (version_compare($installed, OUINPO_SUITE_VERSION, '>=')) {
             return;
         }
 
         self::installOrUpgradeSharedSchema();
         AiSettings::migrate_public_access_for_existing_site($installed);
+        self::ensureProjectsStudentAiSchema();
         Capabilities::install();
         update_option('ouinpo_suite_version', OUINPO_SUITE_VERSION, false);
     }
@@ -143,6 +146,197 @@ final class Installer
             KEY last_suggested_at (last_suggested_at),
             KEY exercise_id (exercise_id)
         ) {$schema_suffix};");
+
+        // Projects / suivi pedagogique BTS SIO.
+        $tProjects   = $wpdb->prefix . 'ouinpo_projects';
+        $tMembers    = $wpdb->prefix . 'ouinpo_project_members';
+        $tColumns    = $wpdb->prefix . 'ouinpo_project_columns';
+        $tTasks      = $wpdb->prefix . 'ouinpo_project_tasks';
+        $tComments   = $wpdb->prefix . 'ouinpo_project_task_comments';
+        $tChecklist  = $wpdb->prefix . 'ouinpo_project_checklist_items';
+        $tProjectLog = $wpdb->prefix . 'ouinpo_project_logs';
+        $tDeliverables = $wpdb->prefix . 'ouinpo_project_deliverables';
+        $tEvidence = $wpdb->prefix . 'ouinpo_project_evidence';
+        $tCompetencyLinks = $wpdb->prefix . 'ouinpo_project_competency_links';
+
+        dbDelta("CREATE TABLE {$tProjects} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            title VARCHAR(190) NOT NULL,
+            slug VARCHAR(190) NOT NULL,
+            description LONGTEXT NULL,
+            level VARCHAR(100) NULL,
+            class_slug VARCHAR(100) NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'draft',
+            student_ai_enabled TINYINT(1) NOT NULL DEFAULT 0,
+            teacher_id BIGINT UNSIGNED NOT NULL,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            created_by BIGINT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY slug (slug),
+            KEY status (status),
+            KEY teacher_id (teacher_id),
+            KEY class_slug (class_slug),
+            KEY created_by (created_by),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tMembers} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            role VARCHAR(50) NOT NULL DEFAULT 'member',
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY project_user (project_id, user_id),
+            KEY project_id (project_id),
+            KEY user_id (user_id),
+            KEY role (role),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tColumns} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            title VARCHAR(190) NOT NULL,
+            position INT NOT NULL DEFAULT 0,
+            status_key VARCHAR(100) NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY  (id),
+            KEY project_id (project_id),
+            KEY project_position (project_id, position),
+            KEY status_key (status_key),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tTasks} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            column_id BIGINT UNSIGNED NOT NULL,
+            title VARCHAR(190) NOT NULL,
+            description LONGTEXT NULL,
+            assigned_user_id BIGINT UNSIGNED NULL,
+            priority VARCHAR(20) NOT NULL DEFAULT 'normal',
+            due_date DATE NULL,
+            position INT NOT NULL DEFAULT 0,
+            status VARCHAR(30) NOT NULL DEFAULT 'open',
+            created_by BIGINT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY  (id),
+            KEY project_id (project_id),
+            KEY column_id (column_id),
+            KEY column_position (column_id, position),
+            KEY assigned_user_id (assigned_user_id),
+            KEY created_by (created_by),
+            KEY status (status),
+            KEY priority (priority),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tComments} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            task_id BIGINT UNSIGNED NOT NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            comment LONGTEXT NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY  (id),
+            KEY task_id (task_id),
+            KEY user_id (user_id),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tChecklist} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            task_id BIGINT UNSIGNED NOT NULL,
+            label VARCHAR(190) NOT NULL,
+            is_done TINYINT(1) NOT NULL DEFAULT 0,
+            position INT NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY  (id),
+            KEY task_id (task_id),
+            KEY task_position (task_id, position),
+            KEY is_done (is_done),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tProjectLog} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            work_done LONGTEXT NOT NULL,
+            blockers LONGTEXT NULL,
+            decision_taken LONGTEXT NULL,
+            next_step LONGTEXT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY  (id),
+            KEY project_id (project_id),
+            KEY user_id (user_id),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tDeliverables} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            title VARCHAR(190) NOT NULL,
+            description LONGTEXT NULL,
+            type VARCHAR(50) NOT NULL DEFAULT 'other',
+            status VARCHAR(50) NOT NULL DEFAULT 'expected',
+            due_date DATE NULL,
+            validated_by BIGINT UNSIGNED NULL,
+            validated_at DATETIME NULL,
+            position INT NOT NULL DEFAULT 0,
+            created_by BIGINT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY  (id),
+            KEY project_id (project_id),
+            KEY project_position (project_id, position),
+            KEY status (status),
+            KEY type (type),
+            KEY due_date (due_date),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tEvidence} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            deliverable_id BIGINT UNSIGNED NULL,
+            task_id BIGINT UNSIGNED NULL,
+            user_id BIGINT UNSIGNED NOT NULL,
+            title VARCHAR(190) NOT NULL,
+            description LONGTEXT NULL,
+            evidence_type VARCHAR(50) NOT NULL DEFAULT 'link',
+            url TEXT NULL,
+            attachment_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY  (id),
+            KEY project_id (project_id),
+            KEY deliverable_id (deliverable_id),
+            KEY task_id (task_id),
+            KEY user_id (user_id),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
+
+        dbDelta("CREATE TABLE {$tCompetencyLinks} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id BIGINT UNSIGNED NOT NULL,
+            object_type VARCHAR(30) NOT NULL,
+            object_id BIGINT UNSIGNED NOT NULL,
+            competency_id BIGINT UNSIGNED NOT NULL,
+            created_by BIGINT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY object_competency (object_type, object_id, competency_id),
+            KEY project_id (project_id),
+            KEY object_lookup (object_type, object_id),
+            KEY competency_id (competency_id),
+            KEY created_at (created_at)
+        ) {$schema_suffix};");
         
     }
 
@@ -248,6 +442,37 @@ private static function addForeignKeyIfMissing(string $table, string $name, stri
         ];
 
         update_option('ouinpo_suite_fk_failures', $failures, false);
+    }
+}
+
+public static function ensureProjectsStudentAiSchema(): void
+{
+    global $wpdb;
+
+    $projects = $wpdb->prefix . 'ouinpo_projects';
+    $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $projects));
+    if ((string) $tableExists === $projects) {
+        $columnExists = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$projects} LIKE %s", 'student_ai_enabled'));
+        if (!$columnExists) {
+            $wpdb->query("ALTER TABLE {$projects} ADD student_ai_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER status");
+        }
+    }
+
+    self::ensureProjectsStudentAiDefaults();
+}
+
+private static function ensureProjectsStudentAiDefaults(): void
+{
+    $defaults = AiSettings::defaults();
+    foreach ([
+        'ouinpo_projects_student_ai_enabled',
+        'ouinpo_ai_projects_student_per_minute',
+        'ouinpo_ai_projects_student_per_day',
+        'ouinpo_ai_projects_student_max_tokens',
+    ] as $option) {
+        if (get_option($option, null) === null && array_key_exists($option, $defaults)) {
+            update_option($option, $defaults[$option], false);
+        }
     }
 }
 }
