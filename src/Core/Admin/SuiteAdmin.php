@@ -82,8 +82,8 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
-            'Contenus',
-            'Contenus',
+            'Préparer',
+            'Préparer',
             Capabilities::MANAGE_EXERCISES,
             'ouinpo-suite-contents',
             [self::class, 'renderContentsHub']
@@ -111,8 +111,8 @@ final class SuiteAdmin
 
         add_submenu_page(
             self::ROOT_SLUG,
-            'Classes & élèves',
-            'Classes & élèves',
+            'Suivre',
+            'Suivre',
             Capabilities::MANAGE_CLASSES,
             'ouinpo-suite-classes',
             [self::class, 'renderClassesHub']
@@ -128,7 +128,7 @@ final class SuiteAdmin
         );
 
         add_submenu_page(
-            self::ROOT_SLUG,
+            null,
             'Badges',
             'Badges',
             Capabilities::MANAGE_BADGES,
@@ -174,7 +174,7 @@ final class SuiteAdmin
         $tabs = [
             self::ROOT_SLUG              => 'Tableau de bord',
             'ouinpo-suite-first-setup'   => 'Première configuration',
-            'ouinpo-suite-contents'      => 'Contenus',
+            'ouinpo-suite-contents'      => 'Préparer',
         ];
 
         if (ModuleSettings::isEnabled('flashcards')) {
@@ -182,12 +182,8 @@ final class SuiteAdmin
         }
 
         $tabs['ouinpo-suite-evaluations'] = 'Évaluations';
-        $tabs['ouinpo-suite-classes'] = 'Classes & élèves';
+        $tabs['ouinpo-suite-classes'] = 'Suivre';
         $tabs['ouinpo-suite-referentiel'] = 'Référentiel BO';
-
-        if (Capabilities::can(Capabilities::MANAGE_BADGES)) {
-            $tabs['ouinpo-suite-badges'] = 'Badges';
-        }
 
         if (self::hasAiOrPathModule()) {
             $tabs['ouinpo-suite-ai'] = 'IA & parcours';
@@ -548,7 +544,7 @@ final class SuiteAdmin
             );
 
             self::metricCard(
-                'Classes & élèves',
+                'Suivre',
                 ($stats['groups_total'] !== null ? number_format_i18n($stats['groups_total']) : '—'),
                 ($stats['members_total'] !== null ? number_format_i18n($stats['members_total']) . ' affectations' : 'groupes ou affectations indisponibles'),
                 admin_url('admin.php?page=ouinpo-suite-classes')
@@ -578,44 +574,22 @@ final class SuiteAdmin
         <div class="ouinpo-suite-grid">
             <?php
             self::quickAction(
-                'Créer / gérer les contenus',
-                'Accès au catalogue des exercices et sujets pratiques.',
+                'Préparer les contenus',
+                'Accéder aux exercices, annales, sujets pratiques, flashcards et imports.',
                 admin_url('admin.php?page=ouinpo-suite-contents')
-            );
-
-            if (ModuleSettings::isEnabled('flashcards')) {
-                self::quickAction(
-                    'Préparer les révisions',
-                    'Gérer les flashcards et paquets de cartes.',
-                    admin_url('admin.php?page=ouinpo-suite-revisions')
-                );
-            }
-
-            self::quickAction(
-                'Importer des exercices',
-                'Ajouter rapidement de nouveaux exercices.',
-                admin_url('admin.php?page=ouinpo-suite-contents&tab=import')
             );
 
             self::quickAction(
                 'Devoirs surveillés',
                 'Gérer les DS et évaluations.',
-                admin_url('admin.php?page=ouinpo-suite-evaluations&tab=ds')
+                admin_url('admin.php?page=ouinpo-suite-evaluations')
             );
 
             if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                 self::quickAction(
-                    'Groupes',
-                    'Organiser les classes et affectations.',
+                    'Suivre les élèves',
+                    'Organiser les classes, affectations, dépôts, compétences et badges.',
                     admin_url('admin.php?page=ouinpo-suite-classes')
-                );
-            }
-
-            if (ModuleSettings::isEnabled('submissions')) {
-                self::quickAction(
-                    'Dépôts élèves',
-                    'Voir les travaux récents des élèves.',
-                    admin_url('edit.php?post_type=ouinpo_submission')
                 );
             }
 
@@ -654,20 +628,32 @@ final class SuiteAdmin
 
     public static function renderContentsHub(): void
     {
-        $tab   = self::currentTab('catalogue');
+        $tab   = self::currentTab('exercices');
         $stats = self::dashboardStats();
 
-        self::pageIntro('Contenus', 'Exercices, sujets pratiques, imports et paramètres des contenus pédagogiques.');
+        self::pageIntro('Préparer', 'Exercices, annales, sujets pratiques, flashcards, imports et paramètres des contenus pédagogiques.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-contents');
 
-        self::subTabs('ouinpo-suite-contents', [
-            'catalogue' => 'Catalogue',
+        $contentTabs = [
+            'exercices' => 'Exercices',
+            'ecrits'    => 'Annales écrites',
             'pratiques' => 'Sujets pratiques',
-            'import'    => 'Import',
-            'options'   => 'Options',
-        ], $tab);
+        ];
 
-        if ($tab === 'catalogue') {
+        if (ModuleSettings::isEnabled('flashcards')) {
+            $contentTabs['flashcards'] = 'Flashcards';
+        }
+
+        $contentTabs['import'] = 'Import';
+        $contentTabs['options'] = 'Options';
+
+        if (!isset($contentTabs[$tab])) {
+            $tab = 'exercices';
+        }
+
+        self::subTabs('ouinpo-suite-contents', $contentTabs, $tab);
+
+        if ($tab === 'exercices') {
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
@@ -679,15 +665,21 @@ final class SuiteAdmin
                 );
 
                 self::quickAction(
-                    'Gérer les exercices',
+                    'Exercices',
                     'Créer, modifier et organiser les exercices du catalogue.',
                     admin_url('admin.php?page=ouinpo-exercices')
                 );
-
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'ecrits') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
                 self::quickAction(
-                    'Exercices type bac',
-                    'Retrouver les exercices orientés bac et leurs métadonnées.',
-                    admin_url('admin.php?page=ouinpo-exercices')
+                    'Annales écrites',
+                    'Gérer les annales écrites, leurs fichiers, exercices et questions.',
+                    admin_url('admin.php?page=ouinpo-written-subjects')
                 );
                 ?>
             </div>
@@ -701,11 +693,17 @@ final class SuiteAdmin
                     'Gérer les sujets pratiques et leurs appels.',
                     admin_url('admin.php?page=ouinpo-practical-subjects')
                 );
-
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'flashcards' && ModuleSettings::isEnabled('flashcards')) {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
                 self::quickAction(
-                    'Catalogue des exercices',
-                    'Revenir au catalogue principal des exercices.',
-                    admin_url('admin.php?page=ouinpo-exercices')
+                    'Flashcards',
+                    'Créer les paquets, modifier les cartes et préparer les révisions.',
+                    admin_url('admin.php?page=ouinpo-flashcards')
                 );
                 ?>
             </div>
@@ -715,8 +713,8 @@ final class SuiteAdmin
             <div class="ouinpo-suite-grid">
                 <?php
                 self::quickAction(
-                    'Importer des exercices',
-                    'Ajouter rapidement de nouveaux exercices au catalogue.',
+                    'Import',
+                    'Importer des exercices, annales, sujets ou contenus pédagogiques.',
                     admin_url('admin.php?page=ouinpo-import-exercises')
                 );
                 ?>
@@ -728,7 +726,7 @@ final class SuiteAdmin
                 <?php
                 if (Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
                     self::quickAction(
-                        'Options des contenus',
+                        'Options',
                         'Configurer les réglages du module Exercices.',
                         admin_url('admin.php?page=ouinpo-exercises-settings')
                     );
@@ -836,15 +834,14 @@ final class SuiteAdmin
 
     public static function renderClassesHub(): void
     {
-        $tab   = self::currentTab('groupes');
+        $tab   = self::currentTab('classes');
         $stats = self::dashboardStats();
 
-        self::pageIntro('Classes & élèves', 'Organisation des classes, affectations et productions des élèves.');
+        self::pageIntro('Suivre', 'Organisation des classes, affectations, productions, compétences et badges des élèves.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-classes');
 
         $classTabs = [
-            'niveaux'      => 'Niveaux',
-            'groupes'      => 'Classes',
+            'classes'      => 'Classes',
             'affectations' => 'Affectations',
         ];
 
@@ -853,34 +850,16 @@ final class SuiteAdmin
             $classTabs['ressources'] = 'Ressources';
         }
 
+        $classTabs['competences'] = 'Compétences';
+        $classTabs['badges'] = 'Badges';
+
         if (!isset($classTabs[$tab])) {
-            $tab = 'groupes';
+            $tab = 'classes';
         }
 
         self::subTabs('ouinpo-suite-classes', $classTabs, $tab);
 
-        if ($tab === 'niveaux') {
-            ?>
-            <div class="ouinpo-suite-grid">
-                <?php
-                if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
-                    self::quickAction(
-                        'Gerer les niveaux',
-                        'Creer, modifier ou supprimer les niveaux scolaires utilises par les classes et exercices.',
-                        admin_url('admin.php?page=ouinpo-levels')
-                    );
-                } else {
-                    ?>
-                    <div class="card ouinpo-suite-card">
-                        <h3 class="ouinpo-suite-card-title">Niveaux</h3>
-                        <p>La gestion des niveaux est reservee aux profils autorises.</p>
-                    </div>
-                    <?php
-                }
-                ?>
-            </div>
-            <?php
-        } elseif ($tab === 'groupes') {
+        if ($tab === 'classes') {
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
@@ -893,9 +872,15 @@ final class SuiteAdmin
 
                 if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                     self::quickAction(
-                        'Gérer les classes',
+                        'Classes',
                         'Créer, modifier et organiser les groupes.',
                         admin_url('admin.php?page=ouinpo-groups')
+                    );
+
+                    self::quickAction(
+                        'Niveaux scolaires',
+                        'Créer ou modifier les niveaux utilisés par les classes et les contenus.',
+                        admin_url('admin.php?page=ouinpo-levels')
                     );
                 } else {
                     ?>
@@ -921,7 +906,7 @@ final class SuiteAdmin
 
                 if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
                     self::quickAction(
-                        'Gérer les affectations',
+                        'Affectations',
                         'Associer les élèves aux classes.',
                         admin_url('admin.php?page=ouinpo-assignments')
                     );
@@ -948,7 +933,7 @@ final class SuiteAdmin
                 );
 
                 self::quickAction(
-                    'Voir tous les dépôts',
+                    'Dépôts',
                     'Accéder à la liste complète des travaux déposés.',
                     admin_url('edit.php?post_type=ouinpo_submission')
                 );
@@ -973,7 +958,7 @@ final class SuiteAdmin
                 );
 
                 self::quickAction(
-                    'Voir les ressources',
+                    'Ressources',
                     'Accéder à la liste complète des ressources pédagogiques.',
                     admin_url('edit.php?post_type=ouinpo_resource')
                 );
@@ -983,6 +968,54 @@ final class SuiteAdmin
                     'ouinpo_resource',
                     admin_url('edit.php?post_type=ouinpo_resource')
                 );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'competences') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (Capabilities::can(Capabilities::VIEW_STUDENT_DATA)) {
+                    self::quickAction(
+                        'Compétences',
+                        'Suivre les acquis par année, classe, domaine et élève.',
+                        admin_url('admin.php?page=ouinpo-competencies')
+                    );
+                } else {
+                    ?>
+                    <div class="card ouinpo-suite-card">
+                        <h3 class="ouinpo-suite-card-title">Compétences</h3>
+                        <p>Le suivi des compétences est réservé aux profils autorisés.</p>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'badges') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (Capabilities::can(Capabilities::MANAGE_BADGES)) {
+                    self::quickAction(
+                        'Badges',
+                        'Créer, modifier et organiser les badges disponibles.',
+                        admin_url('admin.php?page=ouinpo-badges')
+                    );
+
+                    self::quickAction(
+                        'Attributions de badges',
+                        'Attribuer ou retirer des badges aux élèves.',
+                        admin_url('admin.php?page=ouinpo-badge-assignments')
+                    );
+                } else {
+                    ?>
+                    <div class="card ouinpo-suite-card">
+                        <h3 class="ouinpo-suite-card-title">Badges</h3>
+                        <p>La gestion des badges est réservée aux profils autorisés.</p>
+                    </div>
+                    <?php
+                }
                 ?>
             </div>
             <?php
@@ -2407,39 +2440,24 @@ final class SuiteAdmin
 
     public static function renderEvaluationsHub(): void
     {
-        $tab = self::currentTab('suivi');
+        $tab = self::currentTab('ds');
 
-        self::pageIntro('Évaluations', 'Devoirs surveillés et suivi des compétences des élèves.');
+        self::pageIntro('Évaluations', 'Devoirs surveillés, conception de devoirs et corrections assistées par IA.');
         self::tabs(self::mainTabs(), 'ouinpo-suite-evaluations');
 
         $tabs = [
-            'suivi' => 'Suivi des compétences',
-            'ds'    => 'Devoirs surveillés',
+            'ds'          => 'Devoirs surveillés',
+            'builder'     => 'Concepteur',
+            'corrections' => 'Corrections IA',
         ];
 
-        if (ModuleSettings::isEnabled('submissions')) {
-            $tabs['depots'] = 'Dépôts élèves';
-        }
-
         if (!isset($tabs[$tab])) {
-            $tab = 'suivi';
+            $tab = 'ds';
         }
 
         self::subTabs('ouinpo-suite-evaluations', $tabs, $tab);
 
-        if ($tab === 'suivi') {
-            ?>
-            <div class="ouinpo-suite-grid">
-                <?php
-                self::quickAction(
-                    'Suivi des compétences',
-                    'Accéder à l’écran de suivi par année, classe, domaine et élève.',
-                    admin_url('admin.php?page=ouinpo-competencies')
-                );
-                ?>
-            </div>
-            <?php
-        } elseif ($tab === 'ds') {
+        if ($tab === 'ds') {
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
@@ -2448,6 +2466,13 @@ final class SuiteAdmin
                     'Créer et gérer les DS.',
                     admin_url('admin.php?page=ouinpo-assessments')
                 );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'builder') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
 
                 self::quickAction(
                     'Concepteur de devoirs',
@@ -2457,15 +2482,30 @@ final class SuiteAdmin
                 ?>
             </div>
             <?php
-        } elseif ($tab === 'depots' && ModuleSettings::isEnabled('submissions')) {
+        } elseif ($tab === 'corrections') {
             ?>
             <div class="ouinpo-suite-grid">
                 <?php
-                self::quickAction(
-                    'Dépôts élèves',
-                    'Voir les travaux récents pour croiser évaluation et entraînement.',
-                    admin_url('edit.php?post_type=ouinpo_submission')
-                );
+                if (Capabilities::can(Capabilities::MANAGE_ASSESSMENTS)) {
+                    self::quickAction(
+                        'Correction IA',
+                        'Corriger des copies numérisées avec le workflow scans/OCR.',
+                        admin_url('admin.php?page=ouinpo-ai-corrections')
+                    );
+
+                    self::quickAction(
+                        'Correction IA fichiers',
+                        'Corriger des fichiers rendus par les élèves.',
+                        admin_url('admin.php?page=ouinpo-ai-file-corrections')
+                    );
+                } else {
+                    ?>
+                    <div class="card ouinpo-suite-card">
+                        <h3 class="ouinpo-suite-card-title">Corrections IA</h3>
+                        <p>Les corrections assistées par IA sont réservées aux profils autorisés.</p>
+                    </div>
+                    <?php
+                }
                 ?>
             </div>
             <?php
