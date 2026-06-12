@@ -266,6 +266,11 @@ $storeUploadedFile = method_body($projectsPrivateFilesSource, 'storeUploadedFile
 $absolutePath = method_body($projectsPrivateFilesSource, 'absolutePath');
 $downloadEvidence = method_body($projectsRestSource, 'downloadEvidence');
 $canDownloadEvidence = method_body($projectsRestSource, 'canDownloadEvidence');
+$memberGetMembers = method_body($projectMemberSource, 'getMembers');
+$memberAddMember = method_body($projectMemberSource, 'addMember');
+$memberRemoveMember = method_body($projectMemberSource, 'removeMember');
+$permissionIsProjectMember = method_body($projectPermissionSource, 'isProjectMember');
+$repositoryCleanMemberRole = method_body($repositorySource, 'cleanMemberRole');
 check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
 check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));
@@ -365,6 +370,29 @@ check('ProjectMemberService centralise les methodes membres', methods_present($p
 check('Repository conserve les facades membres Projects', repository_member_facades_delegate($repositorySource));
 check('ProjectMemberService conserve l ordre des membres', $projectMemberSource !== '' && str_contains($projectMemberSource, 'ORDER BY pm.role ASC, u.display_name ASC, pm.user_id ASC'));
 check('ProjectMemberService conserve les roles via Repository', $projectMemberSource !== '' && str_contains($projectMemberSource, 'Repository::cleanMemberRole($role)'));
+check('ProjectMemberService conserve les colonnes membres', source_contains_all($memberGetMembers, [
+    'SELECT pm.*, u.display_name, u.user_email',
+    'LEFT JOIN {$wpdb->users} u ON u.ID = pm.user_id',
+    'WHERE pm.project_id = %d',
+]));
+check('ProjectMemberService conserve l upsert membre', source_contains_all($memberAddMember, [
+    'Repository::cleanMemberRole($role)',
+    'INSERT INTO {$this->repository->table(\'members\')}',
+    'ON DUPLICATE KEY UPDATE role = VALUES(role)',
+]));
+check('ProjectMemberService conserve la suppression par projet et utilisateur', source_contains_all($memberRemoveMember, [
+    '$this->repository->table(\'members\')',
+    "'project_id' => \$projectId",
+    "'user_id' => \$userId",
+]));
+check('ProjectPermissionService::isProjectMember lit toujours la table members', source_contains_all($permissionIsProjectMember, [
+    "SELECT COUNT(*) FROM {\$this->repository->table('members')}",
+    'WHERE project_id = %d AND user_id = %d',
+]));
+check('Repository conserve cleanMemberRole()', $repositoryCleanMemberRole !== '' && source_contains_all($repositoryCleanMemberRole, [
+    'self::MEMBER_ROLES',
+    "? \$role : 'member'",
+]));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
