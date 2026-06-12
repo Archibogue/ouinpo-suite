@@ -1,10 +1,10 @@
-# Audit coherence 0.7.0-beta
+# Audit coherence 0.7.1-beta
 
-OuInPo Suite 0.7.0-beta est une beta technique. Elle peut etre partagee pour test encadre, mais ne doit pas etre presentee comme une version stable.
+OuInPo Suite 0.7.1-beta est une beta technique. Elle peut etre partagee pour test encadre, mais ne doit pas etre presentee comme une version stable.
 
 ## Architecture actuelle
 
-- `ouinpo-suite.php` charge l'autoloader, declare la version `0.7.0-beta` et boote la suite sur `plugins_loaded`.
+- `ouinpo-suite.php` charge l'autoloader, declare la version `0.7.1-beta` et boote la suite sur `plugins_loaded`.
 - `src/Core/Plugin.php` orchestre activation, desactivation et boot. Le schema partage est installe ou migre avant le boot des modules.
 - `src/Core/Installer.php` contient les tables partagees Gate, SegFault et Projects, les contraintes SegFault et les complements de schema IA Projects.
 - `src/Core/ModuleRegistry.php` liste les modules disponibles. Les modules actifs par defaut restent `exercises` et `flashcards`; `exercises` reste le socle non desactivable.

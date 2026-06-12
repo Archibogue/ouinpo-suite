@@ -2,6 +2,16 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.1-beta] - 2026-06-12
+
+- Release intermediaire de stabilisation/refactoring, sans nouvelle refonte fonctionnelle majeure.
+- Optimisation du chemin normal de chargement: migrations Projects lourdes evitees quand la version installee est deja a jour, cache de lecture `ModuleSettings`, allowlist des modules activables et cache de version des assets.
+- Optimisations SQL Projects: suppression du N+1 sur les checklists du Kanban et agregats dedies pour la synthese `getProjectSummary()`.
+- Mutualisation technique: parseur JSON IA commun et validateur d'upload prive commun pour les fichiers sensibles.
+- Decoupage maintenabilite Projects en services: board, statistiques, permissions, livrables, evidence, journal, checklists, membres et taches.
+- Renforcement des garde-fous qualite avec `tools/verify-optimizations.php`, couvrant les optimisations, services Projects, fichiers prives, permissions et coherence taches/colonnes.
+- Ajout de la checklist de smoke test manuel `docs/smoke-test-0.7.1.md` pour validation WordPress locale et preproduction avant diffusion.
+
 ## [0.7.0-beta] - 2026-06-11
 
 - Ajout du module optionnel Projects / SPOPI Projects.

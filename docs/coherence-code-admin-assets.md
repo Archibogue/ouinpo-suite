@@ -1,6 +1,6 @@
 # Cohérence code admin et assets
 
-Ce document fixe les conventions internes pour OuInPo Suite 0.7.0-beta. Il ne décrit pas de nouvelle fonctionnalité pédagogique.
+Ce document fixe les conventions internes pour OuInPo Suite 0.7.1-beta. Il ne décrit pas de nouvelle fonctionnalité pédagogique.
 
 ## Principe admin
 

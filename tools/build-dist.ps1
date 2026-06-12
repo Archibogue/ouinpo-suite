@@ -104,6 +104,7 @@ Write-Host "Nettoyage des fichiers interdits..."
 
 $forbiddenExactNames = @(
     ".distignore",
+    ".gitignore",
     ".env",
     "wp-config.php",
     "secrets.php",

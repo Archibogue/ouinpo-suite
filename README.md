@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.0-beta : beta technique partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.7.1-beta : beta technique de stabilisation et refactoring, partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -18,6 +18,7 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Roles et droits : [`docs/roles-et-droits.md`](docs/roles-et-droits.md).
 - Acces publics et prives : [`docs/acces-publics-prives.md`](docs/acces-publics-prives.md).
 - Donnees personnelles et IA : [`docs/modele-donnees-personnelles-ia.md`](docs/modele-donnees-personnelles-ia.md).
+- Checklist de smoke test 0.7.1 : [`docs/smoke-test-0.7.1.md`](docs/smoke-test-0.7.1.md).
 - Politique de securite : [`SECURITY.md`](SECURITY.md).
 
 ## Fonctionnalités principales
