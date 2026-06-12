@@ -116,6 +116,7 @@ $assets = path('src/Core/Assets.php');
 $installer = path('src/Core/Installer.php');
 $moduleSettings = path('src/Core/ModuleSettings.php');
 $projectsRepository = path('src/Modules/Projects/Repository.php');
+$projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
@@ -232,11 +233,16 @@ if (is_file($moduleSettings)) {
 }
 
 $repositorySource = read_file($projectsRepository);
+$projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
+$repositoryBoard = method_body($repositorySource, 'getBoard');
+$boardGetBoard = method_body($projectBoardSource, 'getBoard');
 $repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
 $statsProjectSummary = method_body($projectStatsSource, 'getProjectSummary');
-check('Projects charge les checklists en groupe', $repositorySource !== '' && str_contains($repositorySource, 'function getChecklistForTasks('));
-check('getBoard utilise le chargement groupe des checklists', $repositorySource !== '' && str_contains($repositorySource, 'getChecklistForTasks(array_column($tasks, \'id\'))'));
+check('ProjectBoardService existe', is_file($projectBoardService));
+check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
+check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));
+check('getBoard utilise le chargement groupe des checklists', $boardGetBoard !== '' && str_contains($boardGetBoard, 'getChecklistForTasks(array_column($tasks, \'id\'))'));
 check('ProjectStatsService existe', is_file($projectStatsService));
 check('Repository delegue getProjectSummary au service', $repositoryProjectSummary !== '' && str_contains($repositoryProjectSummary, 'ProjectStatsService'));
 check('getProjectSummary utilise des agregats SQL', $statsProjectSummary !== '' && str_contains($statsProjectSummary, 'SUM(CASE WHEN'));
