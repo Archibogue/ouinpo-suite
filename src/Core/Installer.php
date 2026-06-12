@@ -6,9 +6,9 @@ final class Installer
     public static function maybeUpgrade(): void
     {
         $installed = (string) get_option('ouinpo_suite_version', '0.2.0');
-        self::ensureProjectsStudentAiSchema();
+        $current = (string) OUINPO_SUITE_VERSION;
 
-        if (version_compare($installed, OUINPO_SUITE_VERSION, '>=')) {
+        if (version_compare($installed, $current, '>=')) {
             return;
         }
 
@@ -16,7 +16,7 @@ final class Installer
         AiSettings::migrate_public_access_for_existing_site($installed);
         self::ensureProjectsStudentAiSchema();
         Capabilities::install();
-        update_option('ouinpo_suite_version', OUINPO_SUITE_VERSION, false);
+        update_option('ouinpo_suite_version', $current, false);
     }
 
     public static function installOrUpgradeSharedSchema(): void
