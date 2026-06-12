@@ -122,6 +122,7 @@ $projectsStudentAiAssistant = path('src/Modules/Projects/ProjectsStudentAiAssist
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
+$projectDeliverableService = path('src/Modules/Projects/ProjectDeliverableService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -240,6 +241,7 @@ $repositorySource = read_file($projectsRepository);
 $projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
 $projectPermissionSource = read_file($projectPermissionService);
+$projectDeliverableSource = read_file($projectDeliverableService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsStudentAiSource = read_file($projectsStudentAiAssistant);
@@ -257,6 +259,20 @@ check('ProjectStatsService existe', is_file($projectStatsService));
 check('Repository delegue getProjectSummary au service', $repositoryProjectSummary !== '' && str_contains($repositoryProjectSummary, 'ProjectStatsService'));
 check('getProjectSummary utilise des agregats SQL', $statsProjectSummary !== '' && str_contains($statsProjectSummary, 'SUM(CASE WHEN'));
 check('getProjectSummary evite les get_var() de compteurs separes', $statsProjectSummary !== '' && substr_count($statsProjectSummary, 'get_var(') === 0);
+check('ProjectDeliverableService existe', is_file($projectDeliverableService));
+check('ProjectDeliverableService utilise le namespace Projects', $projectDeliverableSource !== '' && str_contains($projectDeliverableSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectDeliverableService centralise les methodes livrables', methods_present($projectDeliverableSource, [
+    'ensureDefaultDeliverables',
+    'getDeliverables',
+    'getDeliverable',
+    'createDeliverable',
+    'updateDeliverable',
+    'updateDeliverableStatus',
+    'deleteDeliverable',
+    'nextDeliverablePosition',
+    'deliverableBelongsToProject',
+]));
+check('Repository conserve les facades livrables Projects', repository_deliverable_facades_delegate($repositorySource));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -415,6 +431,30 @@ function repository_permission_facades_delegate(string $source): bool
     }
 
     return true;
+}
+
+function repository_deliverable_facades_delegate(string $source): bool
+{
+    $facades = [
+        'ensureDefaultDeliverables' => 'deliverables()->ensureDefaultDeliverables',
+        'getDeliverables' => 'deliverables()->getDeliverables',
+        'getDeliverable' => 'deliverables()->getDeliverable',
+        'createDeliverable' => 'deliverables()->createDeliverable',
+        'updateDeliverable' => 'deliverables()->updateDeliverable',
+        'updateDeliverableStatus' => 'deliverables()->updateDeliverableStatus',
+        'deleteDeliverable' => 'deliverables()->deleteDeliverable',
+        'nextDeliverablePosition' => 'deliverables()->nextDeliverablePosition',
+        'deliverableBelongsToProject' => 'deliverables()->deliverableBelongsToProject',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function deliverables(): ProjectDeliverableService');
 }
 
 function bootstrap_module_ids(string $source): array

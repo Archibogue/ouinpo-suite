@@ -754,220 +754,42 @@ final class Repository
 
     public function ensureDefaultDeliverables(int $projectId, int $userId): int
     {
-        global $wpdb;
-
-        if ($projectId <= 0 || $userId <= 0) {
-            return 0;
-        }
-
-        $existing = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table('deliverables')} WHERE project_id = %d",
-            $projectId
-        ));
-
-        if ($existing > 0) {
-            return 0;
-        }
-
-        $created = 0;
-        foreach (self::defaultDeliverables() as $position => $deliverable) {
-            $id = $this->createDeliverable($projectId, [
-                'title' => $deliverable['title'],
-                'type' => $deliverable['type'],
-                'position' => $position + 1,
-            ], $userId);
-            if ($id > 0) {
-                $created++;
-            }
-        }
-
-        return $created;
+        return $this->deliverables()->ensureDefaultDeliverables($projectId, $userId);
     }
 
     public function getDeliverables(int $projectId): array
     {
-        global $wpdb;
-
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT d.*, u.display_name AS creator_name, validator.display_name AS validator_name
-             FROM {$this->table('deliverables')} d
-             LEFT JOIN {$wpdb->users} u ON u.ID = d.created_by
-             LEFT JOIN {$wpdb->users} validator ON validator.ID = d.validated_by
-             WHERE d.project_id = %d
-             ORDER BY d.position ASC, d.due_date ASC, d.id ASC",
-            $projectId
-        ), ARRAY_A) ?: [];
+        return $this->deliverables()->getDeliverables($projectId);
     }
 
     public function getDeliverable(int $deliverableId): ?array
     {
-        global $wpdb;
-
-        $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$this->table('deliverables')} WHERE id = %d LIMIT 1",
-            $deliverableId
-        ), ARRAY_A);
-
-        return is_array($row) ? $row : null;
+        return $this->deliverables()->getDeliverable($deliverableId);
     }
 
     public function createDeliverable(int $projectId, array $data, int $userId): int
     {
-        global $wpdb;
-
-        $title = self::cleanTitle($data['title'] ?? '');
-        if ($projectId <= 0 || $userId <= 0 || $title === '') {
-            return 0;
-        }
-
-        $position = isset($data['position'])
-            ? max(0, (int) $data['position'])
-            : $this->nextDeliverablePosition($projectId);
-
-        $inserted = $wpdb->insert(
-            $this->table('deliverables'),
-            [
-                'project_id' => $projectId,
-                'title' => $title,
-                'description' => self::cleanLongText($data['description'] ?? ''),
-                'type' => self::cleanDeliverableType($data['type'] ?? 'other'),
-                'status' => self::cleanDeliverableStatus($data['status'] ?? 'expected'),
-                'due_date' => self::cleanDate($data['due_date'] ?? ''),
-                'validated_by' => null,
-                'validated_at' => null,
-                'position' => $position,
-                'created_by' => $userId,
-                'created_at' => current_time('mysql'),
-                'updated_at' => null,
-            ],
-            ['%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s']
-        );
-
-        return $inserted ? (int) $wpdb->insert_id : 0;
+        return $this->deliverables()->createDeliverable($projectId, $data, $userId);
     }
 
     public function updateDeliverable(int $deliverableId, array $data): bool
     {
-        global $wpdb;
-
-        $updates = [];
-        $formats = [];
-
-        if (array_key_exists('title', $data)) {
-            $title = self::cleanTitle($data['title']);
-            if ($title !== '') {
-                $updates['title'] = $title;
-                $formats[] = '%s';
-            }
-        }
-
-        if (array_key_exists('description', $data)) {
-            $updates['description'] = self::cleanLongText($data['description']);
-            $formats[] = '%s';
-        }
-
-        if (array_key_exists('type', $data)) {
-            $updates['type'] = self::cleanDeliverableType($data['type']);
-            $formats[] = '%s';
-        }
-
-        if (array_key_exists('status', $data)) {
-            $updates['status'] = self::cleanDeliverableStatus($data['status']);
-            $formats[] = '%s';
-        }
-
-        if (array_key_exists('due_date', $data)) {
-            $updates['due_date'] = self::cleanDate($data['due_date']);
-            $formats[] = '%s';
-        }
-
-        if (array_key_exists('position', $data)) {
-            $updates['position'] = max(0, (int) $data['position']);
-            $formats[] = '%d';
-        }
-
-        if (!$updates) {
-            return true;
-        }
-
-        $updates['updated_at'] = current_time('mysql');
-        $formats[] = '%s';
-
-        return false !== $wpdb->update(
-            $this->table('deliverables'),
-            $updates,
-            ['id' => $deliverableId],
-            $formats,
-            ['%d']
-        );
+        return $this->deliverables()->updateDeliverable($deliverableId, $data);
     }
 
     public function updateDeliverableStatus(int $deliverableId, string $status, int $userId): bool
     {
-        global $wpdb;
-
-        $status = self::cleanDeliverableStatus($status);
-        $updates = [
-            'status' => $status,
-            'updated_at' => current_time('mysql'),
-        ];
-        $formats = ['%s', '%s'];
-
-        if ($status === 'validated') {
-            $updates['validated_by'] = $userId;
-            $updates['validated_at'] = current_time('mysql');
-            $formats[] = '%d';
-            $formats[] = '%s';
-        } else {
-            $updates['validated_by'] = null;
-            $updates['validated_at'] = null;
-            $formats[] = '%d';
-            $formats[] = '%s';
-        }
-
-        return false !== $wpdb->update(
-            $this->table('deliverables'),
-            $updates,
-            ['id' => $deliverableId],
-            $formats,
-            ['%d']
-        );
+        return $this->deliverables()->updateDeliverableStatus($deliverableId, $status, $userId);
     }
 
     public function deleteDeliverable(int $deliverableId): bool
     {
-        global $wpdb;
-
-        $deliverable = $this->getDeliverable($deliverableId);
-        if (!$deliverable) {
-            return false;
-        }
-
-        $wpdb->update(
-            $this->table('evidence'),
-            ['deliverable_id' => null, 'updated_at' => current_time('mysql')],
-            ['deliverable_id' => $deliverableId],
-            ['%d', '%s'],
-            ['%d']
-        );
-
-        $wpdb->delete(
-            $this->table('competency_links'),
-            ['object_type' => 'deliverable', 'object_id' => $deliverableId],
-            ['%s', '%d']
-        );
-
-        return false !== $wpdb->delete($this->table('deliverables'), ['id' => $deliverableId], ['%d']);
+        return $this->deliverables()->deleteDeliverable($deliverableId);
     }
 
     public function nextDeliverablePosition(int $projectId): int
     {
-        global $wpdb;
-
-        return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COALESCE(MAX(position), 0) + 1 FROM {$this->table('deliverables')} WHERE project_id = %d",
-            $projectId
-        ));
+        return $this->deliverables()->nextDeliverablePosition($projectId);
     }
 
     public function getEvidence(int $projectId): array
@@ -1110,9 +932,7 @@ final class Repository
 
     public function deliverableBelongsToProject(int $deliverableId, int $projectId): bool
     {
-        $deliverable = $this->getDeliverable($deliverableId);
-
-        return $deliverable && (int) $deliverable['project_id'] === $projectId;
+        return $this->deliverables()->deliverableBelongsToProject($deliverableId, $projectId);
     }
 
     public function taskBelongsToProject(int $taskId, int $projectId): bool
@@ -1523,6 +1343,11 @@ final class Repository
     private function permissions(): ProjectPermissionService
     {
         return new ProjectPermissionService($this);
+    }
+
+    private function deliverables(): ProjectDeliverableService
+    {
+        return new ProjectDeliverableService($this);
     }
 
     public static function cleanTitle($value): string
