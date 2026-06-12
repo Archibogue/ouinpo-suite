@@ -8,6 +8,7 @@ define('OUINPO_SUITE_VERSION', '0.7.0-beta');
 
 $root = dirname(__DIR__);
 $checks = [];
+$wpOptions = [];
 
 if (!class_exists('WP_Error', false)) {
     class WP_Error
@@ -69,6 +70,33 @@ if (!function_exists('sanitize_file_name')) {
     }
 }
 
+if (!function_exists('sanitize_key')) {
+    function sanitize_key($key): string
+    {
+        $key = strtolower((string) $key);
+        return preg_replace('/[^a-z0-9_\-]/', '', $key) ?? '';
+    }
+}
+
+if (!function_exists('get_option')) {
+    function get_option($key, $default = false)
+    {
+        global $wpOptions;
+
+        return array_key_exists((string) $key, $wpOptions) ? $wpOptions[(string) $key] : $default;
+    }
+}
+
+if (!function_exists('update_option')) {
+    function update_option($key, $value, $autoload = null): bool
+    {
+        global $wpOptions;
+
+        $wpOptions[(string) $key] = $value;
+        return true;
+    }
+}
+
 if (!function_exists('wp_check_filetype_and_ext')) {
     function wp_check_filetype_and_ext($tmp_name, $filename, $mimes): array
     {
@@ -88,6 +116,7 @@ $assets = path('src/Core/Assets.php');
 $installer = path('src/Core/Installer.php');
 $moduleSettings = path('src/Core/ModuleSettings.php');
 $projectsRepository = path('src/Modules/Projects/Repository.php');
+$projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -164,13 +193,54 @@ check('maybeUpgrade retourne avant les migrations si version a jour', $maybeUpgr
 $moduleSettingsSource = read_file($moduleSettings);
 check('ModuleSettings declare un cache local', $moduleSettingsSource !== '' && str_contains($moduleSettingsSource, '$enabledCache'));
 check('ModuleSettings invalide le cache a la sauvegarde', $moduleSettingsSource !== '' && str_contains($moduleSettingsSource, 'self::$enabledCache = null'));
+check('ModuleSettings expose availableModules()', $moduleSettingsSource !== '' && str_contains($moduleSettingsSource, 'public static function availableModules('));
+check('ModuleSettings normalise via allowlist', $moduleSettingsSource !== '' && str_contains($moduleSettingsSource, 'array_fill_keys(self::availableModules()'));
+
+if (is_file($moduleSettings)) {
+    require_once $moduleSettings;
+
+    $expectedModules = [
+        'exercises',
+        'flashcards',
+        'submissions',
+        'segfault',
+        'gate',
+        'rechtext',
+        'meta',
+        'projects',
+    ];
+    $availableModules = \Ouinpo\Suite\Core\ModuleSettings::availableModules();
+    $availableLookup = array_fill_keys($availableModules, true);
+    $bootstrapModules = bootstrap_module_ids(read_file(path('src/Core/Bootstrap.php')));
+
+    check('ModuleSettings liste les modules officiels attendus', all_present($expectedModules, $availableLookup));
+    check('ModuleSettings couvre les modules declares dans Bootstrap', $bootstrapModules !== [] && all_present($bootstrapModules, $availableLookup));
+
+    $optionKey = \Ouinpo\Suite\Core\ModuleSettings::OPTION_KEY;
+    $wpOptions[$optionKey] = ['exercises', 'badkey', 'flashcards'];
+    reset_module_settings_cache();
+    check(
+        'ModuleSettings ignore badkey a la lecture',
+        \Ouinpo\Suite\Core\ModuleSettings::getEnabledModules() === ['exercises', 'flashcards']
+    );
+
+    \Ouinpo\Suite\Core\ModuleSettings::saveEnabledModules(['badkey', 'projects', 'projects']);
+    check(
+        'ModuleSettings ne reecrit pas badkey a la sauvegarde',
+        $wpOptions[$optionKey] === ['projects', 'exercises']
+    );
+}
 
 $repositorySource = read_file($projectsRepository);
-$getProjectSummary = method_body($repositorySource, 'getProjectSummary');
+$projectStatsSource = read_file($projectStatsService);
+$repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
+$statsProjectSummary = method_body($projectStatsSource, 'getProjectSummary');
 check('Projects charge les checklists en groupe', $repositorySource !== '' && str_contains($repositorySource, 'function getChecklistForTasks('));
 check('getBoard utilise le chargement groupe des checklists', $repositorySource !== '' && str_contains($repositorySource, 'getChecklistForTasks(array_column($tasks, \'id\'))'));
-check('getProjectSummary utilise des agregats SQL', $getProjectSummary !== '' && str_contains($getProjectSummary, 'SUM(CASE WHEN'));
-check('getProjectSummary evite les get_var() de compteurs separes', $getProjectSummary !== '' && substr_count($getProjectSummary, 'get_var(') === 0);
+check('ProjectStatsService existe', is_file($projectStatsService));
+check('Repository delegue getProjectSummary au service', $repositoryProjectSummary !== '' && str_contains($repositoryProjectSummary, 'ProjectStatsService'));
+check('getProjectSummary utilise des agregats SQL', $statsProjectSummary !== '' && str_contains($statsProjectSummary, 'SUM(CASE WHEN'));
+check('getProjectSummary evite les get_var() de compteurs separes', $statsProjectSummary !== '' && substr_count($statsProjectSummary, 'get_var(') === 0);
 
 $failed = 0;
 foreach ($checks as [$label, $ok]) {
@@ -218,6 +288,64 @@ function parser_accepts(string $raw, string $key): bool
     $parsed = \Ouinpo\Suite\Core\Ai\JsonResponseParser::parse($raw, 'object');
 
     return is_array($parsed) && array_key_exists($key, $parsed);
+}
+
+function all_present(array $expected, array $lookup): bool
+{
+    foreach ($expected as $value) {
+        if (!isset($lookup[$value])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function bootstrap_module_ids(string $source): array
+{
+    if ($source === '') {
+        return [];
+    }
+
+    preg_match_all('/use\s+Ouinpo\\\\Suite\\\\Modules\\\\([^\\\\]+)\\\\Module\s+as\s+([A-Za-z]+)Module;/', $source, $uses, PREG_SET_ORDER);
+    preg_match_all('/register\(new\s+([A-Za-z]+)Module\(\)\)/', $source, $registers, PREG_SET_ORDER);
+
+    $aliases = [];
+    foreach ($uses as $use) {
+        $aliases[$use[2]] = module_namespace_to_id($use[1]);
+    }
+
+    $ids = [];
+    foreach ($registers as $register) {
+        if (isset($aliases[$register[1]])) {
+            $ids[] = $aliases[$register[1]];
+        }
+    }
+
+    return array_values(array_unique($ids));
+}
+
+function module_namespace_to_id(string $namespace): string
+{
+    $map = [
+        'Exercises' => 'exercises',
+        'Flashcards' => 'flashcards',
+        'Submissions' => 'submissions',
+        'SegFault' => 'segfault',
+        'Gate' => 'gate',
+        'RechText' => 'rechtext',
+        'Meta' => 'meta',
+        'Projects' => 'projects',
+    ];
+
+    return $map[$namespace] ?? strtolower($namespace);
+}
+
+function reset_module_settings_cache(): void
+{
+    $property = new ReflectionProperty(\Ouinpo\Suite\Core\ModuleSettings::class, 'enabledCache');
+    $property->setAccessible(true);
+    $property->setValue(null, null);
 }
 
 function method_body(string $source, string $method): string
