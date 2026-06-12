@@ -1602,9 +1602,10 @@ function ouinpo_sf_difficulty_rank_from_id(int $difficulty_id): int {
 add_action('wp_enqueue_scripts', function () {
 
   $sf_css_rel = 'assets/css/front/segfault.css';
-  $sf_css_ver = defined('OUINPO_SUITE_DIR') && file_exists(OUINPO_SUITE_DIR . $sf_css_rel)
-      ? (string) filemtime(OUINPO_SUITE_DIR . $sf_css_rel)
-      : '1.0.0';
+  $sf_css_ver = \Ouinpo\Suite\Core\Assets::fileVersion(
+      defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR . $sf_css_rel : '',
+      '1.0.0'
+  );
 
   $sf_css_deps = [];
 
@@ -1629,7 +1630,7 @@ add_action('wp_enqueue_scripts', function () {
   $sf_js_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : OUINPO_SF_DIR;
   $sf_js_url = defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL : OUINPO_SF_URL;
   $sf_js_file = $sf_js_dir . $sf_js_rel;
-  $sf_js_ver = file_exists($sf_js_file) ? (string) filemtime($sf_js_file) : '1.0.0';
+  $sf_js_ver = \Ouinpo\Suite\Core\Assets::fileVersion($sf_js_file, '1.0.0');
 
   wp_enqueue_script('ouinpo-sf', $sf_js_url . $sf_js_rel, [], $sf_js_ver, true);
 

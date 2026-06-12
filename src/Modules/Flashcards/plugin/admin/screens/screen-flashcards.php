@@ -83,10 +83,7 @@ final class ScreenFlashcards
         $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : '';
         $file = $base_dir !== '' ? $base_dir . $rel : '';
         $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-        if ($file !== '' && file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
+        $version = \Ouinpo\Suite\Core\Assets::fileVersion($file, $version);
 
         wp_enqueue_script('ouinpo-flashcards-admin-js', $base_url . $rel, [], $version, true);
     }

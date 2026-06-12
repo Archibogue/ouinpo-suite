@@ -25,10 +25,7 @@ if (!function_exists('ouinpo_sf_enqueue_student_parcours_script')) {
 
     $file = $base_dir . $rel;
     $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-    if (file_exists($file)) {
-      $version = (string) filemtime($file);
-    }
+    $version = \Ouinpo\Suite\Core\Assets::fileVersion($file, $version);
 
     wp_enqueue_script(
       'ouinpo-sf-student-parcours-js',

@@ -46,10 +46,7 @@ function ouinpo_gate_enqueue_assets(): void {
   $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : dirname(__DIR__, 4) . '/';
   $file = $base_dir . $rel;
   $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-  if (file_exists($file)) {
-    $version = (string) filemtime($file);
-  }
+  $version = \Ouinpo\Suite\Core\Assets::fileVersion($file, $version);
 
   wp_enqueue_style('ouinpo-gate-css', $base_url . $rel, [], $version);
 }
@@ -61,10 +58,7 @@ function ouinpo_gate_enqueue_signpad_script(): void {
   $base_dir = defined('OUINPO_SUITE_DIR') ? OUINPO_SUITE_DIR : dirname(__DIR__, 4) . '/';
   $file = $base_dir . $rel;
   $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-  if (file_exists($file)) {
-    $version = (string) filemtime($file);
-  }
+  $version = \Ouinpo\Suite\Core\Assets::fileVersion($file, $version);
 
   wp_enqueue_script('ouinpo-gate-js', $base_url . $rel, [], $version, true);
 }

@@ -281,9 +281,7 @@ wp_enqueue_style(
         ? OUINPO_SUITE_URL . $css_rel
         : $plugin_base_url . '/public/assets/css/teacher-competencies.css',
     [],
-    ($css_file !== '' && file_exists($css_file))
-        ? (string) filemtime($css_file)
-        : $asset_version
+    \Ouinpo\Suite\Core\Assets::fileVersion($css_file, $asset_version)
 );
 
 $js_rel = 'assets/js/admin/admin-competencies.js';
@@ -299,9 +297,7 @@ wp_enqueue_script(
     'ouinpo-competencies',
     $js_url . $js_rel,
     ['jquery'],
-    file_exists($js_file)
-        ? (string) filemtime($js_file)
-        : $asset_version,
+    \Ouinpo\Suite\Core\Assets::fileVersion($js_file, $asset_version),
     true
 );
 

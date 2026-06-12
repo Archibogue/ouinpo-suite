@@ -8,6 +8,8 @@ final class ModuleSettings
 {
     public const OPTION_KEY = 'ouinpo_suite_enabled_modules';
 
+    private static ?array $enabledCache = null;
+
     /**
      * Le module Exercices reste le socle de la suite.
      * Il n'est pas désactivable dans cette première version.
@@ -32,10 +34,16 @@ final class ModuleSettings
 
     public static function getEnabledModules(): array
     {
+        if (self::$enabledCache !== null) {
+            return self::$enabledCache;
+        }
+
         $raw = get_option(self::OPTION_KEY, null);
 
         if (!is_array($raw)) {
-            return self::defaultEnabledModules();
+            self::$enabledCache = self::defaultEnabledModules();
+
+            return self::$enabledCache;
         }
 
         $enabled = array_values(array_unique(array_map('sanitize_key', $raw)));
@@ -46,7 +54,9 @@ final class ModuleSettings
             }
         }
 
-        return $enabled;
+        self::$enabledCache = $enabled;
+
+        return self::$enabledCache;
     }
 
     public static function isEnabled(string $moduleId): bool
@@ -79,5 +89,6 @@ final class ModuleSettings
         $clean = array_values(array_unique($clean));
 
         update_option(self::OPTION_KEY, $clean, false);
+        self::$enabledCache = null;
     }
 }

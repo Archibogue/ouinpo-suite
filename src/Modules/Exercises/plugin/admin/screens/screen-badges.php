@@ -395,9 +395,10 @@ class Screen_Badges {
             ? OUINPO_SUITE_URL
             : plugin_dir_url($base_dir . '/ouinpo-suite.php');
         $file = $base_dir . $relative_path;
-        $version = file_exists($file)
-            ? (string) filemtime($file)
-            : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0');
+        $version = \Ouinpo\Suite\Core\Assets::fileVersion(
+            $file,
+            defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0'
+        );
 
         wp_enqueue_script(
             'ouinpo-badges-admin-js',

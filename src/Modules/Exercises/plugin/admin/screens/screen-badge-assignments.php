@@ -26,9 +26,10 @@ $badge_admin_js_url = defined('OUINPO_SUITE_URL')
     ? OUINPO_SUITE_URL
     : plugin_dir_url($badge_admin_js_dir . '/ouinpo-suite.php');
 $badge_admin_js_file = $badge_admin_js_dir . $badge_admin_js_rel;
-$badge_admin_js_version = file_exists($badge_admin_js_file)
-    ? (string) filemtime($badge_admin_js_file)
-    : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0');
+$badge_admin_js_version = \Ouinpo\Suite\Core\Assets::fileVersion(
+    $badge_admin_js_file,
+    defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0'
+);
 
 wp_enqueue_script(
     'ouinpo-badges-admin-js',

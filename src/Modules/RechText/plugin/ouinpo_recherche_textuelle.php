@@ -30,9 +30,10 @@ if (!function_exists('ouinpo_rechtext_enqueue_assets')) {
         $js_path = $base_dir . $js_rel;
         $js_url = $base_url . $js_rel;
 
-        $css_ver = ($css_path !== '' && file_exists($css_path))
-            ? (string) filemtime($css_path)
-            : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0');
+        $css_ver = \Ouinpo\Suite\Core\Assets::fileVersion(
+            $css_path,
+            defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0'
+        );
 
         $deps = [];
 
@@ -57,9 +58,10 @@ if (!function_exists('ouinpo_rechtext_enqueue_assets')) {
             'ouinpo-rechtext-js',
             $js_url,
             [],
-            file_exists($js_path)
-                ? (string) filemtime($js_path)
-                : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0'),
+            \Ouinpo\Suite\Core\Assets::fileVersion(
+                $js_path,
+                defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0'
+            ),
             true
         );
     }

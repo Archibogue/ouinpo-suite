@@ -45,9 +45,7 @@ class OuInPo_Segfault_Notifier {
             : '';
 
         if ($css_url !== '') {
-            $css_ver = ($css_path !== '' && file_exists($css_path))
-                ? (string) filemtime($css_path)
-                : self::VERSION;
+            $css_ver = \Ouinpo\Suite\Core\Assets::fileVersion($css_path, self::VERSION);
 
             $deps = [];
 
@@ -78,9 +76,7 @@ class OuInPo_Segfault_Notifier {
             ? OUINPO_SUITE_DIR . $js_rel
             : trailingslashit($fallback_root) . $js_rel;
 
-        $js_ver = file_exists($js_path)
-            ? (string) filemtime($js_path)
-            : self::VERSION;
+        $js_ver = \Ouinpo\Suite\Core\Assets::fileVersion($js_path, self::VERSION);
 
         wp_enqueue_script(
             'ouinpo-segfault-notify',

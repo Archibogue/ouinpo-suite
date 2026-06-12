@@ -587,9 +587,7 @@ class Ouinpo_Submissions_Plugin {
             : '';
 
         if ($css_url !== '') {
-            $css_ver = ($css_path !== '' && file_exists($css_path))
-                ? (string) filemtime($css_path)
-                : self::VERSION;
+            $css_ver = \Ouinpo\Suite\Core\Assets::fileVersion($css_path, self::VERSION);
 
             $deps = [];
 
@@ -623,9 +621,7 @@ class Ouinpo_Submissions_Plugin {
             ? OUINPO_SUITE_DIR . $js_rel
             : trailingslashit($fallback_root) . $js_rel;
 
-        $js_version = file_exists($js_path)
-            ? (string) filemtime($js_path)
-            : self::VERSION;
+        $js_version = \Ouinpo\Suite\Core\Assets::fileVersion($js_path, self::VERSION);
 
         wp_enqueue_script(
             'ouinpo-submissions',
@@ -676,9 +672,7 @@ class Ouinpo_Submissions_Plugin {
             ? OUINPO_SUITE_DIR . $js_rel
             : trailingslashit($fallback_root) . $js_rel;
 
-        $js_version = file_exists($js_path)
-            ? (string) filemtime($js_path)
-            : self::VERSION;
+        $js_version = \Ouinpo\Suite\Core\Assets::fileVersion($js_path, self::VERSION);
 
         wp_enqueue_script(
             'ouinpo-submissions-notifier-js',
@@ -728,7 +722,7 @@ class Ouinpo_Submissions_Plugin {
                     'ouinpo-submissions-admin',
                     $css_url,
                     [],
-                    ($css_path !== '' && file_exists($css_path)) ? (string) filemtime($css_path) : self::VERSION
+                    \Ouinpo\Suite\Core\Assets::fileVersion($css_path, self::VERSION)
                 );
             }
         }
@@ -746,9 +740,7 @@ class Ouinpo_Submissions_Plugin {
                 ? OUINPO_SUITE_DIR . $js_rel
                 : trailingslashit($fallback_root) . $js_rel;
 
-            $js_version = file_exists($js_path)
-                ? (string) filemtime($js_path)
-                : self::VERSION;
+            $js_version = \Ouinpo\Suite\Core\Assets::fileVersion($js_path, self::VERSION);
 
             wp_enqueue_script(
                 'ouinpo-submissions-admin-js',

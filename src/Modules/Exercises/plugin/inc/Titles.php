@@ -180,9 +180,10 @@ class Titles {
             'ouinpo-titles-css',
             $css_url,
             $deps,
-            ($css_path !== '' && file_exists($css_path))
-                ? (string) filemtime($css_path)
-                : (defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0')
+            \Ouinpo\Suite\Core\Assets::fileVersion(
+                $css_path,
+                defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0'
+            )
         );
 
         if (wp_style_is('ouinpo-theme-css', 'registered')) {

@@ -6,20 +6,39 @@ defined('ABSPATH') || exit;
 
 final class Assets
 {
+    private static array $versionCache = [];
+
     public static function version(string $relativePath, string $fallback = ''): string
     {
         $baseDir = self::baseDir();
         $file = $baseDir !== '' ? $baseDir . ltrim($relativePath, '/\\') : '';
 
+        return self::fileVersion($file, $fallback);
+    }
+
+    public static function fileVersion(string $file, string $fallback = ''): string
+    {
+        $cacheKey = $file !== '' ? $file : '__missing__:' . $fallback;
+
+        if (isset(self::$versionCache[$cacheKey])) {
+            return self::$versionCache[$cacheKey];
+        }
+
         if ($file !== '' && file_exists($file)) {
-            return (string) filemtime($file);
+            self::$versionCache[$cacheKey] = (string) filemtime($file);
+
+            return self::$versionCache[$cacheKey];
         }
 
         if ($fallback !== '') {
-            return $fallback;
+            self::$versionCache[$cacheKey] = $fallback;
+
+            return self::$versionCache[$cacheKey];
         }
 
-        return defined('OUINPO_SUITE_VERSION') ? (string) OUINPO_SUITE_VERSION : '1.0.0';
+        self::$versionCache[$cacheKey] = defined('OUINPO_SUITE_VERSION') ? (string) OUINPO_SUITE_VERSION : '1.0.0';
+
+        return self::$versionCache[$cacheKey];
     }
 
     public static function url(string $relativePath): string

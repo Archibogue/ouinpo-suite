@@ -38,13 +38,9 @@ final class Assets
             'js'  => 'assets/js/front/flashcards.js',
         ];
 
-        $css_ver = file_exists($base_path . $files['css'])
-            ? (string) filemtime($base_path . $files['css'])
-            : $fallback_version;
+        $css_ver = \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $files['css'], $fallback_version);
 
-        $js_ver = file_exists($base_path . $files['js'])
-            ? (string) filemtime($base_path . $files['js'])
-            : $fallback_version;
+        $js_ver = \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $files['js'], $fallback_version);
 
         $deps = [];
 

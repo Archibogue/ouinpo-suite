@@ -52,9 +52,7 @@ class Assets {
         $ver = [];
 
         foreach ($files as $key => $rel) {
-            $ver[$key] = file_exists($base_path . $rel)
-                ? (string) filemtime($base_path . $rel)
-                : $fallback_version;
+            $ver[$key] = \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $rel, $fallback_version);
         }
 
         /*
@@ -96,9 +94,7 @@ class Assets {
             'ouinpo-theme-css',
             $base_url . $theme_file,
             [],
-            file_exists($base_path . $theme_file)
-                ? (string) filemtime($base_path . $theme_file)
-                : $fallback_version
+            \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $theme_file, $fallback_version)
         );
 
         /*

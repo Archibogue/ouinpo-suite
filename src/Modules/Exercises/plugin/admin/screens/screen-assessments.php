@@ -1804,10 +1804,7 @@ class Screen_Assessments {
 
         $file = trailingslashit($base_dir) . $relative_path;
         $version = defined('OUINPO_SUITE_VERSION') ? OUINPO_SUITE_VERSION : '1.0.0';
-
-        if (file_exists($file)) {
-            $version = (string) filemtime($file);
-        }
+        $version = \Ouinpo\Suite\Core\Assets::fileVersion($file, $version);
 
         wp_enqueue_script(
             'ouinpo-assessments-admin-js',
