@@ -496,53 +496,17 @@ final class Repository
 
     public function getMembers(int $projectId): array
     {
-        global $wpdb;
-
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT pm.*, u.display_name, u.user_email
-             FROM {$this->table('members')} pm
-             LEFT JOIN {$wpdb->users} u ON u.ID = pm.user_id
-             WHERE pm.project_id = %d
-             ORDER BY pm.role ASC, u.display_name ASC, pm.user_id ASC",
-            $projectId
-        ), ARRAY_A);
-
-        return $rows ?: [];
+        return $this->members()->getMembers($projectId);
     }
 
     public function addMember(int $projectId, int $userId, string $role = 'member'): bool
     {
-        global $wpdb;
-
-        if ($projectId <= 0 || $userId <= 0) {
-            return false;
-        }
-
-        $role = self::cleanMemberRole($role);
-        $now = current_time('mysql');
-
-        $sql = $wpdb->prepare(
-            "INSERT INTO {$this->table('members')} (project_id, user_id, role, created_at)
-             VALUES (%d, %d, %s, %s)
-             ON DUPLICATE KEY UPDATE role = VALUES(role)",
-            $projectId,
-            $userId,
-            $role,
-            $now
-        );
-
-        return false !== $wpdb->query($sql);
+        return $this->members()->addMember($projectId, $userId, $role);
     }
 
     public function removeMember(int $projectId, int $userId): bool
     {
-        global $wpdb;
-
-        return false !== $wpdb->delete(
-            $this->table('members'),
-            ['project_id' => $projectId, 'user_id' => $userId],
-            ['%d', '%d']
-        );
+        return $this->members()->removeMember($projectId, $userId);
     }
 
     public function isProjectMember(int $projectId, int $userId): bool
@@ -1057,6 +1021,11 @@ final class Repository
     private function checklist(): ProjectChecklistService
     {
         return new ProjectChecklistService($this);
+    }
+
+    private function members(): ProjectMemberService
+    {
+        return new ProjectMemberService($this);
     }
 
     public static function cleanTitle($value): string

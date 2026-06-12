@@ -127,6 +127,7 @@ $projectDeliverableService = path('src/Modules/Projects/ProjectDeliverableServic
 $projectEvidenceService = path('src/Modules/Projects/ProjectEvidenceService.php');
 $projectJournalService = path('src/Modules/Projects/ProjectJournalService.php');
 $projectChecklistService = path('src/Modules/Projects/ProjectChecklistService.php');
+$projectMemberService = path('src/Modules/Projects/ProjectMemberService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -249,6 +250,7 @@ $projectDeliverableSource = read_file($projectDeliverableService);
 $projectEvidenceSource = read_file($projectEvidenceService);
 $projectJournalSource = read_file($projectJournalService);
 $projectChecklistSource = read_file($projectChecklistService);
+$projectMemberSource = read_file($projectMemberService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsPrivateFilesSource = read_file($projectsPrivateFiles);
@@ -353,6 +355,16 @@ check('ProjectChecklistService centralise les methodes checklist', methods_prese
 ]));
 check('Repository conserve les facades checklist Projects', repository_checklist_facades_delegate($repositorySource));
 check('ProjectChecklistService conserve l ordre des items', $projectChecklistSource !== '' && str_contains($projectChecklistSource, 'ORDER BY position ASC, id ASC'));
+check('ProjectMemberService existe', is_file($projectMemberService));
+check('ProjectMemberService utilise le namespace Projects', $projectMemberSource !== '' && str_contains($projectMemberSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectMemberService centralise les methodes membres', methods_present($projectMemberSource, [
+    'getMembers',
+    'addMember',
+    'removeMember',
+]));
+check('Repository conserve les facades membres Projects', repository_member_facades_delegate($repositorySource));
+check('ProjectMemberService conserve l ordre des membres', $projectMemberSource !== '' && str_contains($projectMemberSource, 'ORDER BY pm.role ASC, u.display_name ASC, pm.user_id ASC'));
+check('ProjectMemberService conserve les roles via Repository', $projectMemberSource !== '' && str_contains($projectMemberSource, 'Repository::cleanMemberRole($role)'));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -600,6 +612,24 @@ function repository_checklist_facades_delegate(string $source): bool
     }
 
     return str_contains($source, 'function checklist(): ProjectChecklistService');
+}
+
+function repository_member_facades_delegate(string $source): bool
+{
+    $facades = [
+        'getMembers' => 'members()->getMembers',
+        'addMember' => 'members()->addMember',
+        'removeMember' => 'members()->removeMember',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function members(): ProjectMemberService');
 }
 
 function bootstrap_module_ids(string $source): array
