@@ -2,7 +2,6 @@
 
 namespace Ouinpo\Suite\Modules\Projects;
 
-use Ouinpo\Suite\Core\Capabilities;
 use Ouinpo\Suite\Core\Storage\PrivateUploadValidator;
 
 defined('ABSPATH') || exit;
@@ -548,71 +547,32 @@ final class Repository
 
     public function isProjectMember(int $projectId, int $userId): bool
     {
-        global $wpdb;
-
-        if ($projectId <= 0 || $userId <= 0) {
-            return false;
-        }
-
-        return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table('members')} WHERE project_id = %d AND user_id = %d",
-            $projectId,
-            $userId
-        )) > 0;
+        return $this->permissions()->isProjectMember($projectId, $userId);
     }
 
     public function userCanViewProject(int $projectId, int $userId): bool
     {
-        $project = $this->getProject($projectId);
-        if (!$project || $userId <= 0) {
-            return false;
-        }
-
-        return $this->userCanManageProjectRow($project, $userId)
-            || ($this->userHasCap($userId, Capabilities::PROJECTS_VIEW_OWN) && $this->isProjectMember($projectId, $userId));
+        return $this->permissions()->canViewProject($projectId, $userId);
     }
 
     public function userCanManageProject(int $projectId, int $userId): bool
     {
-        $project = $this->getProject($projectId);
-
-        return $project ? $this->userCanManageProjectRow($project, $userId) : false;
+        return $this->permissions()->canManageProject($projectId, $userId);
     }
 
     public function userCanManageProjectRow(array $project, int $userId): bool
     {
-        if ($this->userCanManageAll($userId)) {
-            return true;
-        }
-
-        if (!$this->userHasCap($userId, Capabilities::PROJECTS_MANAGE_CLASS) && !$this->userHasCap($userId, Capabilities::PROJECTS_CREATE)) {
-            return false;
-        }
-
-        return (int) ($project['teacher_id'] ?? 0) === $userId
-            || (int) ($project['created_by'] ?? 0) === $userId;
+        return $this->permissions()->canManageProjectRow($project, $userId);
     }
 
     public function userCanManageAll(int $userId): bool
     {
-        return $this->userHasCap($userId, Capabilities::PROJECTS_MANAGE_ALL);
+        return $this->permissions()->canManageAllProjects($userId);
     }
 
     public function userCanEditTask(array $task, int $userId): bool
     {
-        if ($this->userCanManageProject((int) $task['project_id'], $userId)) {
-            return true;
-        }
-
-        if (!$this->userHasCap($userId, Capabilities::PROJECTS_EDIT_OWN_TASKS)) {
-            return false;
-        }
-
-        return $this->userCanViewProject((int) $task['project_id'], $userId)
-            && (
-                (int) ($task['created_by'] ?? 0) === $userId
-                || (int) ($task['assigned_user_id'] ?? 0) === $userId
-            );
+        return $this->permissions()->canEditTask($task, $userId);
     }
 
     public function getComments(int $taskId): array
@@ -1328,22 +1288,12 @@ final class Repository
 
     public function userCanSubmitProjectItem(int $projectId, int $userId): bool
     {
-        if ($this->userCanManageProject($projectId, $userId)) {
-            return true;
-        }
-
-        return $this->userHasCap($userId, Capabilities::PROJECTS_COMMENT)
-            && $this->userCanViewProject($projectId, $userId);
+        return $this->permissions()->canSubmitProjectItem($projectId, $userId);
     }
 
     public function userCanManageEvidenceItem(array $evidence, int $userId): bool
     {
-        if ($this->userCanManageProject((int) $evidence['project_id'], $userId)) {
-            return true;
-        }
-
-        return (int) ($evidence['user_id'] ?? 0) === $userId
-            && $this->userCanSubmitProjectItem((int) $evidence['project_id'], $userId);
+        return $this->permissions()->canManageEvidenceItem($evidence, $userId);
     }
 
     public function objectBelongsToProject(int $projectId, string $objectType, int $objectId): bool
@@ -1570,9 +1520,9 @@ final class Repository
         }
     }
 
-    private function userHasCap(int $userId, string $capability): bool
+    private function permissions(): ProjectPermissionService
     {
-        return user_can($userId, $capability) || user_can($userId, 'manage_options');
+        return new ProjectPermissionService($this);
     }
 
     public static function cleanTitle($value): string

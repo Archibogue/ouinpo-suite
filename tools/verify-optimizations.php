@@ -118,6 +118,7 @@ $moduleSettings = path('src/Core/ModuleSettings.php');
 $projectsRepository = path('src/Modules/Projects/Repository.php');
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
+$projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -235,10 +236,13 @@ if (is_file($moduleSettings)) {
 $repositorySource = read_file($projectsRepository);
 $projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
+$projectPermissionSource = read_file($projectPermissionService);
 $repositoryBoard = method_body($repositorySource, 'getBoard');
 $boardGetBoard = method_body($projectBoardSource, 'getBoard');
 $repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
 $statsProjectSummary = method_body($projectStatsSource, 'getProjectSummary');
+$repositoryUserCanViewProject = method_body($repositorySource, 'userCanViewProject');
+$repositoryUserCanEditTask = method_body($repositorySource, 'userCanEditTask');
 check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
 check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));
@@ -247,6 +251,10 @@ check('ProjectStatsService existe', is_file($projectStatsService));
 check('Repository delegue getProjectSummary au service', $repositoryProjectSummary !== '' && str_contains($repositoryProjectSummary, 'ProjectStatsService'));
 check('getProjectSummary utilise des agregats SQL', $statsProjectSummary !== '' && str_contains($statsProjectSummary, 'SUM(CASE WHEN'));
 check('getProjectSummary evite les get_var() de compteurs separes', $statsProjectSummary !== '' && substr_count($statsProjectSummary, 'get_var(') === 0);
+check('ProjectPermissionService existe', is_file($projectPermissionService));
+check('ProjectPermissionService centralise les regles Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'function canViewProject(') && str_contains($projectPermissionSource, 'function canUseProjectAi(') && str_contains($projectPermissionSource, 'function canManageEvidenceItem('));
+check('Repository delegue les permissions Projects au service', $repositoryUserCanViewProject !== '' && str_contains($repositoryUserCanViewProject, 'permissions()->canViewProject') && $repositoryUserCanEditTask !== '' && str_contains($repositoryUserCanEditTask, 'permissions()->canEditTask'));
+check('ProjectPermissionService conserve manage_options', $projectPermissionSource !== '' && str_contains($projectPermissionSource, "user_can(\$userId, 'manage_options')"));
 
 $failed = 0;
 foreach ($checks as [$label, $ok]) {

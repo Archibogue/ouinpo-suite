@@ -4,7 +4,6 @@ namespace Ouinpo\Suite\Modules\Projects;
 
 use Ouinpo\Suite\Core\AiSettings;
 use Ouinpo\Suite\Core\Ai\JsonResponseParser;
-use Ouinpo\Suite\Core\Capabilities;
 use WP_Error;
 
 defined('ABSPATH') || exit;
@@ -126,11 +125,12 @@ final class ProjectsStudentAiAssistant
             return new WP_Error('ouinpo_projects_student_ai_archived', 'Assistant IA eleve indisponible pour un projet archive.', ['status' => 403]);
         }
 
-        if ($userId <= 0 || !$this->repository->isProjectMember($projectId, $userId)) {
+        $permissions = new ProjectPermissionService($this->repository);
+        if ($userId <= 0 || !$permissions->isProjectMember($projectId, $userId)) {
             return new WP_Error('ouinpo_projects_student_ai_not_member', 'Assistant IA reserve aux membres actuels du projet.', ['status' => 403]);
         }
 
-        if (!current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) && !current_user_can('manage_options')) {
+        if (!$permissions->canUseStudentAi($project, $userId)) {
             return new WP_Error('ouinpo_projects_student_ai_forbidden', 'Droit IA eleve requis.', ['status' => 403]);
         }
 

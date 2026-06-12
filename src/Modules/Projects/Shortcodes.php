@@ -2,8 +2,6 @@
 
 namespace Ouinpo\Suite\Modules\Projects;
 
-use Ouinpo\Suite\Core\Capabilities;
-
 defined('ABSPATH') || exit;
 
 final class Shortcodes
@@ -227,11 +225,10 @@ final class Shortcodes
             return self::notice('Projet introuvable.');
         }
 
+        $permissions = new ProjectPermissionService($repository);
         $columns = $repository->getBoard($projectId);
         $members = $repository->getMembers($projectId);
-        $canCreateTask = $repository->userCanManageProject($projectId, get_current_user_id())
-            || current_user_can(Capabilities::PROJECTS_EDIT_OWN_TASKS)
-            || current_user_can('manage_options');
+        $canCreateTask = $permissions->canCreateTask($projectId, get_current_user_id());
 
         ob_start();
         ?>
@@ -312,9 +309,7 @@ final class Shortcodes
 
         $project = $repository->getProject($projectId);
         $logs = $repository->getLogs($projectId);
-        $canAdd = current_user_can(Capabilities::PROJECTS_COMMENT)
-            || $repository->userCanManageProject($projectId, get_current_user_id())
-            || current_user_can('manage_options');
+        $canAdd = (new ProjectPermissionService($repository))->canSubmitProjectItem($projectId, get_current_user_id());
 
         ob_start();
         ?>
@@ -725,7 +720,7 @@ final class Shortcodes
             return self::notice('Assistant IA eleve desactive pour ce projet.');
         }
 
-        if (!current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) && !current_user_can('manage_options')) {
+        if (!(new ProjectPermissionService($repository))->canUseStudentAi($project, get_current_user_id())) {
             return self::notice('Droit IA eleve requis.');
         }
 
@@ -1005,18 +1000,12 @@ final class Shortcodes
 
     private static function canCreateOrManage(): bool
     {
-        return current_user_can(Capabilities::PROJECTS_CREATE)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_CLASS)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_ALL)
-            || current_user_can('manage_options');
+        return (new ProjectPermissionService(new Repository()))->canCreateOrManageProjects(get_current_user_id());
     }
 
     private static function canUseProjectAi(Repository $repository, int $projectId): bool
     {
-        return (
-            current_user_can(Capabilities::PROJECTS_AI_USE)
-            || current_user_can('manage_options')
-        ) && $repository->userCanManageProject($projectId, get_current_user_id());
+        return (new ProjectPermissionService($repository))->canUseProjectAi($projectId, get_current_user_id());
     }
 
     private static function canUseProjectStudentAi(Repository $repository, int $projectId): bool
@@ -1026,9 +1015,6 @@ final class Shortcodes
             return false;
         }
 
-        return ProjectsStudentAiAssistant::globalEnabled()
-            && ProjectsStudentAiAssistant::projectStudentAiEnabled($project)
-            && $repository->isProjectMember($projectId, get_current_user_id())
-            && (current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) || current_user_can('manage_options'));
+        return (new ProjectPermissionService($repository))->canUseStudentAi($project, get_current_user_id());
     }
 }

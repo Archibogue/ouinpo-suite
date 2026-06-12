@@ -3,7 +3,6 @@
 namespace Ouinpo\Suite\Modules\Projects;
 
 use Ouinpo\Suite\Core\Admin\AdminMenuRegistry;
-use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
 
@@ -182,7 +181,7 @@ final class AdminPage
                 wp_die('Acces refuse.');
             }
             $status = isset($_POST['status']) ? sanitize_key(wp_unslash((string) $_POST['status'])) : 'expected';
-            if ($status === 'validated' && !current_user_can(Capabilities::PROJECTS_VALIDATE) && !current_user_can('manage_options')) {
+            if ($status === 'validated' && !(new ProjectPermissionService($repository))->canValidateDeliverables(get_current_user_id())) {
                 wp_die('Validation refusee.');
             }
             $repository->updateDeliverableStatus($deliverableId, $status, get_current_user_id());
@@ -616,9 +615,6 @@ final class AdminPage
 
     private static function canManage(): bool
     {
-        return current_user_can(Capabilities::PROJECTS_CREATE)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_CLASS)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_ALL)
-            || current_user_can('manage_options');
+        return (new ProjectPermissionService(new Repository()))->canCreateOrManageProjects(get_current_user_id());
     }
 }

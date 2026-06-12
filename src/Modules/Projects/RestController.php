@@ -583,7 +583,7 @@ final class RestController
         $body = self::body($request);
         $status = Repository::cleanDeliverableStatus($body['status'] ?? '');
 
-        if ($status === 'validated' && !current_user_can(Capabilities::PROJECTS_VALIDATE) && !current_user_can('manage_options')) {
+        if ($status === 'validated' && !(new ProjectPermissionService(new Repository()))->canValidateDeliverables(get_current_user_id())) {
             return new WP_Error('ouinpo_projects_validation_forbidden', 'Validation refusee.', ['status' => 403]);
         }
 
@@ -969,10 +969,7 @@ final class RestController
             return $allowed;
         }
 
-        return current_user_can(Capabilities::PROJECTS_CREATE)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_CLASS)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_ALL)
-            || current_user_can('manage_options')
+        return (new ProjectPermissionService(new Repository()))->canCreateOrManageProjects(get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Droit de creation requis.', ['status' => 403]);
     }
@@ -1047,11 +1044,12 @@ final class RestController
         }
 
         $userId = get_current_user_id();
-        if (!$repository->isProjectMember($projectId, $userId)) {
+        $permissions = new ProjectPermissionService($repository);
+        if (!$permissions->isProjectMember($projectId, $userId)) {
             return new WP_Error('ouinpo_projects_student_ai_not_member', 'Assistant IA reserve aux membres actuels du projet.', ['status' => 403]);
         }
 
-        return current_user_can(Capabilities::PROJECTS_AI_STUDENT_USE) || current_user_can('manage_options')
+        return $permissions->canUseStudentAi($project, $userId)
             ? true
             : new WP_Error('ouinpo_projects_student_ai_forbidden', 'Droit IA eleve requis.', ['status' => 403]);
     }
@@ -1064,7 +1062,7 @@ final class RestController
         }
 
         $userId = get_current_user_id();
-        if ((new Repository())->userCanManageProject(self::id($request), $userId) || current_user_can(Capabilities::PROJECTS_EDIT_OWN_TASKS)) {
+        if ((new ProjectPermissionService(new Repository()))->canCreateTask(self::id($request), $userId)) {
             return true;
         }
 
@@ -1139,10 +1137,7 @@ final class RestController
             return $view;
         }
 
-        return current_user_can(Capabilities::PROJECTS_COMMENT)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_CLASS)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_ALL)
-            || current_user_can('manage_options')
+        return (new ProjectPermissionService(new Repository()))->canCommentOrLog(get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Commentaire refuse.', ['status' => 403]);
     }
@@ -1177,10 +1172,7 @@ final class RestController
             return $view;
         }
 
-        return current_user_can(Capabilities::PROJECTS_COMMENT)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_CLASS)
-            || current_user_can(Capabilities::PROJECTS_MANAGE_ALL)
-            || current_user_can('manage_options')
+        return (new ProjectPermissionService(new Repository()))->canCommentOrLog(get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Journal refuse.', ['status' => 403]);
     }
@@ -1409,12 +1401,7 @@ final class RestController
             return new WP_Error('ouinpo_projects_not_found', 'Projet introuvable.', ['status' => 404]);
         }
 
-        $userId = get_current_user_id();
-        $hasCapability = current_user_can($capability) || current_user_can('manage_options');
-        if ($requireUseCapability) {
-            $hasCapability = $hasCapability && (current_user_can(Capabilities::PROJECTS_AI_USE) || current_user_can('manage_options'));
-        }
-        if (!$hasCapability || !$repository->userCanManageProject($projectId, $userId)) {
+        if (!(new ProjectPermissionService($repository))->canUseProjectAi($projectId, get_current_user_id(), $capability, $requireUseCapability)) {
             return new WP_Error('ouinpo_projects_ai_forbidden', 'Assistant IA reserve aux enseignants responsables du projet.', ['status' => 403]);
         }
 
