@@ -202,86 +202,55 @@ class Ouinpo_Submissions_Plugin {
 
     private function validate_private_upload_file(string $field) {
 
-        if (empty($_FILES[$field]['name']) || empty($_FILES[$field]['tmp_name'])) {
+        $text_like_declared_mimes = array('', 'text/plain', 'application/octet-stream');
+        $zip_like_declared_mimes = array('application/zip', 'application/x-zip-compressed', 'application/octet-stream');
 
-            return new WP_Error('missing_file', 'Aucun fichier recu.');
-
-        }
-
-        if (!empty($_FILES[$field]['error']) && (int) $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
-
-            return new WP_Error('upload_error', 'Erreur upload.');
-
-        }
-
-        $size = isset($_FILES[$field]['size']) ? (int) $_FILES[$field]['size'] : 0;
-        if ($size <= 0) {
-
-            return new WP_Error('empty_file', 'Fichier vide.');
-
-        }
-
-        if ($size > self::UPLOAD_MAX_BYTES) {
-
-            return new WP_Error('file_too_large', 'Fichier trop lourd.');
-
-        }
-
-        $filename = sanitize_file_name(wp_basename((string) $_FILES[$field]['name']));
-        if ($filename === '' || $filename === '.' || $filename === '..' || $filename[0] === '.') {
-
-            return new WP_Error('invalid_filename', 'Nom de fichier invalide.');
-
-        }
-
-        $parts = array_values(array_filter(explode('.', strtolower($filename)), static fn($part) => $part !== ''));
-        $extension = end($parts);
-        if (!is_string($extension) || !isset(self::UPLOAD_ALLOWED_MIMES[$extension])) {
-
-            return new WP_Error('unsupported_file_type', 'Type de fichier non autorise.');
-
-        }
-
-        foreach ($parts as $part) {
-
-            if (in_array($part, self::UPLOAD_BLOCKED_EXTENSIONS, true)) {
-
-                return new WP_Error('dangerous_extension', 'Extension de fichier dangereuse.');
-
-            }
-
-        }
-
-        $check = wp_check_filetype_and_ext((string) $_FILES[$field]['tmp_name'], $filename, self::UPLOAD_ALLOWED_MIMES);
-        if (!empty($check['ext']) && (string) $check['ext'] !== $extension) {
-
-            return new WP_Error('mime_mismatch', 'Le type du fichier ne correspond pas a son extension.');
-
-        }
-
-        if (empty($check['type'])) {
-
-            $declared = isset($_FILES[$field]['type']) ? strtolower((string) $_FILES[$field]['type']) : '';
-            $text_like = array('txt', 'md', 'csv', 'json', 'sql', 'py');
-            $zip_like = array('zip', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp');
-
-            if (in_array($extension, $text_like, true) && in_array($declared, array('', 'text/plain', 'application/octet-stream'), true)) {
-
-                return $filename;
-
-            }
-
-            if (in_array($extension, $zip_like, true) && in_array($declared, array('application/zip', 'application/x-zip-compressed', 'application/octet-stream'), true)) {
-
-                return $filename;
-
-            }
-
-            return new WP_Error('mime_not_allowed', 'Type MIME non autorise.');
-
-        }
-
-        return $filename;
+        return \Ouinpo\Suite\Core\Storage\PrivateUploadValidator::validateUploadedFile(
+            isset($_FILES[$field]) && is_array($_FILES[$field]) ? $_FILES[$field] : array(),
+            array(
+                'allowed_mimes' => self::UPLOAD_ALLOWED_MIMES,
+                'blocked_extensions' => self::UPLOAD_BLOCKED_EXTENSIONS,
+                'max_size' => self::UPLOAD_MAX_BYTES,
+                'require_file_fields' => true,
+                'fallback_declared_mimes' => array(
+                    'txt' => $text_like_declared_mimes,
+                    'md' => $text_like_declared_mimes,
+                    'csv' => $text_like_declared_mimes,
+                    'json' => $text_like_declared_mimes,
+                    'sql' => $text_like_declared_mimes,
+                    'py' => $text_like_declared_mimes,
+                    'zip' => $zip_like_declared_mimes,
+                    'docx' => $zip_like_declared_mimes,
+                    'xlsx' => $zip_like_declared_mimes,
+                    'pptx' => $zip_like_declared_mimes,
+                    'odt' => $zip_like_declared_mimes,
+                    'ods' => $zip_like_declared_mimes,
+                    'odp' => $zip_like_declared_mimes,
+                ),
+                'codes' => array(
+                    'missing_file' => 'missing_file',
+                    'upload_error' => 'upload_error',
+                    'empty_file' => 'empty_file',
+                    'file_too_large' => 'file_too_large',
+                    'invalid_filename' => 'invalid_filename',
+                    'unsupported_file_type' => 'unsupported_file_type',
+                    'dangerous_extension' => 'dangerous_extension',
+                    'mime_mismatch' => 'mime_mismatch',
+                    'mime_not_allowed' => 'mime_not_allowed',
+                ),
+                'messages' => array(
+                    'missing_file' => 'Aucun fichier recu.',
+                    'upload_error' => 'Erreur upload.',
+                    'empty_file' => 'Fichier vide.',
+                    'file_too_large' => 'Fichier trop lourd.',
+                    'invalid_filename' => 'Nom de fichier invalide.',
+                    'unsupported_file_type' => 'Type de fichier non autorise.',
+                    'dangerous_extension' => 'Extension de fichier dangereuse.',
+                    'mime_mismatch' => 'Le type du fichier ne correspond pas a son extension.',
+                    'mime_not_allowed' => 'Type MIME non autorise.',
+                ),
+            )
+        );
 
     }
 

@@ -3,6 +3,7 @@
 namespace Ouinpo\Suite\Modules\Projects;
 
 use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Storage\PrivateUploadValidator;
 
 defined('ABSPATH') || exit;
 
@@ -1557,85 +1558,59 @@ final class Repository
 
     public static function normalizedEvidenceUploadExtension(string $filename): string
     {
-        $filename = strtolower(sanitize_file_name(wp_basename($filename)));
-        $parts = array_values(array_filter(explode('.', $filename), static fn($part) => $part !== ''));
-        $count = count($parts);
-
-        if ($count >= 3 && $parts[$count - 1] === 'txt' && in_array($parts[$count - 2], ['html', 'css', 'js'], true)) {
-            return $parts[$count - 2] . '.txt';
-        }
-
-        return $count > 0 ? (string) $parts[$count - 1] : '';
+        return PrivateUploadValidator::normalizedExtension($filename, self::EVIDENCE_UPLOAD_ALLOWED_EXTENSIONS);
     }
 
     public static function validateEvidenceUploadFile(array $file)
     {
-        $rawName = isset($file['name']) ? (string) $file['name'] : '';
-        $rawBaseName = wp_basename($rawName);
-        $rawBaseLower = strtolower((string) $rawBaseName);
+        $textLikeDeclaredMimes = ['', 'text/plain', 'application/octet-stream', 'text/csv', 'application/json', 'text/markdown', 'application/sql', 'text/x-python'];
 
-        if ($rawBaseName === '' || $rawBaseName[0] === '.' || $rawBaseLower === '.env') {
-            return new \WP_Error('ouinpo_projects_bad_filename', 'Nom de fichier invalide.');
-        }
-
-        $name = sanitize_file_name(wp_basename($rawName));
-
-        if ($name === '' || $name === '.' || $name === '..' || $name[0] === '.') {
-            return new \WP_Error('ouinpo_projects_bad_filename', 'Nom de fichier invalide.');
-        }
-
-        if (!empty($file['error'])) {
-            return new \WP_Error('ouinpo_projects_upload_error', 'Transfert de fichier incomplet.');
-        }
-
-        $size = isset($file['size']) ? (int) $file['size'] : 0;
-        if ($size <= 0 || $size > self::EVIDENCE_UPLOAD_MAX_BYTES) {
-            return new \WP_Error('ouinpo_projects_upload_size', 'Fichier vide ou trop volumineux.');
-        }
-
-        $extension = self::normalizedEvidenceUploadExtension($name);
-        if ($extension === '' || !in_array($extension, self::EVIDENCE_UPLOAD_ALLOWED_EXTENSIONS, true)) {
-            return new \WP_Error('ouinpo_projects_upload_type', 'Extension de fichier non autorisee.');
-        }
-
-        $parts = array_values(array_filter(explode('.', strtolower($name)), static fn($part) => $part !== ''));
-        $count = count($parts);
-        foreach ($parts as $index => $part) {
-            if (!in_array($part, self::EVIDENCE_UPLOAD_BLOCKED_EXTENSIONS, true)) {
-                continue;
-            }
-
-            $neutralizedWebFile = in_array($extension, ['html.txt', 'css.txt', 'js.txt'], true)
-                && $index === $count - 2
-                && in_array($part, ['html', 'css', 'js'], true);
-
-            if (!$neutralizedWebFile) {
-                return new \WP_Error('ouinpo_projects_upload_dangerous', 'Extension dangereuse refusee.');
-            }
-        }
-
-        if (!isset($file['tmp_name']) || !is_uploaded_file((string) $file['tmp_name'])) {
-            return new \WP_Error('ouinpo_projects_upload_missing', 'Fichier temporaire manquant.');
-        }
-
-        $finalExtension = pathinfo($name, PATHINFO_EXTENSION);
-        $mimes = self::evidenceUploadMimes();
-        $check = wp_check_filetype_and_ext((string) $file['tmp_name'], $name, $mimes);
-        if (!empty($check['ext']) && strtolower((string) $check['ext']) !== strtolower((string) $finalExtension)) {
-            return new \WP_Error('ouinpo_projects_upload_mime', 'Le type du fichier ne correspond pas a son extension.');
-        }
-
-        if (!empty($check['type'])) {
-            return $name;
-        }
-
-        $declared = isset($file['type']) ? strtolower((string) $file['type']) : '';
-        $textLike = ['txt', 'md', 'csv', 'json', 'sql', 'py', 'html.txt', 'css.txt', 'js.txt'];
-        if (in_array($extension, $textLike, true) && in_array($declared, ['', 'text/plain', 'application/octet-stream', 'text/csv', 'application/json', 'text/markdown', 'application/sql', 'text/x-python'], true)) {
-            return $name;
-        }
-
-        return new \WP_Error('ouinpo_projects_upload_mime', 'Type MIME non autorise.');
+        return PrivateUploadValidator::validateUploadedFile($file, [
+            'allowed_mimes' => self::evidenceUploadMimes(),
+            'allowed_extensions' => self::EVIDENCE_UPLOAD_ALLOWED_EXTENSIONS,
+            'blocked_extensions' => self::EVIDENCE_UPLOAD_BLOCKED_EXTENSIONS,
+            'max_size' => self::EVIDENCE_UPLOAD_MAX_BYTES,
+            'reject_raw_dotfiles' => true,
+            'require_uploaded_file' => true,
+            'allowed_blocked_parts' => [
+                'html.txt' => ['html'],
+                'css.txt' => ['css'],
+                'js.txt' => ['js'],
+            ],
+            'fallback_declared_mimes' => [
+                'txt' => $textLikeDeclaredMimes,
+                'md' => $textLikeDeclaredMimes,
+                'csv' => $textLikeDeclaredMimes,
+                'json' => $textLikeDeclaredMimes,
+                'sql' => $textLikeDeclaredMimes,
+                'py' => $textLikeDeclaredMimes,
+                'html.txt' => $textLikeDeclaredMimes,
+                'css.txt' => $textLikeDeclaredMimes,
+                'js.txt' => $textLikeDeclaredMimes,
+            ],
+            'codes' => [
+                'invalid_filename' => 'ouinpo_projects_bad_filename',
+                'upload_error' => 'ouinpo_projects_upload_error',
+                'empty_file' => 'ouinpo_projects_upload_size',
+                'file_too_large' => 'ouinpo_projects_upload_size',
+                'unsupported_file_type' => 'ouinpo_projects_upload_type',
+                'dangerous_extension' => 'ouinpo_projects_upload_dangerous',
+                'missing_tmp_file' => 'ouinpo_projects_upload_missing',
+                'mime_mismatch' => 'ouinpo_projects_upload_mime',
+                'mime_not_allowed' => 'ouinpo_projects_upload_mime',
+            ],
+            'messages' => [
+                'invalid_filename' => 'Nom de fichier invalide.',
+                'upload_error' => 'Transfert de fichier incomplet.',
+                'empty_file' => 'Fichier vide ou trop volumineux.',
+                'file_too_large' => 'Fichier vide ou trop volumineux.',
+                'unsupported_file_type' => 'Extension de fichier non autorisee.',
+                'dangerous_extension' => 'Extension dangereuse refusee.',
+                'missing_tmp_file' => 'Fichier temporaire manquant.',
+                'mime_mismatch' => 'Le type du fichier ne correspond pas a son extension.',
+                'mime_not_allowed' => 'Type MIME non autorise.',
+            ],
+        ]);
     }
 
     public static function decorateEvidenceAttachment(array $row): array
