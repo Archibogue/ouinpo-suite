@@ -118,6 +118,7 @@ $moduleSettings = path('src/Core/ModuleSettings.php');
 $projectsRepository = path('src/Modules/Projects/Repository.php');
 $projectsRestController = path('src/Modules/Projects/RestController.php');
 $projectsShortcodes = path('src/Modules/Projects/Shortcodes.php');
+$projectsPrivateFiles = path('src/Modules/Projects/PrivateFiles.php');
 $projectsStudentAiAssistant = path('src/Modules/Projects/ProjectsStudentAiAssistant.php');
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
@@ -246,6 +247,7 @@ $projectDeliverableSource = read_file($projectDeliverableService);
 $projectEvidenceSource = read_file($projectEvidenceService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
+$projectsPrivateFilesSource = read_file($projectsPrivateFiles);
 $projectsStudentAiSource = read_file($projectsStudentAiAssistant);
 $repositoryBoard = method_body($repositorySource, 'getBoard');
 $boardGetBoard = method_body($projectBoardSource, 'getBoard');
@@ -253,6 +255,11 @@ $repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
 $statsProjectSummary = method_body($projectStatsSource, 'getProjectSummary');
 $repositoryUserCanViewProject = method_body($repositorySource, 'userCanViewProject');
 $repositoryUserCanEditTask = method_body($repositorySource, 'userCanEditTask');
+$decorateEvidenceAttachment = method_body($projectEvidenceSource, 'decorateEvidenceAttachment');
+$storeUploadedFile = method_body($projectsPrivateFilesSource, 'storeUploadedFile');
+$absolutePath = method_body($projectsPrivateFilesSource, 'absolutePath');
+$downloadEvidence = method_body($projectsRestSource, 'downloadEvidence');
+$canDownloadEvidence = method_body($projectsRestSource, 'canDownloadEvidence');
 check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
 check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));
@@ -286,10 +293,35 @@ check('ProjectEvidenceService centralise les methodes evidence', methods_present
     'decorateEvidenceAttachment',
 ]));
 check('Repository conserve les facades evidence Projects', repository_evidence_facades_delegate($repositorySource));
+check('Evidence privee utilise la route REST protegee', $decorateEvidenceAttachment !== '' && str_contains($decorateEvidenceAttachment, 'PrivateFiles::downloadUrl'));
+check('Evidence non privee conserve wp_get_attachment_url()', $decorateEvidenceAttachment !== '' && str_contains($decorateEvidenceAttachment, 'wp_get_attachment_url('));
+check('Upload evidence passe par PrivateFiles::storeUploadedFile()', $projectsRestSource !== '' && str_contains($projectsRestSource, 'PrivateFiles::storeUploadedFile($file)'));
 check('Validation upload evidence reste dans Repository', $repositorySource !== '' && str_contains($repositorySource, 'PrivateUploadValidator::validateUploadedFile'));
-check('Telechargement prive evidence reste protege', source_contains_all($projectsRestSource, [
+check('PrivateFiles valide les uploads evidence via Repository', $storeUploadedFile !== '' && str_contains($storeUploadedFile, 'Repository::validateEvidenceUploadFile($file)'));
+check('PrivateFiles::downloadUrl pointe vers la route evidence protegee', method_contains_all($projectsPrivateFilesSource, 'downloadUrl', [
+    'rest_url(\'ouinpo-projects/v1/evidence/\' . $evidenceId . \'/download\')',
+    "wp_create_nonce('wp_rest')",
+]));
+check('PrivateFiles::absolutePath bloque les chemins hors dossier prive', $absolutePath !== '' && source_contains_all($absolutePath, [
+    "str_contains(\$relativePath, '../')",
+    "!str_starts_with(\$relativePath, 'ouinpo/projects/')",
+    'realpath($path)',
+    '!str_starts_with($real, $expectedDir)',
+]));
+check('Route REST de telechargement evidence conservee', source_contains_all($projectsRestSource, [
+    "register_rest_route(self::NS, '/evidence/(?P<id>\\d+)/download'",
     "'permission_callback' => [self::class, 'canDownloadEvidence']",
+]));
+check('Permission de telechargement evidence verifie le projet', $canDownloadEvidence !== '' && source_contains_all($canDownloadEvidence, [
+    'getEvidenceItem',
+    'userCanViewProject',
+    "new WP_Error('ouinpo_projects_forbidden'",
+]));
+check('Telechargement prive evidence verifie attachment et metas', $downloadEvidence !== '' && source_contains_all($downloadEvidence, [
     'PrivateFiles::isPrivateAttachment',
+    'PrivateFiles::META_PROJECT_ID',
+    'PrivateFiles::META_EVIDENCE_ID',
+    'PrivateFiles::absolutePath',
     'PrivateFiles::sendFile',
 ]));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
@@ -427,6 +459,11 @@ function methods_present(string $source, array $methods): bool
     }
 
     return true;
+}
+
+function method_contains_all(string $source, string $method, array $needles): bool
+{
+    return source_contains_all(method_body($source, $method), $needles);
 }
 
 function repository_permission_facades_delegate(string $source): bool
