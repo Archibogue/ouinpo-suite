@@ -11,6 +11,23 @@ final class ModuleSettings
     private static ?array $enabledCache = null;
 
     /**
+     * Identifiants des modules declarés par la suite.
+     */
+    public static function availableModules(): array
+    {
+        return [
+            'exercises',
+            'flashcards',
+            'submissions',
+            'segfault',
+            'gate',
+            'rechtext',
+            'meta',
+            'projects',
+        ];
+    }
+
+    /**
      * Le module Exercices reste le socle de la suite.
      * Il n'est pas désactivable dans cette première version.
      */
@@ -46,15 +63,7 @@ final class ModuleSettings
             return self::$enabledCache;
         }
 
-        $enabled = array_values(array_unique(array_map('sanitize_key', $raw)));
-
-        foreach (self::lockedModules() as $locked) {
-            if (!in_array($locked, $enabled, true)) {
-                $enabled[] = $locked;
-            }
-        }
-
-        self::$enabledCache = $enabled;
+        self::$enabledCache = self::normalizeModules($raw);
 
         return self::$enabledCache;
     }
@@ -72,23 +81,31 @@ final class ModuleSettings
 
     public static function saveEnabledModules(array $moduleIds): void
     {
+        $clean = self::normalizeModules($moduleIds);
+
+        update_option(self::OPTION_KEY, $clean, false);
+        self::$enabledCache = null;
+    }
+
+    private static function normalizeModules(array $moduleIds): array
+    {
+        $allowed = array_fill_keys(self::availableModules(), true);
         $clean = [];
 
         foreach ($moduleIds as $moduleId) {
             $moduleId = sanitize_key((string) $moduleId);
 
-            if ($moduleId !== '') {
+            if ($moduleId !== '' && isset($allowed[$moduleId])) {
                 $clean[] = $moduleId;
             }
         }
 
         foreach (self::lockedModules() as $locked) {
-            $clean[] = $locked;
+            if (isset($allowed[$locked])) {
+                $clean[] = $locked;
+            }
         }
 
-        $clean = array_values(array_unique($clean));
-
-        update_option(self::OPTION_KEY, $clean, false);
-        self::$enabledCache = null;
+        return array_values(array_unique($clean));
     }
 }
