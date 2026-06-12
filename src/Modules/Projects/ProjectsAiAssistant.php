@@ -3,6 +3,7 @@
 namespace Ouinpo\Suite\Modules\Projects;
 
 use Ouinpo\Suite\Core\AiSettings;
+use Ouinpo\Suite\Core\Ai\JsonResponseParser;
 use WP_Error;
 
 defined('ABSPATH') || exit;
@@ -854,83 +855,17 @@ final class ProjectsAiAssistant
 
     private static function parseJsonObject(string $raw)
     {
-        $clean = trim(preg_replace('/^\xEF\xBB\xBF/', '', $raw) ?? $raw);
-        if ($clean === '') {
-            return new WP_Error('ouinpo_projects_ai_empty_response', 'La reponse IA est vide.', ['status' => 502]);
-        }
-
-        if (preg_match('/^```(?:json|JSON)?\s*(.*?)\s*```$/s', $clean, $m)) {
-            $clean = trim($m[1]);
-        }
-        $clean = preg_replace('/^\s*```(?:json|JSON)?\s*/', '', $clean) ?? $clean;
-        $clean = preg_replace('/\s*```\s*$/', '', $clean) ?? $clean;
-
-        $candidate = self::extractBalancedObject($clean);
-        if (is_wp_error($candidate)) {
-            return $candidate;
-        }
-
-        try {
-            $decoded = json_decode($candidate, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $exception) {
-            return new WP_Error('ouinpo_projects_ai_invalid_json', 'La reponse IA ne contient pas de JSON valide.', [
-                'status' => 502,
-                'json_error' => $exception->getMessage(),
-            ]);
-        }
-
-        if (!is_array($decoded) || array_is_list($decoded)) {
-            return new WP_Error('ouinpo_projects_ai_invalid_json_root', 'La reponse IA doit etre un objet JSON.', ['status' => 502]);
-        }
-
-        return $decoded;
-    }
-
-    private static function extractBalancedObject(string $text)
-    {
-        $length = strlen($text);
-        for ($start = 0; $start < $length; $start++) {
-            if ($text[$start] !== '{') {
-                continue;
-            }
-
-            $depth = 0;
-            $inString = false;
-            $escaped = false;
-            for ($i = $start; $i < $length; $i++) {
-                $current = $text[$i];
-                if ($inString) {
-                    if ($escaped) {
-                        $escaped = false;
-                        continue;
-                    }
-                    if ($current === '\\') {
-                        $escaped = true;
-                        continue;
-                    }
-                    if ($current === '"') {
-                        $inString = false;
-                    }
-                    continue;
-                }
-                if ($current === '"') {
-                    $inString = true;
-                    continue;
-                }
-                if ($current === '{') {
-                    $depth++;
-                    continue;
-                }
-                if ($current === '}') {
-                    $depth--;
-                    if ($depth === 0) {
-                        return substr($text, $start, $i - $start + 1);
-                    }
-                }
-            }
-        }
-
-        return new WP_Error('ouinpo_projects_ai_invalid_json', 'Aucun objet JSON complet trouve dans la reponse IA.', ['status' => 502]);
+        return JsonResponseParser::parse($raw, 'object', [
+            'status' => 502,
+            'empty_code' => 'ouinpo_projects_ai_empty_response',
+            'empty_message' => 'La reponse IA est vide.',
+            'invalid_json_code' => 'ouinpo_projects_ai_invalid_json',
+            'invalid_json_message' => 'La reponse IA ne contient pas de JSON valide.',
+            'append_json_error_to_message' => false,
+            'invalid_root_code' => 'ouinpo_projects_ai_invalid_json_root',
+            'invalid_root_object_message' => 'La reponse IA doit etre un objet JSON.',
+            'not_found_message' => 'Aucun objet JSON complet trouve dans la reponse IA.',
+        ]);
     }
 
     private function memberRoleCounts(array $members): array
