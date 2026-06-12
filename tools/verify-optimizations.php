@@ -126,6 +126,7 @@ $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.
 $projectDeliverableService = path('src/Modules/Projects/ProjectDeliverableService.php');
 $projectEvidenceService = path('src/Modules/Projects/ProjectEvidenceService.php');
 $projectJournalService = path('src/Modules/Projects/ProjectJournalService.php');
+$projectChecklistService = path('src/Modules/Projects/ProjectChecklistService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -247,6 +248,7 @@ $projectPermissionSource = read_file($projectPermissionService);
 $projectDeliverableSource = read_file($projectDeliverableService);
 $projectEvidenceSource = read_file($projectEvidenceService);
 $projectJournalSource = read_file($projectJournalService);
+$projectChecklistSource = read_file($projectChecklistService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsPrivateFilesSource = read_file($projectsPrivateFiles);
@@ -266,6 +268,7 @@ check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
 check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));
 check('getBoard utilise le chargement groupe des checklists', $boardGetBoard !== '' && str_contains($boardGetBoard, 'getChecklistForTasks(array_column($tasks, \'id\'))'));
+check('Chargement groupe des checklists reste dans ProjectBoardService', $projectBoardSource !== '' && str_contains($projectBoardSource, 'private function getChecklistForTasks('));
 check('ProjectStatsService existe', is_file($projectStatsService));
 check('Repository delegue getProjectSummary au service', $repositoryProjectSummary !== '' && str_contains($repositoryProjectSummary, 'ProjectStatsService'));
 check('getProjectSummary utilise des agregats SQL', $statsProjectSummary !== '' && str_contains($statsProjectSummary, 'SUM(CASE WHEN'));
@@ -339,6 +342,17 @@ check('ProjectJournalService conserve les ordres des commentaires et logs', sour
     'ORDER BY c.created_at ASC, c.id ASC',
     'ORDER BY l.created_at DESC, l.id DESC',
 ]));
+check('ProjectChecklistService existe', is_file($projectChecklistService));
+check('ProjectChecklistService utilise le namespace Projects', $projectChecklistSource !== '' && str_contains($projectChecklistSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectChecklistService centralise les methodes checklist', methods_present($projectChecklistSource, [
+    'getChecklistForTask',
+    'getChecklistItem',
+    'addChecklistItem',
+    'updateChecklistItem',
+    'deleteChecklistItem',
+]));
+check('Repository conserve les facades checklist Projects', repository_checklist_facades_delegate($repositorySource));
+check('ProjectChecklistService conserve l ordre des items', $projectChecklistSource !== '' && str_contains($projectChecklistSource, 'ORDER BY position ASC, id ASC'));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -566,6 +580,26 @@ function repository_journal_facades_delegate(string $source): bool
     }
 
     return str_contains($source, 'function journal(): ProjectJournalService');
+}
+
+function repository_checklist_facades_delegate(string $source): bool
+{
+    $facades = [
+        'getChecklistForTask' => 'checklist()->getChecklistForTask',
+        'getChecklistItem' => 'checklist()->getChecklistItem',
+        'addChecklistItem' => 'checklist()->addChecklistItem',
+        'updateChecklistItem' => 'checklist()->updateChecklistItem',
+        'deleteChecklistItem' => 'checklist()->deleteChecklistItem',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function checklist(): ProjectChecklistService');
 }
 
 function bootstrap_module_ids(string $source): array

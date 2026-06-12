@@ -587,102 +587,27 @@ final class Repository
 
     public function getChecklistForTask(int $taskId): array
     {
-        global $wpdb;
-
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$this->table('checklist_items')} WHERE task_id = %d ORDER BY position ASC, id ASC",
-            $taskId
-        ), ARRAY_A) ?: [];
+        return $this->checklist()->getChecklistForTask($taskId);
     }
 
     public function getChecklistItem(int $itemId): ?array
     {
-        global $wpdb;
-
-        $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$this->table('checklist_items')} WHERE id = %d LIMIT 1",
-            $itemId
-        ), ARRAY_A);
-
-        return is_array($row) ? $row : null;
+        return $this->checklist()->getChecklistItem($itemId);
     }
 
     public function addChecklistItem(int $taskId, string $label): int
     {
-        global $wpdb;
-
-        $label = self::cleanTitle($label);
-        if ($taskId <= 0 || $label === '') {
-            return 0;
-        }
-
-        $position = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COALESCE(MAX(position), 0) + 1 FROM {$this->table('checklist_items')} WHERE task_id = %d",
-            $taskId
-        ));
-
-        $inserted = $wpdb->insert(
-            $this->table('checklist_items'),
-            [
-                'task_id' => $taskId,
-                'label' => $label,
-                'is_done' => 0,
-                'position' => $position,
-                'created_at' => current_time('mysql'),
-                'updated_at' => null,
-            ],
-            ['%d', '%s', '%d', '%d', '%s', '%s']
-        );
-
-        return $inserted ? (int) $wpdb->insert_id : 0;
+        return $this->checklist()->addChecklistItem($taskId, $label);
     }
 
     public function updateChecklistItem(int $itemId, array $data): bool
     {
-        global $wpdb;
-
-        $updates = [];
-        $formats = [];
-
-        if (array_key_exists('label', $data)) {
-            $label = self::cleanTitle($data['label']);
-            if ($label !== '') {
-                $updates['label'] = $label;
-                $formats[] = '%s';
-            }
-        }
-
-        if (array_key_exists('is_done', $data)) {
-            $updates['is_done'] = !empty($data['is_done']) ? 1 : 0;
-            $formats[] = '%d';
-        }
-
-        if (array_key_exists('position', $data)) {
-            $updates['position'] = max(0, (int) $data['position']);
-            $formats[] = '%d';
-        }
-
-        if (!$updates) {
-            return true;
-        }
-
-        $updates['updated_at'] = current_time('mysql');
-        $formats[] = '%s';
-
-        return false !== $wpdb->update(
-            $this->table('checklist_items'),
-            $updates,
-            ['id' => $itemId],
-            $formats,
-            ['%d']
-        );
+        return $this->checklist()->updateChecklistItem($itemId, $data);
     }
 
     public function deleteChecklistItem(int $itemId): bool
     {
-        global $wpdb;
-
-        return false !== $wpdb->delete($this->table('checklist_items'), ['id' => $itemId], ['%d']);
+        return $this->checklist()->deleteChecklistItem($itemId);
     }
 
     public function getLogs(int $projectId): array
@@ -1127,6 +1052,11 @@ final class Repository
     private function journal(): ProjectJournalService
     {
         return new ProjectJournalService($this);
+    }
+
+    private function checklist(): ProjectChecklistService
+    {
+        return new ProjectChecklistService($this);
     }
 
     public static function cleanTitle($value): string
