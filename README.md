@@ -69,9 +69,11 @@ Commandes utiles depuis le depot de developpement :
 ```powershell
 .\tools\build-dist.ps1
 .\scripts\test-dist.ps1
+php .\tools\verify-optimizations.php
 ```
 
 Le script de test reconstruit le zip, verifie la presence de `ouinpo-suite/ouinpo-suite.php`, les chemins internes et l'absence de fichiers interdits.
+Le script `verify-optimizations.php` effectue des controles cibles sur les optimisations recentes sans charger WordPress ni modifier le plugin.
 
 ## Choix de securite a verifier
 
