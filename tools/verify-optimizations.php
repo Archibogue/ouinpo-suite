@@ -123,6 +123,7 @@ $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
 $projectDeliverableService = path('src/Modules/Projects/ProjectDeliverableService.php');
+$projectEvidenceService = path('src/Modules/Projects/ProjectEvidenceService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -242,6 +243,7 @@ $projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
 $projectPermissionSource = read_file($projectPermissionService);
 $projectDeliverableSource = read_file($projectDeliverableService);
+$projectEvidenceSource = read_file($projectEvidenceService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsStudentAiSource = read_file($projectsStudentAiAssistant);
@@ -273,6 +275,23 @@ check('ProjectDeliverableService centralise les methodes livrables', methods_pre
     'deliverableBelongsToProject',
 ]));
 check('Repository conserve les facades livrables Projects', repository_deliverable_facades_delegate($repositorySource));
+check('ProjectEvidenceService existe', is_file($projectEvidenceService));
+check('ProjectEvidenceService utilise le namespace Projects', $projectEvidenceSource !== '' && str_contains($projectEvidenceSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectEvidenceService centralise les methodes evidence', methods_present($projectEvidenceSource, [
+    'getEvidence',
+    'getEvidenceItem',
+    'createEvidence',
+    'updateEvidence',
+    'deleteEvidence',
+    'decorateEvidenceAttachment',
+]));
+check('Repository conserve les facades evidence Projects', repository_evidence_facades_delegate($repositorySource));
+check('Validation upload evidence reste dans Repository', $repositorySource !== '' && str_contains($repositorySource, 'PrivateUploadValidator::validateUploadedFile'));
+check('Telechargement prive evidence reste protege', source_contains_all($projectsRestSource, [
+    "'permission_callback' => [self::class, 'canDownloadEvidence']",
+    'PrivateFiles::isPrivateAttachment',
+    'PrivateFiles::sendFile',
+]));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -455,6 +474,27 @@ function repository_deliverable_facades_delegate(string $source): bool
     }
 
     return str_contains($source, 'function deliverables(): ProjectDeliverableService');
+}
+
+function repository_evidence_facades_delegate(string $source): bool
+{
+    $facades = [
+        'getEvidence' => 'evidence()->getEvidence',
+        'getEvidenceItem' => 'evidence()->getEvidenceItem',
+        'createEvidence' => 'evidence()->createEvidence',
+        'updateEvidence' => 'evidence()->updateEvidence',
+        'deleteEvidence' => 'evidence()->deleteEvidence',
+        'decorateEvidenceAttachment' => 'ProjectEvidenceService::decorateEvidenceAttachment',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function evidence(): ProjectEvidenceService');
 }
 
 function bootstrap_module_ids(string $source): array
