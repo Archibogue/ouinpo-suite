@@ -2,6 +2,14 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.2-beta] - 2026-06-12
+
+- Release intermediaire de refactoring/stabilisation interne Projects, sans nouvelle fonctionnalite majeure visible.
+- Extraction de la logique des colonnes Kanban Projects dans `ProjectColumnService`, avec conservation des facades publiques dans `Repository`.
+- Extraction de la logique des liens de competences Projects dans `ProjectCompetencyService`, avec conservation de `cleanCompetencyObjectType()` et des facades `Repository`.
+- Aucun changement de route REST, permission, shortcode, CSS/JS ou structure SQL.
+- Renforcement des garde-fous `tools/verify-optimizations.php` pour couvrir les services colonnes/competences, les fallbacks, les jointures optionnelles et les facades `Repository`.
+
 ## [0.7.1-beta] - 2026-06-12
 
 - Release intermediaire de stabilisation/refactoring, sans nouvelle refonte fonctionnelle majeure.

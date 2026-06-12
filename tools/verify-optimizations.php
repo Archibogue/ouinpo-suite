@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 define('ABSPATH', __DIR__);
-define('OUINPO_SUITE_VERSION', '0.7.1-beta');
+define('OUINPO_SUITE_VERSION', '0.7.2-beta');
 
 $root = dirname(__DIR__);
 $checks = [];

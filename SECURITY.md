@@ -1,13 +1,13 @@
 # Securite
 
-OuInPo Suite `0.7.1-beta` est une beta technique partageable pour test encadre. Elle n'est pas une version stable destinee a une diffusion large sans validation sur le site cible.
+OuInPo Suite `0.7.2-beta` est une beta technique partageable pour test encadre. Elle n'est pas une version stable destinee a une diffusion large sans validation sur le site cible.
 
 ## Versions supportees
 
 | Version | Support |
 |---|---|
-| `0.7.1-beta` | Corrections de securite pendant la phase de test |
-| `< 0.7.1-beta` | Non supporte pour nouveaux tests |
+| `0.7.2-beta` | Corrections de securite pendant la phase de test |
+| `< 0.7.2-beta` | Non supporte pour nouveaux tests |
 
 ## Donnees a ne jamais publier
 
