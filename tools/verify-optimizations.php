@@ -119,6 +119,7 @@ $projectsRepository = path('src/Modules/Projects/Repository.php');
 $projectsRestController = path('src/Modules/Projects/RestController.php');
 $projectsShortcodes = path('src/Modules/Projects/Shortcodes.php');
 $projectsPrivateFiles = path('src/Modules/Projects/PrivateFiles.php');
+$projectsAiAssistant = path('src/Modules/Projects/ProjectsAiAssistant.php');
 $projectsStudentAiAssistant = path('src/Modules/Projects/ProjectsStudentAiAssistant.php');
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
@@ -256,6 +257,7 @@ $projectTaskSource = read_file($projectTaskService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsPrivateFilesSource = read_file($projectsPrivateFiles);
+$projectsAiSource = read_file($projectsAiAssistant);
 $projectsStudentAiSource = read_file($projectsStudentAiAssistant);
 $repositoryBoard = method_body($repositorySource, 'getBoard');
 $boardGetBoard = method_body($projectBoardSource, 'getBoard');
@@ -277,7 +279,9 @@ $taskCreateTask = method_body($projectTaskSource, 'createTask');
 $taskUpdateTask = method_body($projectTaskSource, 'updateTask');
 $taskMoveTask = method_body($projectTaskSource, 'moveTask');
 $taskDeleteTask = method_body($projectTaskSource, 'deleteTask');
+$taskGetTask = method_body($projectTaskSource, 'getTask');
 $taskGetMainTasks = method_body($projectTaskSource, 'getMainTasks');
+$taskNextTaskPosition = method_body($projectTaskSource, 'nextTaskPosition');
 $taskBelongsToProject = method_body($projectTaskSource, 'taskBelongsToProject');
 check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
@@ -418,27 +422,71 @@ check('ProjectTaskService utilise les facades colonnes du Repository', source_co
     '$this->repository->columnBelongsToProject',
     '$this->repository->getFirstColumnId',
 ]));
+check('ProjectTaskService conserve createTask colonne et position', source_contains_all($taskCreateTask, [
+    '$columnId = (int) ($data[\'column_id\'] ?? 0)',
+    '!$this->repository->columnBelongsToProject($columnId, $projectId)',
+    '$columnId = $this->repository->getFirstColumnId($projectId)',
+    '$position = $this->nextTaskPosition($columnId)',
+]));
 check('ProjectTaskService conserve l assignation membre', source_contains_all($taskCreateTask . $taskUpdateTask, [
     'Repository::cleanNullableId',
     '$this->repository->isProjectMember',
     '$assignedUserId = null',
 ]));
+check('ProjectTaskService conserve createTask nettoyages et insertion', source_contains_all($taskCreateTask, [
+    'Repository::cleanTitle',
+    'Repository::cleanLongText',
+    'Repository::cleanPriority',
+    'Repository::cleanDate',
+    'Repository::cleanTaskStatus',
+    '$wpdb->insert',
+    '$this->repository->table(\'tasks\')',
+]));
+check('ProjectTaskService conserve updateTask partiel et updated_at', source_contains_all($taskUpdateTask, [
+    'array_key_exists(\'title\', $data)',
+    'array_key_exists(\'description\', $data)',
+    'array_key_exists(\'assigned_user_id\', $data)',
+    'array_key_exists(\'priority\', $data)',
+    'array_key_exists(\'due_date\', $data)',
+    'array_key_exists(\'status\', $data)',
+    '$updates[\'updated_at\'] = current_time(\'mysql\')',
+]));
 check('ProjectTaskService conserve move sans recalcul global', source_contains_all($taskMoveTask, [
+    '$this->repository->columnBelongsToProject',
     "'column_id' => \$columnId",
     "'position' => max(0, \$position)",
+    "'updated_at' => current_time('mysql')",
 ]) && !str_contains($taskMoveTask, 'nextTaskPosition('));
 check('ProjectTaskService conserve delete par archivage', source_contains_all($taskDeleteTask, [
     "'status' => 'archived'",
+    "'updated_at' => current_time('mysql')",
     '$this->repository->table(\'tasks\')',
+]) && !str_contains($taskDeleteTask, 'delete(')
+    && !str_contains($taskDeleteTask, "table('checklist")
+    && !str_contains($taskDeleteTask, "table('comments")
+    && !str_contains($taskDeleteTask, "table('logs"));
+check('ProjectTaskService conserve getTask par id', source_contains_all($taskGetTask, [
+    'SELECT * FROM {$this->repository->table(\'tasks\')} WHERE id = %d LIMIT 1',
+    'return is_array($row) ? $row : null',
 ]));
 check('ProjectTaskService conserve getMainTasks hors archive', source_contains_all($taskGetMainTasks, [
     'max(1, min(50, $limit))',
     "WHERE project_id = %d AND status <> 'archived'",
     'ORDER BY status ASC, priority DESC, due_date ASC, id ASC',
+    'LIMIT %d',
+]));
+check('ProjectTaskService conserve nextTaskPosition()', source_contains_all($taskNextTaskPosition, [
+    'COALESCE(MAX(position), 0) + 1',
+    '$this->repository->table(\'tasks\')',
+    'WHERE column_id = %d',
 ]));
 check('ProjectTaskService conserve taskBelongsToProject()', source_contains_all($taskBelongsToProject, [
     '$task = $this->getTask($taskId)',
     "(int) \$task['project_id'] === \$projectId",
+]));
+check('ProjectsAiAssistant conserve le placement IA via getColumnIdForStatusKey()', source_contains_all($projectsAiSource, [
+    '$this->repository->createTask($projectId',
+    '$this->repository->getColumnIdForStatusKey($projectId',
 ]));
 check('Repository conserve les methodes colonnes hors ProjectTaskService', source_contains_all($repositorySource, [
     'function ensureDefaultColumns(',
