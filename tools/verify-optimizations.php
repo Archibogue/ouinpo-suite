@@ -116,6 +116,9 @@ $assets = path('src/Core/Assets.php');
 $installer = path('src/Core/Installer.php');
 $moduleSettings = path('src/Core/ModuleSettings.php');
 $projectsRepository = path('src/Modules/Projects/Repository.php');
+$projectsRestController = path('src/Modules/Projects/RestController.php');
+$projectsShortcodes = path('src/Modules/Projects/Shortcodes.php');
+$projectsStudentAiAssistant = path('src/Modules/Projects/ProjectsStudentAiAssistant.php');
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
@@ -237,6 +240,9 @@ $repositorySource = read_file($projectsRepository);
 $projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
 $projectPermissionSource = read_file($projectPermissionService);
+$projectsRestSource = read_file($projectsRestController);
+$projectsShortcodesSource = read_file($projectsShortcodes);
+$projectsStudentAiSource = read_file($projectsStudentAiAssistant);
 $repositoryBoard = method_body($repositorySource, 'getBoard');
 $boardGetBoard = method_body($projectBoardSource, 'getBoard');
 $repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
@@ -252,9 +258,56 @@ check('Repository delegue getProjectSummary au service', $repositoryProjectSumma
 check('getProjectSummary utilise des agregats SQL', $statsProjectSummary !== '' && str_contains($statsProjectSummary, 'SUM(CASE WHEN'));
 check('getProjectSummary evite les get_var() de compteurs separes', $statsProjectSummary !== '' && substr_count($statsProjectSummary, 'get_var(') === 0);
 check('ProjectPermissionService existe', is_file($projectPermissionService));
-check('ProjectPermissionService centralise les regles Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'function canViewProject(') && str_contains($projectPermissionSource, 'function canUseProjectAi(') && str_contains($projectPermissionSource, 'function canManageEvidenceItem('));
+check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
+    'isProjectMember',
+    'canManageAllProjects',
+    'canCreateOrManageProjects',
+    'canViewProject',
+    'canManageProject',
+    'canEditTask',
+    'canCreateTask',
+    'canCommentOrLog',
+    'canSubmitProjectItem',
+    'canManageEvidenceItem',
+    'canValidateDeliverables',
+    'canUseProjectAi',
+    'canUseStudentAi',
+]));
+check('ProjectPermissionService couvre evidence et IA', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'canManageEvidenceItem(') && str_contains($projectPermissionSource, 'canUseProjectAi(') && str_contains($projectPermissionSource, 'canUseStudentAi('));
 check('Repository delegue les permissions Projects au service', $repositoryUserCanViewProject !== '' && str_contains($repositoryUserCanViewProject, 'permissions()->canViewProject') && $repositoryUserCanEditTask !== '' && str_contains($repositoryUserCanEditTask, 'permissions()->canEditTask'));
 check('ProjectPermissionService conserve manage_options', $projectPermissionSource !== '' && str_contains($projectPermissionSource, "user_can(\$userId, 'manage_options')"));
+check('Repository conserve les facades de permission Projects', repository_permission_facades_delegate($repositorySource));
+check('IA eleve Projects utilise ProjectPermissionService', $projectsStudentAiSource !== '' && str_contains($projectsStudentAiSource, 'new ProjectPermissionService($this->repository)') && str_contains($projectsStudentAiSource, 'canUseStudentAi('));
+check('RestController conserve les routes Projects attendues', source_contains_all($projectsRestSource, [
+    "register_rest_route(self::NS, '/projects'",
+    "register_rest_route(self::NS, '/projects/(?P<id>\\d+)'",
+    "register_rest_route(self::NS, '/projects/(?P<id>\\d+)/board'",
+    "register_rest_route(self::NS, '/projects/(?P<id>\\d+)/tasks'",
+    "register_rest_route(self::NS, '/projects/(?P<id>\\d+)/evidence'",
+    "register_rest_route(self::NS, '/evidence/(?P<id>\\d+)/download'",
+    "register_rest_route(self::NS, '/projects/(?P<id>\\d+)/ai/'",
+    "register_rest_route(self::NS, '/projects/(?P<id>\\d+)/student-ai/'",
+]));
+check('RestController conserve les callbacks de permission Projects', source_contains_all($projectsRestSource, [
+    "'permission_callback' => [self::class, 'canViewProject']",
+    "'permission_callback' => [self::class, 'canManageProject']",
+    "'permission_callback' => [self::class, 'canCreateTask']",
+    "'permission_callback' => [self::class, 'canCreateEvidence']",
+    "'permission_callback' => [self::class, 'canManageEvidence']",
+    "'permission_callback' => [self::class, 'canDownloadEvidence']",
+    "'permission_callback' => [self::class, 'canUseProjectAi']",
+    "'permission_callback' => [self::class, 'canUseProjectStudentAi']",
+]));
+check('Shortcodes Projects conservent les noms publics attendus', source_contains_all($projectsShortcodesSource, [
+    "add_shortcode('ouinpo_my_projects'",
+    "add_shortcode('ouinpo_project_kanban'",
+    "add_shortcode('ouinpo_project_journal'",
+    "add_shortcode('ouinpo_project_deliverables'",
+    "add_shortcode('ouinpo_project_evidence'",
+    "add_shortcode('ouinpo_project_ai_assistant'",
+    "add_shortcode('ouinpo_project_student_ai'",
+]));
 
 $failed = 0;
 foreach ($checks as [$label, $ok]) {
@@ -308,6 +361,55 @@ function all_present(array $expected, array $lookup): bool
 {
     foreach ($expected as $value) {
         if (!isset($lookup[$value])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function source_contains_all(string $source, array $needles): bool
+{
+    if ($source === '') {
+        return false;
+    }
+
+    foreach ($needles as $needle) {
+        if (!str_contains($source, $needle)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function methods_present(string $source, array $methods): bool
+{
+    foreach ($methods as $method) {
+        if (method_body($source, $method) === '') {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function repository_permission_facades_delegate(string $source): bool
+{
+    $facades = [
+        'isProjectMember' => 'permissions()->isProjectMember',
+        'userCanViewProject' => 'permissions()->canViewProject',
+        'userCanManageProject' => 'permissions()->canManageProject',
+        'userCanManageProjectRow' => 'permissions()->canManageProjectRow',
+        'userCanManageAll' => 'permissions()->canManageAllProjects',
+        'userCanEditTask' => 'permissions()->canEditTask',
+        'userCanSubmitProjectItem' => 'permissions()->canSubmitProjectItem',
+        'userCanManageEvidenceItem' => 'permissions()->canManageEvidenceItem',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
             return false;
         }
     }
