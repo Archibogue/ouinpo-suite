@@ -577,39 +577,12 @@ final class Repository
 
     public function getComments(int $taskId): array
     {
-        global $wpdb;
-
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT c.*, u.display_name
-             FROM {$this->table('task_comments')} c
-             LEFT JOIN {$wpdb->users} u ON u.ID = c.user_id
-             WHERE c.task_id = %d
-             ORDER BY c.created_at ASC, c.id ASC",
-            $taskId
-        ), ARRAY_A) ?: [];
+        return $this->journal()->getComments($taskId);
     }
 
     public function addComment(int $taskId, int $userId, string $comment): int
     {
-        global $wpdb;
-
-        $comment = self::cleanLongText($comment);
-        if ($taskId <= 0 || $userId <= 0 || $comment === '') {
-            return 0;
-        }
-
-        $inserted = $wpdb->insert(
-            $this->table('task_comments'),
-            [
-                'task_id' => $taskId,
-                'user_id' => $userId,
-                'comment' => $comment,
-                'created_at' => current_time('mysql'),
-            ],
-            ['%d', '%d', '%s', '%s']
-        );
-
-        return $inserted ? (int) $wpdb->insert_id : 0;
+        return $this->journal()->addComment($taskId, $userId, $comment);
     }
 
     public function getChecklistForTask(int $taskId): array
@@ -714,42 +687,12 @@ final class Repository
 
     public function getLogs(int $projectId): array
     {
-        global $wpdb;
-
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT l.*, u.display_name
-             FROM {$this->table('logs')} l
-             LEFT JOIN {$wpdb->users} u ON u.ID = l.user_id
-             WHERE l.project_id = %d
-             ORDER BY l.created_at DESC, l.id DESC",
-            $projectId
-        ), ARRAY_A) ?: [];
+        return $this->journal()->getLogs($projectId);
     }
 
     public function addLog(int $projectId, int $userId, array $data): int
     {
-        global $wpdb;
-
-        $workDone = self::cleanLongText($data['work_done'] ?? '');
-        if ($projectId <= 0 || $userId <= 0 || $workDone === '') {
-            return 0;
-        }
-
-        $inserted = $wpdb->insert(
-            $this->table('logs'),
-            [
-                'project_id' => $projectId,
-                'user_id' => $userId,
-                'work_done' => $workDone,
-                'blockers' => self::cleanLongText($data['blockers'] ?? ''),
-                'decision_taken' => self::cleanLongText($data['decision_taken'] ?? ''),
-                'next_step' => self::cleanLongText($data['next_step'] ?? ''),
-                'created_at' => current_time('mysql'),
-            ],
-            ['%d', '%d', '%s', '%s', '%s', '%s', '%s']
-        );
-
-        return $inserted ? (int) $wpdb->insert_id : 0;
+        return $this->journal()->addLog($projectId, $userId, $data);
     }
 
     public function ensureDefaultDeliverables(int $projectId, int $userId): int
@@ -1179,6 +1122,11 @@ final class Repository
     private function evidence(): ProjectEvidenceService
     {
         return new ProjectEvidenceService($this);
+    }
+
+    private function journal(): ProjectJournalService
+    {
+        return new ProjectJournalService($this);
     }
 
     public static function cleanTitle($value): string

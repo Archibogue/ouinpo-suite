@@ -125,6 +125,7 @@ $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
 $projectDeliverableService = path('src/Modules/Projects/ProjectDeliverableService.php');
 $projectEvidenceService = path('src/Modules/Projects/ProjectEvidenceService.php');
+$projectJournalService = path('src/Modules/Projects/ProjectJournalService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -245,6 +246,7 @@ $projectStatsSource = read_file($projectStatsService);
 $projectPermissionSource = read_file($projectPermissionService);
 $projectDeliverableSource = read_file($projectDeliverableService);
 $projectEvidenceSource = read_file($projectEvidenceService);
+$projectJournalSource = read_file($projectJournalService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsPrivateFilesSource = read_file($projectsPrivateFiles);
@@ -323,6 +325,19 @@ check('Telechargement prive evidence verifie attachment et metas', $downloadEvid
     'PrivateFiles::META_EVIDENCE_ID',
     'PrivateFiles::absolutePath',
     'PrivateFiles::sendFile',
+]));
+check('ProjectJournalService existe', is_file($projectJournalService));
+check('ProjectJournalService utilise le namespace Projects', $projectJournalSource !== '' && str_contains($projectJournalSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectJournalService centralise les methodes journal', methods_present($projectJournalSource, [
+    'getComments',
+    'addComment',
+    'getLogs',
+    'addLog',
+]));
+check('Repository conserve les facades journal Projects', repository_journal_facades_delegate($repositorySource));
+check('ProjectJournalService conserve les ordres des commentaires et logs', source_contains_all($projectJournalSource, [
+    'ORDER BY c.created_at ASC, c.id ASC',
+    'ORDER BY l.created_at DESC, l.id DESC',
 ]));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
@@ -532,6 +547,25 @@ function repository_evidence_facades_delegate(string $source): bool
     }
 
     return str_contains($source, 'function evidence(): ProjectEvidenceService');
+}
+
+function repository_journal_facades_delegate(string $source): bool
+{
+    $facades = [
+        'getComments' => 'journal()->getComments',
+        'addComment' => 'journal()->addComment',
+        'getLogs' => 'journal()->getLogs',
+        'addLog' => 'journal()->addLog',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function journal(): ProjectJournalService');
 }
 
 function bootstrap_module_ids(string $source): array
