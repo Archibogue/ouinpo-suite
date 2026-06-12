@@ -121,6 +121,7 @@ $projectsShortcodes = path('src/Modules/Projects/Shortcodes.php');
 $projectsPrivateFiles = path('src/Modules/Projects/PrivateFiles.php');
 $projectsAiAssistant = path('src/Modules/Projects/ProjectsAiAssistant.php');
 $projectsStudentAiAssistant = path('src/Modules/Projects/ProjectsStudentAiAssistant.php');
+$projectColumnService = path('src/Modules/Projects/ProjectColumnService.php');
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
@@ -245,6 +246,7 @@ if (is_file($moduleSettings)) {
 }
 
 $repositorySource = read_file($projectsRepository);
+$projectColumnSource = read_file($projectColumnService);
 $projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
 $projectPermissionSource = read_file($projectPermissionService);
@@ -261,6 +263,16 @@ $projectsAiSource = read_file($projectsAiAssistant);
 $projectsStudentAiSource = read_file($projectsStudentAiAssistant);
 $repositoryBoard = method_body($repositorySource, 'getBoard');
 $boardGetBoard = method_body($projectBoardSource, 'getBoard');
+$columnDefaultColumns = method_body($projectColumnSource, 'defaultColumns');
+$columnEnsureDefaultColumns = method_body($projectColumnSource, 'ensureDefaultColumns');
+$columnGetFirstColumnId = method_body($projectColumnSource, 'getFirstColumnId');
+$columnGetColumnIdForStatusKey = method_body($projectColumnSource, 'getColumnIdForStatusKey');
+$columnBelongsToProject = method_body($projectColumnSource, 'columnBelongsToProject');
+$repositoryDefaultColumns = method_body($repositorySource, 'defaultColumns');
+$repositoryEnsureDefaultColumns = method_body($repositorySource, 'ensureDefaultColumns');
+$repositoryGetFirstColumnId = method_body($repositorySource, 'getFirstColumnId');
+$repositoryGetColumnIdForStatusKey = method_body($repositorySource, 'getColumnIdForStatusKey');
+$repositoryColumnBelongsToProject = method_body($repositorySource, 'columnBelongsToProject');
 $repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
 $statsProjectSummary = method_body($projectStatsSource, 'getProjectSummary');
 $repositoryUserCanViewProject = method_body($repositorySource, 'userCanViewProject');
@@ -488,15 +500,106 @@ check('ProjectsAiAssistant conserve le placement IA via getColumnIdForStatusKey(
     '$this->repository->createTask($projectId',
     '$this->repository->getColumnIdForStatusKey($projectId',
 ]));
-check('Repository conserve les methodes colonnes hors ProjectTaskService', source_contains_all($repositorySource, [
+check('ProjectColumnService existe', is_file($projectColumnService));
+check('ProjectColumnService utilise le namespace Projects', $projectColumnSource !== '' && str_contains($projectColumnSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectColumnService centralise les methodes colonnes', methods_present($projectColumnSource, [
+    'defaultColumns',
+    'ensureDefaultColumns',
+    'getFirstColumnId',
+    'getColumnIdForStatusKey',
+    'columnBelongsToProject',
+]));
+check('ProjectColumnService conserve les colonnes par defaut', source_contains_all($projectColumnSource, [
+    "'status_key' => 'a_cadrer'",
+    "'status_key' => 'a_faire'",
+    "'status_key' => 'en_cours'",
+    "'status_key' => 'a_tester'",
+    "'status_key' => 'a_documenter'",
+    "'status_key' => 'a_valider'",
+    "'status_key' => 'termine'",
+]));
+check('ProjectColumnService conserve l ordre des status_key par defaut', status_keys_in_order($columnDefaultColumns, [
+    'a_cadrer',
+    'a_faire',
+    'en_cours',
+    'a_tester',
+    'a_documenter',
+    'a_valider',
+    'termine',
+]));
+check('ProjectColumnService protege ensureDefaultColumns contre les doublons', source_contains_all($columnEnsureDefaultColumns, [
+    'SELECT COUNT(*)',
+    '$exists > 0',
+    'return;',
+]));
+check('ProjectColumnService conserve les champs et formats des colonnes', source_contains_all($columnEnsureDefaultColumns, [
+    "'project_id' => \$projectId",
+    "'title' => \$column['title']",
+    "'position' => \$position + 1",
+    "'status_key' => sanitize_key((string) \$column['status_key'])",
+    "'created_at' => \$now",
+    "['%d', '%s', '%d', '%s', '%s']",
+]));
+check('ProjectColumnService getFirstColumnId conserve l initialisation et l ordre', source_contains_all($columnGetFirstColumnId, [
+    '$this->ensureDefaultColumns($projectId)',
+    'ORDER BY position ASC, id ASC LIMIT 1',
+]));
+check('ProjectColumnService getColumnIdForStatusKey nettoie et fallback', source_contains_all($columnGetColumnIdForStatusKey, [
+    '$this->ensureDefaultColumns($projectId)',
+    '$statusKey = sanitize_key($statusKey)',
+    'AND status_key = %s',
+    'ORDER BY position ASC, id ASC LIMIT 1',
+    'return $this->getFirstColumnId($projectId);',
+    'return $columnId > 0 ? $columnId : $this->getFirstColumnId($projectId);',
+]));
+check('ProjectColumnService columnBelongsToProject verifie id et project_id', source_contains_all($columnBelongsToProject, [
+    'WHERE id = %d AND project_id = %d',
+    '$columnId',
+    '$projectId',
+    '> 0',
+]));
+check('ProjectColumnService conserve les fallbacks colonnes', source_contains_all($projectColumnSource, [
+    '$this->ensureDefaultColumns($projectId)',
+    'return $this->getFirstColumnId($projectId);',
+    'return $columnId > 0 ? $columnId : $this->getFirstColumnId($projectId);',
+]));
+check('Repository conserve les facades colonnes Projects', source_contains_all($repositorySource, [
     'function ensureDefaultColumns(',
     'function getFirstColumnId(',
     'function getColumnIdForStatusKey(',
     'function columnBelongsToProject(',
+    'function columns(): ProjectColumnService',
+    'ProjectColumnService::defaultColumns()',
+    '$this->columns()->ensureDefaultColumns($projectId)',
+    '$this->columns()->getFirstColumnId($projectId)',
+    '$this->columns()->getColumnIdForStatusKey($projectId, $statusKey)',
+    '$this->columns()->columnBelongsToProject($columnId, $projectId)',
 ]) && !str_contains($projectTaskSource, 'function ensureDefaultColumns(')
     && !str_contains($projectTaskSource, 'function getFirstColumnId(')
     && !str_contains($projectTaskSource, 'function getColumnIdForStatusKey(')
     && !str_contains($projectTaskSource, 'function columnBelongsToProject('));
+check('Repository delegue chaque facade colonne a columns()', source_contains_all($repositoryDefaultColumns, [
+    'ProjectColumnService::defaultColumns()',
+]) && source_contains_all($repositoryEnsureDefaultColumns, [
+    '$this->columns()->ensureDefaultColumns($projectId)',
+]) && source_contains_all($repositoryGetFirstColumnId, [
+    '$this->columns()->getFirstColumnId($projectId)',
+]) && source_contains_all($repositoryGetColumnIdForStatusKey, [
+    '$this->columns()->getColumnIdForStatusKey($projectId, $statusKey)',
+]) && source_contains_all($repositoryColumnBelongsToProject, [
+    '$this->columns()->columnBelongsToProject($columnId, $projectId)',
+]));
+check('ProjectBoardService utilise toujours la facade ensureDefaultColumns()', source_contains_all($boardGetBoard, [
+    '$this->repository->ensureDefaultColumns($projectId)',
+]));
+check('ProjectTaskService utilise toujours les facades colonnes Repository', source_contains_all($taskCreateTask . $taskMoveTask, [
+    '$this->repository->columnBelongsToProject',
+    '$this->repository->getFirstColumnId',
+]));
+check('RestController moveTask verifie toujours columnBelongsToProject()', method_contains_all($projectsRestSource, 'moveTask', [
+    '$repository->columnBelongsToProject($columnId',
+    "(int) \$task['project_id']",
+]));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -618,6 +721,24 @@ function source_contains_all(string $source, array $needles): bool
         if (!str_contains($source, $needle)) {
             return false;
         }
+    }
+
+    return true;
+}
+
+function status_keys_in_order(string $source, array $expected): bool
+{
+    if ($source === '') {
+        return false;
+    }
+
+    $offset = 0;
+    foreach ($expected as $statusKey) {
+        $position = strpos($source, "'status_key' => '{$statusKey}'", $offset);
+        if ($position === false) {
+            return false;
+        }
+        $offset = $position + strlen($statusKey);
     }
 
     return true;
