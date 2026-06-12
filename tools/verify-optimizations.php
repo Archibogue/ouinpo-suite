@@ -128,6 +128,7 @@ $projectEvidenceService = path('src/Modules/Projects/ProjectEvidenceService.php'
 $projectJournalService = path('src/Modules/Projects/ProjectJournalService.php');
 $projectChecklistService = path('src/Modules/Projects/ProjectChecklistService.php');
 $projectMemberService = path('src/Modules/Projects/ProjectMemberService.php');
+$projectTaskService = path('src/Modules/Projects/ProjectTaskService.php');
 
 check('parseur JSON commun present', is_file($jsonParser));
 check('wrapper Exercises AiJsonResponseParser conserve', is_file($exercisesWrapper));
@@ -251,6 +252,7 @@ $projectEvidenceSource = read_file($projectEvidenceService);
 $projectJournalSource = read_file($projectJournalService);
 $projectChecklistSource = read_file($projectChecklistService);
 $projectMemberSource = read_file($projectMemberService);
+$projectTaskSource = read_file($projectTaskService);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsPrivateFilesSource = read_file($projectsPrivateFiles);
@@ -271,6 +273,12 @@ $memberAddMember = method_body($projectMemberSource, 'addMember');
 $memberRemoveMember = method_body($projectMemberSource, 'removeMember');
 $permissionIsProjectMember = method_body($projectPermissionSource, 'isProjectMember');
 $repositoryCleanMemberRole = method_body($repositorySource, 'cleanMemberRole');
+$taskCreateTask = method_body($projectTaskSource, 'createTask');
+$taskUpdateTask = method_body($projectTaskSource, 'updateTask');
+$taskMoveTask = method_body($projectTaskSource, 'moveTask');
+$taskDeleteTask = method_body($projectTaskSource, 'deleteTask');
+$taskGetMainTasks = method_body($projectTaskSource, 'getMainTasks');
+$taskBelongsToProject = method_body($projectTaskSource, 'taskBelongsToProject');
 check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
 check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));
@@ -393,6 +401,54 @@ check('Repository conserve cleanMemberRole()', $repositoryCleanMemberRole !== ''
     'self::MEMBER_ROLES',
     "? \$role : 'member'",
 ]));
+check('ProjectTaskService existe', is_file($projectTaskService));
+check('ProjectTaskService utilise le namespace Projects', $projectTaskSource !== '' && str_contains($projectTaskSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectTaskService centralise les methodes taches', methods_present($projectTaskSource, [
+    'createTask',
+    'updateTask',
+    'moveTask',
+    'deleteTask',
+    'getTask',
+    'getMainTasks',
+    'nextTaskPosition',
+    'taskBelongsToProject',
+]));
+check('Repository conserve les facades taches Projects', repository_task_facades_delegate($repositorySource));
+check('ProjectTaskService utilise les facades colonnes du Repository', source_contains_all($taskCreateTask . $taskMoveTask, [
+    '$this->repository->columnBelongsToProject',
+    '$this->repository->getFirstColumnId',
+]));
+check('ProjectTaskService conserve l assignation membre', source_contains_all($taskCreateTask . $taskUpdateTask, [
+    'Repository::cleanNullableId',
+    '$this->repository->isProjectMember',
+    '$assignedUserId = null',
+]));
+check('ProjectTaskService conserve move sans recalcul global', source_contains_all($taskMoveTask, [
+    "'column_id' => \$columnId",
+    "'position' => max(0, \$position)",
+]) && !str_contains($taskMoveTask, 'nextTaskPosition('));
+check('ProjectTaskService conserve delete par archivage', source_contains_all($taskDeleteTask, [
+    "'status' => 'archived'",
+    '$this->repository->table(\'tasks\')',
+]));
+check('ProjectTaskService conserve getMainTasks hors archive', source_contains_all($taskGetMainTasks, [
+    'max(1, min(50, $limit))',
+    "WHERE project_id = %d AND status <> 'archived'",
+    'ORDER BY status ASC, priority DESC, due_date ASC, id ASC',
+]));
+check('ProjectTaskService conserve taskBelongsToProject()', source_contains_all($taskBelongsToProject, [
+    '$task = $this->getTask($taskId)',
+    "(int) \$task['project_id'] === \$projectId",
+]));
+check('Repository conserve les methodes colonnes hors ProjectTaskService', source_contains_all($repositorySource, [
+    'function ensureDefaultColumns(',
+    'function getFirstColumnId(',
+    'function getColumnIdForStatusKey(',
+    'function columnBelongsToProject(',
+]) && !str_contains($projectTaskSource, 'function ensureDefaultColumns(')
+    && !str_contains($projectTaskSource, 'function getFirstColumnId(')
+    && !str_contains($projectTaskSource, 'function getColumnIdForStatusKey(')
+    && !str_contains($projectTaskSource, 'function columnBelongsToProject('));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -658,6 +714,29 @@ function repository_member_facades_delegate(string $source): bool
     }
 
     return str_contains($source, 'function members(): ProjectMemberService');
+}
+
+function repository_task_facades_delegate(string $source): bool
+{
+    $facades = [
+        'createTask' => 'tasks()->createTask',
+        'updateTask' => 'tasks()->updateTask',
+        'moveTask' => 'tasks()->moveTask',
+        'deleteTask' => 'tasks()->deleteTask',
+        'getTask' => 'tasks()->getTask',
+        'getMainTasks' => 'tasks()->getMainTasks',
+        'nextTaskPosition' => 'tasks()->nextTaskPosition',
+        'taskBelongsToProject' => 'tasks()->taskBelongsToProject',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function tasks(): ProjectTaskService');
 }
 
 function bootstrap_module_ids(string $source): array
