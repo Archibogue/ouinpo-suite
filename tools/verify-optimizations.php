@@ -122,6 +122,7 @@ $projectsPrivateFiles = path('src/Modules/Projects/PrivateFiles.php');
 $projectsAiAssistant = path('src/Modules/Projects/ProjectsAiAssistant.php');
 $projectsStudentAiAssistant = path('src/Modules/Projects/ProjectsStudentAiAssistant.php');
 $projectColumnService = path('src/Modules/Projects/ProjectColumnService.php');
+$projectCompetencyService = path('src/Modules/Projects/ProjectCompetencyService.php');
 $projectBoardService = path('src/Modules/Projects/ProjectBoardService.php');
 $projectStatsService = path('src/Modules/Projects/ProjectStatsService.php');
 $projectPermissionService = path('src/Modules/Projects/ProjectPermissionService.php');
@@ -247,6 +248,7 @@ if (is_file($moduleSettings)) {
 
 $repositorySource = read_file($projectsRepository);
 $projectColumnSource = read_file($projectColumnService);
+$projectCompetencySource = read_file($projectCompetencyService);
 $projectBoardSource = read_file($projectBoardService);
 $projectStatsSource = read_file($projectStatsService);
 $projectPermissionSource = read_file($projectPermissionService);
@@ -273,6 +275,11 @@ $repositoryEnsureDefaultColumns = method_body($repositorySource, 'ensureDefaultC
 $repositoryGetFirstColumnId = method_body($repositorySource, 'getFirstColumnId');
 $repositoryGetColumnIdForStatusKey = method_body($repositorySource, 'getColumnIdForStatusKey');
 $repositoryColumnBelongsToProject = method_body($repositorySource, 'columnBelongsToProject');
+$competencyGetLinks = method_body($projectCompetencySource, 'getCompetencyLinks');
+$competencyAddLink = method_body($projectCompetencySource, 'addCompetencyLink');
+$competencyAvailable = method_body($projectCompetencySource, 'getAvailableCompetencies');
+$competencyObjectBelongs = method_body($projectCompetencySource, 'objectBelongsToProject');
+$competencyExists = method_body($projectCompetencySource, 'competencyExists');
 $repositoryProjectSummary = method_body($repositorySource, 'getProjectSummary');
 $statsProjectSummary = method_body($projectStatsSource, 'getProjectSummary');
 $repositoryUserCanViewProject = method_body($repositorySource, 'userCanViewProject');
@@ -600,6 +607,76 @@ check('RestController moveTask verifie toujours columnBelongsToProject()', metho
     '$repository->columnBelongsToProject($columnId',
     "(int) \$task['project_id']",
 ]));
+check('ProjectCompetencyService existe', is_file($projectCompetencyService));
+check('ProjectCompetencyService utilise le namespace Projects', $projectCompetencySource !== '' && str_contains($projectCompetencySource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
+check('ProjectCompetencyService centralise les methodes competences', methods_present($projectCompetencySource, [
+    'getCompetencyLinks',
+    'getCompetencyLink',
+    'addCompetencyLink',
+    'deleteCompetencyLink',
+    'getAvailableCompetencies',
+    'objectBelongsToProject',
+    'competencyExists',
+]));
+check('ProjectCompetencyService conserve la jointure optionnelle competences', source_contains_all($competencyGetLinks, [
+    "\$wpdb->prefix . 'ouin_exo_competencies'",
+    '$this->repository->tableExists($competencies)',
+    "LEFT JOIN {\$competencies} c ON c.id = l.competency_id",
+    "'' AS domain, '' AS domain_slug, '' AS competency, '' AS label",
+]));
+check('ProjectCompetencyService conserve filtres et tri des liens', source_contains_all($competencyGetLinks, [
+    'l.project_id = %d',
+    'l.object_type = %s',
+    'l.object_id = %d',
+    "FROM {\$this->repository->table('competency_links')} l",
+    'ORDER BY l.object_type ASC, l.object_id ASC, l.id ASC',
+]));
+check('ProjectCompetencyService conserve INSERT IGNORE et lookup historique', source_contains_all($competencyAddLink, [
+    'INSERT IGNORE INTO',
+    '(project_id, object_type, object_id, competency_id, created_by, created_at)',
+    'VALUES (%d, %s, %d, %d, %d, %s)',
+    "WHERE object_type = %s AND object_id = %d AND competency_id = %d",
+]) && competency_post_insert_lookup_omits_project_id($competencyAddLink));
+check('ProjectCompetencyService conserve les validations avant ajout', source_contains_all($competencyAddLink, [
+    'Repository::cleanCompetencyObjectType($objectType)',
+    '$projectId <= 0',
+    '$objectId <= 0',
+    '$competencyId <= 0',
+    '$userId <= 0',
+    '!$this->objectBelongsToProject($projectId, $objectType, $objectId)',
+    '!$this->competencyExists($competencyId)',
+]));
+check('ProjectCompetencyService conserve la liste active et limite bornee', source_contains_all($competencyAvailable, [
+    "\$wpdb->prefix . 'ouin_exo_competencies'",
+    '$this->repository->tableExists($table)',
+    '$limit = max(1, min(1000, $limit))',
+    'WHERE active = %d OR active IS NULL',
+    'ORDER BY domain ASC, id ASC',
+]));
+check('ProjectCompetencyService objectBelongsToProject couvre les objets attendus', source_contains_all($competencyObjectBelongs, [
+    "Repository::cleanCompetencyObjectType(\$objectType)",
+    "\$objectType === 'project'",
+    "\$objectType === 'task'",
+    "\$objectType === 'deliverable'",
+    "\$objectType === 'evidence'",
+    '$this->repository->getProject($projectId)',
+    '$this->repository->getTask($objectId)',
+    '$this->repository->getDeliverable($objectId)',
+    '$this->repository->getEvidenceItem($objectId)',
+]));
+check('ProjectCompetencyService competencyExists conserve le referentiel BO', source_contains_all($competencyExists, [
+    "\$wpdb->prefix . 'ouin_exo_competencies'",
+    '$this->repository->tableExists($table)',
+    'SELECT COUNT(*) FROM {$table} WHERE id = %d',
+]));
+check('Repository conserve les facades competences Projects', repository_competency_facades_delegate($repositorySource));
+check('Repository expose tableExists pour les services Projects', method_body($repositorySource, 'tableExists') !== '' && str_contains($repositorySource, 'public function tableExists(string $table): bool'));
+check('RestController et IA utilisent toujours les facades competences Repository', source_contains_all($projectsRestSource . $projectsAiSource, [
+    'getCompetencyLinks',
+    'addCompetencyLink',
+    'getAvailableCompetencies',
+    'objectBelongsToProject',
+]));
 check('ProjectPermissionService existe', is_file($projectPermissionService));
 check('ProjectPermissionService utilise le namespace Projects', $projectPermissionSource !== '' && str_contains($projectPermissionSource, 'namespace Ouinpo\\Suite\\Modules\\Projects;'));
 check('ProjectPermissionService centralise les regles principales', methods_present($projectPermissionSource, [
@@ -906,6 +983,41 @@ function repository_task_facades_delegate(string $source): bool
     }
 
     return str_contains($source, 'function tasks(): ProjectTaskService');
+}
+
+function repository_competency_facades_delegate(string $source): bool
+{
+    $facades = [
+        'getCompetencyLinks' => 'competencies()->getCompetencyLinks',
+        'getCompetencyLink' => 'competencies()->getCompetencyLink',
+        'addCompetencyLink' => 'competencies()->addCompetencyLink',
+        'deleteCompetencyLink' => 'competencies()->deleteCompetencyLink',
+        'getAvailableCompetencies' => 'competencies()->getAvailableCompetencies',
+        'objectBelongsToProject' => 'competencies()->objectBelongsToProject',
+        'competencyExists' => 'competencies()->competencyExists',
+    ];
+
+    foreach ($facades as $method => $needle) {
+        $body = method_body($source, $method);
+        if ($body === '' || !str_contains($body, $needle)) {
+            return false;
+        }
+    }
+
+    return str_contains($source, 'function competencies(): ProjectCompetencyService');
+}
+
+function competency_post_insert_lookup_omits_project_id(string $source): bool
+{
+    $start = strpos($source, 'SELECT id FROM');
+    if ($start === false) {
+        return false;
+    }
+
+    $lookup = substr($source, $start);
+
+    return str_contains($lookup, 'WHERE object_type = %s AND object_id = %d AND competency_id = %d')
+        && !str_contains($lookup, 'project_id');
 }
 
 function bootstrap_module_ids(string $source): array
