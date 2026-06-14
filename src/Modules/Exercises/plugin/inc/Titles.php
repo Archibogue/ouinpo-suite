@@ -176,6 +176,10 @@ class Titles {
             $deps[] = 'ouinpo-core-css';
         }
 
+        if (wp_style_is('ouinpo-theme-titles-css', 'registered')) {
+            $deps[] = 'ouinpo-theme-titles-css';
+        }
+
         wp_enqueue_style(
             'ouinpo-titles-css',
             $css_url,

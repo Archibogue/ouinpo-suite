@@ -18,11 +18,16 @@ final class Assets
     {
         $css = 'assets/css/front/projects.css';
         $js = 'assets/js/front/projects.js';
+        $cssDeps = wp_style_is('ouinpo-core-css', 'registered') ? ['ouinpo-core-css'] : [];
+
+        if (wp_style_is('ouinpo-theme-projects-css', 'registered')) {
+            $cssDeps[] = 'ouinpo-theme-projects-css';
+        }
 
         CoreAssets::registerStyle(
             'ouinpo-projects',
             $css,
-            wp_style_is('ouinpo-core-css', 'registered') ? ['ouinpo-core-css'] : []
+            $cssDeps
         );
 
         CoreAssets::registerScript(

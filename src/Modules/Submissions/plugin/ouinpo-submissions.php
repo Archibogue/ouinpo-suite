@@ -564,6 +564,10 @@ class Ouinpo_Submissions_Plugin {
                 $deps[] = 'ouinpo-core-css';
             }
 
+            if (wp_style_is('ouinpo-theme-submissions-css', 'registered')) {
+                $deps[] = 'ouinpo-theme-submissions-css';
+            }
+
             wp_enqueue_style(
                 'ouinpo-submissions',
                 $css_url,

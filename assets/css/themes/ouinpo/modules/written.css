@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /* OuInPo theme layer for written subjects. */
 
 .ouinpo-written-page,
@@ -75,21 +76,21 @@
 
 .ouinpo-written-question-progress.ouinpo-badge--attempted,
 .ouinpo-written-page .ouinpo-badge--student-progress.ouinpo-badge--attempted {
-  background: rgba(227, 178, 85, 0.18);
-  border-color: rgba(227, 178, 85, 0.4);
-  color: var(--written-warning);
+  background: rgba(227, 178, 85, 0.18) !important;
+  border: 1px solid rgba(227, 178, 85, 0.40) !important;
+  color: #f0c86f !important;
 }
 
 .ouinpo-written-question-progress.ouinpo-badge--solved,
 .ouinpo-written-page .ouinpo-badge--student-progress.ouinpo-badge--solved {
-  background: rgba(119, 217, 138, 0.18);
-  border-color: rgba(119, 217, 138, 0.38);
-  color: var(--written-success);
+  background: rgba(119, 217, 138, 0.18) !important;
+  border: 1px solid rgba(119, 217, 138, 0.38) !important;
+  color: var(--op-green, #77d98a) !important;
 }
 
 .ouinpo-written-subject .ouinpo-badge--competency,
 .ouinpo-written-page .ouinpo-badge--competency {
-  background: rgba(78, 154, 255, 0.16);
-  border-color: rgba(78, 154, 255, 0.34);
-  color: #9fc6ff;
+  background: rgba(78, 154, 255, 0.16) !important;
+  border: 1px solid rgba(78, 154, 255, 0.34) !important;
+  color: #9fc6ff !important;
 }

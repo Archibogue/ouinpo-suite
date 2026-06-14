@@ -41,6 +41,10 @@ if (!function_exists('ouinpo_rechtext_enqueue_assets')) {
             $deps[] = 'ouinpo-core-css';
         }
 
+        if (wp_style_is('ouinpo-theme-rechtext-css', 'registered')) {
+            $deps[] = 'ouinpo-theme-rechtext-css';
+        }
+
         if ($css_url !== '') {
             wp_enqueue_style(
                 'ouinpo-rechtext-css',

@@ -46,10 +46,6 @@ class Assets {
             'teacher_css'   => 'assets/css/front/teacher-competencies.css',
 
             'theme_neutral' => 'assets/css/themes/neutral.css',
-            'theme_ouinpo'  => 'assets/css/themes/ouinpo.css',
-            'theme_bsio'    => 'assets/css/themes/bsio.css',
-            'theme_written_ouinpo' => 'assets/css/themes/ouinpo/modules/written.css',
-            'theme_written_bsio'   => 'assets/css/themes/bsio/modules/written.css',
         ];
 
         $ver = [];
@@ -71,14 +67,6 @@ class Assets {
             $style_mode = 'neutral';
         }
 
-        $theme_files = [
-            'neutral' => $files['theme_neutral'],
-            'ouinpo'  => $files['theme_ouinpo'],
-            'bsio'    => $files['theme_bsio'],
-        ];
-
-        $theme_file = $theme_files[$style_mode] ?? $files['theme_neutral'];
-
         /*
          * CSS commun.
          */
@@ -93,12 +81,69 @@ class Assets {
          * Thème actif.
          * Pour l’instant, le fichier peut être vide.
          */
-        wp_register_style(
-            'ouinpo-theme-css',
-            $base_url . $theme_file,
-            [],
-            \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $theme_file, $fallback_version)
-        );
+        if ($style_mode === 'neutral') {
+            wp_register_style(
+                'ouinpo-theme-css',
+                $base_url . $files['theme_neutral'],
+                [],
+                \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $files['theme_neutral'], $fallback_version)
+            );
+        } else {
+            $theme_layers = [
+                'foundation' => 'foundation.css',
+                'content' => 'content.css',
+                'components' => 'components.css',
+                'legacy-overrides' => 'legacy-overrides.css',
+            ];
+            $theme_deps = [];
+
+            foreach ($theme_layers as $layer_key => $layer_file) {
+                $layer_handle = 'ouinpo-theme-' . $layer_key . '-css';
+                $layer_rel = 'assets/css/themes/' . $style_mode . '/' . $layer_file;
+                $theme_deps[] = $layer_handle;
+
+                wp_register_style(
+                    $layer_handle,
+                    $base_url . $layer_rel,
+                    [],
+                    \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $layer_rel, $fallback_version)
+                );
+            }
+
+            wp_register_style(
+                'ouinpo-theme-css',
+                false,
+                $theme_deps,
+                $fallback_version
+            );
+        }
+
+        $theme_module_handles = [
+            'exercises'   => 'ouinpo-theme-exercises-css',
+            'practical'   => 'ouinpo-theme-practical-css',
+            'written'     => 'ouinpo-theme-written-css',
+            'teacher'     => 'ouinpo-theme-teacher-css',
+            'flashcards'  => 'ouinpo-theme-flashcards-css',
+            'segfault'    => 'ouinpo-theme-segfault-css',
+            'rechtext'    => 'ouinpo-theme-rechtext-css',
+            'projects'    => 'ouinpo-theme-projects-css',
+            'submissions' => 'ouinpo-theme-submissions-css',
+            'titles'      => 'ouinpo-theme-titles-css',
+        ];
+
+        foreach ($theme_module_handles as $module => $handle) {
+            $module_rel = 'assets/css/themes/' . $style_mode . '/modules/' . $module . '.css';
+            $has_module_file = $style_mode !== 'neutral' && is_file($base_path . $module_rel);
+
+            wp_register_style(
+                $handle,
+                $has_module_file ? $base_url . $module_rel : false,
+                ['ouinpo-theme-css'],
+                $has_module_file
+                    ? \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $module_rel, $fallback_version)
+                    : $fallback_version
+            );
+        }
 
         /*
          * Module Exercices.
@@ -118,7 +163,7 @@ class Assets {
         wp_register_style(
             'ouinpo-exo-css',
             false,
-            ['ouinpo-exo-module-css', 'ouinpo-theme-css'],
+            ['ouinpo-exo-module-css', 'ouinpo-theme-exercises-css'],
             $fallback_version
         );
 
@@ -138,7 +183,7 @@ class Assets {
         wp_register_style(
             'ouinpo-practical-css',
             false,
-            ['ouinpo-practical-module-css', 'ouinpo-theme-css'],
+            ['ouinpo-practical-module-css', 'ouinpo-theme-practical-css'],
             $fallback_version
         );
 
@@ -150,21 +195,6 @@ class Assets {
             $base_url . $files['written_css'],
             ['ouinpo-core-css', 'ouinpo-exo-module-css'],
             $ver['written_css']
-        );
-
-        $written_theme_files = [
-            'ouinpo' => $files['theme_written_ouinpo'],
-            'bsio'   => $files['theme_written_bsio'],
-        ];
-        $written_theme_file = $written_theme_files[$style_mode] ?? '';
-
-        wp_register_style(
-            'ouinpo-theme-written-css',
-            $written_theme_file !== '' ? $base_url . $written_theme_file : false,
-            ['ouinpo-theme-css'],
-            $written_theme_file !== ''
-                ? \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $written_theme_file, $fallback_version)
-                : $fallback_version
         );
 
         wp_register_style(
@@ -190,7 +220,7 @@ class Assets {
         wp_register_style(
             'ouinpo-teacher-css',
             false,
-            ['ouinpo-teacher-module-css', 'ouinpo-theme-css'],
+            ['ouinpo-teacher-module-css', 'ouinpo-theme-teacher-css'],
             $fallback_version
         );
 

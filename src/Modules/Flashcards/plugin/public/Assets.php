@@ -48,6 +48,10 @@ final class Assets
             $deps[] = 'ouinpo-core-css';
         }
 
+        if (wp_style_is('ouinpo-theme-flashcards-css', 'registered')) {
+            $deps[] = 'ouinpo-theme-flashcards-css';
+        }
+
         wp_register_style(
             'ouinpo-flashcards',
             $base_url . $files['css'],

@@ -1613,6 +1613,10 @@ add_action('wp_enqueue_scripts', function () {
       $sf_css_deps[] = 'ouinpo-core-css';
   }
 
+  if (wp_style_is('ouinpo-theme-segfault-css', 'registered')) {
+      $sf_css_deps[] = 'ouinpo-theme-segfault-css';
+  }
+
   wp_enqueue_style(
       'ouinpo-sf',
       defined('OUINPO_SUITE_URL') ? OUINPO_SUITE_URL . $sf_css_rel : OUINPO_SF_URL . 'assets/segfault.css',
