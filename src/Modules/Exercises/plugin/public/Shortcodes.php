@@ -1828,7 +1828,7 @@ JS,
 /** Liste des sujets d’épreuve pratique */
 
 public static function render_written_subjects($atts = array(), $content = '') {
-  wp_enqueue_style('ouinpo-exo-css');
+  wp_enqueue_style('ouinpo-written-css');
   wp_enqueue_script('ouinpo-exo-js');
 
   $atts = shortcode_atts([
@@ -2007,7 +2007,7 @@ public static function render_written_subjects($atts = array(), $content = '') {
 }
 
 public static function render_written_subject($atts = array(), $content = '') {
-  wp_enqueue_style('ouinpo-exo-css');
+  wp_enqueue_style('ouinpo-written-css');
   wp_enqueue_script('ouinpo-exo-js');
 
   $atts = shortcode_atts([
@@ -2094,9 +2094,9 @@ public static function render_written_subject($atts = array(), $content = '') {
       <?php endif; ?>
 
       <?php if (!empty($subject['files']) && is_array($subject['files'])): ?>
-        <div class="ouinpo-practical-files">
+        <div class="ouinpo-practical-files ouinpo-written-files">
           <h3>Fichiers du sujet</h3>
-          <ul class="ouinpo-practical-files-list">
+          <ul class="ouinpo-practical-files-list ouinpo-written-files-list">
             <?php foreach ($subject['files'] as $file): ?>
               <?php
               $file_url = (string) ($file['download_url'] ?? '');

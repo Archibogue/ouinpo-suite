@@ -1,0 +1,97 @@
+/* BSIO theme layer for written subjects. */
+
+.ouinpo-written-page,
+.ouinpo-written-subject {
+  --written-bg: var(--bsio-paper-soft, #fff8e8);
+  --written-bg-soft: var(--bsio-paper, #f3ead8);
+  --written-bg-muted: var(--bsio-stamp, rgba(47, 111, 78, 0.12));
+  --written-text: var(--bsio-ink, #263238);
+  --written-muted: var(--bsio-muted, #66706a);
+  --written-primary: var(--bsio-green, #2f6f4e);
+  --written-primary-dark: var(--bsio-terminal, #1f3b2d);
+  --written-success: var(--bsio-green, #2f6f4e);
+  --written-warning: var(--bsio-orange, #c78b3a);
+  --written-danger: var(--bsio-red, #b64235);
+  --written-border: var(--bsio-border, #b9aa8c);
+  --written-border-soft: var(--bsio-border-soft, rgba(185, 170, 140, 0.55));
+  --written-shadow: var(--bsio-shadow, 0 8px 22px rgba(38, 50, 56, 0.11));
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.ouinpo-written-page .ouinpo-panel,
+.ouinpo-written-subject .ouinpo-panel,
+.ouinpo-written-filters,
+.ouinpo-written-exercise-front,
+.ouinpo-written-report-panel,
+.ouinpo-written-files {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent),
+    var(--written-bg);
+  border-color: var(--written-border);
+}
+
+.ouinpo-written-page .ouinpo-panel::before,
+.ouinpo-written-subject .ouinpo-panel::before,
+.ouinpo-written-filters::before,
+.ouinpo-written-exercise-front::before,
+.ouinpo-written-report-panel::before,
+.ouinpo-written-files::before,
+.ouinpo-written-question-front::before {
+  background: linear-gradient(90deg, var(--bsio-green, #2f6f4e), var(--bsio-orange, #c78b3a));
+}
+
+.ouinpo-written-page .ouinpo-panel-title,
+.ouinpo-written-subject .ouinpo-panel-title,
+.ouinpo-written-exercise-front > h3,
+.ouinpo-written-files h3,
+.ouinpo-written-subject .ouinpo-practical-files h3,
+.ouinpo-written-report-panel > h3,
+.ouinpo-written-question-title {
+  color: var(--written-primary-dark);
+}
+
+.ouinpo-written-answer,
+.ouinpo-written-filter-form select,
+.ouinpo-written-file-preview {
+  background: #ffffff;
+  color: var(--written-text);
+  border-color: var(--written-border);
+}
+
+.ouinpo-written-page .button,
+.ouinpo-written-page button,
+.ouinpo-written-subject .button,
+.ouinpo-written-subject button {
+  background: linear-gradient(180deg, var(--bsio-green, #2f6f4e), var(--bsio-terminal, #1f3b2d));
+  border-color: var(--bsio-terminal, #1f3b2d);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.ouinpo-written-page .button:hover,
+.ouinpo-written-page button:hover,
+.ouinpo-written-subject .button:hover,
+.ouinpo-written-subject button:hover {
+  background: linear-gradient(180deg, #3b805c, var(--bsio-terminal, #1f3b2d));
+}
+
+.ouinpo-written-page .ouinpo-badge,
+.ouinpo-written-subject .ouinpo-badge {
+  background: rgba(255, 248, 232, 0.92);
+  border-color: var(--written-border);
+  color: var(--written-primary-dark);
+}
+
+.ouinpo-written-question-progress.ouinpo-badge--attempted,
+.ouinpo-written-page .ouinpo-badge--student-progress.ouinpo-badge--attempted {
+  background: rgba(199, 139, 58, 0.18);
+  border-color: rgba(199, 139, 58, 0.55);
+  color: #5b3a04;
+}
+
+.ouinpo-written-question-progress.ouinpo-badge--solved,
+.ouinpo-written-page .ouinpo-badge--student-progress.ouinpo-badge--solved {
+  background: rgba(47, 111, 78, 0.14);
+  border-color: rgba(47, 111, 78, 0.48);
+  color: var(--written-primary-dark);
+}

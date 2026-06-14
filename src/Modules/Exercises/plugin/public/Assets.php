@@ -42,11 +42,14 @@ class Assets {
             'core_css'      => 'assets/css/core/base.css',
             'exo_css'       => 'assets/css/front/exercises.css',
             'practical_css' => 'assets/css/front/practical.css',
+            'written_css'   => 'assets/css/front/written.css',
             'teacher_css'   => 'assets/css/front/teacher-competencies.css',
 
             'theme_neutral' => 'assets/css/themes/neutral.css',
             'theme_ouinpo'  => 'assets/css/themes/ouinpo.css',
             'theme_bsio'    => 'assets/css/themes/bsio.css',
+            'theme_written_ouinpo' => 'assets/css/themes/ouinpo/modules/written.css',
+            'theme_written_bsio'   => 'assets/css/themes/bsio/modules/written.css',
         ];
 
         $ver = [];
@@ -136,6 +139,38 @@ class Assets {
             'ouinpo-practical-css',
             false,
             ['ouinpo-practical-module-css', 'ouinpo-theme-css'],
+            $fallback_version
+        );
+
+        /*
+         * Module Sujets ecrits.
+         */
+        wp_register_style(
+            'ouinpo-written-module-css',
+            $base_url . $files['written_css'],
+            ['ouinpo-core-css', 'ouinpo-exo-module-css'],
+            $ver['written_css']
+        );
+
+        $written_theme_files = [
+            'ouinpo' => $files['theme_written_ouinpo'],
+            'bsio'   => $files['theme_written_bsio'],
+        ];
+        $written_theme_file = $written_theme_files[$style_mode] ?? '';
+
+        wp_register_style(
+            'ouinpo-theme-written-css',
+            $written_theme_file !== '' ? $base_url . $written_theme_file : false,
+            ['ouinpo-theme-css'],
+            $written_theme_file !== ''
+                ? \Ouinpo\Suite\Core\Assets::fileVersion($base_path . $written_theme_file, $fallback_version)
+                : $fallback_version
+        );
+
+        wp_register_style(
+            'ouinpo-written-css',
+            false,
+            ['ouinpo-written-module-css', 'ouinpo-theme-written-css'],
             $fallback_version
         );
 
