@@ -30,10 +30,19 @@ foreach (['ouinpo', 'bsio'] as $theme) {
     foreach ($themeParts as $file) {
         require_file("assets/css/themes/{$theme}/{$file}");
     }
+    require_non_empty_css("assets/css/themes/{$theme}/legacy-overrides.css");
 
     foreach ($moduleParts as $file) {
         require_file("assets/css/themes/{$theme}/modules/{$file}");
     }
+}
+
+foreach ([
+    'assets/css/front/exercises.css',
+    'assets/css/front/practical.css',
+    'assets/css/front/written.css',
+] as $file) {
+    require_file($file);
 }
 
 require_file('assets/css/themes/ouinpo.css');
@@ -42,16 +51,19 @@ require_file('assets/css/themes/bsio.css');
 foreach (glob(path('assets/css/themes') . DIRECTORY_SEPARATOR . '*.css') ?: [] as $file) {
     reject_import($file);
     require_charset($file);
+    reject_mojibake_content($file);
 }
 
 foreach (glob(path('assets/css/themes') . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*.css') ?: [] as $file) {
     reject_import($file);
     require_charset($file);
+    reject_mojibake_content($file);
 }
 
 foreach (glob(path('assets/css/themes') . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . '*.css') ?: [] as $file) {
     reject_import($file);
     require_charset($file);
+    reject_mojibake_content($file);
 }
 
 $assetsSource = read_file('src/Modules/Exercises/plugin/public/Assets.php');
@@ -104,6 +116,22 @@ $exercisesCss = read_file('assets/css/front/exercises.css');
 if (preg_match('/\.ouinpo-written-[A-Za-z0-9_-]+/', $exercisesCss) === 1) {
     $errors[] = 'assets/css/front/exercises.css contient encore des regles .ouinpo-written-*';
 }
+
+require_contains(
+    read_file('assets/css/front/written.css'),
+    '.ouinpo-written-',
+    'assets/css/front/written.css contient les regles du module ecrit'
+);
+require_contains(
+    read_file('assets/css/front/practical.css'),
+    '.ouinpo-practical-',
+    'assets/css/front/practical.css contient les regles du module pratique'
+);
+require_contains(
+    $exercisesCss,
+    '.ouinpo-exercise-',
+    'assets/css/front/exercises.css contient les regles du module exercices'
+);
 
 foreach (['ouinpo', 'bsio'] as $theme) {
     $legacySource = read_file("assets/css/themes/{$theme}/legacy-overrides.css");
@@ -165,6 +193,19 @@ function reject_import(string $file): void
     }
 }
 
+function require_non_empty_css(string $relative): void
+{
+    global $errors;
+
+    $source = read_file($relative);
+    $withoutComments = preg_replace('/\/\*.*?\*\//s', '', $source);
+    $withoutCharset = preg_replace('/@charset\s+"UTF-8";/i', '', is_string($withoutComments) ? $withoutComments : '');
+
+    if (trim(is_string($withoutCharset) ? $withoutCharset : '') === '') {
+        $errors[] = "fichier CSS vide: {$relative}";
+    }
+}
+
 function require_charset(string $file): void
 {
     global $errors, $root;
@@ -182,6 +223,21 @@ function require_charset(string $file): void
     if (!str_starts_with($source, '@charset "UTF-8";')) {
         $relative = str_replace($root . DIRECTORY_SEPARATOR, '', $file);
         $errors[] = "charset UTF-8 manquant en tete: {$relative}";
+    }
+}
+
+function reject_mojibake_content(string $file): void
+{
+    global $errors, $root;
+
+    $source = file_get_contents($file);
+    if (!is_string($source)) {
+        return;
+    }
+
+    if (preg_match('/content\s*:\s*["\'][^"\']*(?:\xC3\x83|\xC3\x82|\xC3\xA2|\xC3\xB0)/', $source) === 1) {
+        $relative = str_replace($root . DIRECTORY_SEPARATOR, '', $file);
+        $errors[] = "content CSS probablement mojibake: {$relative}";
     }
 }
 
