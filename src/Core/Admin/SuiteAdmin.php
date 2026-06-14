@@ -3312,6 +3312,158 @@ final class SuiteAdmin
             </form>
         </div>
         <?php
+
+        self::renderThemeCssDiagnostic();
+    }
+
+    private static function renderThemeCssDiagnostic(): void
+    {
+        if (!Capabilities::can(Capabilities::MANAGE_SETTINGS)) {
+            return;
+        }
+
+        $current = get_option('ouinpo_suite_style_mode', 'neutral');
+        if (!in_array($current, ['neutral', 'ouinpo', 'bsio'], true)) {
+            $current = 'neutral';
+        }
+
+        ?>
+        <div class="card ouinpo-suite-card-bounded ouinpo-suite-card-spaced">
+            <h2 class="ouinpo-suite-card-title">Diagnostic CSS thematique</h2>
+            <p class="ouinpo-suite-muted">
+                Mode de style actif : <strong><?php echo esc_html((string) $current); ?></strong>.
+                Les CSS modules sont charges conditionnellement par shortcode ou par module ; leur presence ici indique seulement les fichiers et handles attendus.
+            </p>
+
+            <h3>Fichiers CSS attendus</h3>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th class="ouinpo-suite-col-22">Mode</th>
+                        <th>Fichier</th>
+                        <th class="ouinpo-suite-col-12">Etat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach (self::themeCssExpectedFiles() as $row): ?>
+                        <?php $exists = is_file(self::suiteRootPath($row['file'])); ?>
+                        <tr>
+                            <td><?php echo esc_html($row['mode']); ?></td>
+                            <td><code><?php echo esc_html($row['file']); ?></code></td>
+                            <td><?php self::statusBadge($exists, 'OK', 'Absent'); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+
+            <h3>Handles CSS attendus</h3>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th class="ouinpo-suite-col-26">Handle public</th>
+                        <th class="ouinpo-suite-col-26">Handle theme attendu</th>
+                        <th>Contexte</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach (self::themeCssExpectedHandles() as $row): ?>
+                        <tr>
+                            <td><code><?php echo esc_html($row['public']); ?></code></td>
+                            <td><code><?php echo esc_html($row['theme']); ?></code></td>
+                            <td><?php echo esc_html($row['context']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    private static function themeCssExpectedFiles(): array
+    {
+        $rows = [
+            ['mode' => 'neutral', 'file' => 'assets/css/themes/neutral.css'],
+            ['mode' => 'compat', 'file' => 'assets/css/themes/ouinpo.css'],
+            ['mode' => 'compat', 'file' => 'assets/css/themes/bsio.css'],
+        ];
+
+        foreach (['ouinpo', 'bsio'] as $theme) {
+            foreach (['foundation.css', 'content.css', 'components.css', 'legacy-overrides.css'] as $file) {
+                $rows[] = ['mode' => $theme, 'file' => 'assets/css/themes/' . $theme . '/' . $file];
+            }
+
+            foreach (array_keys(self::themeCssModuleHandles()) as $module) {
+                $rows[] = ['mode' => $theme, 'file' => 'assets/css/themes/' . $theme . '/modules/' . $module . '.css'];
+            }
+        }
+
+        return $rows;
+    }
+
+    private static function themeCssExpectedHandles(): array
+    {
+        $rows = [
+            [
+                'public' => 'ouinpo-theme-css',
+                'theme' => 'ouinpo-theme-css',
+                'context' => 'Theme global : neutral.css ou pile decoupee foundation/content/components/legacy.',
+            ],
+            [
+                'public' => '-',
+                'theme' => 'ouinpo-theme-foundation-css',
+                'context' => 'Couche theme foundation.',
+            ],
+            [
+                'public' => '-',
+                'theme' => 'ouinpo-theme-content-css',
+                'context' => 'Couche theme content.',
+            ],
+            [
+                'public' => '-',
+                'theme' => 'ouinpo-theme-components-css',
+                'context' => 'Couche theme components.',
+            ],
+            [
+                'public' => '-',
+                'theme' => 'ouinpo-theme-legacy-overrides-css',
+                'context' => 'Couche finale legacy-overrides.',
+            ],
+        ];
+
+        foreach (self::themeCssModuleHandles() as $module => $handles) {
+            $rows[] = [
+                'public' => $handles['public'],
+                'theme' => $handles['theme'],
+                'context' => $module,
+            ];
+        }
+
+        return $rows;
+    }
+
+    private static function themeCssModuleHandles(): array
+    {
+        return [
+            'exercises' => ['public' => 'ouinpo-exo-css', 'theme' => 'ouinpo-theme-exercises-css'],
+            'practical' => ['public' => 'ouinpo-practical-css', 'theme' => 'ouinpo-theme-practical-css'],
+            'written' => ['public' => 'ouinpo-written-css', 'theme' => 'ouinpo-theme-written-css'],
+            'teacher' => ['public' => 'ouinpo-teacher-css', 'theme' => 'ouinpo-theme-teacher-css'],
+            'flashcards' => ['public' => 'ouinpo-flashcards', 'theme' => 'ouinpo-theme-flashcards-css'],
+            'segfault' => ['public' => 'ouinpo-sf', 'theme' => 'ouinpo-theme-segfault-css'],
+            'rechtext' => ['public' => 'ouinpo-rechtext-css', 'theme' => 'ouinpo-theme-rechtext-css'],
+            'projects' => ['public' => 'ouinpo-projects', 'theme' => 'ouinpo-theme-projects-css'],
+            'submissions' => ['public' => 'ouinpo-submissions', 'theme' => 'ouinpo-theme-submissions-css'],
+            'titles' => ['public' => 'ouinpo-titles-css', 'theme' => 'ouinpo-theme-titles-css'],
+        ];
+    }
+
+    private static function suiteRootPath(string $relative): string
+    {
+        $root = defined('OUINPO_SUITE_DIR')
+            ? (string) OUINPO_SUITE_DIR
+            : dirname(__DIR__, 3) . DIRECTORY_SEPARATOR;
+
+        return rtrim($root, '/\\') . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relative);
     }
 
     private static function renderModulesSettings(): void

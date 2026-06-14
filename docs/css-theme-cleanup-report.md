@@ -38,22 +38,14 @@ Regle identique :
 
 Decision : conserve. Les deux fichiers appartiennent a des themes mutuellement exclusifs, donc ce doublon n'est pas une surcharge inutile au runtime.
 
-Doublons stricts internes encore presents dans `assets/css/themes/ouinpo/legacy-overrides.css`, a recontroler plus tard avant suppression :
+Doublons stricts internes encore presents dans `assets/css/themes/ouinpo/legacy-overrides.css`, laisses volontairement :
 
-- `.ouinpo-ia-notice`
-- `.ouinpo-ia-notice p`
-- `.ouinpo-ia-notice a`
-- `.ouinpo-practical-files-list a:hover`
-- `.ouinpo-practical-call-status`
-- `.ouinpo-practical-call-head, .ouinpo-practical-progress-item`
 - `.ouinpo-practical-statement h3::before`
 - `.ouinpo-practical-files h3::before`
 - `.ouinpo-practical-calls h3::before`
 - `.ouinpo-practical-progress h3::before`
-- `.ouinpo-practical-statement-content li`
-- `.ouinpo-fc-toolbar select`
 
-Decision : non supprimes dans cette passe. Ces doublons proviennent de blocs prod successifs dans `legacy-overrides.css`; sans verification visuelle du bloc intermediaire, la suppression de la derniere occurrence peut masquer une intention de restauration de cascade.
+Decision : conserves. Ces regles portent des pseudo-elements visibles et apparaissent dans des surcouches pratiques successives ; leur retrait n'est pas considere comme absolument certain sans controle visuel.
 
 ## Selecteurs presents dans plusieurs couches
 
@@ -97,7 +89,27 @@ Doivent rester dans `legacy-overrides.css` tant qu'une verification visuelle n'a
 
 ## Nettoyages effectues
 
-- Doublons stricts supprimes : aucun.
+- Doublons stricts supprimes : voir la section "Nettoyage doublons stricts".
 - Regles deplacees depuis `legacy-overrides.css` : aucune.
 - Corrections sures : les valeurs `content:` mojibake de `assets/css/themes/ouinpo/legacy-overrides.css` ont ete remplacees par des echappements CSS Unicode equivalents.
 
+## Nettoyage doublons stricts
+
+Suppressions effectuees dans `assets/css/themes/ouinpo/legacy-overrides.css` uniquement. Aucune regle n'a ete deplacee, et l'occurrence conservee reste dans le meme fichier.
+
+| Fichier concerne | Selecteur | Justification | Regle conservee |
+| --- | --- | --- | --- |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `.ouinpo-ia-notice` | Occurrence ancienne strictement identique a une occurrence plus tardive ; meme selecteur, memes proprietes, memes valeurs. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `.ouinpo-ia-notice p` | Deux occurrences anciennes strictement identiques supprimees ; une occurrence identique reste plus bas. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `.ouinpo-ia-notice a` | Occurrence ancienne strictement identique a une occurrence plus tardive. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `.ouinpo-practical-files-list a:hover` | Occurrence ancienne strictement identique a une occurrence plus tardive. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `.ouinpo-practical-call-status` | Occurrence ancienne strictement identique a une occurrence plus tardive. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `@media (max-width: 800px) .ouinpo-practical-call-head, .ouinpo-practical-progress-item` | Occurrence ancienne dans le meme contexte media, strictement identique a une occurrence plus tardive. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `.ouinpo-practical-statement-content li` | Occurrence ancienne strictement identique a une occurrence plus tardive. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+| `assets/css/themes/ouinpo/legacy-overrides.css` | `@media (max-width: 640px) .ouinpo-fc-toolbar select` | Occurrence ancienne dans le meme contexte media, strictement identique a une occurrence plus tardive. | `assets/css/themes/ouinpo/legacy-overrides.css` |
+
+Doublons volontairement laisses :
+
+- doublon inter-theme `assets/css/themes/ouinpo/modules/written.css` / `assets/css/themes/bsio/modules/written.css`, car les themes sont mutuellement exclusifs ;
+- doublons de pseudo-elements pratiques listes plus haut, car ils portent des marqueurs visuels ;
+- regles proches mais non identiques des surcouches finales, notamment les variantes `.ouinpo-ia-notice` finales.

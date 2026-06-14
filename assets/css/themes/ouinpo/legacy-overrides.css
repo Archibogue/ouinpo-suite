@@ -4748,25 +4748,6 @@
   }
 }
 
-.ouinpo-ia-notice {
-  margin: 1rem 0;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(232, 170, 70, 0.35);
-  border-left: 4px solid #e8aa46;
-  border-radius: 12px;
-  background: rgba(20, 20, 20, 0.55);
-  line-height: 1.45;
-  font-size: 0.95rem;
-}
-
-.ouinpo-ia-notice p {
-  margin: 0;
-}
-
-.ouinpo-ia-notice a {
-  font-weight: 600;
-}
-
 /* ===== Source prod complÃ¨te : src/Modules/Exercises/plugin/public/assets/css/practical.css ===== */
 
 /* =========================================================
@@ -4899,10 +4880,6 @@
   text-decoration: none;
 }
 
-.ouinpo-practical-files-list a:hover {
-  text-decoration: underline;
-}
-
 /* -------- Progression -------- */
 
 .ouinpo-practical-progress-list {
@@ -4964,10 +4941,6 @@
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.35;
-}
-
-.ouinpo-practical-call-status {
-  flex: 0 0 auto;
 }
 
 .ouinpo-practical-call-prompt {
@@ -5107,12 +5080,6 @@
 /* -------- Responsive -------- */
 
 @media (max-width: 800px) {
-  .ouinpo-practical-call-head,
-  .ouinpo-practical-progress-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .ouinpo-practical-title {
     font-size: 1.35rem;
   }
@@ -5551,10 +5518,6 @@
   padding-left: 1.4rem;
 }
 
-.ouinpo-practical-statement-content li {
-  margin-bottom: 0.55rem;
-}
-
 .ouinpo-practical-statement-content strong {
   color: #f2dfb6;
 }
@@ -5742,10 +5705,6 @@
   background: rgba(20, 20, 20, 0.55);
   line-height: 1.45;
   font-size: 0.95rem;
-}
-
-.ouinpo-ia-notice p {
-  margin: 0;
 }
 
 .ouinpo-ia-notice a {
@@ -7250,12 +7209,6 @@
   border: 1px solid rgba(214,163,98,0.35);
   border-radius: 16px;
   background: rgba(255,255,255,0.04);
-}
-
-@media (max-width: 640px) {
-  .ouinpo-fc-toolbar select {
-    min-width: 100%;
-  }
 }
 
 /* =========================================================
