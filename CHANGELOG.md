@@ -2,6 +2,22 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.3-beta] - 2026-06-14
+
+### Ameliorations
+
+- Decoupage des CSS thematiques OuInPo et BSIO en couches foundation/content/components/legacy et modules dedies.
+- Ajout d'un CSS dedie aux sujets ecrits.
+- Ajout d'un diagnostic CSS theme dans l'administration et via outil CLI.
+- Amelioration de la stabilite du scroll sur les filtres et actions front.
+- Nettoyage prudent de doublons CSS strictement identiques.
+
+### Technique
+
+- Conservation des handles CSS historiques.
+- Ajout de verifications pour les CSS thematiques et le scroll restore.
+- Aucun changement volontaire du rendu visuel.
+
 ## [0.7.2-beta] - 2026-06-12
 
 - Release intermediaire de refactoring/stabilisation interne Projects, sans nouvelle fonctionnalite majeure visible.

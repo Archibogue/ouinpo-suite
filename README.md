@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.2-beta : beta technique de stabilisation et refactoring interne Projects, partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.7.3-beta : beta technique de stabilisation CSS, sujets ecrits et ergonomie front, partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
