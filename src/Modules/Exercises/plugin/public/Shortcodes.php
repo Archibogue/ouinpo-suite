@@ -1739,7 +1739,7 @@ JS,
 
 
 
-      <section class="ouinpo-panel ouinpo-panel--filters">
+      <section class="ouinpo-panel ouinpo-panel--filters ouinpo-preserve-scroll">
 
         <h2 class="ouinpo-panel-title">Choisir le niveau</h2>
 
@@ -1899,7 +1899,7 @@ public static function render_written_subjects($atts = array(), $content = '') {
     <div class="ouinpo-exercises-shell">
       <section class="ouinpo-panel ouinpo-panel--filters ouinpo-written-filters" data-written-subject-filters>
         <h2 class="ouinpo-panel-title">Filtrer les sujets</h2>
-        <form method="get" action="<?php echo esc_url($filter_action); ?>" class="ouinpo-written-filter-form">
+        <form method="get" action="<?php echo esc_url($filter_action); ?>" class="ouinpo-written-filter-form ouinpo-preserve-scroll">
           <div class="ouinpo-filters-grid">
             <div class="ouinpo-field">
               <label for="ouinpo-written-level">Niveau</label>
@@ -2222,7 +2222,7 @@ public static function render_written_subject($atts = array(), $content = '') {
 
               <?php if ($is_logged): ?>
               <div class="ouinpo-written-status-actions">
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form" data-written-question-status-form>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ouinpo-inline-form ouinpo-preserve-scroll" data-written-question-status-form>
                   <?php wp_nonce_field('ouinpo_written_question_status_' . (int) ($question['id'] ?? 0)); ?>
                   <input type="hidden" name="action" value="ouinpo_written_question_status">
                   <input type="hidden" name="question_id" value="<?php echo esc_attr((string) (int) ($question['id'] ?? 0)); ?>">
@@ -2372,7 +2372,7 @@ public static function render_practical_subjects($atts = array(), $content = '')
 
       <?php if (!$is_logged): ?>
 
-        <section class="ouinpo-panel ouinpo-panel--filters">
+        <section class="ouinpo-panel ouinpo-panel--filters ouinpo-preserve-scroll">
 
           <h2 class="ouinpo-panel-title">Filtrer les sujets</h2>
 
@@ -2877,11 +2877,11 @@ $is_logged = is_user_logged_in();
 
       .'<div class="exo-hints">
 
-        <button data-hint="1">Indice 1</button>
+        <button type="button" data-hint="1">Indice 1</button>
 
-        <button data-hint="2" disabled>Indice 2</button>
+        <button type="button" data-hint="2" disabled>Indice 2</button>
 
-        <button data-hint="3" disabled>Indice 3</button>
+        <button type="button" data-hint="3" disabled>Indice 3</button>
 
       </div>
 
@@ -3589,7 +3589,7 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
 
 
-        <div class="ouinpo-toolbar">
+        <div class="ouinpo-toolbar ouinpo-preserve-scroll">
 
 
 
@@ -3705,7 +3705,7 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
 
 
-          <button id="t-refresh" class="btn-copper">Actualiser</button>
+          <button type="button" id="t-refresh" class="btn-copper">Actualiser</button>
 
         </div>
 

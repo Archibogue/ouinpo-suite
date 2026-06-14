@@ -134,6 +134,8 @@ $projectMemberService = path('src/Modules/Projects/ProjectMemberService.php');
 $projectTaskService = path('src/Modules/Projects/ProjectTaskService.php');
 $exercisesPublicAssets = path('src/Modules/Exercises/plugin/public/Assets.php');
 $exercisesPublicShortcodes = path('src/Modules/Exercises/plugin/public/Shortcodes.php');
+$scrollRestoreJs = path('assets/js/front/scroll-restore.js');
+$segfaultStudentParcours = path('src/Modules/SegFault/plugin/includes/student-parcours.php');
 $writtenCss = path('assets/css/front/written.css');
 $writtenThemeOuinpoCss = path('assets/css/themes/ouinpo/modules/written.css');
 $writtenThemeBsioCss = path('assets/css/themes/bsio/modules/written.css');
@@ -265,6 +267,8 @@ $projectMemberSource = read_file($projectMemberService);
 $projectTaskSource = read_file($projectTaskService);
 $exercisesPublicAssetsSource = read_file($exercisesPublicAssets);
 $exercisesPublicShortcodesSource = read_file($exercisesPublicShortcodes);
+$scrollRestoreSource = read_file($scrollRestoreJs);
+$segfaultStudentParcoursSource = read_file($segfaultStudentParcours);
 $projectsRestSource = read_file($projectsRestController);
 $projectsShortcodesSource = read_file($projectsShortcodes);
 $projectsPrivateFilesSource = read_file($projectsPrivateFiles);
@@ -317,6 +321,23 @@ check('Assets enregistre ouinpo-theme-written-css', $exercisesPublicAssetsSource
 check('ouinpo-written-css depend du module et du theme ecrits', $exercisesPublicAssetsSource !== '' && str_contains($exercisesPublicAssetsSource, "['ouinpo-written-module-css', 'ouinpo-theme-written-css']"));
 check('ouinpo-theme-written-css depend du theme global', $exercisesPublicAssetsSource !== '' && str_contains($exercisesPublicAssetsSource, "['ouinpo-theme-css']"));
 check('Shortcodes ecrits chargent ouinpo-written-css', $exercisesPublicShortcodesSource !== '' && substr_count($exercisesPublicShortcodesSource, "wp_enqueue_style('ouinpo-written-css')") >= 2);
+check('Utilitaire front de restauration du scroll present', is_file($scrollRestoreJs));
+check('Utilitaire scroll utilise sessionStorage et une fenetre courte', source_contains_all($scrollRestoreSource, [
+    'window.sessionStorage',
+    'var MAX_AGE = 10000',
+    'window.OuinpoScrollRestore',
+]));
+check('Utilitaire scroll cible uniquement les marqueurs explicites', source_contains_all($scrollRestoreSource, [
+    '.ouinpo-preserve-scroll',
+    '[data-ouinpo-preserve-scroll="1"]',
+]));
+check('Assets enregistre ouinpo-scroll-restore', source_contains_all($exercisesPublicAssetsSource, [
+    "'scroll_js'     => 'assets/js/front/scroll-restore.js'",
+    "'ouinpo-scroll-restore'",
+]));
+check('Filtres front principaux marquent la preservation du scroll', substr_count($exercisesPublicShortcodesSource, 'ouinpo-preserve-scroll') >= 5);
+check('Aucun href # restant dans le parcours eleve SegFault', $segfaultStudentParcoursSource !== '' && !str_contains($segfaultStudentParcoursSource, 'href="#"'));
+check('Boutons d interface cibles ont un type explicite', !preg_match('/<button(?![^>]*\btype=)[^>]*(?:data-hint=|id="t-refresh"|sf-delete-path|sf-use-template)/i', $exercisesPublicShortcodesSource . $segfaultStudentParcoursSource));
 check('ProjectBoardService existe', is_file($projectBoardService));
 check('Repository delegue getBoard au service', $repositoryBoard !== '' && str_contains($repositoryBoard, 'ProjectBoardService'));
 check('Projects charge les checklists en groupe', $projectBoardSource !== '' && str_contains($projectBoardSource, 'function getChecklistForTasks('));

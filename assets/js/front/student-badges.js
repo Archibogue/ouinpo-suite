@@ -22,7 +22,18 @@
     });
   }
 
-  function postJSON(url, body) {
+  function preserveScroll() {
+    if (
+      window.OuinpoScrollRestore &&
+      typeof window.OuinpoScrollRestore.remember === 'function'
+    ) {
+      window.OuinpoScrollRestore.remember();
+    }
+  }
+
+
+
+  function postJSON(url, body) {
     const headers = commonHeaders();
     headers['Content-Type'] = 'application/json';
 
@@ -61,6 +72,7 @@
 
       }
 
+      preserveScroll();
       window.location.href = url.toString();
 
     });
@@ -316,7 +328,8 @@
       postJSON(API_ROOT + '/me/title', { badge_id: badge.id })
         .then(resp => {
           alert('Ton titre a été mis à jour ✨');
-          window.location.reload();
+          preserveScroll();
+          window.location.reload();
         })
         .catch(err => {
           console.error('Erreur mise à jour titre', err);

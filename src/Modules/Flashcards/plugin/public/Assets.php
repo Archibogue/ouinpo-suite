@@ -59,10 +59,15 @@ final class Assets
             $css_ver
         );
 
+        $jsDeps = [];
+        if (wp_script_is('ouinpo-scroll-restore', 'registered')) {
+            $jsDeps[] = 'ouinpo-scroll-restore';
+        }
+
         wp_register_script(
             'ouinpo-flashcards',
             $base_url . $files['js'],
-            [],
+            $jsDeps,
             $js_ver,
             true
         );

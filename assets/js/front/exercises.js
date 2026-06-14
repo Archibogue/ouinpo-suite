@@ -336,6 +336,15 @@
     };
   }
 
+  function preserveScroll() {
+    if (
+      window.OuinpoScrollRestore &&
+      typeof window.OuinpoScrollRestore.remember === 'function'
+    ) {
+      window.OuinpoScrollRestore.remember();
+    }
+  }
+
   function isWrittenPublicMode(root) {
     return !!(root && String(root.getAttribute('data-public-mode') || '0') === '1');
   }
@@ -3597,6 +3606,7 @@ function enableTabInAnswerTextareas() {
         url.searchParams.delete('lvl');
       }
 
+      preserveScroll();
       window.location.href = url.toString();
     });
 
@@ -3621,6 +3631,7 @@ function enableTabInAnswerTextareas() {
       function navigate(update) {
         const url = new URL(window.location.href);
         update(url.searchParams);
+        preserveScroll();
         window.location.href = url.toString();
       }
 

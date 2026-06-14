@@ -30,7 +30,7 @@ if (!function_exists('ouinpo_sf_enqueue_student_parcours_script')) {
     wp_enqueue_script(
       'ouinpo-sf-student-parcours-js',
       $base_url . $rel,
-      [],
+      wp_script_is('ouinpo-scroll-restore', 'registered') ? ['ouinpo-scroll-restore'] : [],
       $version,
       true
     );
@@ -401,7 +401,7 @@ add_shortcode('segfault_mes_parcours', function ($atts) {
     $html .= '<div class="sf-back">';
     $html .= '<a class="ouinpo-sf-btn" href="'.$back_url.'">← Retour à mes parcours</a>';
     if ($can_delete_current) {
-      $html .= ' <a href="#" class="ouinpo-sf-btn sf-delete-path" data-path-id="'.(int)$view_id.'">Supprimer ce parcours</a>';
+      $html .= ' <button type="button" class="ouinpo-sf-btn sf-delete-path" data-path-id="'.(int)$view_id.'">Supprimer ce parcours</button>';
     }
     $html .= '</div>';
 
@@ -668,7 +668,7 @@ if (!empty($templates)) {
     $html .= '<td><div class="ouinpo-sf-cell-wrap">'.esc_html($tpl_domain_label).'</div></td>';
     $html .= '<td><div class="ouinpo-sf-cell-wrap">'.esc_html($tpl_goal_label).'</div></td>';
     $html .= '<td><div class="ouinpo-sf-cell-wrap">'.esc_html($tpl_mode_label).'</div></td>';
-    $html .= '<td class="sf-actions"><a href="#" class="ouinpo-sf-btn sf-use-template" data-template-id="'.$tpl_id.'">Choisir</a></td>';
+    $html .= '<td class="sf-actions"><button type="button" class="ouinpo-sf-btn sf-use-template" data-template-id="'.$tpl_id.'">Choisir</button></td>';
 
     $html .= '</tr>';
   }
@@ -726,7 +726,7 @@ if (!empty($templates)) {
       $html .= '<td>'.$bar.' '.$txt.'</td>';
       $html .= '<td class="sf-actions"><a class="ouinpo-sf-btn" href="'.$view_url.'">Voir</a>';
       if ($can_delete) {
-        $html .= ' <a href="#" class="ouinpo-sf-btn sf-delete-path" data-path-id="'.$pid.'">Supprimer</a>';
+        $html .= ' <button type="button" class="ouinpo-sf-btn sf-delete-path" data-path-id="'.$pid.'">Supprimer</button>';
       }
       $html .= '</td>';
       $html .= '</tr>';

@@ -45,6 +45,15 @@
     return h;
   }
 
+  function preserveScroll() {
+    if (
+      window.OuinpoScrollRestore &&
+      typeof window.OuinpoScrollRestore.remember === 'function'
+    ) {
+      window.OuinpoScrollRestore.remember();
+    }
+  }
+
 
 
   async function apiGET(path) {
@@ -208,6 +217,7 @@
 
       }
 
+      preserveScroll();
       window.location.href = url.toString();
 
     });

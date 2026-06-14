@@ -3,6 +3,15 @@
 
   const cfg = window.OuinpoProjects || {};
 
+  function preserveScroll() {
+    if (
+      window.OuinpoScrollRestore &&
+      typeof window.OuinpoScrollRestore.remember === 'function'
+    ) {
+      window.OuinpoScrollRestore.remember();
+    }
+  }
+
   /* rest */
 
   function request(path, options) {
@@ -288,6 +297,7 @@
         method: 'POST',
         body: JSON.stringify(data)
       }).then(function () {
+        preserveScroll();
         window.location.reload();
       }).catch(function (error) {
         window.alert(error.message);
@@ -308,6 +318,7 @@
           method: 'POST',
           body: JSON.stringify(data)
         }).then(function () {
+          preserveScroll();
           window.location.reload();
         }).catch(function (error) {
           window.alert(error.message);
@@ -331,6 +342,7 @@
           method: 'PATCH',
           body: JSON.stringify({ status: statusButton.dataset.ouinpoProjectsDeliverableStatus })
         }).then(function () {
+          preserveScroll();
           window.location.reload();
         }).catch(function (error) {
           window.alert(error.message);
@@ -344,6 +356,7 @@
         request('/deliverables/' + encodeURIComponent(id), {
           method: 'DELETE'
         }).then(function () {
+          preserveScroll();
           window.location.reload();
         }).catch(function (error) {
           window.alert(error.message);
@@ -370,6 +383,7 @@
           method: 'POST',
           body: payload
         }).then(function () {
+          preserveScroll();
           window.location.reload();
         }).catch(function (error) {
           window.alert(error.message);
@@ -391,6 +405,7 @@
       request('/evidence/' + encodeURIComponent(card.dataset.evidenceId), {
         method: 'DELETE'
       }).then(function () {
+        preserveScroll();
         window.location.reload();
       }).catch(function (error) {
         window.alert(error.message);

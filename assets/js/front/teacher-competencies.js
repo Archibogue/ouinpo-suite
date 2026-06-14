@@ -28,6 +28,15 @@
 
   const root = normalizeApiRoot();
 
+  function preserveScroll() {
+    if (
+      window.OuinpoScrollRestore &&
+      typeof window.OuinpoScrollRestore.remember === 'function'
+    ) {
+      window.OuinpoScrollRestore.remember();
+    }
+  }
+
 
 
   function H(tag, attrs, text) {
@@ -473,6 +482,7 @@ function updateViewFieldVisibility() {
 
 
 
+    preserveScroll();
     window.location.search = params.toString();
 
   }

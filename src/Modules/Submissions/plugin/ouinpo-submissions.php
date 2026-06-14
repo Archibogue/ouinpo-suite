@@ -596,10 +596,15 @@ class Ouinpo_Submissions_Plugin {
 
         $js_version = \Ouinpo\Suite\Core\Assets::fileVersion($js_path, self::VERSION);
 
+        $deps = array('ouinpo-front-vars');
+        if (wp_script_is('ouinpo-scroll-restore', 'registered')) {
+            $deps[] = 'ouinpo-scroll-restore';
+        }
+
         wp_enqueue_script(
             'ouinpo-submissions',
             $js_url,
-            array('ouinpo-front-vars'),
+            $deps,
             $js_version,
             true
         );

@@ -35,6 +35,7 @@ class Assets {
         $files = [
             'exo_js'        => 'assets/js/front/exercises.js',
             'practical_js'  => 'assets/js/front/practical.js',
+            'scroll_js'     => 'assets/js/front/scroll-restore.js',
             'student_js'    => 'assets/js/front/student-competencies.js',
             'teacher_js'    => 'assets/js/front/teacher-competencies.js',
             'badges_js'     => 'assets/js/front/student-badges.js',
@@ -229,9 +230,17 @@ class Assets {
          * On utilise $base_url partout pour rester cohérent avec la nouvelle structure.
          */
         wp_register_script(
+            'ouinpo-scroll-restore',
+            $base_url . $files['scroll_js'],
+            [],
+            $ver['scroll_js'],
+            true
+        );
+
+        wp_register_script(
             'ouinpo-exo-js',
             $base_url . $files['exo_js'],
-            [],
+            ['ouinpo-scroll-restore'],
             $ver['exo_js'],
             true
         );
@@ -239,7 +248,7 @@ class Assets {
         wp_register_script(
             'ouinpo-practical-js',
             $base_url . $files['practical_js'],
-            [],
+            ['ouinpo-scroll-restore'],
             $ver['practical_js'],
             true
         );
@@ -247,7 +256,7 @@ class Assets {
         wp_register_script(
             'ouinpo-student-competencies',
             $base_url . $files['student_js'],
-            [],
+            ['ouinpo-scroll-restore'],
             $ver['student_js'],
             true
         );
@@ -255,7 +264,7 @@ class Assets {
         wp_register_script(
             'ouinpo-teacher-competencies',
             $base_url . $files['teacher_js'],
-            [],
+            ['ouinpo-scroll-restore'],
             $ver['teacher_js'],
             true
         );
@@ -263,7 +272,7 @@ class Assets {
         wp_register_script(
             'ouinpo-student-badges',
             $base_url . $files['badges_js'],
-            [],
+            ['ouinpo-scroll-restore'],
             $ver['badges_js'],
             true
         );

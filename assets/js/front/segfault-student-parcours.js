@@ -7,6 +7,15 @@
     }
   }
 
+  function preserveScroll() {
+    if (
+      window.OuinpoScrollRestore &&
+      typeof window.OuinpoScrollRestore.remember === 'function'
+    ) {
+      window.OuinpoScrollRestore.remember();
+    }
+  }
+
   ready(function() {
     const config = window.OuinpoSfStudentParcours || {};
     const ajaxUrl = config.ajaxUrl || '';
@@ -146,6 +155,7 @@
         setMsg(msg, "Parcours créé (" + (data.data.count || 0) + " exos). Ouverture…");
         const url = new URL(window.location.href);
         url.searchParams.set("sf_path", String(pathId));
+        preserveScroll();
         window.location.href = url.toString();
         return;
       }
@@ -177,6 +187,7 @@
 
       const url = new URL(window.location.href);
       url.searchParams.set("sf_path", String(data.data.path_id));
+      preserveScroll();
       window.location.href = url.toString();
     }
 
@@ -205,6 +216,7 @@
       if (url.searchParams.get("sf_path") === String(pathId)) {
         url.searchParams.delete("sf_path");
       }
+      preserveScroll();
       window.location.href = url.toString();
     }
 

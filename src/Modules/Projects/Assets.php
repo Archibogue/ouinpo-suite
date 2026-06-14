@@ -23,6 +23,7 @@ final class Assets
         if (wp_style_is('ouinpo-theme-projects-css', 'registered')) {
             $cssDeps[] = 'ouinpo-theme-projects-css';
         }
+        $jsDeps = wp_script_is('ouinpo-scroll-restore', 'registered') ? ['ouinpo-scroll-restore'] : [];
 
         CoreAssets::registerStyle(
             'ouinpo-projects',
@@ -32,7 +33,8 @@ final class Assets
 
         CoreAssets::registerScript(
             'ouinpo-projects',
-            $js
+            $js,
+            $jsDeps
         );
 
         wp_localize_script('ouinpo-projects', 'OuinpoProjects', [
