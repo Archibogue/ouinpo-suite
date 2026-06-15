@@ -148,6 +148,35 @@
   font-size:18px;
 }
 
+.ouinpo-sf-settings-table td {
+  width:100%;
+}
+
+.ouinpo-sf-settings-table fieldset {
+  width:100%;
+  max-width:none;
+  margin:0 0 16px;
+}
+
+.ouinpo-sf-settings-table fieldset label,
+.ouinpo-sf-settings-table .ouinpo-sf-ai-field-label {
+  display:block;
+  margin:0 0 4px;
+}
+
+.ouinpo-sf-settings-table .ouinpo-sf-ai-input,
+.ouinpo-sf-settings-table .ouinpo-sf-ai-textarea {
+  display:block;
+  width:100% !important;
+  max-width:none;
+  box-sizing:border-box;
+}
+
+.ouinpo-sf-settings-table .ouinpo-sf-ai-textarea {
+  min-height:120px;
+  resize:vertical;
+}
+
 .ouinpo-sf-input-small {
   width:80px;
 }

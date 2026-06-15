@@ -671,9 +671,17 @@ Les différences restantes sont non bloquantes :
 
 OuInPo Suite contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas, consignes systeme et workflows de correction IA. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
 
-### Personas IA configurables
+### Personas, messages et consignes IA
 
-Les personas se reglent dans l'administration WordPress, page SegFault, section "Prompts, personas et messages". Un persona decrit l'identite, le role, le ton et la posture pedagogique de l'assistant. Les consignes metier strictes restent dans le code ou dans les champs de consigne dedies quand elles imposent un format JSON, des regles de correction, des garde-fous de securite ou des contraintes de validation. Le contexte reste separe : RAG, donnees d'exercice, projet, copie, annale ou reponse eleve.
+Les reglages IA se trouvent dans l'administration WordPress, page SegFault, onglet "Prompts", section "Personas, messages et consignes IA". Ils sont separes en trois familles :
+
+- Persona : definit qui parle, avec quel role, quel ton et quelle posture pedagogique.
+- Message utilisateur : texte affiche directement dans l interface, par exemple une notice RGPD ou un message d indisponibilite.
+- Consigne interne : prompt ou garde-fou utilise par l IA pour respecter un format, le RAG, la validation JSON, les regles anti-invention ou les contraintes de correction.
+
+Pour changer le ton de la chatbox, modifiez le persona `ouinpo_ai_persona_chatbox`. Pour changer un texte affiche a l ouverture ou pres du chat, modifiez le message utilisateur correspondant. Pour modifier les regles de correction ou le format JSON attendu, modifiez les consignes internes avec prudence.
+
+Un persona ne doit pas contenir de schema JSON, de secret, de quota, de regle de droits, ni de consigne technique fragile. Ces elements doivent rester dans les consignes internes ou dans le code metier. Le contexte reste separe : RAG, donnees d exercice, projet, copie, annale ou reponse eleve.
 
 Personas disponibles :
 
@@ -690,7 +698,22 @@ Personas disponibles :
 - `ouinpo_ai_persona_projects_teacher` : assistant Projects cote enseignant.
 - `ouinpo_ai_persona_projects_student` : assistant Projects cote eleve et portfolio.
 
-Gate conserve son propre `system_prompt` configurable dans les reglages Gate, car la validation d'enigmes a un schema JSON et des regles anti-divulgation specifiques.
+Messages utilisateur principaux :
+
+- `ouinpo_ai_disabled_message` : message quand l IA est desactivee.
+- `ouinpo_ai_privacy_notice` : notice pedagogique / RGPD generale.
+- `ouinpo_sf_ai_notice_public` : notice visible par les visiteurs anonymes.
+- `ouinpo_sf_ai_notice_logged` : notice visible par les utilisateurs connectes.
+
+Consignes internes principales :
+
+- `ouinpo_ai_rag_system_prompt` : regles RAG et sources.
+- `ouinpo_ai_exercise_correction_prompt` : correction d exercices et JSON attendu.
+- `ouinpo_ai_practical_correction_prompt` : correction pratique / code et JSON attendu.
+- `ouinpo_ai_suggestions_prompt` : suggestions pedagogiques.
+- `ouinpo_ai_out_of_program_guardrails` : garde-fous hors programme.
+
+Gate conserve son propre `system_prompt` configurable dans les reglages Gate, car la validation d'enigmes necessite des regles anti-divulgation et un format de reponse specifique.
 
 Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
 

@@ -25,11 +25,20 @@
             return 'overview';
         }
 
-        if (title.indexOf('moteur principal') !== -1 || title.indexOf('secours connecte') !== -1) {
+        if (
+            title.indexOf('reglages techniques ia') !== -1 ||
+            title.indexOf('quotas ia') !== -1 ||
+            title.indexOf('moteur principal') !== -1 ||
+            title.indexOf('secours connecte') !== -1
+        ) {
             return 'providers';
         }
 
-        if (title.indexOf('prompts') !== -1) {
+        if (
+            title.indexOf('prompts') !== -1 ||
+            title.indexOf('personas') !== -1 ||
+            title.indexOf('consignes ia') !== -1
+        ) {
             return 'prompts';
         }
 

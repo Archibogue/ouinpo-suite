@@ -154,7 +154,97 @@ final class AiSettings
 
     public static function persona_options(): array
     {
-        return self::persona_definitions();
+        $options = [];
+        foreach (self::persona_definitions() as $option => $definition) {
+            $definition['option'] = (string) ($definition['option'] ?? $option);
+            $definition['category'] = (string) ($definition['category'] ?? 'persona');
+            $definition['rows'] = (int) ($definition['rows'] ?? 4);
+            $options[$option] = $definition;
+        }
+
+        return $options;
+    }
+
+    public static function user_message_options(): array
+    {
+        return [
+            'ouinpo_ai_disabled_message' => [
+                'label' => 'Message IA desactivee',
+                'category' => 'user_message',
+                'description' => 'Texte affiche quand l assistant IA est indisponible ou desactive.',
+                'help' => 'Texte visible directement dans l interface. Il ne modifie pas le comportement interne de l IA.',
+                'rows' => 1,
+            ],
+            'ouinpo_ai_privacy_notice' => [
+                'label' => 'Information RGPD / usage pedagogique',
+                'category' => 'user_message',
+                'description' => 'Notice generale affichee autour des usages IA pedagogiques.',
+                'help' => 'Texte visible par les utilisateurs. Garder une formulation courte, claire et non technique.',
+                'rows' => 3,
+            ],
+            'ouinpo_sf_ai_notice_url' => [
+                'label' => 'URL de la page d information IA',
+                'category' => 'user_message',
+                'description' => 'Lien affiche sous les messages d information IA.',
+                'help' => 'Peut etre vide, une URL complete ou un chemin relatif du site.',
+                'rows' => 1,
+            ],
+            'ouinpo_sf_ai_notice_public' => [
+                'label' => 'Message IA publique',
+                'category' => 'user_message',
+                'description' => 'Message affiche aux visiteurs non connectes avant ou pres du chat public.',
+                'help' => 'Texte visible directement dans l interface publique.',
+                'rows' => 4,
+            ],
+            'ouinpo_sf_ai_notice_logged' => [
+                'label' => 'Message IA eleves connectes',
+                'category' => 'user_message',
+                'description' => 'Message affiche aux utilisateurs connectes.',
+                'help' => 'Texte visible directement dans l interface connectee.',
+                'rows' => 4,
+            ],
+        ];
+    }
+
+    public static function internal_instruction_options(): array
+    {
+        return [
+            'ouinpo_ai_rag_system_prompt' => [
+                'label' => 'Regles RAG',
+                'category' => 'internal_instruction',
+                'description' => 'Consigne systeme pour l utilisation du contexte documentaire RAG.',
+                'help' => 'Attention : ce champ pilote les sources, citations et limites documentaires de l IA.',
+                'rows' => 4,
+            ],
+            'ouinpo_ai_exercise_correction_prompt' => [
+                'label' => 'Prompt de correction JSON - exercices',
+                'category' => 'internal_instruction',
+                'description' => 'Consigne interne de correction des reponses aux exercices.',
+                'help' => 'Attention : une modification incorrecte peut casser le JSON, les verdicts ou les garde-fous de correction.',
+                'rows' => 4,
+            ],
+            'ouinpo_ai_practical_correction_prompt' => [
+                'label' => 'Prompt de correction JSON - pratique / code',
+                'category' => 'internal_instruction',
+                'description' => 'Consigne interne de correction des sujets pratiques et du code.',
+                'help' => 'Attention : garder les contraintes de JSON, prudence, analyse statique et non-invention.',
+                'rows' => 4,
+            ],
+            'ouinpo_ai_suggestions_prompt' => [
+                'label' => 'Suggestions pedagogiques',
+                'category' => 'internal_instruction',
+                'description' => 'Consigne interne pour les suggestions pedagogiques.',
+                'help' => 'A modifier avec prudence : ce champ cadre les suggestions produites par l IA.',
+                'rows' => 3,
+            ],
+            'ouinpo_ai_out_of_program_guardrails' => [
+                'label' => 'Garde-fous hors programme',
+                'category' => 'internal_instruction',
+                'description' => 'Regles de prudence quand une demande depasse le niveau scolaire attendu.',
+                'help' => 'Garde-fou important : eviter de presenter des notions hors programme comme exigibles.',
+                'rows' => 4,
+            ],
+        ];
     }
 
     public static function persona(string $key, ?string $legacyOption = null, string $fallback = ''): string
@@ -800,63 +890,99 @@ final class AiSettings
         return [
             'ouinpo_ai_persona_general' => [
                 'label' => 'Persona generale',
+                'category' => 'persona',
                 'description' => 'Fallback commun quand aucun persona specialise ne s applique.',
+                'help' => 'Definit le role, le ton et la posture par defaut de l assistant IA.',
                 'default' => self::default_general_persona(),
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_chatbox' => [
                 'label' => 'Chatbox / SegFault',
+                'category' => 'persona',
                 'description' => 'Assistant conversationnel du site, RAG et aide generale aux eleves.',
+                'help' => 'Exemple : Tu es un assistant pedagogique bienveillant, clair et exigeant, qui aide l eleve a progresser sans donner directement la reponse.',
                 'default' => self::default_chatbox_persona(),
+                'rows' => 6,
             ],
             'ouinpo_ai_persona_public' => [
                 'label' => 'Chat public anonyme',
+                'category' => 'persona',
                 'description' => 'Assistant visible par les visiteurs anonymes, avec prudence RGPD renforcee.',
+                'help' => 'Definit seulement le ton du chat public. Les garde-fous publics restent des consignes internes.',
                 'default' => 'Tu aides un visiteur anonyme en NSI/SNT. Reste bref, prudent, sans memoire utilisateur ni donnee personnelle.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_student' => [
                 'label' => 'Eleve connecte',
+                'category' => 'persona',
                 'description' => 'Aide pedagogique individuelle, sans faire le travail a la place de l eleve.',
+                'help' => 'Persona general pour les interactions eleve quand un persona plus specialise ne s applique pas.',
                 'default' => 'Tu aides un eleve en NSI/SNT avec bienveillance. Guide par etapes sans faire le travail a sa place.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_teacher' => [
                 'label' => 'Enseignant',
+                'category' => 'persona',
                 'description' => 'Aide generale a la preparation pedagogique cote enseignant.',
+                'help' => 'Persona general pour les usages enseignant quand un persona plus specialise ne s applique pas.',
                 'default' => 'Tu aides un enseignant a preparer des pistes pedagogiques sobres, verifiables et adaptees au programme.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_exercise_correction' => [
                 'label' => 'Correction exercices',
+                'category' => 'persona',
                 'description' => 'Correction des reponses d eleves aux exercices courts.',
+                'help' => 'Ne pas mettre ici le schema JSON ni les regles de validation : elles restent dans les consignes internes.',
                 'default' => 'Tu es un correcteur pedagogique bienveillant pour des eleves de lycee en NSI/SNT.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_practical_correction' => [
                 'label' => 'Correction sujets pratiques / code',
+                'category' => 'persona',
                 'description' => 'Correction prudente de code et d appels de sujets pratiques NSI.',
+                'help' => 'Definit le ton du correcteur de code. Les regles de JSON, de robustesse et d analyse statique restent internes.',
                 'default' => 'Tu es CodeBogue, une IA specialisee dans la correction de code Python pour la specialite NSI.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_copy_correction' => [
                 'label' => 'Correction copies et rendus',
+                'category' => 'persona',
                 'description' => 'Correction assistee de copies scannees ou de rendus numeriques.',
+                'help' => 'Definit la posture de correction. Les regles anti-invention et de validation professeur restent internes.',
                 'default' => 'Tu aides un enseignant a corriger une copie ou un rendu numerique. Tu proposes seulement une correction : l enseignant valide.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_written_subject' => [
                 'label' => 'Annales / sujets ecrits',
+                'category' => 'persona',
                 'description' => 'Analyse et conseils sur les reponses aux sujets ecrits de bac NSI.',
+                'help' => 'Definit le ton des conseils sur annales. Les interdictions de note chiffree et de corrige complet restent internes.',
                 'default' => 'Tu es un assistant pedagogique NSI pour les sujets ecrits de bac. Tu restes prudent, bienveillant et non exhaustif.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_assessment_generation' => [
                 'label' => 'Generation pedagogique',
+                'category' => 'persona',
                 'description' => 'Generation d exercices, devoirs, structures d annales et imports pedagogiques.',
+                'help' => 'Definit la posture de generation. Les schemas JSON et contraintes de programme restent internes.',
                 'default' => 'Tu aides un enseignant NSI a produire des contenus pedagogiques structures, sobres et conformes au programme.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_projects_teacher' => [
                 'label' => 'Projects enseignant',
+                'category' => 'persona',
                 'description' => 'Suggestions encadrees pour le suivi de projets BTS SIO cote enseignant.',
+                'help' => 'Definit le ton de l assistant Projects pour les enseignants.',
                 'default' => 'Tu es Assistant pataprojectif, aide encadree pour projets BTS SIO cote enseignant.',
+                'rows' => 4,
             ],
             'ouinpo_ai_persona_projects_student' => [
                 'label' => 'Projects eleve / portfolio',
+                'category' => 'persona',
                 'description' => 'Aide a la reflexion personnelle et au portfolio projet cote eleve.',
+                'help' => 'Definit le ton d accompagnement portfolio. Les interdictions d inventer des preuves ou traces restent internes.',
                 'default' => 'Tu es un assistant BTS SIO pour aider un eleve a preparer son portfolio personnel.',
+                'rows' => 4,
             ],
         ];
     }

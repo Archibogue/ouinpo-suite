@@ -17,6 +17,37 @@ add_action('admin_enqueue_scripts', function (string $hook = ''): void {
   \Ouinpo\Suite\Core\Assets::enqueueScript('ouinpo-segfault-admin-js', 'assets/js/admin/segfault-admin.js');
 });
 
+function ouinpo_sf_available_school_levels(): array {
+  global $wpdb;
+
+  $fallback = [
+    'seconde' => 'Seconde',
+    'premiere' => 'Premiere',
+    'terminale' => 'Terminale',
+  ];
+
+  $table = $wpdb->prefix . 'ouin_exo_school_levels';
+  $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+  if ($exists !== $table) {
+    return $fallback;
+  }
+
+  $order_by = ouinpo_sf_table_column_exists($table, 'sort_order') ? 'sort_order ASC, id ASC' : 'id ASC';
+  $rows = $wpdb->get_results("SELECT slug, label FROM {$table} ORDER BY {$order_by}");
+  $levels = [];
+
+  foreach ((array) $rows as $row) {
+    $slug = sanitize_key((string) ($row->slug ?? ''));
+    $label = sanitize_text_field((string) ($row->label ?? ''));
+
+    if ($slug !== '' && $label !== '') {
+      $levels[$slug] = $label;
+    }
+  }
+
+  return $levels ?: $fallback;
+}
+
 
 
 add_action('admin_menu', function () {
@@ -4111,7 +4142,14 @@ try {
           </tr>
 
           <tr>
-            <th>Fournisseurs</th>
+            <th colspan="2">
+              <h2>Reglages techniques IA</h2>
+              <p class="description">Modele, quotas, temperature, limites, fournisseur IA et options d execution. Ces reglages changent le fonctionnement technique, pas le ton de l assistant.</p>
+            </th>
+          </tr>
+
+          <tr>
+            <th><code>[TECHNIQUE]</code> Fournisseurs</th>
             <td>
               <?php foreach (['ouinpo_ai_default_provider' => 'Defaut', 'ouinpo_ai_public_provider' => 'Anonymes', 'ouinpo_ai_logged_provider' => 'Connectes'] as $option => $label): ?>
                 <?php $provider = (string)get_option($option, 'albert'); ?>
@@ -4126,7 +4164,7 @@ try {
           </tr>
 
           <tr>
-            <th>API, modeles et limites</th>
+            <th><code>[TECHNIQUE]</code> API, modeles et limites</th>
             <td>
               <label>URL de base <input name="ouinpo_ai_api_base_url" class="regular-text" value="<?php echo esc_attr(get_option('ouinpo_ai_api_base_url', 'https://albert.api.etalab.gouv.fr/v1')); ?>" /></label><br>
               <label>Cle API <input type="password" name="ouinpo_ai_api_key" class="regular-text" autocomplete="off" value="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_input_value('ouinpo_ai_api_key')); ?>" placeholder="<?php echo esc_attr(\Ouinpo\Suite\Core\AiSettings::secret_configured('ouinpo_ai_api_key') ? 'Cle configuree' : ''); ?>" /></label><br>
@@ -4154,12 +4192,12 @@ try {
 
           <tr>
             <th colspan="2">
-              <h2>Quotas IA / Albert</h2>
+              <h2><code>[TECHNIQUE]</code> Quotas IA / Albert</h2>
             </th>
           </tr>
 
           <tr>
-            <th>Requetes IA</th>
+            <th><code>[TECHNIQUE]</code> Requetes IA</th>
             <td>
               <?php foreach ([
                 'ouinpo_ai_public_ip_per_minute' => 'Public anonyme par IP / minute',
@@ -4186,7 +4224,7 @@ try {
           </tr>
 
           <tr>
-            <th>Max tokens par contexte</th>
+            <th><code>[TECHNIQUE]</code> Max tokens par contexte</th>
             <td>
               <?php foreach ([
                 'ouinpo_ai_public_chat_max_tokens' => 'Chat public',
@@ -4205,32 +4243,101 @@ try {
 
           <tr>
             <th colspan="2">
-              <h2>Prompts, personas et messages</h2>
+              <h2>Personas, messages et consignes IA</h2>
+              <div class="notice notice-info inline">
+                <p><strong>Les reglages IA sont separes en trois familles.</strong></p>
+                <p><strong>Persona</strong> : definit le role, le ton et la posture de l IA. <strong>Message utilisateur</strong> : texte affiche dans l interface. <strong>Consigne interne</strong> : regles techniques ou pedagogiques utilisees par l IA pour produire une reponse fiable.</p>
+                <p>En general, modifiez les personas pour changer le style de l assistant. Modifiez les consignes internes seulement si vous savez exactement ce que vous faites.</p>
+              </div>
             </th>
           </tr>
 
           <tr>
-            <th>Messages et prompts</th>
+            <th>Personas IA</th>
             <td>
-              <label>Message IA desactivee<br><input name="ouinpo_ai_disabled_message" class="large-text" value="<?php echo esc_attr(get_option('ouinpo_ai_disabled_message', 'L assistant IA est desactive pour le moment.')); ?>" /></label><br>
-              <label>Information RGPD / usage pedagogique<br><textarea name="ouinpo_ai_privacy_notice" rows="3" class="large-text"><?php echo esc_textarea(get_option('ouinpo_ai_privacy_notice', \Ouinpo\Suite\Core\AiSettings::defaults()['ouinpo_ai_privacy_notice'])); ?></textarea></label>
+              <p class="description">Un persona definit qui parle, avec quel role, quel ton et quelle posture pedagogique. Il ne doit pas contenir de regles JSON strictes, de secrets, ni de consignes techniques.</p>
               <?php foreach (\Ouinpo\Suite\Core\AiSettings::persona_options() as $option => $persona): ?>
-                <label><?php echo esc_html((string) ($persona['label'] ?? $option)); ?><br><textarea name="<?php echo esc_attr($option); ?>" rows="4" class="large-text"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea></label>
-                <?php if (!empty($persona['description'])): ?>
-                  <p class="description"><?php echo esc_html((string) $persona['description']); ?></p>
-                <?php endif; ?>
+                <?php $rows = max(2, min(10, (int) ($persona['rows'] ?? 4))); ?>
+                <?php $field_id = 'ouinpo-sf-' . sanitize_html_class($option); ?>
+                <fieldset>
+                  <label for="<?php echo esc_attr($field_id); ?>" class="ouinpo-sf-ai-field-label"><code>[PERSONA]</code> <?php echo esc_html((string) ($persona['label'] ?? $option)); ?></label>
+                  <textarea id="<?php echo esc_attr($field_id); ?>" name="<?php echo esc_attr($option); ?>" rows="<?php echo esc_attr($rows); ?>" cols="120" class="large-text ouinpo-sf-ai-textarea"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea>
+                  <?php if (!empty($persona['description'])): ?>
+                    <p class="description"><?php echo esc_html((string) $persona['description']); ?></p>
+                  <?php endif; ?>
+                  <?php if (!empty($persona['help'])): ?>
+                    <p class="description"><?php echo esc_html((string) $persona['help']); ?></p>
+                  <?php endif; ?>
+                </fieldset>
               <?php endforeach; ?>
-              <?php foreach ([
-                'ouinpo_ai_rag_system_prompt' => 'Consigne systeme RAG',
-                'ouinpo_ai_exercise_correction_prompt' => 'Consigne corrections exercices',
-                'ouinpo_ai_practical_correction_prompt' => 'Consigne sujets pratiques',
-                'ouinpo_ai_suggestions_prompt' => 'Consigne suggestions pedagogiques',
-                'ouinpo_ai_out_of_program_guardrails' => 'Garde-fous hors programme par niveau',
-              ] as $option => $label): ?>
-                <label><?php echo esc_html($label); ?><br><textarea name="<?php echo esc_attr($option); ?>" rows="3" class="large-text"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea></label><br>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Messages affiches aux utilisateurs</th>
+            <td>
+              <p class="description">Ces textes sont visibles dans l interface : messages d accueil, textes d aide, messages d erreur ou d information. Ils ne modifient pas le comportement interne de l IA.</p>
+              <?php foreach (\Ouinpo\Suite\Core\AiSettings::user_message_options() as $option => $message): ?>
+                <?php $rows = (int) ($message['rows'] ?? 1); ?>
+                <?php $field_id = 'ouinpo-sf-' . sanitize_html_class($option); ?>
+                <fieldset>
+                  <label for="<?php echo esc_attr($field_id); ?>" class="ouinpo-sf-ai-field-label"><code>[MESSAGE UTILISATEUR]</code> <?php echo esc_html((string) ($message['label'] ?? $option)); ?></label>
+                  <?php if ($rows <= 1): ?>
+                    <input id="<?php echo esc_attr($field_id); ?>" name="<?php echo esc_attr($option); ?>" class="large-text ouinpo-sf-ai-input" value="<?php echo esc_attr(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?>" />
+                  <?php else: ?>
+                    <textarea id="<?php echo esc_attr($field_id); ?>" name="<?php echo esc_attr($option); ?>" rows="<?php echo esc_attr($rows); ?>" cols="120" class="large-text ouinpo-sf-ai-textarea"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea>
+                  <?php endif; ?>
+                  <?php if (!empty($message['description'])): ?>
+                    <p class="description"><?php echo esc_html((string) $message['description']); ?></p>
+                  <?php endif; ?>
+                  <?php if (!empty($message['help'])): ?>
+                    <p class="description"><?php echo esc_html((string) $message['help']); ?></p>
+                  <?php endif; ?>
+                </fieldset>
               <?php endforeach; ?>
-              <label>Niveau anonyme par defaut <input name="ouinpo_ai_anonymous_default_school_level" value="<?php echo esc_attr(get_option('ouinpo_ai_anonymous_default_school_level', 'premiere')); ?>" /></label><br>
-              <label><input type="checkbox" name="ouinpo_ai_show_rag_sources" value="1" <?php checked(1, (int)get_option('ouinpo_ai_show_rag_sources', 1)); ?> /> Afficher les references / sources dans les reponses RAG.</label>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Consignes internes et garde-fous</th>
+            <td>
+              <p class="description">Ces prompts servent a encadrer le comportement de l IA : format de reponse, regles anti-invention, contraintes RAG, interdiction de divulguer un corrige complet, validation JSON, etc. A modifier avec prudence.</p>
+              <?php foreach (\Ouinpo\Suite\Core\AiSettings::internal_instruction_options() as $option => $instruction): ?>
+                <?php $rows = max(3, min(10, (int) ($instruction['rows'] ?? 4))); ?>
+                <?php $field_id = 'ouinpo-sf-' . sanitize_html_class($option); ?>
+                <fieldset>
+                  <label for="<?php echo esc_attr($field_id); ?>" class="ouinpo-sf-ai-field-label"><code>[CONSIGNE INTERNE]</code> <?php echo esc_html((string) ($instruction['label'] ?? $option)); ?></label>
+                  <textarea id="<?php echo esc_attr($field_id); ?>" name="<?php echo esc_attr($option); ?>" rows="<?php echo esc_attr($rows); ?>" cols="120" class="large-text ouinpo-sf-ai-textarea"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea>
+                  <?php if (!empty($instruction['description'])): ?>
+                    <p class="description"><?php echo esc_html((string) $instruction['description']); ?></p>
+                  <?php endif; ?>
+                  <?php if (!empty($instruction['help'])): ?>
+                    <p class="description"><?php echo esc_html((string) $instruction['help']); ?></p>
+                  <?php endif; ?>
+                </fieldset>
+              <?php endforeach; ?>
+              <fieldset>
+                <legend><code>[CONSIGNE INTERNE]</code> Gate — validation d enigmes</legend>
+                <p class="description">Gate utilise un prompt dedie dans ses propres reglages, car la validation d enigmes necessite des regles anti-divulgation et un format de reponse specifique.</p>
+              </fieldset>
+              <fieldset>
+                <?php
+                  $anonymous_levels = ouinpo_sf_available_school_levels();
+                  $anonymous_level = sanitize_key((string) get_option('ouinpo_ai_anonymous_default_school_level', 'premiere'));
+                  if (!isset($anonymous_levels[$anonymous_level])) {
+                    $anonymous_level = (string) array_key_first($anonymous_levels);
+                  }
+                ?>
+                <label><code>[TECHNIQUE]</code> Niveau anonyme par defaut
+                  <select name="ouinpo_ai_anonymous_default_school_level">
+                    <?php foreach ($anonymous_levels as $level_slug => $level_label): ?>
+                      <option value="<?php echo esc_attr($level_slug); ?>" <?php selected($anonymous_level, $level_slug); ?>><?php echo esc_html($level_label); ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </label><br>
+                <label><input type="checkbox" name="ouinpo_ai_show_rag_sources" value="1" <?php checked(1, (int)get_option('ouinpo_ai_show_rag_sources', 1)); ?> /> <code>[TECHNIQUE]</code> Afficher les references / sources dans les reponses RAG.</label>
+                <p class="description">Ces options changent l execution et l affichage, pas le ton de l IA.</p>
+              </fieldset>
             </td>
           </tr>
 
@@ -4515,55 +4622,6 @@ try {
             </td>
 
           </tr>
-
-        <tr>
-  <th colspan="2">
-    <h2>Information RGPD / IA</h2>
-  </th>
-</tr>
-
-<tr>
-  <th>URL de la page d’information</th>
-  <td>
-    <input
-      type="text"
-      name="ouinpo_sf_ai_notice_url"
-      value="<?php echo esc_attr(get_option('ouinpo_sf_ai_notice_url', '')); ?>"
-      class="regular-text"
-    />
-    <p class="description">
-      Lien affiché sous les messages d’information IA. Peut être vide, une URL complète ou un chemin relatif du site.
-    </p>
-  </td>
-</tr>
-
-<tr>
-  <th>Message IA publique</th>
-  <td>
-    <textarea
-      name="ouinpo_sf_ai_notice_public"
-      rows="4"
-      class="large-text"
-    ><?php echo esc_textarea(get_option('ouinpo_sf_ai_notice_public', "Assistant IA public — N’écris pas de nom, prénom, note, adresse ou information personnelle. Les réponses peuvent contenir des erreurs.")); ?></textarea>
-    <p class="description">
-      Message affiché aux visiteurs non connectés avant ou près du chat public.
-    </p>
-  </td>
-</tr>
-
-<tr>
-  <th>Message IA élèves connectés</th>
-  <td>
-    <textarea
-      name="ouinpo_sf_ai_notice_logged"
-      rows="4"
-      class="large-text"
-    ><?php echo esc_textarea(get_option('ouinpo_sf_ai_notice_logged', "IA pédagogique — N’écris pas de données personnelles. Les réponses proposées par l’assistant doivent être vérifiées et ne remplacent pas le professeur.")); ?></textarea>
-    <p class="description">
-      Message affiché aux utilisateurs connectés.
-    </p>
-  </td>
-</tr>
 
         <tr>
           <th colspan="2">
