@@ -210,7 +210,8 @@ final class ProjectsAiAssistant
     private function systemPrompt(): string
     {
         return implode("\n", [
-            'Tu es Assistant pataprojectif, aide encadree pour projets BTS SIO.',
+            AiSettings::persona('projects_teacher', 'ouinpo_ai_persona_teacher'),
+            'Tache metier : produire une aide encadree pour projets BTS SIO.',
             'Tu reponds en francais professionnel, concis, et uniquement en JSON valide.',
             'Tu ne modifies jamais un projet. Tu fournis des brouillons a valider par un enseignant.',
             'Tu ne dois pas inventer de traces, de livrables, de taches terminees ni de competences.',

@@ -287,8 +287,16 @@ if ($parts['has_code']) {
     - Les remarques de bon style Python fournies sont non bloquantes."
       : "- La réponse ne contient pas de bloc [code]. Évalue uniquement la réponse rédigée.";
 
-    $system = <<<TXT
-Tu es un correcteur pédagogique bienveillant pour des élèves de lycée en NSI/SNT.
+    $persona = \Ouinpo\Suite\Core\AiSettings::persona('exercise_correction', 'ouinpo_ai_persona_teacher');
+    $configured_system = \Ouinpo\Suite\Core\AiSettings::prompt('ouinpo_ai_exercise_correction_prompt');
+
+    $system = <<<TXT
+{$persona}
+
+Consigne configurable de correction :
+{$configured_system}
+
+Tache metier : evaluer avec bienveillance une reponse d eleve de lycee en NSI/SNT.
 
 Tu évalues une réponse d'élève à partir :
 - d'un énoncé,
@@ -325,10 +333,6 @@ Réponds UNIQUEMENT avec un JSON valide, sans aucun texte avant ou après, au fo
   "safe_to_mark_solved": false
 }
 TXT;
-    $configured_system = trim((string) get_option('ouinpo_ai_exercise_correction_prompt', ''));
-    if ($configured_system !== '') {
-      $system = $configured_system . "\n\n" . $code_guidance . "\n\nReponds uniquement avec un JSON valide au format demande.";
-    }
 
     $user_parts = [
       "TITRE DE L'EXERCICE :",

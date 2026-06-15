@@ -4214,11 +4214,13 @@ try {
             <td>
               <label>Message IA desactivee<br><input name="ouinpo_ai_disabled_message" class="large-text" value="<?php echo esc_attr(get_option('ouinpo_ai_disabled_message', 'L assistant IA est desactive pour le moment.')); ?>" /></label><br>
               <label>Information RGPD / usage pedagogique<br><textarea name="ouinpo_ai_privacy_notice" rows="3" class="large-text"><?php echo esc_textarea(get_option('ouinpo_ai_privacy_notice', \Ouinpo\Suite\Core\AiSettings::defaults()['ouinpo_ai_privacy_notice'])); ?></textarea></label>
+              <?php foreach (\Ouinpo\Suite\Core\AiSettings::persona_options() as $option => $persona): ?>
+                <label><?php echo esc_html((string) ($persona['label'] ?? $option)); ?><br><textarea name="<?php echo esc_attr($option); ?>" rows="4" class="large-text"><?php echo esc_textarea(get_option($option, \Ouinpo\Suite\Core\AiSettings::defaults()[$option] ?? '')); ?></textarea></label>
+                <?php if (!empty($persona['description'])): ?>
+                  <p class="description"><?php echo esc_html((string) $persona['description']); ?></p>
+                <?php endif; ?>
+              <?php endforeach; ?>
               <?php foreach ([
-                'ouinpo_ai_persona_general' => 'Persona generale',
-                'ouinpo_ai_persona_public' => 'Persona publique',
-                'ouinpo_ai_persona_student' => 'Persona eleve',
-                'ouinpo_ai_persona_teacher' => 'Persona professeur',
                 'ouinpo_ai_rag_system_prompt' => 'Consigne systeme RAG',
                 'ouinpo_ai_exercise_correction_prompt' => 'Consigne corrections exercices',
                 'ouinpo_ai_practical_correction_prompt' => 'Consigne sujets pratiques',

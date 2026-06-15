@@ -261,8 +261,12 @@ $context = trim(
 
     $messages = [];
 
-$configured_rag_prompt = trim((string) get_option('ouinpo_ai_rag_system_prompt', ''));
-$configured_guardrails = trim((string) get_option('ouinpo_ai_out_of_program_guardrails', ''));
+$configured_rag_prompt = class_exists('\\Ouinpo\\Suite\\Core\\AiSettings')
+  ? \Ouinpo\Suite\Core\AiSettings::prompt('ouinpo_ai_rag_system_prompt')
+  : trim((string) get_option('ouinpo_ai_rag_system_prompt', ''));
+$configured_guardrails = class_exists('\\Ouinpo\\Suite\\Core\\AiSettings')
+  ? \Ouinpo\Suite\Core\AiSettings::prompt('ouinpo_ai_out_of_program_guardrails')
+  : trim((string) get_option('ouinpo_ai_out_of_program_guardrails', ''));
 
 $system_blocks = array_merge(array_filter([$persona, $configured_rag_prompt, $configured_guardrails]), $extra_system, [
 

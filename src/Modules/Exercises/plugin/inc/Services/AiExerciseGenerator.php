@@ -185,7 +185,9 @@ final class AiExerciseGenerator
             'program_guardrails' => ['in_program' => true, 'warnings' => []],
         ];
 
-        $system = "Tu aides un enseignant NSI à créer un exercice. Réponds uniquement avec un objet JSON valide. Aucun Markdown. Aucun bloc ```json. Aucune explication hors JSON. N'invente pas d'ID : réutilise seulement les IDs fournis. Ne demande ni n'utilise aucune donnée personnelle d'élève. Le contenu doit rester dans le programme du niveau choisi. Toutes les chaînes HTML et tout code doivent être des chaînes JSON valides avec guillemets correctement échappés.";
+        $system = "Tache metier : creer un exercice pour un enseignant NSI. Réponds uniquement avec un objet JSON valide. Aucun Markdown. Aucun bloc ```json. Aucune explication hors JSON. N'invente pas d'ID : réutilise seulement les IDs fournis. Ne demande ni n'utilise aucune donnée personnelle d'élève. Le contenu doit rester dans le programme du niveau choisi. Toutes les chaînes HTML et tout code doivent être des chaînes JSON valides avec guillemets correctement échappés.";
+
+        $system = AiSettings::persona('assessment_generation', 'ouinpo_ai_persona_teacher') . "\n\n" . $system;
 
         $user = "Action demandée : " . self::ACTION_INSTRUCTIONS[$context['action']] . "\n"
             . "Niveau : {$context['level']['label']} ({$context['level']['slug']})\n"

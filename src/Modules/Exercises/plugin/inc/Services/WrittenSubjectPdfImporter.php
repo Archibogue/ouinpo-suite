@@ -278,6 +278,8 @@ final class WrittenSubjectPdfImporter
 
         $system = "Tu transformes un sujet officiel de bac NSI ecrit en structure JSON pour une plateforme pedagogique. Reponds uniquement avec un objet JSON valide, sans Markdown. Respecte le texte du sujet : ne cree pas de nouvelles questions. Decoupe les exercices et sous-questions, conserve tout le contexte, les consignes, tableaux, donnees, schemas decrits et extraits de code en HTML. Les aides IA doivent guider sans donner la solution complete. Pour les competences, utilise uniquement les IDs fournis et jamais 0.";
 
+        $system = AiSettings::persona('assessment_generation', 'ouinpo_ai_persona_teacher') . "\n\n" . $system;
+
         $user = "Competences BO disponibles :\n" . implode("\n", $competency_lines) . "\n\n"
             . "Format JSON attendu :\n" . wp_json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
             . "Contraintes :\n"

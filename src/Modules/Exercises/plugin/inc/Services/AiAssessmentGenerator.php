@@ -166,7 +166,9 @@ final class AiAssessmentGenerator
             ],
         ];
 
-        $system = "Tu aides un enseignant NSI à composer un devoir. Réponds uniquement avec un objet JSON valide. Aucun Markdown. Aucun bloc ```json. Aucune explication hors JSON. N'utilise aucun nom d'élève. N'invente aucun ID d'exercice : pour kind=existing_exercise, choisis uniquement parmi les IDs candidats transmis. Pour kind=new_ai_exercise_request, fournis uniquement une demande légère de nouvel exercice, jamais l'énoncé complet, jamais les indices, jamais la solution.";
+        $system = "Tache metier : composer un devoir pour un enseignant NSI. Réponds uniquement avec un objet JSON valide. Aucun Markdown. Aucun bloc ```json. Aucune explication hors JSON. N'utilise aucun nom d'élève. N'invente aucun ID d'exercice : pour kind=existing_exercise, choisis uniquement parmi les IDs candidats transmis. Pour kind=new_ai_exercise_request, fournis uniquement une demande légère de nouvel exercice, jamais l'énoncé complet, jamais les indices, jamais la solution.";
+        $system = AiSettings::persona('assessment_generation', 'ouinpo_ai_persona_teacher') . "\n\n" . $system;
+
         $user = "Contexte non nominatif : groupe #{$context['group_id']}, niveau {$context['level']['label']}.\n"
             . "Durée cible : {$context['target_minutes']} min. Nombre d'exercices souhaité : {$context['items_count']}.\n"
             . "Difficulté globale : {$context['difficulty']['label']} ({$context['difficulty']['slug']}).\n"

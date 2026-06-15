@@ -25,7 +25,7 @@ final class AiSettings
 
     public static function defaults(): array
     {
-        return [
+        return array_merge([
             'ouinpo_ai_enabled' => 0,
             'ouinpo_ai_public_enabled' => 0,
             'ouinpo_ai_usage_chat_rag' => 1,
@@ -84,10 +84,7 @@ final class AiSettings
             'ouinpo_ai_public_rag_max_tokens' => 1200,
             'ouinpo_ai_disabled_message' => 'L\'assistant IA est desactive pour le moment.',
             'ouinpo_ai_privacy_notice' => 'IA pedagogique : n\'ecris pas de donnees personnelles. Les reponses peuvent contenir des erreurs et doivent etre verifiees.',
-            'ouinpo_ai_persona_general' => self::default_general_persona(),
-            'ouinpo_ai_persona_public' => 'Tu aides un visiteur anonyme en NSI/SNT. Reste bref, prudent, sans memoire utilisateur ni donnee personnelle.',
-            'ouinpo_ai_persona_student' => 'Tu aides un eleve en NSI/SNT avec bienveillance. Guide par etapes sans faire le travail a sa place.',
-            'ouinpo_ai_persona_teacher' => 'Tu aides un enseignant a preparer des pistes pedagogiques sobres, verifiables et adaptees au programme.',
+        ], self::persona_defaults(), [
             'ouinpo_ai_rag_system_prompt' => self::default_rag_prompt(),
             'ouinpo_ai_exercise_correction_prompt' => self::default_exercise_prompt(),
             'ouinpo_ai_practical_correction_prompt' => self::default_practical_prompt(),
@@ -128,7 +125,7 @@ final class AiSettings
             'ouinpo_sf_ai_notice_url' => '',
             'ouinpo_sf_ai_notice_public' => 'Assistant IA public : n\'ecris pas de nom, prenom, note, adresse ou information personnelle. Les reponses peuvent contenir des erreurs.',
             'ouinpo_sf_ai_notice_logged' => 'IA pedagogique : n\'ecris pas de donnees personnelles. Les reponses proposees par l\'assistant doivent etre verifiees et ne remplacent pas le professeur.',
-        ];
+        ]);
     }
 
     public static function register_settings(string $group = 'ouinpo_sf'): void
@@ -153,6 +150,54 @@ final class AiSettings
 
         $defaults = self::defaults();
         return get_option($option, $defaults[$option] ?? '');
+    }
+
+    public static function persona_options(): array
+    {
+        return self::persona_definitions();
+    }
+
+    public static function persona(string $key, ?string $legacyOption = null, string $fallback = ''): string
+    {
+        $option = self::resolve_persona_option($key);
+        $configured = trim((string) get_option($option, ''));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        if ($legacyOption !== null && $legacyOption !== $option) {
+            $legacy = trim((string) get_option($legacyOption, ''));
+            if ($legacy !== '') {
+                return $legacy;
+            }
+        }
+
+        $defaults = self::defaults();
+        $default = trim((string) ($defaults[$option] ?? ''));
+        if ($default !== '') {
+            return $default;
+        }
+
+        if ($legacyOption !== null && $legacyOption !== $option) {
+            $legacyDefault = trim((string) ($defaults[$legacyOption] ?? ''));
+            if ($legacyDefault !== '') {
+                return $legacyDefault;
+            }
+        }
+
+        return trim($fallback);
+    }
+
+    public static function prompt(string $option, string $fallback = ''): string
+    {
+        $configured = trim((string) get_option($option, ''));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        $defaults = self::defaults();
+        $default = trim((string) ($defaults[$option] ?? ''));
+        return $default !== '' ? $default : trim($fallback);
     }
 
     public static function secret(string $option): string
@@ -496,7 +541,7 @@ final class AiSettings
 
     private static function schema(): array
     {
-        return [
+        return array_merge([
             'ouinpo_ai_enabled' => 'bool',
             'ouinpo_ai_public_enabled' => 'bool',
             'ouinpo_ai_usage_chat_rag' => 'bool',
@@ -555,10 +600,7 @@ final class AiSettings
             'ouinpo_ai_public_rag_max_tokens' => 'max_tokens',
             'ouinpo_ai_disabled_message' => 'text',
             'ouinpo_ai_privacy_notice' => 'long_text',
-            'ouinpo_ai_persona_general' => 'long_text',
-            'ouinpo_ai_persona_public' => 'long_text',
-            'ouinpo_ai_persona_student' => 'long_text',
-            'ouinpo_ai_persona_teacher' => 'long_text',
+        ], self::persona_schema(), [
             'ouinpo_ai_rag_system_prompt' => 'long_text',
             'ouinpo_ai_exercise_correction_prompt' => 'long_text',
             'ouinpo_ai_practical_correction_prompt' => 'long_text',
@@ -599,7 +641,7 @@ final class AiSettings
             'ouinpo_sf_ai_notice_url' => 'url_or_path',
             'ouinpo_sf_ai_notice_public' => 'long_text',
             'ouinpo_sf_ai_notice_logged' => 'long_text',
-        ];
+        ]);
     }
 
     public static function sanitize_bool($value): int
@@ -725,9 +767,108 @@ final class AiSettings
         return trim($value);
     }
 
+    private static function resolve_persona_option(string $key): string
+    {
+        $key = trim($key);
+        if (str_starts_with($key, 'ouinpo_ai_persona_')) {
+            return $key;
+        }
+
+        return 'ouinpo_ai_persona_' . sanitize_key($key);
+    }
+
+    private static function persona_schema(): array
+    {
+        $schema = [];
+        foreach (array_keys(self::persona_definitions()) as $option) {
+            $schema[$option] = 'long_text';
+        }
+        return $schema;
+    }
+
+    private static function persona_defaults(): array
+    {
+        $defaults = [];
+        foreach (self::persona_definitions() as $option => $definition) {
+            $defaults[$option] = (string) ($definition['default'] ?? '');
+        }
+        return $defaults;
+    }
+
+    private static function persona_definitions(): array
+    {
+        return [
+            'ouinpo_ai_persona_general' => [
+                'label' => 'Persona generale',
+                'description' => 'Fallback commun quand aucun persona specialise ne s applique.',
+                'default' => self::default_general_persona(),
+            ],
+            'ouinpo_ai_persona_chatbox' => [
+                'label' => 'Chatbox / SegFault',
+                'description' => 'Assistant conversationnel du site, RAG et aide generale aux eleves.',
+                'default' => self::default_chatbox_persona(),
+            ],
+            'ouinpo_ai_persona_public' => [
+                'label' => 'Chat public anonyme',
+                'description' => 'Assistant visible par les visiteurs anonymes, avec prudence RGPD renforcee.',
+                'default' => 'Tu aides un visiteur anonyme en NSI/SNT. Reste bref, prudent, sans memoire utilisateur ni donnee personnelle.',
+            ],
+            'ouinpo_ai_persona_student' => [
+                'label' => 'Eleve connecte',
+                'description' => 'Aide pedagogique individuelle, sans faire le travail a la place de l eleve.',
+                'default' => 'Tu aides un eleve en NSI/SNT avec bienveillance. Guide par etapes sans faire le travail a sa place.',
+            ],
+            'ouinpo_ai_persona_teacher' => [
+                'label' => 'Enseignant',
+                'description' => 'Aide generale a la preparation pedagogique cote enseignant.',
+                'default' => 'Tu aides un enseignant a preparer des pistes pedagogiques sobres, verifiables et adaptees au programme.',
+            ],
+            'ouinpo_ai_persona_exercise_correction' => [
+                'label' => 'Correction exercices',
+                'description' => 'Correction des reponses d eleves aux exercices courts.',
+                'default' => 'Tu es un correcteur pedagogique bienveillant pour des eleves de lycee en NSI/SNT.',
+            ],
+            'ouinpo_ai_persona_practical_correction' => [
+                'label' => 'Correction sujets pratiques / code',
+                'description' => 'Correction prudente de code et d appels de sujets pratiques NSI.',
+                'default' => 'Tu es CodeBogue, une IA specialisee dans la correction de code Python pour la specialite NSI.',
+            ],
+            'ouinpo_ai_persona_copy_correction' => [
+                'label' => 'Correction copies et rendus',
+                'description' => 'Correction assistee de copies scannees ou de rendus numeriques.',
+                'default' => 'Tu aides un enseignant a corriger une copie ou un rendu numerique. Tu proposes seulement une correction : l enseignant valide.',
+            ],
+            'ouinpo_ai_persona_written_subject' => [
+                'label' => 'Annales / sujets ecrits',
+                'description' => 'Analyse et conseils sur les reponses aux sujets ecrits de bac NSI.',
+                'default' => 'Tu es un assistant pedagogique NSI pour les sujets ecrits de bac. Tu restes prudent, bienveillant et non exhaustif.',
+            ],
+            'ouinpo_ai_persona_assessment_generation' => [
+                'label' => 'Generation pedagogique',
+                'description' => 'Generation d exercices, devoirs, structures d annales et imports pedagogiques.',
+                'default' => 'Tu aides un enseignant NSI a produire des contenus pedagogiques structures, sobres et conformes au programme.',
+            ],
+            'ouinpo_ai_persona_projects_teacher' => [
+                'label' => 'Projects enseignant',
+                'description' => 'Suggestions encadrees pour le suivi de projets BTS SIO cote enseignant.',
+                'default' => 'Tu es Assistant pataprojectif, aide encadree pour projets BTS SIO cote enseignant.',
+            ],
+            'ouinpo_ai_persona_projects_student' => [
+                'label' => 'Projects eleve / portfolio',
+                'description' => 'Aide a la reflexion personnelle et au portfolio projet cote eleve.',
+                'default' => 'Tu es un assistant BTS SIO pour aider un eleve a preparer son portfolio personnel.',
+            ],
+        ];
+    }
+
     private static function default_general_persona(): string
     {
         return 'Tu es un assistant pedagogique pour la NSI et la SNT. Tu expliques sobrement, tu guides par etapes, tu respectes le programme et tu refuses les demandes hors cadre sans inventer de ressource.';
+    }
+
+    private static function default_chatbox_persona(): string
+    {
+        return 'Tu es SegFault, assistant pedagogique NSI/SNT du site OuInPo. Tu es bienveillant, legerement taquin, clair et concis. Tu guides par indices progressifs, tu aides l eleve a comprendre sans faire le travail a sa place, tu priorises les sources et contextes fournis, tu n inventes pas de ressource et tu refuses les hors-sujets avec tact.';
     }
 
     private static function default_rag_prompt(): string

@@ -192,8 +192,11 @@ final class AiFileCorrectionService
         $warnings = json_decode((string) ($copy['extraction_warnings'] ?? '[]'), true);
         $manifest = json_decode((string) ($copy['file_manifest'] ?? '[]'), true);
 
+        $system = AiSettings::persona('copy_correction', 'ouinpo_ai_persona_teacher')
+            . "\n\nTache metier : proposer une correction de rendu numerique a un enseignant, qui valide ensuite. RÃ©ponds uniquement avec un JSON strict. Analyse statique uniquement : ne prÃ©tends jamais avoir exÃ©cutÃ© le code, nâ€™invente pas de tests ni de fichiers absents.";
+
         return [
-            ['role' => 'system', 'content' => "Tu aides un enseignant Ã  corriger un rendu numÃ©rique. Tu proposes seulement une correction : lâ€™enseignant valide. RÃ©ponds uniquement avec un JSON strict. Analyse statique uniquement : ne prÃ©tends jamais avoir exÃ©cutÃ© le code, nâ€™invente pas de tests ni de fichiers absents."],
+            ['role' => 'system', 'content' => $system],
             ['role' => 'user', 'content' =>
                 "Contexte : " . (string) ($context['title'] ?? '') . "\n"
                 . "BarÃ¨me, Ã©noncÃ©s, solutions et compÃ©tences :\n" . wp_json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"

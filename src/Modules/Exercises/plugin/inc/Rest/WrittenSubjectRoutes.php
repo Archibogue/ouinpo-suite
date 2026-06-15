@@ -1194,7 +1194,7 @@ final class WrittenSubjectRoutes
 
         $messages = [[
             'role' => 'system',
-            'content' => "Tu es un assistant pedagogique NSI. Tu rediges un rapport de conseils pour un eleve apres un sujet ecrit de bac NSI, meme si l'eleve n'a repondu qu'a une seule question. Base-toi uniquement sur les questions repondues, les competences BO, le contexte de cours fourni et les aides qu'il indique avoir utilisees. Ne fais pas semblant d'avoir analyse les questions sans reponse. Ne donne pas de note chiffree et ne corrige pas exhaustivement le sujet. Reste bienveillant, precis et actionnable. Reponds uniquement en JSON valide.",
+            'content' => \Ouinpo\Suite\Core\AiSettings::persona('written_subject', 'ouinpo_ai_persona_student') . "\n\nTache metier : rediger un rapport de conseils pour un eleve apres un sujet ecrit de bac NSI, meme si l'eleve n'a repondu qu'a une seule question. Base-toi uniquement sur les questions repondues, les competences BO, le contexte de cours fourni et les aides qu'il indique avoir utilisees. Ne fais pas semblant d'avoir analyse les questions sans reponse. Ne donne pas de note chiffree et ne corrige pas exhaustivement le sujet. Reste bienveillant, precis et actionnable. Reponds uniquement en JSON valide.",
         ], [
             'role' => 'user',
             'content' => wp_json_encode([
@@ -1293,7 +1293,7 @@ final class WrittenSubjectRoutes
 
         $messages = [[
             'role' => 'system',
-            'content' => "Tu es un evaluateur pedagogique NSI. Tu analyses une reponse d'eleve a une question de bac ecrit. Tu utilises le contexte de cours fourni pour cadrer le programme et les attendus, sans inventer de source absente. Tu ne donnes pas la correction complete et tu n'attribues pas de note chiffree. Tu determines un verdict prudent, un taux de confiance et des pistes d'amelioration. Reponds uniquement en JSON valide.",
+            'content' => \Ouinpo\Suite\Core\AiSettings::persona('written_subject', 'ouinpo_ai_persona_student') . "\n\nTache metier : analyser une reponse d'eleve a une question de bac ecrit NSI. Tu utilises le contexte de cours fourni pour cadrer le programme et les attendus, sans inventer de source absente. Tu ne donnes pas la correction complete et tu n'attribues pas de note chiffree. Tu determines un verdict prudent, un taux de confiance et des pistes d'amelioration. Reponds uniquement en JSON valide.",
         ], [
             'role' => 'user',
             'content' => wp_json_encode([

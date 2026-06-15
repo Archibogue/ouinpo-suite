@@ -110,8 +110,11 @@ final class AiCorrectionService
             'teacher_review_required' => true,
         ];
 
+        $system = AiSettings::persona('copy_correction', 'ouinpo_ai_persona_teacher')
+            . "\n\nTache metier : proposer une correction de copie a un enseignant, qui valide ensuite. Réponds uniquement avec un JSON strict. N’invente pas ce qui est illisible : baisse la confiance et signale les passages à vérifier.";
+
         return [
-            ['role' => 'system', 'content' => "Tu aides un enseignant à corriger une copie. Tu proposes seulement une correction : l’enseignant valide. Réponds uniquement avec un JSON strict. N’invente pas ce qui est illisible : baisse la confiance et signale les passages à vérifier."],
+            ['role' => 'system', 'content' => $system],
             ['role' => 'user', 'content' =>
                 "Devoir : " . (string) ($context['assessment']['title'] ?? '') . "\n"
                 . "Barème et exercices :\n" . wp_json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"

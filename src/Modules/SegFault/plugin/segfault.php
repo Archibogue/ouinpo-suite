@@ -1830,12 +1830,12 @@ function ouinpo_sf_public_sanitize_message($value): string {
 
 function ouinpo_sf_public_system_prompt(): string {
 
-  $configured = trim((string) get_option('ouinpo_ai_persona_public', ''));
-  if ($configured !== '') {
-    return $configured;
+  $persona = "Tu es SegFault, l’assistant public du site OuInPo.";
+  if (class_exists('\\Ouinpo\\Suite\\Core\\AiSettings')) {
+    $persona = \Ouinpo\Suite\Core\AiSettings::persona('public', 'ouinpo_ai_persona_general');
   }
 
-return "Tu es SegFault, l’assistant public du site OuInPo.\n"
+return $persona . "\n"
 
     . "Tu aides à comprendre les notions de SNT et de NSI pour des élèves de lycée.\n"
 
@@ -2870,17 +2870,15 @@ add_action('rest_api_init', function () {
 
 
 
-        // Même persona que le SegFault habituel + garde-fous publics.
+        // Persona public dedie + garde-fous publics.
 
-        $system_persona = \OuInPo\SegFault\Persona::system();
-
-        $public_rules   = ouinpo_sf_public_system_prompt();
+        $system_persona = ouinpo_sf_public_system_prompt();
 
 
 
         $messages = [
 
-          ['role' => 'system', 'content' => $system_persona . "\n\n" . $public_rules],
+          ['role' => 'system', 'content' => $system_persona],
 
           [
 

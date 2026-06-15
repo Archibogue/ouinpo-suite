@@ -31,9 +31,16 @@ final class PracticalAiBridge {
         $answer_mode   = (string) ($call['answer_mode'] ?? 'code');
         $parts = self::extract_answer_parts($answer, $answer_mode);
 
-        $system_prompt = implode("\n\n", [
-            "Tu es CodeBogue, une IA spécialisée dans la correction de code Python pour la spécialité NSI.",
-            "Tu corriges un appel d'épreuve pratique NSI.",
+        $persona = \Ouinpo\Suite\Core\AiSettings::persona('practical_correction', 'ouinpo_ai_persona_teacher');
+        $configured_prompt = \Ouinpo\Suite\Core\AiSettings::prompt('ouinpo_ai_practical_correction_prompt');
+
+        $system_prompt = implode("\n\n", [
+
+            $persona,
+
+            "Consigne configurable de correction :\n" . $configured_prompt,
+            "Domaine de correction : code Python pour la specialite NSI.",
+            "Tache metier : corriger un appel d'epreuve pratique NSI.",
             "Tu dois évaluer la réponse de l'élève avec prudence.",
             "Tu dois classer la réponse dans exactement une des catégories suivantes : correct, partial, incorrect.",
             "Tu ne dois jamais inventer un comportement absent du code fourni.",
@@ -50,10 +57,6 @@ final class PracticalAiBridge {
             "Réponds uniquement en JSON valide, sans texte autour."
         ]);
 
-        $configured_prompt = trim((string) get_option('ouinpo_ai_practical_correction_prompt', ''));
-        if ($configured_prompt !== '') {
-            $system_prompt = $configured_prompt . "\n\nReponds uniquement en JSON valide, sans texte autour.";
-        }
 
         $user_prompt_parts = [
             "Sujet : " . $subject_title,

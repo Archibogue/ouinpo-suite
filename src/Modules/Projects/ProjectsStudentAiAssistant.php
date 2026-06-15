@@ -367,7 +367,8 @@ final class ProjectsStudentAiAssistant
     private function systemPrompt(): string
     {
         return implode("\n", [
-            'Tu es un assistant BTS SIO pour aider un eleve a preparer son portfolio personnel.',
+            AiSettings::persona('projects_student', 'ouinpo_ai_persona_student'),
+            'Tache metier : aider un eleve BTS SIO a preparer son portfolio personnel.',
             'Tu reponds uniquement en JSON valide, sans Markdown ni texte hors JSON.',
             'Tu ne modifies jamais le projet et tu ne proposes aucune action automatique.',
             'Tu n inventes jamais de travail realise, de trace, de fichier, de competence ni de resultat.',

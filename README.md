@@ -671,6 +671,27 @@ Les différences restantes sont non bloquantes :
 
 OuInPo Suite contient une page de reglages IA dans l'administration SegFault. Les administrateurs peuvent y activer ou desactiver l'IA globale et publique, choisir les usages autorises, regler les fournisseurs, URL, cles API, modeles, quotas, parametres de generation, personas, consignes systeme et workflows de correction IA. Les cles API sont stockees comme options WordPress et ne doivent pas etre exportees.
 
+### Personas IA configurables
+
+Les personas se reglent dans l'administration WordPress, page SegFault, section "Prompts, personas et messages". Un persona decrit l'identite, le role, le ton et la posture pedagogique de l'assistant. Les consignes metier strictes restent dans le code ou dans les champs de consigne dedies quand elles imposent un format JSON, des regles de correction, des garde-fous de securite ou des contraintes de validation. Le contexte reste separe : RAG, donnees d'exercice, projet, copie, annale ou reponse eleve.
+
+Personas disponibles :
+
+- `ouinpo_ai_persona_general` : fallback commun.
+- `ouinpo_ai_persona_chatbox` : chatbox SegFault, RAG et aide generale.
+- `ouinpo_ai_persona_public` : assistant public anonyme.
+- `ouinpo_ai_persona_student` : aide eleve connecte.
+- `ouinpo_ai_persona_teacher` : aide generale enseignant.
+- `ouinpo_ai_persona_exercise_correction` : correction des reponses aux exercices.
+- `ouinpo_ai_persona_practical_correction` : correction de sujets pratiques et code.
+- `ouinpo_ai_persona_copy_correction` : correction de copies scannees et rendus numeriques.
+- `ouinpo_ai_persona_written_subject` : conseils et evaluation prudente sur annales ecrites.
+- `ouinpo_ai_persona_assessment_generation` : generation d'exercices, devoirs et imports structures.
+- `ouinpo_ai_persona_projects_teacher` : assistant Projects cote enseignant.
+- `ouinpo_ai_persona_projects_student` : assistant Projects cote eleve et portfolio.
+
+Gate conserve son propre `system_prompt` configurable dans les reglages Gate, car la validation d'enigmes a un schema JSON et des regles anti-divulgation specifiques.
+
 Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
 
 - exercices visibles par les visiteurs anonymes ;
