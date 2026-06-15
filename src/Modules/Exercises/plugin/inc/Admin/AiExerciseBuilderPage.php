@@ -37,7 +37,7 @@ final class AiExerciseBuilderPage
             <h1>Créer un exercice avec l’IA</h1>
 
             <?php if (!$rest['aiEnabled']): ?>
-                <div class="notice notice-warning"><p><?php echo esc_html((string) $rest['disabledMessage']); ?></p></div>
+                <div class="notice notice-warning"><?php echo AiSettings::render_user_message_html((string) $rest['disabledMessage']); ?></div>
             <?php endif; ?>
 
             <div id="ouinpo-ai-exercise-builder" class="ouinpo-admin-ai-builder">

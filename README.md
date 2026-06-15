@@ -706,6 +706,8 @@ Messages utilisateur principaux :
 - `ouinpo_sf_ai_notice_public` : notice visible par les visiteurs anonymes.
 - `ouinpo_sf_ai_notice_logged` : notice visible par les utilisateurs connectes.
 
+Les messages utilisateur visibles peuvent utiliser un Markdown leger selon leur point d affichage : `**gras**`, `*italique*`, `` `code` ``, retours ligne et emoji. Le HTML libre reste retire a l enregistrement.
+
 Consignes internes principales :
 
 - `ouinpo_ai_rag_system_prompt` : regles RAG et sources.

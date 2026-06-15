@@ -942,6 +942,19 @@ final class AiSettings
         return sanitize_text_field((string) $value);
     }
 
+    public static function render_user_message_html(string $value): string
+    {
+        $html = esc_html($value);
+
+        $html = (string) preg_replace('/`([^`]+)`/u', '<code>$1</code>', $html);
+        $html = (string) preg_replace('/\*\*(.+?)\*\*/su', '<strong>$1</strong>', $html);
+        $html = (string) preg_replace('/__(.+?)__/su', '<strong>$1</strong>', $html);
+        $html = (string) preg_replace('/(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)/su', '<em>$1</em>', $html);
+        $html = (string) preg_replace('/(?<!_)_(?!\s)(.+?)(?<!\s)_(?!_)/su', '<em>$1</em>', $html);
+
+        return wp_kses_post(wpautop($html));
+    }
+
     public static function sanitize_long_text($value): string
     {
         $value = wp_unslash((string) $value);

@@ -1708,7 +1708,7 @@ if (!function_exists('ouinpo_sf_ai_notice_html')) {
     $html = '
       <div class="sf-ai-notice sf-ai-notice--compact" role="note" aria-label="Information sur l’usage de l’intelligence artificielle">
         <div class="sf-ai-notice__text">'
-          . wp_kses_post(wpautop($text)) .
+          . \Ouinpo\Suite\Core\AiSettings::render_user_message_html($text) .
         '</div>';
 
     if ($url !== '') {

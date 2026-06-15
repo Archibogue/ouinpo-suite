@@ -45,7 +45,7 @@ final class AiAssessmentBuilderPage
         <div class="ouinpo-builder-card" id="ouinpo-ai-assessment-builder">
             <h2>Composer avec l’IA</h2>
             <?php if (!$ai_enabled): ?>
-                <div class="notice notice-warning inline"><p><?php echo esc_html((string) $config['rest']['disabledMessage']); ?></p></div>
+                <div class="notice notice-warning inline"><?php echo AiSettings::render_user_message_html((string) $config['rest']['disabledMessage']); ?></div>
             <?php endif; ?>
 
             <div class="ouinpo-builder-field">
