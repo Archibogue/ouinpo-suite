@@ -177,6 +177,19 @@
   resize:vertical;
 }
 
+.ouinpo-sf-context-table {
+  table-layout:fixed;
+}
+
+.ouinpo-sf-context-table th,
+.ouinpo-sf-context-table td {
+  vertical-align:top;
+}
+
+.ouinpo-sf-context-table code {
+  white-space:normal;
+}
+
 .ouinpo-sf-input-small {
   width:80px;
 }

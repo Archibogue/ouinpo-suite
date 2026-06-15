@@ -84,6 +84,7 @@ final class AiSettings
             'ouinpo_ai_public_rag_max_tokens' => 1200,
             'ouinpo_ai_disabled_message' => 'L\'assistant IA est desactive pour le moment.',
             'ouinpo_ai_privacy_notice' => 'IA pedagogique : n\'ecris pas de donnees personnelles. Les reponses peuvent contenir des erreurs et doivent etre verifiees.',
+            'ouinpo_ai_chatbox_welcome_message' => 'Miaou. Je suis *SegFault* - ton assistant NSI. Pose ta question sur Python, algorithmique, structures de donnees, reseaux, bases ou web. Hors-sujet ? Je t indiquerai un cours NSI a la place.',
         ], self::persona_defaults(), [
             'ouinpo_ai_rag_system_prompt' => self::default_rag_prompt(),
             'ouinpo_ai_exercise_correction_prompt' => self::default_exercise_prompt(),
@@ -182,6 +183,13 @@ final class AiSettings
                 'help' => 'Texte visible par les utilisateurs. Garder une formulation courte, claire et non technique.',
                 'rows' => 3,
             ],
+            'ouinpo_ai_chatbox_welcome_message' => [
+                'label' => 'Message d accueil de la chatbox',
+                'category' => 'user_message',
+                'description' => 'Premier message affiche dans la bulle SegFault quand la conversation est vide.',
+                'help' => 'Texte visible dans la chatbox. Le Markdown simple est accepte, par exemple *SegFault*.',
+                'rows' => 4,
+            ],
             'ouinpo_sf_ai_notice_url' => [
                 'label' => 'URL de la page d information IA',
                 'category' => 'user_message',
@@ -243,6 +251,89 @@ final class AiSettings
                 'description' => 'Regles de prudence quand une demande depasse le niveau scolaire attendu.',
                 'help' => 'Garde-fou important : eviter de presenter des notions hors programme comme exigibles.',
                 'rows' => 4,
+            ],
+        ];
+    }
+
+    public static function ai_context_map(): array
+    {
+        return [
+            [
+                'usage' => 'Chatbox connectee',
+                'persona' => 'chatbox',
+                'context' => 'Question de l eleve, page courante si disponible, extraits RAG autorises, historique court de conversation, contexte pedagogique eleve si disponible.',
+                'excluded' => 'Pas de corrige complet injecte automatiquement. Pas de documents non autorises.',
+                'guardrails' => 'RAG, limites programme, anti-invention, respect des droits d acces.',
+            ],
+            [
+                'usage' => 'Chatbox publique',
+                'persona' => 'public + regles publiques strictes',
+                'context' => 'Question du visiteur, page publique courante, extraits RAG publics si disponibles.',
+                'excluded' => 'Pas de profil eleve, pas de progression personnelle, pas de donnees privees, pas d historique durable.',
+                'guardrails' => 'Regles publiques, RGPD, anti-invention, limitation aux contenus publics.',
+            ],
+            [
+                'usage' => 'Correction d exercice',
+                'persona' => 'exercise_correction + consignes de correction',
+                'context' => 'Enonce, corriges de reference, indices, reponse eleve, blocs de code eventuels, resultat d analyse syntaxique si disponible.',
+                'excluded' => 'Pas de RAG general necessaire par defaut. L IA juge la reponse par rapport a l exercice.',
+                'guardrails' => 'JSON strict, verdict controle, feedback pedagogique, anti-corrige complet.',
+            ],
+            [
+                'usage' => 'Correction pratique / code',
+                'persona' => 'practical_correction + consignes pratiques',
+                'context' => 'Sujet pratique, appel concerne, consigne, grille IA eventuelle, code ou texte fourni par l eleve.',
+                'excluded' => 'L IA ne doit pas pretendre avoir execute le code si aucun moteur d execution reel n est utilise.',
+                'guardrails' => 'Analyse statique, JSON strict, criteres de validation, feedback exploitable.',
+            ],
+            [
+                'usage' => 'Correction copie / scan OCR',
+                'persona' => 'copy_correction',
+                'context' => 'Devoir, bareme, exercices, solutions de reference, competences liees, texte OCR ou texte saisi, reference anonymisee de la copie.',
+                'excluded' => 'L IA produit une proposition de correction. Validation enseignant recommandee.',
+                'guardrails' => 'Anti-invention, prudence OCR, anonymisation, bareme, justification.',
+            ],
+            [
+                'usage' => 'Correction fichier numerique',
+                'persona' => 'copy_correction ou consigne de correction fichier selon le contexte choisi',
+                'context' => 'Contexte choisi par l enseignant : devoir, exercice ou sujet pratique ; manifeste des fichiers ; contenu extrait ; avertissements d extraction.',
+                'excluded' => 'L IA ne doit pas pretendre avoir lance les fichiers. Le mode free reste limite par l etat reel de l implementation.',
+                'guardrails' => 'Analyse statique, limites d extraction, anti-invention, validation enseignant.',
+            ],
+            [
+                'usage' => 'Annales / sujets ecrits',
+                'persona' => 'written_subject',
+                'context' => 'Sujet, exercice, question, reponse eleve, reponses precedentes du meme exercice, aides utilisees, competences liees, extraits RAG de cours, contexte pedagogique eleve si disponible.',
+                'excluded' => 'L IA ne doit pas resoudre tout le sujet a la place de l eleve.',
+                'guardrails' => 'Anti-corrige complet, progressivite, aide sans substitution, coherence avec le programme.',
+            ],
+            [
+                'usage' => 'Generation d exercices / devoirs / imports',
+                'persona' => 'assessment_generation',
+                'context' => 'Niveau, competences, domaine, difficulte, duree, contraintes enseignant, exercices candidats, KPI agreges de classe si disponibles, texte extrait d un PDF en cas d import.',
+                'excluded' => 'Pas de donnees nominatives inutiles. Les KPI doivent rester agreges.',
+                'guardrails' => 'Coherence pedagogique, format attendu, anti-invention, validation enseignant.',
+            ],
+            [
+                'usage' => 'Projects enseignant',
+                'persona' => 'projects_teacher',
+                'context' => 'Projet complet, description, membres, taches, colonnes Kanban, livrables, traces, logs recents, competences disponibles, contexte libre enseignant.',
+                'excluded' => 'L IA propose, mais ne doit pas modifier automatiquement le projet sans validation.',
+                'guardrails' => 'Validation enseignant, pas d invention de traces, respect des roles.',
+            ],
+            [
+                'usage' => 'Projects eleve / portfolio',
+                'persona' => 'projects_student',
+                'context' => 'Projet filtre cote eleve, ses taches, ses traces, son journal, ses livrables, competences liees, declaration personnelle.',
+                'excluded' => 'L IA ne doit pas inventer du travail realise. Elle aide a formuler, pas a falsifier.',
+                'guardrails' => 'Pas d invention de preuves, aide a la reformulation, honnetete portfolio.',
+            ],
+            [
+                'usage' => 'Gate - validation d enigmes',
+                'persona' => 'Prompt Gate dedie configurable',
+                'context' => 'Enonce de l enigme, reponse attendue, variantes acceptees, criteres IA, niveau, theme, reponse eleve.',
+                'excluded' => 'Ne pas reveler la reponse attendue.',
+                'guardrails' => 'Anti-divulgation, validation stricte, format de reponse specifique.',
             ],
         ];
     }
@@ -690,6 +781,7 @@ final class AiSettings
             'ouinpo_ai_public_rag_max_tokens' => 'max_tokens',
             'ouinpo_ai_disabled_message' => 'text',
             'ouinpo_ai_privacy_notice' => 'long_text',
+            'ouinpo_ai_chatbox_welcome_message' => 'long_text',
         ], self::persona_schema(), [
             'ouinpo_ai_rag_system_prompt' => 'long_text',
             'ouinpo_ai_exercise_correction_prompt' => 'long_text',

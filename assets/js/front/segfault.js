@@ -102,11 +102,23 @@
   function greet(box, addBubble) {
     const messages = sel('.sf-messages', box);
     if (!messages || messages.dataset.greeted === '1' || messages.childElementCount > 0) return;
-    const intro =
+    let intro =
       "Miaou. Je suis *SegFault* — ton assistant NSI. " +
       "Pose ta question sur Python, algorithmique, structures de données, réseaux, bases ou web. " +
       "Hors-sujet ? Je t’indiquerai un cours NSI à la place. 🐾";
-    addBubble(intro, 'assistant');
+    if (
+      window.OUINPO_SF &&
+      typeof window.OUINPO_SF.chatbox_welcome_message === 'string'
+    ) {
+      intro = window.OUINPO_SF.chatbox_welcome_message.trim();
+    }
+
+    if (!intro) {
+      messages.dataset.greeted = '1';
+      return;
+    }
+
+    addBubble(intro, 'assistant');
     messages.dataset.greeted = '1';
   }
 

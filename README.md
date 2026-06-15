@@ -702,6 +702,7 @@ Messages utilisateur principaux :
 
 - `ouinpo_ai_disabled_message` : message quand l IA est desactivee.
 - `ouinpo_ai_privacy_notice` : notice pedagogique / RGPD generale.
+- `ouinpo_ai_chatbox_welcome_message` : message d accueil affiche dans la chatbox quand la conversation est vide.
 - `ouinpo_sf_ai_notice_public` : notice visible par les visiteurs anonymes.
 - `ouinpo_sf_ai_notice_logged` : notice visible par les utilisateurs connectes.
 
@@ -714,6 +715,30 @@ Consignes internes principales :
 - `ouinpo_ai_out_of_program_guardrails` : garde-fous hors programme.
 
 Gate conserve son propre `system_prompt` configurable dans les reglages Gate, car la validation d'enigmes necessite des regles anti-divulgation et un format de reponse specifique.
+
+### Contexte IA
+
+Les reglages IA distinguent quatre notions :
+
+- Persona : definit qui parle et avec quel ton.
+- Message utilisateur : texte visible dans l interface.
+- Consigne interne : regle metier, format attendu ou garde-fou.
+- Contexte IA : donnees concretes injectees automatiquement selon le workflow.
+
+Le contexte IA n est pas un prompt global modifiable. Il est construit par le code selon le cas d usage : question, exercice, copie, sujet, projet, documents RAG, page courante, progression eleve ou criteres de validation. L onglet "Contexte" de l administration SegFault documente ces transmissions sans ajouter de nouveau reglage libre.
+
+| Usage IA | Contexte utilise |
+| --- | --- |
+| Chatbox connectee | RAG autorise, page courante, profil pedagogique si disponible, historique court. |
+| Chatbox publique | Question du visiteur, page publique courante, RAG public si disponible. |
+| Correction exercice | Exercice, corriges, indices, reponse eleve, blocs de code, analyse syntaxique si disponible. |
+| Correction pratique | Sujet, appel, consigne, code ou texte fourni, grille IA eventuelle. |
+| Correction copie/fichier | Devoir, exercice ou sujet, OCR ou fichiers extraits, bareme, solutions de reference, avertissements d extraction. |
+| Annales / sujets ecrits | Sujet, exercice, question, reponses, aides utilisees, competences, RAG de cours. |
+| Generation pedagogique | Niveau, competences, domaine, difficulte, contraintes, exercices candidats, KPI agreges si disponibles. |
+| Projects enseignant | Projet complet, taches, membres, livrables, traces, logs recents, competences disponibles. |
+| Projects eleve | Projet filtre, taches eleve, traces eleve, journal, livrables, competences liees. |
+| Gate | Enigme, reponse attendue, variantes, criteres IA, niveau, theme, reponse eleve. |
 
 Les routes REST publiques des exercices et sujets pratiques sont maintenant gouvernees par des options d'administration :
 

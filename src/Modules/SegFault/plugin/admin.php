@@ -4020,6 +4020,7 @@ try {
         <button type="button" class="button button-secondary is-active" data-ouinpo-sf-tab="overview">Vue d'ensemble</button>
         <button type="button" class="button button-secondary" data-ouinpo-sf-tab="providers">Fournisseurs</button>
         <button type="button" class="button button-secondary" data-ouinpo-sf-tab="prompts">Prompts</button>
+        <button type="button" class="button button-secondary" data-ouinpo-sf-tab="context">Contexte</button>
         <button type="button" class="button button-secondary" data-ouinpo-sf-tab="public">Acces publics</button>
         <button type="button" class="button button-secondary" data-ouinpo-sf-tab="privacy">Confidentialite</button>
         <button type="button" class="button button-secondary" data-ouinpo-sf-tab="rag">RAG / indexation</button>
@@ -4338,6 +4339,68 @@ try {
                 <label><input type="checkbox" name="ouinpo_ai_show_rag_sources" value="1" <?php checked(1, (int)get_option('ouinpo_ai_show_rag_sources', 1)); ?> /> <code>[TECHNIQUE]</code> Afficher les references / sources dans les reponses RAG.</label>
                 <p class="description">Ces options changent l execution et l affichage, pas le ton de l IA.</p>
               </fieldset>
+            </td>
+          </tr>
+
+          <tr>
+            <th colspan="2">
+              <h2>Contexte IA</h2>
+            </th>
+          </tr>
+
+          <tr>
+            <th>Qu est-ce que le contexte IA ?</th>
+            <td>
+              <div class="notice notice-info inline">
+                <p>Le contexte IA correspond aux donnees concretes envoyees a l IA pour repondre : exercice, copie, sujet, projet, documents RAG, page courante, progression eleve, etc.</p>
+                <p>Il est construit automatiquement selon le workflow. Pour changer le style de l IA, modifiez un persona dans l onglet Prompts. Pour changer les regles de comportement, modifiez les consignes internes avec prudence.</p>
+                <p><strong>Cet onglet est informatif :</strong> il decrit ce que le plugin transmet a l IA selon les cas d usage.</p>
+              </div>
+              <p>
+                <button type="button" class="button button-secondary" data-ouinpo-sf-tab-jump="prompts">Modifier les personas et consignes internes</button>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Dans quel cas quel contexte est transmis ?</th>
+            <td>
+              <table class="widefat striped ouinpo-sf-context-table">
+                <thead>
+                  <tr>
+                    <th>Usage IA</th>
+                    <th>Persona / prompt utilise</th>
+                    <th>Contexte transmis a l IA</th>
+                    <th>Donnees exclues / limites</th>
+                    <th>Garde-fous principaux</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach (\Ouinpo\Suite\Core\AiSettings::ai_context_map() as $context_row): ?>
+                    <tr>
+                      <td><strong><?php echo esc_html((string) ($context_row['usage'] ?? '')); ?></strong></td>
+                      <td><code><?php echo esc_html((string) ($context_row['persona'] ?? '')); ?></code></td>
+                      <td><?php echo esc_html((string) ($context_row['context'] ?? '')); ?></td>
+                      <td><?php echo esc_html((string) ($context_row['excluded'] ?? '')); ?></td>
+                      <td><?php echo esc_html((string) ($context_row['guardrails'] ?? '')); ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <th>A retenir</th>
+            <td>
+              <ul class="ul-disc">
+                <li>Le persona change le ton de l IA.</li>
+                <li>Les consignes internes changent les regles de comportement.</li>
+                <li>Le contexte est construit automatiquement par le workflow.</li>
+                <li>Le contexte public est volontairement limite.</li>
+                <li>Le contexte eleve est filtre selon les droits.</li>
+                <li>Gate utilise un prompt dedie.</li>
+              </ul>
             </td>
           </tr>
 

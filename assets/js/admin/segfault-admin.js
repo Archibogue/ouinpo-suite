@@ -25,6 +25,10 @@
             return 'overview';
         }
 
+        if (title.indexOf('contexte ia') !== -1) {
+            return 'context';
+        }
+
         if (
             title.indexOf('reglages techniques ia') !== -1 ||
             title.indexOf('quotas ia') !== -1 ||
@@ -98,6 +102,12 @@
         tabs.forEach(function(tab) {
             tab.addEventListener('click', function() {
                 showSection(tab.getAttribute('data-ouinpo-sf-tab') || 'overview');
+            });
+        });
+
+        document.querySelectorAll('[data-ouinpo-sf-tab-jump]').forEach(function(button) {
+            button.addEventListener('click', function() {
+                showSection(button.getAttribute('data-ouinpo-sf-tab-jump') || 'overview');
             });
         });
 

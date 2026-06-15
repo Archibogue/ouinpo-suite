@@ -1652,6 +1652,10 @@ add_action('wp_enqueue_scripts', function () {
 
     'public_ai'    => (class_exists('\\OuInPo\\SegFault\\Albert') && \OuInPo\SegFault\Albert::public_available()) ? 1 : 0,
 
+    'chatbox_welcome_message' => class_exists('\\Ouinpo\\Suite\\Core\\AiSettings')
+      ? (string) \Ouinpo\Suite\Core\AiSettings::get('ouinpo_ai_chatbox_welcome_message')
+      : (string) get_option('ouinpo_ai_chatbox_welcome_message', 'Miaou. Je suis *SegFault* - ton assistant NSI. Pose ta question sur Python, algorithmique, structures de donnees, reseaux, bases ou web. Hors-sujet ? Je t indiquerai un cours NSI a la place.'),
+
   ]);
 
 }, 20);
