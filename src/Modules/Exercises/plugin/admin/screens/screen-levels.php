@@ -17,8 +17,13 @@ $tbl_members      = $wpdb->prefix . 'ouin_exo_group_members';
 $tbl_exercises    = $wpdb->prefix . 'ouin_exo_exercises';
 $tbl_exo_levels   = $wpdb->prefix . 'ouin_exo_exercise_school_level';
 $tbl_comp_levels  = $wpdb->prefix . 'ouin_exo_competency_school_level';
+$tbl_cycles       = $wpdb->prefix . 'ouinpo_cycles';
 
 $has_sort_order = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$tbl_levels} LIKE %s", 'sort_order'));
+$has_cycle_id = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$tbl_levels} LIKE %s", 'cycle_id'));
+$has_cycle_rank = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$tbl_levels} LIKE %s", 'cycle_rank'));
+$has_is_cycle_terminal = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$tbl_levels} LIKE %s", 'is_cycle_terminal'));
+$has_default_next_level_id = (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$tbl_levels} LIKE %s", 'default_next_level_id'));
 $table_exists = static function (string $table) use ($wpdb): bool {
     return (bool) $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 };
@@ -153,6 +158,29 @@ if (!empty($_POST) && check_admin_referer('ouinpo_levels_form', 'ouinpo_levels_n
             $formats[] = '%d';
         }
 
+        if ($has_cycle_id) {
+            $cycle_id = isset($_POST['cycle_id']) ? absint($_POST['cycle_id']) : 0;
+            $data['cycle_id'] = $cycle_id > 0 ? $cycle_id : null;
+            $formats[] = '%d';
+        }
+
+        if ($has_cycle_rank) {
+            $cycle_rank = isset($_POST['cycle_rank']) ? absint($_POST['cycle_rank']) : 0;
+            $data['cycle_rank'] = $cycle_rank > 0 ? $cycle_rank : null;
+            $formats[] = '%d';
+        }
+
+        if ($has_is_cycle_terminal) {
+            $data['is_cycle_terminal'] = !empty($_POST['is_cycle_terminal']) ? 1 : 0;
+            $formats[] = '%d';
+        }
+
+        if ($has_default_next_level_id) {
+            $next_level_id = isset($_POST['default_next_level_id']) ? absint($_POST['default_next_level_id']) : 0;
+            $data['default_next_level_id'] = $next_level_id > 0 ? $next_level_id : null;
+            $formats[] = '%d';
+        }
+
             if ($post_id > 0) {
                 $updated = $wpdb->update($tbl_levels, $data, ['id' => $post_id], $formats, ['%d']);
                 if ($updated === false) {
@@ -241,6 +269,18 @@ $levels = $wpdb->get_results("
     ORDER BY {$sort_order_sql}
 ");
 
+$cycles = $table_exists($tbl_cycles) ? $wpdb->get_results("
+    SELECT id, label, slug
+    FROM {$tbl_cycles}
+    WHERE status <> 'archived'
+    ORDER BY label ASC, id ASC
+") : [];
+
+$cycles_by_id = [];
+foreach ((array) $cycles as $cycle) {
+    $cycles_by_id[(int) $cycle->id] = $cycle;
+}
+
 foreach ((array) $levels as $level) {
     $usage = $usage_for_level((int) $level->id);
     $level->groups_count = (int) $usage['groups'];
@@ -255,6 +295,10 @@ $current = (object) [
     'slug'  => '',
     'label' => '',
     'sort_order' => 0,
+    'cycle_id' => null,
+    'cycle_rank' => null,
+    'is_cycle_terminal' => 0,
+    'default_next_level_id' => null,
 ];
 $competencies = $wpdb->get_results("
     SELECT id, domain, competency, track, level
@@ -295,6 +339,10 @@ if (!empty($_POST) && ($action === 'edit' || $action === 'new')) {
         'slug'  => isset($_POST['slug']) ? sanitize_text_field(wp_unslash((string) $_POST['slug'])) : '',
         'label' => isset($_POST['label']) ? sanitize_text_field(wp_unslash((string) $_POST['label'])) : '',
         'sort_order' => isset($_POST['sort_order']) ? max(0, (int) $_POST['sort_order']) : 0,
+        'cycle_id' => isset($_POST['cycle_id']) ? absint($_POST['cycle_id']) : 0,
+        'cycle_rank' => isset($_POST['cycle_rank']) ? absint($_POST['cycle_rank']) : 0,
+        'is_cycle_terminal' => !empty($_POST['is_cycle_terminal']) ? 1 : 0,
+        'default_next_level_id' => isset($_POST['default_next_level_id']) ? absint($_POST['default_next_level_id']) : 0,
     ];
     $current_competency_ids = isset($_POST['competency_ids']) && is_array($_POST['competency_ids'])
         ? array_map('intval', wp_unslash($_POST['competency_ids']))
@@ -339,6 +387,10 @@ settings_errors('ouinpo_levels');
             <th>Libelle</th>
             <th>Slug</th>
             <th>Ordre</th>
+            <th>Cycle</th>
+            <th>Rang</th>
+            <th>Terminal</th>
+            <th>Niveau suivant</th>
             <th>Classes</th>
             <th>Eleves</th>
             <th>Exercices</th>
@@ -348,7 +400,7 @@ settings_errors('ouinpo_levels');
         </thead>
         <tbody>
           <?php if (empty($levels)): ?>
-            <tr><td colspan="9">Aucun niveau.</td></tr>
+            <tr><td colspan="13">Aucun niveau.</td></tr>
           <?php else: ?>
             <?php foreach ($levels as $level): ?>
               <?php
@@ -365,6 +417,31 @@ settings_errors('ouinpo_levels');
                 <td><strong><?php echo esc_html($level->label); ?></strong></td>
                 <td><code><?php echo esc_html($level->slug); ?></code></td>
                 <td><?php echo (int) $level->sort_order; ?></td>
+                <td>
+                  <?php
+                  $cycle = !empty($level->cycle_id) && isset($cycles_by_id[(int) $level->cycle_id]) ? $cycles_by_id[(int) $level->cycle_id] : null;
+                  echo $cycle ? esc_html((string) $cycle->label) : '<span class="description">Aucun</span>';
+                  ?>
+                  <?php if (!$cycle): ?>
+                    <p class="description">Ce niveau ne participe pas encore aux clotures par cycle.</p>
+                  <?php endif; ?>
+                </td>
+                <td><?php echo !empty($level->cycle_rank) ? (int) $level->cycle_rank : '-'; ?></td>
+                <td><?php echo !empty($level->is_cycle_terminal) ? 'Oui' : 'Non'; ?></td>
+                <td>
+                  <?php
+                  $nextLabel = '-';
+                  if (!empty($level->default_next_level_id)) {
+                      foreach ($levels as $candidate) {
+                          if ((int) $candidate->id === (int) $level->default_next_level_id) {
+                              $nextLabel = (string) $candidate->label;
+                              break;
+                          }
+                      }
+                  }
+                  echo esc_html($nextLabel);
+                  ?>
+                </td>
                 <td><?php echo (int) $level->groups_count; ?></td>
                 <td><?php echo (int) $level->members_count; ?></td>
                 <td><?php echo $exercise_count; ?></td>
@@ -414,6 +491,49 @@ settings_errors('ouinpo_levels');
               <p class="description">Utilise pour trier les niveaux et, si l'option cumulative est activee, definir la progression.</p>
             </td>
           </tr>
+          <?php if ($has_cycle_id): ?>
+          <tr>
+            <th scope="row"><label for="cycle_id">Cycle associe</label></th>
+            <td>
+              <select name="cycle_id" id="cycle_id">
+                <option value="">Aucun cycle</option>
+                <?php foreach ((array) $cycles as $cycle): ?>
+                  <option value="<?php echo (int) $cycle->id; ?>" <?php selected((int) ($current->cycle_id ?? 0), (int) $cycle->id); ?>>
+                    <?php echo esc_html((string) $cycle->label); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <p class="description">Optionnel pour conserver la compatibilite avec les installations existantes.</p>
+            </td>
+          </tr>
+          <?php endif; ?>
+          <?php if ($has_cycle_rank): ?>
+          <tr>
+            <th scope="row"><label for="cycle_rank">Rang dans le cycle</label></th>
+            <td><input name="cycle_rank" id="cycle_rank" type="number" class="small-text" min="0" step="1" value="<?php echo esc_attr((string) (int) ($current->cycle_rank ?? 0)); ?>"></td>
+          </tr>
+          <?php endif; ?>
+          <?php if ($has_is_cycle_terminal): ?>
+          <tr>
+            <th scope="row">Niveau terminal</th>
+            <td><label><input type="checkbox" name="is_cycle_terminal" value="1" <?php checked(!empty($current->is_cycle_terminal)); ?>> Niveau terminal du cycle</label></td>
+          </tr>
+          <?php endif; ?>
+          <?php if ($has_default_next_level_id): ?>
+          <tr>
+            <th scope="row"><label for="default_next_level_id">Niveau suivant par defaut</label></th>
+            <td>
+              <select name="default_next_level_id" id="default_next_level_id">
+                <option value="">Aucun / sortie de cycle</option>
+                <?php foreach ((array) $levels as $nextLevel): ?>
+                  <option value="<?php echo (int) $nextLevel->id; ?>" <?php selected((int) ($current->default_next_level_id ?? 0), (int) $nextLevel->id); ?>>
+                    <?php echo esc_html((string) $nextLevel->label); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+          </tr>
+          <?php endif; ?>
         </table>
 
         <h3>Competences associees</h3>
