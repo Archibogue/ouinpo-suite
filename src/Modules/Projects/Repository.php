@@ -8,7 +8,9 @@ defined('ABSPATH') || exit;
 
 final class Repository
 {
-    public const STATUS = ['draft', 'active', 'finished', 'archived'];
+    public const STATUS = ['draft', 'active', 'finished', 'completed', 'frozen', 'archived', 'portfolio_archive', 'pending_deletion', 'deleted'];
+    public const LIFECYCLE_STATUS = ['draft', 'active', 'completed', 'frozen', 'archived', 'portfolio_archive', 'pending_deletion', 'deleted'];
+    public const CLOSURE_POLICY = ['auto', 'carry_over', 'freeze_for_portfolio', 'archive_readonly', 'purge_if_no_evidence', 'never_purge_automatically'];
     public const MEMBER_ROLES = ['member', 'leader', 'observer'];
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
     public const TASK_STATUS = ['open', 'done', 'archived'];
@@ -136,25 +138,25 @@ final class Repository
 
         $slug = $this->uniqueProjectSlug($slug);
 
-        $inserted = $wpdb->insert(
-            $this->projectsTable(),
-            [
-                'title' => $title,
-                'slug' => $slug,
-                'description' => self::cleanLongText($data['description'] ?? ''),
-                'level' => self::cleanNullableText($data['level'] ?? '', 100),
-                'class_slug' => self::cleanNullableKey($data['class_slug'] ?? '', 100),
-                'status' => $status,
-                'student_ai_enabled' => !empty($data['student_ai_enabled']) ? 1 : 0,
-                'teacher_id' => $teacherId,
-                'start_date' => self::cleanDate($data['start_date'] ?? ''),
-                'end_date' => self::cleanDate($data['end_date'] ?? ''),
-                'created_by' => $userId,
-                'created_at' => $now,
-                'updated_at' => null,
-            ],
-            ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s', '%s']
-        );
+        $payload = [
+            'title' => $title,
+            'slug' => $slug,
+            'description' => self::cleanLongText($data['description'] ?? ''),
+            'level' => self::cleanNullableText($data['level'] ?? '', 100),
+            'class_slug' => self::cleanNullableKey($data['class_slug'] ?? '', 100),
+            'status' => $status,
+            'student_ai_enabled' => !empty($data['student_ai_enabled']) ? 1 : 0,
+            'teacher_id' => $teacherId,
+            'start_date' => self::cleanDate($data['start_date'] ?? ''),
+            'end_date' => self::cleanDate($data['end_date'] ?? ''),
+            'created_by' => $userId,
+            'created_at' => $now,
+            'updated_at' => null,
+        ];
+        $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s', '%s'];
+        $this->appendProjectClosureFields($payload, $formats, $data);
+
+        $inserted = $wpdb->insert($this->projectsTable(), $payload, $formats);
 
         if (!$inserted) {
             return 0;
@@ -217,6 +219,8 @@ final class Repository
             $updates['student_ai_enabled'] = !empty($data['student_ai_enabled']) ? 1 : 0;
             $formats[] = '%d';
         }
+
+        $this->appendProjectClosureFields($updates, $formats, $data);
 
         if (!$updates) {
             return true;
@@ -515,6 +519,98 @@ final class Repository
         return $alerts;
     }
 
+    public function isPortfolioRelevantProject(array $project): bool
+    {
+        return !empty($project['is_portfolio_relevant'])
+            || (string) ($project['closure_policy'] ?? '') === 'never_purge_automatically';
+    }
+
+    public function shouldNeverPurgeAutomatically(array $project): bool
+    {
+        return $this->isPortfolioRelevantProject($project)
+            || in_array((string) ($project['closure_policy'] ?? ''), ['never_purge_automatically', 'freeze_for_portfolio'], true);
+    }
+
+    public function markProjectCarriedOver(int $projectId, int $toYearId, ?int $toGroupId): bool
+    {
+        $updates = [
+            'current_year_id' => $toYearId,
+            'current_group_id' => $toGroupId,
+            'lifecycle_status' => 'active',
+            'updated_at' => current_time('mysql'),
+        ];
+
+        return $this->updateProjectClosureState($projectId, $updates);
+    }
+
+    public function archiveProjectReadonly(int $projectId, int $userId): bool
+    {
+        $updated = $this->updateProjectClosureState($projectId, [
+            'lifecycle_status' => 'archived',
+            'closure_policy' => 'archive_readonly',
+            'archived_at' => current_time('mysql'),
+            'archived_by' => $userId,
+            'updated_at' => current_time('mysql'),
+        ]);
+
+        if ($updated) {
+            $this->markMembersArchiveViewers($projectId);
+        }
+
+        return $updated;
+    }
+
+    public function freezeProjectForPortfolio(int $projectId, int $userId): bool
+    {
+        $updated = $this->updateProjectClosureState($projectId, [
+            'lifecycle_status' => 'portfolio_archive',
+            'closure_policy' => 'freeze_for_portfolio',
+            'is_portfolio_relevant' => 1,
+            'archived_at' => current_time('mysql'),
+            'archived_by' => $userId,
+            'updated_at' => current_time('mysql'),
+        ]);
+
+        if ($updated) {
+            $this->markMembersArchiveViewers($projectId);
+        }
+
+        return $updated;
+    }
+
+    public function markProjectsCarriedOverForGroup(int $fromYearId, int $toYearId, int $fromGroupId, int $toGroupId): int
+    {
+        global $wpdb;
+
+        if (!$this->columnExists($this->projectsTable(), 'current_group_id')) {
+            return 0;
+        }
+
+        $updates = [
+            'current_year_id' => $toYearId,
+            'current_group_id' => $toGroupId,
+            'updated_at' => current_time('mysql'),
+        ];
+        if ($this->columnExists($this->projectsTable(), 'lifecycle_status')) {
+            $updates['lifecycle_status'] = 'active';
+        }
+
+        $where = ['current_group_id' => $fromGroupId];
+        $whereFormats = ['%d'];
+        if ($fromYearId > 0 && $this->columnExists($this->projectsTable(), 'current_year_id')) {
+            $where['current_year_id'] = $fromYearId;
+            $whereFormats[] = '%d';
+        }
+
+        $formats = array_map(static function ($value): string {
+            return is_int($value) ? '%d' : '%s';
+        }, array_values($updates));
+
+        $result = $wpdb->update($this->projectsTable(), $updates, $where, $formats, $whereFormats);
+
+        return $result === false ? 0 : (int) $result;
+    }
+
     public function nextTaskPosition(int $columnId): int
     {
         return $this->tasks()->nextTaskPosition($columnId);
@@ -523,6 +619,11 @@ final class Repository
     public function userCanSubmitProjectItem(int $projectId, int $userId): bool
     {
         return $this->permissions()->canSubmitProjectItem($projectId, $userId);
+    }
+
+    public function userCanCommentProjectItem(int $projectId, int $userId): bool
+    {
+        return $this->permissions()->canCommentProjectItem($projectId, $userId);
     }
 
     public function userCanManageEvidenceItem(array $evidence, int $userId): bool
@@ -613,6 +714,109 @@ final class Repository
     public static function decorateEvidenceAttachment(array $row): array
     {
         return ProjectEvidenceService::decorateEvidenceAttachment($row);
+    }
+
+    private function appendProjectClosureFields(array &$payload, array &$formats, array $data): void
+    {
+        $table = $this->projectsTable();
+        $map = [
+            'origin_year_id' => ['%d', static fn($value) => self::cleanNullableId($value)],
+            'current_year_id' => ['%d', static fn($value) => self::cleanNullableId($value)],
+            'origin_group_id' => ['%d', static fn($value) => self::cleanNullableId($value)],
+            'current_group_id' => ['%d', static fn($value) => self::cleanNullableId($value)],
+            'cycle_id' => ['%d', static fn($value) => self::cleanNullableId($value)],
+            'lifecycle_status' => ['%s', static fn($value) => self::cleanProjectLifecycleStatus($value)],
+            'closure_policy' => ['%s', static fn($value) => self::cleanClosurePolicy($value)],
+            'is_portfolio_relevant' => ['%d', static fn($value) => !empty($value) ? 1 : 0],
+            'preserve_until' => ['%s', static fn($value) => self::cleanDate($value)],
+            'archived_at' => ['%s', static fn($value) => self::cleanDateTime($value)],
+            'archived_by' => ['%d', static fn($value) => self::cleanNullableId($value)],
+        ];
+
+        foreach ($map as $field => [$format, $cleaner]) {
+            if (!array_key_exists($field, $data) || !$this->columnExists($table, $field)) {
+                continue;
+            }
+            $payload[$field] = $cleaner($data[$field]);
+            $formats[] = $format;
+        }
+    }
+
+    private function updateProjectClosureState(int $projectId, array $updates): bool
+    {
+        global $wpdb;
+
+        $table = $this->projectsTable();
+        $clean = [];
+        $formats = [];
+
+        foreach ($updates as $field => $value) {
+            if (!$this->columnExists($table, $field) && $field !== 'updated_at') {
+                continue;
+            }
+            if ($field === 'current_year_id' || $field === 'current_group_id' || $field === 'archived_by' || $field === 'is_portfolio_relevant') {
+                $clean[$field] = $value === null ? null : (int) $value;
+                $formats[] = '%d';
+            } else {
+                $clean[$field] = $value;
+                $formats[] = '%s';
+            }
+        }
+
+        if (!$clean) {
+            return true;
+        }
+
+        return false !== $wpdb->update($table, $clean, ['id' => $projectId], $formats, ['%d']);
+    }
+
+    private function markMembersArchiveViewers(int $projectId): void
+    {
+        global $wpdb;
+
+        $table = $this->table('members');
+        if (!$this->columnExists($table, 'access_level')) {
+            return;
+        }
+
+        $updates = [
+            'access_level' => 'archive_viewer',
+            'can_edit' => 0,
+            'can_comment' => 0,
+            'can_export' => 1,
+            'archived_at' => current_time('mysql'),
+        ];
+        $formatMap = [
+            'access_level' => '%s',
+            'can_edit' => '%d',
+            'can_comment' => '%d',
+            'can_export' => '%d',
+            'archived_at' => '%s',
+        ];
+        $formats = [];
+
+        foreach (array_keys($updates) as $field) {
+            if (!$this->columnExists($table, $field)) {
+                unset($updates[$field]);
+                continue;
+            }
+            $formats[] = $formatMap[$field];
+        }
+
+        if ($updates) {
+            $wpdb->update($table, $updates, ['project_id' => $projectId], $formats, ['%d']);
+        }
+    }
+
+    public function columnExists(string $table, string $column): bool
+    {
+        global $wpdb;
+
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+            return false;
+        }
+
+        return (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column));
     }
 
     private function competencyExists(int $competencyId): bool
@@ -745,11 +949,32 @@ final class Repository
         return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : null;
     }
 
+    public static function cleanDateTime($value): ?string
+    {
+        $value = sanitize_text_field((string) $value);
+
+        return preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $value) ? $value : null;
+    }
+
     public static function cleanProjectStatus($value): string
     {
         $status = sanitize_key((string) $value);
 
         return in_array($status, self::STATUS, true) ? $status : 'draft';
+    }
+
+    public static function cleanProjectLifecycleStatus($value): string
+    {
+        $status = sanitize_key((string) $value);
+
+        return in_array($status, self::LIFECYCLE_STATUS, true) ? $status : 'active';
+    }
+
+    public static function cleanClosurePolicy($value): string
+    {
+        $policy = sanitize_key((string) $value);
+
+        return in_array($policy, self::CLOSURE_POLICY, true) ? $policy : 'auto';
     }
 
     public static function cleanMemberRole($value): string
