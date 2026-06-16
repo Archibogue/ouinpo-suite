@@ -1,7 +1,9 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
-defined('ABSPATH') || exit;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+
+defined('ABSPATH') || exit;
 
 class PracticalRoutes {
     const NS = 'ouinpo/v1';
@@ -386,9 +388,13 @@ public static function files(\WP_REST_Request $r) {
             return new \WP_Error('invalid_id', 'Identifiant invalide', ['status' => 400]);
         }
 
-        if (!$user_id) {
-            return new \WP_Error('forbidden', 'Connexion requise', ['status' => 401]);
-        }
+        if (!$user_id) {
+            return new \WP_Error('forbidden', 'Connexion requise', ['status' => 401]);
+        }
+
+        if (!(new LearningDataPolicy())->canStoreLearningData($user_id)) {
+            return rest_ensure_response([]);
+        }
 
         if (!self::get_subject_row($exercise_id)) {
             return new \WP_Error('not_found', 'Sujet pratique introuvable', ['status' => 404]);
@@ -504,7 +510,9 @@ public static function files(\WP_REST_Request $r) {
 
         $stored = false;
         
-        if ($user_id > 0) {
+        $can_store = $user_id > 0 && (new LearningDataPolicy())->canStoreLearningData($user_id);
+
+        if ($can_store) {
             $tAttempts = self::table('practical_call_attempts');
             $inserted = $wpdb->insert(
                 $tAttempts,
@@ -538,7 +546,7 @@ public static function files(\WP_REST_Request $r) {
             ? 'solved'
             : 'attempted';
         
-        if ($user_id > 0) {
+        if ($can_store) {
             $tStatus = self::table('practical_call_status');
         
             $existing_status = $wpdb->get_var($wpdb->prepare("
@@ -578,10 +586,11 @@ public static function files(\WP_REST_Request $r) {
             'feedback'            => $feedback,
             'next_steps'          => is_array($evaluation['next_steps'] ?? null) ? array_values($evaluation['next_steps']) : [],
             'confidence'          => $confidence,
-            'safe_to_mark_solved' => $safe_to_mark_solved,
-            'status'              => $new_status,
-            'stored'              => $stored,
-        ]);
+            'safe_to_mark_solved' => $safe_to_mark_solved,
+            'status'              => $new_status,
+            'stored'              => $stored,
+            'reason'              => $stored ? null : 'tracking_disabled',
+        ]);
     }
 
 private static function normalize_folder_name(string $name): string {

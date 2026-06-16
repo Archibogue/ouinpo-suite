@@ -1,7 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
-use WP_REST_Request;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+use WP_REST_Request;
 use WP_REST_Response;
 
 if (!defined('ABSPATH')) exit;
@@ -75,7 +76,9 @@ private static function consume_public_ai_quota() {
     global $wpdb;
 
     $exercise_id = (int) $request['id'];
-    $user_id     = (int) get_current_user_id();
+    $user_id     = (int) get_current_user_id();
+    $can_store   = $user_id > 0 && (new LearningDataPolicy())->canStoreLearningData($user_id);
+    $store_reason = $user_id > 0 ? 'tracking_disabled' : 'not_logged_in';
     $params      = $request->get_json_params();
     $answer      = trim((string) ($params['answer'] ?? ''));
 
@@ -167,7 +170,7 @@ if ($parts['has_code']) {
     if (!empty($check['available']) && empty($check['ok'])) {
       $ai = self::build_syntax_feedback($check, $index + 1, $code_count);
 
-      if ($user_id > 0) {
+      if ($can_store) {
         self::store_attempt($user_id, $exercise_id, $answer, $ai);
       }
 
@@ -178,7 +181,8 @@ if ($parts['has_code']) {
         'confidence'     => isset($ai['confidence']) ? (float) $ai['confidence'] : 0.0,
         'style_warnings' => [],
         'safe_to_mark_solved' => false,
-        'stored'         => $user_id > 0,
+        'stored'         => $can_store,
+        'reason'         => $can_store ? null : $store_reason,
       ], 200);
     }
 
@@ -222,7 +226,7 @@ if ($parts['has_code']) {
       ], 503);
     }    
 
-    if ($user_id > 0) {
+    if ($can_store) {
         self::store_attempt($user_id, $exercise_id, $answer, $ai);
     }
 
@@ -233,7 +237,8 @@ if ($parts['has_code']) {
       'confidence'          => isset($ai['confidence']) ? (float) $ai['confidence'] : 0.0,
       'style_warnings'      => array_values($style_warnings),
       'safe_to_mark_solved' => !empty($ai['safe_to_mark_solved']),
-      'stored'              => $user_id > 0,
+      'stored'              => $can_store,
+      'reason'              => $can_store ? null : $store_reason,
     ], 200);
   }
 

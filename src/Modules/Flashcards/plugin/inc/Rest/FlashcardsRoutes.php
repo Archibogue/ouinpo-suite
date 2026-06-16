@@ -5,6 +5,7 @@ namespace Ouinpo\Flashcards\Rest;
 
 
 use Ouinpo\Flashcards\Service;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
 
 
 
@@ -234,6 +235,16 @@ final class FlashcardsRoutes
 
             return new \WP_Error('bad_request', 'card_id manquant', ['status' => 400]);
 
+        }
+
+        if (!(new LearningDataPolicy())->canStoreLearningData((int) $uid)) {
+            return rest_ensure_response([
+                'ok' => true,
+                'stored' => false,
+                'reason' => 'tracking_disabled',
+                'counts' => Service::get_due_counts($uid, $deck_ids, $domain_slug ?: null, $ctx),
+                'card' => Service::get_next_card_for_user($uid, $deck_ids, $domain_slug ?: null, $ctx),
+            ]);
         }
 
 

@@ -19,6 +19,11 @@ final class Capabilities
     public const MANAGE_SUBMISSIONS = 'ouinpo_manage_submissions';
     public const UPLOAD_SUBMISSION = 'ouinpo_upload_submission';
     public const SUBMIT_WORK = 'ouinpo_submit_work';
+    public const PRACTICE_EXERCISES = 'ouinpo_practice_exercises';
+    public const TRACK_LEARNING_DATA = 'ouinpo_track_learning_data';
+    public const VIEW_OWN_LEARNING_DATA = 'ouinpo_view_own_learning_data';
+    public const PORTFOLIO_VIEW_OWN_ARCHIVE = 'ouinpo_portfolio_view_own_archive';
+    public const PORTFOLIO_EXPORT_OWN = 'ouinpo_portfolio_export_own';
     public const PROJECTS_MANAGE_ALL = 'ouinpo_projects_manage_all';
     public const PROJECTS_MANAGE_CLASS = 'ouinpo_projects_manage_class';
     public const PROJECTS_CREATE = 'ouinpo_projects_create';
@@ -60,6 +65,11 @@ final class Capabilities
             self::MANAGE_AI,
             self::VIEW_STUDENT_DATA,
             self::MANAGE_SUBMISSIONS,
+            self::PRACTICE_EXERCISES,
+            self::TRACK_LEARNING_DATA,
+            self::VIEW_OWN_LEARNING_DATA,
+            self::PORTFOLIO_VIEW_OWN_ARCHIVE,
+            self::PORTFOLIO_EXPORT_OWN,
             self::PROJECTS_MANAGE_ALL,
             self::PROJECTS_MANAGE_CLASS,
             self::PROJECTS_CREATE,
@@ -77,12 +87,25 @@ final class Capabilities
     {
         return [
             'read',
+            self::PRACTICE_EXERCISES,
+            self::TRACK_LEARNING_DATA,
+            self::VIEW_OWN_LEARNING_DATA,
             self::UPLOAD_SUBMISSION,
             self::SUBMIT_WORK,
             self::PROJECTS_VIEW_OWN,
             self::PROJECTS_EDIT_OWN_TASKS,
             self::PROJECTS_COMMENT,
             self::PROJECTS_AI_STUDENT_USE,
+        ];
+    }
+
+    public static function alumni(): array
+    {
+        return [
+            'read',
+            self::PRACTICE_EXERCISES,
+            self::PORTFOLIO_VIEW_OWN_ARCHIVE,
+            self::PORTFOLIO_EXPORT_OWN,
         ];
     }
 
@@ -102,6 +125,11 @@ final class Capabilities
             self::MANAGE_SUBMISSIONS => 'Dépôts élèves',
             self::UPLOAD_SUBMISSION => 'Envoyer un fichier de depot OuInPo',
             self::SUBMIT_WORK => 'Soumettre un travail OuInPo',
+            self::PRACTICE_EXERCISES => 'Pratiquer les exercices',
+            self::TRACK_LEARNING_DATA => 'Stocker le suivi pedagogique',
+            self::VIEW_OWN_LEARNING_DATA => 'Voir ses donnees pedagogiques',
+            self::PORTFOLIO_VIEW_OWN_ARCHIVE => 'Portfolio - voir ses archives',
+            self::PORTFOLIO_EXPORT_OWN => 'Portfolio - exporter ses archives',
             self::PROJECTS_MANAGE_ALL => 'Projets - gestion globale',
             self::PROJECTS_MANAGE_CLASS => 'Projets - gestion de classe',
             self::PROJECTS_CREATE => 'Projets - creation',
@@ -186,6 +214,30 @@ final class Capabilities
             $legacyStudent->remove_cap('upload_files');
             foreach ($studentCaps as $capability) {
                 $legacyStudent->add_cap($capability);
+            }
+        }
+
+        $alumniCaps = self::alumni();
+        $alumni = get_role('ouinpo_alumni');
+        if (!$alumni) {
+            add_role('ouinpo_alumni', 'Ancien eleve OuInPo', array_fill_keys($alumniCaps, true));
+            $alumni = get_role('ouinpo_alumni');
+        }
+
+        if ($alumni) {
+            foreach ($alumniCaps as $capability) {
+                $alumni->add_cap($capability);
+            }
+
+            foreach ([
+                self::TRACK_LEARNING_DATA,
+                self::PROJECTS_EDIT_OWN_TASKS,
+                self::PROJECTS_COMMENT,
+                self::SUBMIT_WORK,
+                self::UPLOAD_SUBMISSION,
+                self::PROJECTS_AI_STUDENT_USE,
+            ] as $capability) {
+                $alumni->remove_cap($capability);
             }
         }
     }
