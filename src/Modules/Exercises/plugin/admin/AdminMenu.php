@@ -59,6 +59,10 @@ class AdminMenu {
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
             ],
+            'ouinpo-cycles' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
             'ouinpo-assignments' => [
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
@@ -68,6 +72,10 @@ class AdminMenu {
                 'file'   => 'assets/css/admin/exercises-admin.css',
             ],
             'ouinpo-years' => [
+                'handle' => 'ouinpo-exercises-admin',
+                'file'   => 'assets/css/admin/exercises-admin.css',
+            ],
+            'ouinpo-year-closure' => [
                 'handle' => 'ouinpo-exercises-admin',
                 'file'   => 'assets/css/admin/exercises-admin.css',
             ],
@@ -100,8 +108,10 @@ class AdminMenu {
             'ouinpo-courses-competencies',
             'ouinpo-groups',
             'ouinpo-levels',
+            'ouinpo-cycles',
             'ouinpo-paths',
             'ouinpo-years',
+            'ouinpo-year-closure',
         ];
 
         if (in_array($page, $script_pages, true)) {
@@ -237,6 +247,15 @@ class AdminMenu {
             'ouinpo-levels',
             [self::class, 'renderLevels']
         );
+
+        add_submenu_page(
+            $parent,
+            'Cycles pedagogiques',
+            'Cycles pedagogiques',
+            Capabilities::MANAGE_CLASSES,
+            'ouinpo-cycles',
+            [self::class, 'renderCycles']
+        );
     
         add_submenu_page(
             $parent,
@@ -263,6 +282,15 @@ class AdminMenu {
             Capabilities::MANAGE_CLASSES,
             'ouinpo-years',
             [self::class, 'render_years']
+        );
+
+        add_submenu_page(
+            $parent,
+            'Cloture annuelle',
+            'Cloture annuelle',
+            Capabilities::MANAGE_CLASSES,
+            'ouinpo-year-closure',
+            [self::class, 'renderYearClosure']
         );
         
         add_submenu_page(
@@ -391,6 +419,14 @@ class AdminMenu {
 
     public static function renderLevels() {
         require_once __DIR__ . '/screens/screen-levels.php';
+    }
+
+    public static function renderCycles() {
+        require_once __DIR__ . '/screens/screen-cycles.php';
+    }
+
+    public static function renderYearClosure() {
+        require_once __DIR__ . '/screens/screen-year-closure.php';
     }
 
     public static function renderAssignments() {
