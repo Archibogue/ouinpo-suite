@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 class InstallV2 {
 
-    const DB_VERSION = '2.7.2';
+    const DB_VERSION = '2.8.0';
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
@@ -1143,6 +1143,9 @@ class InstallV2 {
         self::migrate_competency_school_levels();
         self::ensure_assessment_item_edit_columns();
         self::ensure_written_question_attempt_columns();
+        if (class_exists('\Ouinpo\Suite\Core\Installer')) {
+            \Ouinpo\Suite\Core\Installer::ensureYearClosureSchema();
+        }
 
         self::seed_year_if_missing();
 

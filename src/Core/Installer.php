@@ -15,6 +15,7 @@ final class Installer
         self::installOrUpgradeSharedSchema();
         AiSettings::migrate_public_access_for_existing_site($installed);
         self::ensureProjectsStudentAiSchema();
+        self::ensureYearClosureSchema();
         Capabilities::install();
         update_option('ouinpo_suite_version', $current, false);
     }
@@ -458,7 +459,207 @@ public static function ensureProjectsStudentAiSchema(): void
         }
     }
 
-    self::ensureProjectsStudentAiDefaults();
+        self::ensureProjectsStudentAiDefaults();
+        self::ensureYearClosureSchema();
+    }
+
+public static function ensureYearClosureSchema(): void
+{
+    global $wpdb;
+
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+    $charset = $wpdb->get_charset_collate();
+    $schema_suffix = "ENGINE=InnoDB {$charset}";
+
+    $cycles = $wpdb->prefix . 'ouinpo_cycles';
+    $transitions = $wpdb->prefix . 'ouinpo_level_transitions';
+    $cohorts = $wpdb->prefix . 'ouinpo_cycle_cohorts';
+    $members = $wpdb->prefix . 'ouinpo_cycle_members';
+    $policies = $wpdb->prefix . 'ouinpo_cycle_data_policies';
+    $runs = $wpdb->prefix . 'ouinpo_year_closure_runs';
+    $items = $wpdb->prefix . 'ouinpo_year_closure_items';
+
+    dbDelta("CREATE TABLE {$cycles} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        slug VARCHAR(120) NOT NULL,
+        label VARCHAR(190) NOT NULL,
+        description TEXT NULL,
+        duration_years TINYINT UNSIGNED NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        portfolio_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        default_policy_json LONGTEXT NULL,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY slug (slug),
+        KEY status (status)
+    ) {$schema_suffix};");
+
+    dbDelta("CREATE TABLE {$transitions} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        from_level_id TINYINT UNSIGNED NOT NULL,
+        to_level_id TINYINT UNSIGNED NULL,
+        transition_type VARCHAR(40) NOT NULL DEFAULT 'promotion',
+        is_default TINYINT(1) NOT NULL DEFAULT 0,
+        preserve_cycle_data TINYINT(1) NULL,
+        label VARCHAR(190) NULL,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NULL,
+        PRIMARY KEY  (id),
+        KEY from_level_id (from_level_id),
+        KEY to_level_id (to_level_id),
+        KEY is_default (is_default)
+    ) {$schema_suffix};");
+
+    dbDelta("CREATE TABLE {$cohorts} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        cycle_id BIGINT UNSIGNED NOT NULL,
+        slug VARCHAR(120) NOT NULL,
+        label VARCHAR(190) NOT NULL,
+        starts_year_id SMALLINT UNSIGNED NOT NULL,
+        ends_year_id SMALLINT UNSIGNED NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY slug (slug),
+        KEY cycle_id (cycle_id),
+        KEY starts_year_id (starts_year_id),
+        KEY status (status)
+    ) {$schema_suffix};");
+
+    dbDelta("CREATE TABLE {$members} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        cohort_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        joined_year_id SMALLINT UNSIGNED NULL,
+        left_year_id SMALLINT UNSIGNED NULL,
+        joined_at DATETIME NOT NULL,
+        left_at DATETIME NULL,
+        exit_reason VARCHAR(80) NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY cohort_user (cohort_id, user_id),
+        KEY user_id (user_id),
+        KEY status (status)
+    ) {$schema_suffix};");
+
+    dbDelta("CREATE TABLE {$policies} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        cycle_id BIGINT UNSIGNED NOT NULL,
+        data_domain VARCHAR(80) NOT NULL,
+        scope VARCHAR(30) NOT NULL DEFAULT 'year',
+        action_same_cycle VARCHAR(40) NOT NULL DEFAULT 'reset',
+        action_cycle_exit VARCHAR(40) NOT NULL DEFAULT 'purge',
+        alumni_access VARCHAR(40) NOT NULL DEFAULT 'none',
+        retention_months_after_exit SMALLINT UNSIGNED NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY cycle_domain (cycle_id, data_domain),
+        KEY data_domain (data_domain)
+    ) {$schema_suffix};");
+
+    dbDelta("CREATE TABLE {$runs} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        from_year_id SMALLINT UNSIGNED NOT NULL,
+        to_year_id SMALLINT UNSIGNED NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'draft',
+        mode VARCHAR(20) NOT NULL DEFAULT 'dry_run',
+        options_json LONGTEXT NULL,
+        summary_json LONGTEXT NULL,
+        started_by BIGINT UNSIGNED NOT NULL,
+        started_at DATETIME NOT NULL,
+        finished_at DATETIME NULL,
+        error_message TEXT NULL,
+        PRIMARY KEY  (id),
+        KEY from_year_id (from_year_id),
+        KEY to_year_id (to_year_id),
+        KEY status (status),
+        KEY mode (mode)
+    ) {$schema_suffix};");
+
+    dbDelta("CREATE TABLE {$items} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        run_id BIGINT UNSIGNED NOT NULL,
+        step VARCHAR(80) NOT NULL,
+        object_type VARCHAR(80) NOT NULL,
+        object_id BIGINT UNSIGNED NULL,
+        action VARCHAR(80) NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'planned',
+        message TEXT NULL,
+        count_before BIGINT UNSIGNED NULL,
+        count_after BIGINT UNSIGNED NULL,
+        created_at DATETIME NOT NULL,
+        PRIMARY KEY  (id),
+        KEY run_id (run_id),
+        KEY step (step),
+        KEY status (status)
+    ) {$schema_suffix};");
+
+    $p = $wpdb->prefix . 'ouin_exo_';
+    self::addColumnIfMissing($p . 'school_levels', 'cycle_id', 'cycle_id BIGINT UNSIGNED NULL AFTER label');
+    self::addColumnIfMissing($p . 'school_levels', 'cycle_rank', 'cycle_rank TINYINT UNSIGNED NULL AFTER cycle_id');
+    self::addColumnIfMissing($p . 'school_levels', 'is_cycle_terminal', "is_cycle_terminal TINYINT(1) NOT NULL DEFAULT 0 AFTER cycle_rank");
+    self::addColumnIfMissing($p . 'school_levels', 'default_next_level_id', 'default_next_level_id TINYINT UNSIGNED NULL AFTER is_cycle_terminal');
+
+    self::addColumnIfMissing($p . 'academic_years', 'status', "status VARCHAR(20) NOT NULL DEFAULT 'draft' AFTER is_active");
+    self::addColumnIfMissing($p . 'academic_years', 'closed_at', 'closed_at DATETIME NULL AFTER status');
+    self::addColumnIfMissing($p . 'academic_years', 'closed_by', 'closed_by BIGINT UNSIGNED NULL AFTER closed_at');
+    self::addColumnIfMissing($p . 'academic_years', 'archived_at', 'archived_at DATETIME NULL AFTER closed_by');
+    self::addColumnIfMissing($p . 'academic_years', 'archive_policy_json', 'archive_policy_json LONGTEXT NULL AFTER archived_at');
+
+    self::addColumnIfMissing($p . 'groups', 'status', "status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER created_at");
+    self::addColumnIfMissing($p . 'groups', 'source_group_id', 'source_group_id BIGINT UNSIGNED NULL AFTER status');
+    self::addColumnIfMissing($p . 'groups', 'closed_at', 'closed_at DATETIME NULL AFTER source_group_id');
+    self::addColumnIfMissing($p . 'groups', 'closed_by', 'closed_by BIGINT UNSIGNED NULL AFTER closed_at');
+
+    $projects = $wpdb->prefix . 'ouinpo_projects';
+    self::addColumnIfMissing($projects, 'origin_year_id', 'origin_year_id SMALLINT UNSIGNED NULL AFTER class_slug');
+    self::addColumnIfMissing($projects, 'current_year_id', 'current_year_id SMALLINT UNSIGNED NULL AFTER origin_year_id');
+    self::addColumnIfMissing($projects, 'origin_group_id', 'origin_group_id BIGINT UNSIGNED NULL AFTER current_year_id');
+    self::addColumnIfMissing($projects, 'current_group_id', 'current_group_id BIGINT UNSIGNED NULL AFTER origin_group_id');
+    self::addColumnIfMissing($projects, 'cycle_id', 'cycle_id BIGINT UNSIGNED NULL AFTER current_group_id');
+    self::addColumnIfMissing($projects, 'lifecycle_status', "lifecycle_status VARCHAR(30) NOT NULL DEFAULT 'active' AFTER cycle_id");
+    self::addColumnIfMissing($projects, 'closure_policy', "closure_policy VARCHAR(50) NOT NULL DEFAULT 'auto' AFTER lifecycle_status");
+    self::addColumnIfMissing($projects, 'is_portfolio_relevant', "is_portfolio_relevant TINYINT(1) NOT NULL DEFAULT 0 AFTER closure_policy");
+    self::addColumnIfMissing($projects, 'preserve_until', 'preserve_until DATE NULL AFTER is_portfolio_relevant');
+    self::addColumnIfMissing($projects, 'archived_at', 'archived_at DATETIME NULL AFTER preserve_until');
+    self::addColumnIfMissing($projects, 'archived_by', 'archived_by BIGINT UNSIGNED NULL AFTER archived_at');
+
+    $projectMembers = $wpdb->prefix . 'ouinpo_project_members';
+    self::addColumnIfMissing($projectMembers, 'access_level', "access_level VARCHAR(30) NOT NULL DEFAULT 'member' AFTER role");
+    self::addColumnIfMissing($projectMembers, 'can_edit', "can_edit TINYINT(1) NOT NULL DEFAULT 1 AFTER access_level");
+    self::addColumnIfMissing($projectMembers, 'can_comment', "can_comment TINYINT(1) NOT NULL DEFAULT 1 AFTER can_edit");
+    self::addColumnIfMissing($projectMembers, 'can_export', "can_export TINYINT(1) NOT NULL DEFAULT 1 AFTER can_comment");
+    self::addColumnIfMissing($projectMembers, 'active_until', 'active_until DATE NULL AFTER can_export');
+    self::addColumnIfMissing($projectMembers, 'archived_at', 'archived_at DATETIME NULL AFTER active_until');
+
+    $deliverables = $wpdb->prefix . 'ouinpo_project_deliverables';
+    self::addColumnIfMissing($deliverables, 'is_portfolio_evidence', "is_portfolio_evidence TINYINT(1) NOT NULL DEFAULT 0 AFTER status");
+    self::addColumnIfMissing($deliverables, 'preserve_until', 'preserve_until DATE NULL AFTER is_portfolio_evidence');
+
+    $evidence = $wpdb->prefix . 'ouinpo_project_evidence';
+    self::addColumnIfMissing($evidence, 'is_portfolio_evidence', "is_portfolio_evidence TINYINT(1) NOT NULL DEFAULT 0 AFTER evidence_type");
+    self::addColumnIfMissing($evidence, 'preserve_until', 'preserve_until DATE NULL AFTER is_portfolio_evidence');
+}
+
+private static function addColumnIfMissing(string $table, string $column, string $definition): void
+{
+    global $wpdb;
+
+    if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+        return;
+    }
+
+    $exists = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column));
+    if ($exists) {
+        return;
+    }
+
+    $wpdb->query("ALTER TABLE {$table} ADD {$definition}");
+    if (!empty($wpdb->last_error)) {
+        error_log('[ouinpo suite] add column failed: ' . $table . '.' . $column . ' | ' . $wpdb->last_error);
+    }
 }
 
 private static function ensureProjectsStudentAiDefaults(): void
