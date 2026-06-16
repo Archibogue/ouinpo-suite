@@ -605,3 +605,77 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ouinpo-export-panel {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin: 14px 0 18px;
+  padding: 16px;
+}
+
+.ouinpo-export-panel__head,
+.ouinpo-export-student__head,
+.ouinpo-export-actions {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+}
+
+.ouinpo-export-panel__head {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ouinpo-export-panel__head h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.ouinpo-export-panel__head p,
+.ouinpo-export-stats,
+.ouinpo-export-status,
+.ouinpo-export-loading {
+  color: #50575e;
+  margin: 0;
+}
+
+.ouinpo-export-actions {
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.ouinpo-export-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ouinpo-export-student {
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.ouinpo-export-student__head {
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ouinpo-export-student__head label {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.ouinpo-export-student textarea {
+  box-sizing: border-box;
+  margin-top: 8px;
+  min-height: 104px;
+  width: 100%;
+}
+
+.ouinpo-export-status {
+  min-height: 18px;
+  padding-top: 6px;
+}

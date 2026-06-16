@@ -2,7 +2,9 @@
 namespace Ouinpo\Exercises\Rest;
 
 use Ouinpo\Exercises\CompetencyLevels;
+use Ouinpo\Exercises\Services\AiJsonResponseParser;
 use Ouinpo\Exercises\TeachingState;
+use Ouinpo\Suite\Core\AiSettings;
 use Ouinpo\Suite\Core\Capabilities;
 
 defined('ABSPATH') || exit;
@@ -77,6 +79,14 @@ class CompetenciesRoutes {
             [
                 'methods'  => 'GET',
                 'callback' => [__CLASS__, 'exercisesProgress'],
+                'permission_callback' => [__CLASS__, 'can_view'],
+            ],
+        ]);
+
+        register_rest_route(self::NS, '/competencies/student-summary', [
+            [
+                'methods'  => 'POST',
+                'callback' => [__CLASS__, 'studentSummary'],
                 'permission_callback' => [__CLASS__, 'can_view'],
             ],
         ]);
@@ -1187,6 +1197,375 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         'summary' => $summary,
         'rows'    => $rows,
     ]);
+}
+
+public static function studentSummary(\WP_REST_Request $req) {
+    if (!class_exists(AiSettings::class) || !AiSettings::enabled_for_usage('pedagogical_suggestions')) {
+        return new \WP_Error('ai_disabled', 'La synthese IA enseignant est desactivee.', ['status' => 503]);
+    }
+
+    if (!class_exists('\OuInPo\SegFault\OpenAI')) {
+        return new \WP_Error('ai_unavailable', 'Aucun moteur IA n est disponible.', ['status' => 503]);
+    }
+
+    $year_id  = (int) $req->get_param('year_id');
+    $group_id = (int) $req->get_param('group_id');
+    $user_id  = (int) $req->get_param('user_id');
+    $domain   = sanitize_text_field((string) $req->get_param('domain'));
+
+    if ($year_id <= 0 || $user_id <= 0) {
+        return new \WP_Error('bad_request', 'year_id et user_id requis.', ['status' => 400]);
+    }
+
+    $quota = AiSettings::consumeUserRateLimit(
+        'teacher_ai',
+        get_current_user_id(),
+        AiSettings::quota('ouinpo_ai_teacher_per_minute'),
+        AiSettings::quota('ouinpo_ai_teacher_per_day')
+    );
+
+    if (is_wp_error($quota)) {
+        return $quota;
+    }
+
+    $context = self::studentSummaryContext($year_id, $group_id, $user_id, $domain);
+    if (is_wp_error($context)) {
+        return $context;
+    }
+
+    $messages = [[
+        'role' => 'system',
+        'content' => AiSettings::persona('teacher', 'ouinpo_ai_persona_teacher')
+            . "\n\nTache metier : rediger un commentaire court pour un enseignant avant edition PDF du suivi de competences d un eleve. Base-toi uniquement sur les donnees fournies. Ne donne pas de note chiffree. Reste prudent, concret, bienveillant et actionnable. Reponds uniquement avec un objet JSON valide, compact, sans Markdown, sans balise de code et sans texte avant ou apres le JSON.",
+    ], [
+        'role' => 'user',
+        'content' => wp_json_encode([
+            'schema_attendu' => [
+                'summary' => 'Une phrase courte.',
+                'strengths' => ['maximum 2 points forts, 8 mots chacun'],
+                'priorities' => ['maximum 2 priorites, 8 mots chacune'],
+                'next_steps' => ['maximum 2 actions, 10 mots chacune'],
+                'teacher_comment' => 'Un commentaire lisible de 4 phrases maximum, sans liste.',
+            ],
+            'contexte' => $context,
+            'consignes' => [
+                'Ne mentionne pas de donnees absentes.',
+                'Si peu de competences sont renseignees, signale que la synthese est partielle.',
+                'Utilise les statuts acquis, en consolidation, en progression et non acquis.',
+                'Formule teacher_comment comme un commentaire professionnel reutilisable dans un bilan eleve.',
+                'N enumere pas toutes les competences.',
+                'N ecris jamais plus de 900 caracteres au total.',
+            ],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ]];
+
+    try {
+        $raw = \OuInPo\SegFault\OpenAI::respond($messages, [
+            'temperature' => 0.25,
+            'max_tokens' => 450,
+            'stage' => 'competency_student_summary',
+            'response_format' => ['type' => 'json_object'],
+        ]);
+    } catch (\Throwable $e) {
+        AiSettings::debug_log('Competency student summary AI error', ['error' => $e->getMessage()]);
+        return new \WP_Error('ai_error', 'La synthese IA n a pas pu etre generee.', ['status' => 502]);
+    }
+
+    $json = AiJsonResponseParser::parse((string) $raw, 'object');
+    if (is_wp_error($json)) {
+        AiSettings::debug_log('Competency student summary invalid JSON', [
+            'error' => $json->get_error_message(),
+            'raw_excerpt' => AiJsonResponseParser::excerpt((string) $raw, 500),
+        ]);
+
+        $fallback = self::fallbackStudentSummaryFromText((string) $raw, $context);
+        if ($fallback !== null) {
+            return rest_ensure_response($fallback);
+        }
+
+        return new \WP_Error('invalid_ai_summary', 'La synthese IA n a pas pu etre lue.', ['status' => 502]);
+    }
+
+    return rest_ensure_response(self::sanitizeStudentSummary($json));
+}
+
+private static function studentSummaryContext(int $year_id, int $group_id, int $user_id, string $domain = '') {
+    global $wpdb;
+
+    $p = $wpdb->prefix . 'ouin_exo_';
+    $tblUC = $p . 'user_competencies';
+    $tblC = $p . 'competencies';
+    $tblU = $wpdb->users;
+    $tblG = $p . 'groups';
+    $tblY = $p . 'academic_years';
+    $tblGM = $p . 'group_members';
+
+    if ($group_id > 0) {
+        $member = $wpdb->get_var($wpdb->prepare(
+            "SELECT 1
+               FROM {$tblGM} gm
+               JOIN {$tblG} g ON g.id = gm.group_id
+              WHERE gm.user_id = %d
+                AND gm.group_id = %d
+                AND g.year_id = %d
+                AND gm.role = %s
+              LIMIT 1",
+            $user_id,
+            $group_id,
+            $year_id,
+            'student'
+        ));
+
+        if (!$member) {
+            return new \WP_Error('student_not_in_group', 'Cet eleve n appartient pas a cette classe.', ['status' => 404]);
+        }
+    }
+
+    $where = ['uc.year_id = %d', 'uc.user_id = %d'];
+    $args = [$year_id, $user_id];
+
+    if ($group_id > 0) {
+        $where[] = 'uc.group_id = %d';
+        $args[] = $group_id;
+    }
+
+    if ($domain !== '') {
+        $where[] = 'c.domain_slug = %s';
+        $args[] = $domain;
+    }
+
+    $sql = "
+        SELECT
+            uc.user_id,
+            u.display_name,
+            uc.group_id,
+            g.label AS group_label,
+            y.slug AS year_label,
+            c.id AS competency_id,
+            c.domain,
+            c.domain_slug,
+            c.competency AS label,
+            c.capacity,
+            c.example,
+            uc.status,
+            uc.updated_at
+        FROM {$tblUC} uc
+        JOIN {$tblC} c ON c.id = uc.competency_id
+        JOIN {$tblU} u ON u.ID = uc.user_id
+        LEFT JOIN {$tblG} g ON g.id = uc.group_id
+        LEFT JOIN {$tblY} y ON y.id = uc.year_id
+        WHERE " . implode(' AND ', $where) . "
+        ORDER BY c.domain ASC, c.slug ASC
+    ";
+
+    $rows = $wpdb->get_results($wpdb->prepare($sql, $args), ARRAY_A) ?: [];
+
+    if (!$rows) {
+        return new \WP_Error('no_competency_data', 'Aucune competence suivie pour cet eleve.', ['status' => 404]);
+    }
+
+    $counts = [
+        'acquired' => 0,
+        'consolidating' => 0,
+        'in_progress' => 0,
+        'not_acquired' => 0,
+    ];
+
+    $domains = [];
+    $strengths = [];
+    $priorities = [];
+    $details = [];
+
+    foreach ($rows as $row) {
+        $status = (string) ($row['status'] ?? 'not_acquired');
+        if (!isset($counts[$status])) {
+            $status = 'not_acquired';
+        }
+
+        $counts[$status]++;
+        $domain_label = (string) ($row['domain'] ?? 'Sans domaine');
+
+        if (!isset($domains[$domain_label])) {
+            $domains[$domain_label] = [
+                'total' => 0,
+                'acquired' => 0,
+                'consolidating' => 0,
+                'in_progress' => 0,
+                'not_acquired' => 0,
+            ];
+        }
+
+        $domains[$domain_label]['total']++;
+        $domains[$domain_label][$status]++;
+
+        $item = [
+            'domain' => $domain_label,
+            'label' => AiJsonResponseParser::excerpt((string) ($row['label'] ?? ''), 180),
+            'status' => $status,
+        ];
+
+        if (in_array($status, ['acquired', 'consolidating'], true) && count($strengths) < 12) {
+            $strengths[] = $item;
+        }
+
+        if (in_array($status, ['not_acquired', 'in_progress'], true) && count($priorities) < 12) {
+            $priorities[] = $item;
+        }
+
+        if (count($details) < 80) {
+            $details[] = $item;
+        }
+    }
+
+    $first = $rows[0];
+
+    return [
+        'student' => [
+            'user_id' => (int) ($first['user_id'] ?? $user_id),
+            'display_name' => (string) ($first['display_name'] ?? ''),
+        ],
+        'year' => [
+            'id' => $year_id,
+            'label' => (string) ($first['year_label'] ?? ''),
+        ],
+        'group' => [
+            'id' => (int) ($first['group_id'] ?? $group_id),
+            'label' => (string) ($first['group_label'] ?? ''),
+        ],
+        'filters' => [
+            'domain' => $domain,
+        ],
+        'counts' => $counts + ['total' => count($rows)],
+        'domains' => $domains,
+        'points_solides_possibles' => $strengths,
+        'priorites_possibles' => $priorities,
+        'competences' => $details,
+    ];
+}
+
+private static function sanitizeStudentSummary(array $raw): array {
+    $list = static function($value): array {
+        $out = [];
+        foreach ((array) $value as $item) {
+            if (is_array($item)) {
+                $text = (string) ($item['label'] ?? $item['text'] ?? $item['title'] ?? $item['summary'] ?? '');
+            } else {
+                $text = (string) $item;
+            }
+
+            $text = trim(wp_strip_all_tags($text));
+            if ($text !== '') {
+                $out[] = AiJsonResponseParser::excerpt($text, 120);
+            }
+            if (count($out) >= 2) {
+                break;
+            }
+        }
+        return $out;
+    };
+
+    $summary = trim(wp_strip_all_tags((string) ($raw['summary'] ?? '')));
+    $teacher_comment = trim(wp_strip_all_tags((string) ($raw['teacher_comment'] ?? '')));
+
+    return [
+        'summary' => AiJsonResponseParser::excerpt($summary, 260),
+        'strengths' => $list($raw['strengths'] ?? []),
+        'priorities' => $list($raw['priorities'] ?? []),
+        'next_steps' => $list($raw['next_steps'] ?? []),
+        'teacher_comment' => AiJsonResponseParser::excerpt($teacher_comment !== '' ? $teacher_comment : $summary, 700),
+    ];
+}
+
+private static function fallbackStudentSummaryFromText(string $raw, array $context): ?array {
+    $text = trim(wp_strip_all_tags($raw));
+    $text = preg_replace('/^\s*```(?:json|JSON)?\s*/', '', $text) ?? $text;
+    $text = preg_replace('/\s*```\s*$/', '', $text) ?? $text;
+    $text = trim($text);
+
+    if ($text === '' || str_starts_with($text, '{') || str_starts_with($text, '[')) {
+        return self::deterministicStudentSummary($context);
+    }
+
+    return [
+        'summary' => AiJsonResponseParser::excerpt($text, 260),
+        'strengths' => [],
+        'priorities' => [],
+        'next_steps' => [],
+        'teacher_comment' => AiJsonResponseParser::excerpt($text, 700),
+        'format_warning' => 'La reponse IA a ete reprise en texte libre car elle ne contenait pas de JSON valide.',
+    ];
+}
+
+private static function deterministicStudentSummary(array $context): array {
+    $student = (array) ($context['student'] ?? []);
+    $counts = (array) ($context['counts'] ?? []);
+    $name = trim((string) ($student['display_name'] ?? 'L eleve'));
+
+    $total = (int) ($counts['total'] ?? 0);
+    $acquired = (int) ($counts['acquired'] ?? 0);
+    $consolidating = (int) ($counts['consolidating'] ?? 0);
+    $in_progress = (int) ($counts['in_progress'] ?? 0);
+    $not_acquired = (int) ($counts['not_acquired'] ?? 0);
+
+    $strengths = self::summaryLabels((array) ($context['points_solides_possibles'] ?? []), 2);
+    $priorities = self::summaryLabels((array) ($context['priorites_possibles'] ?? []), 2);
+
+    $summary = sprintf(
+        '%s a %d competence(s) suivie(s) : %d acquise(s), %d en consolidation, %d en progression et %d non acquise(s).',
+        $name,
+        $total,
+        $acquired,
+        $consolidating,
+        $in_progress,
+        $not_acquired
+    );
+
+    $comment = $summary;
+
+    if (!empty($strengths)) {
+        $comment .= ' Points d appui : ' . implode(' ; ', $strengths) . '.';
+    }
+
+    if (!empty($priorities)) {
+        $comment .= ' Priorites : reprendre ' . implode(' ; ', $priorities) . '.';
+    } elseif ($in_progress > 0 || $not_acquired > 0) {
+        $comment .= ' Priorite : consolider les competences encore fragiles avec des exercices courts et cibles.';
+    } else {
+        $comment .= ' La progression est solide ; proposer des situations de reinvestissement pour maintenir les acquis.';
+    }
+
+    return [
+        'summary' => AiJsonResponseParser::excerpt($summary, 260),
+        'strengths' => $strengths,
+        'priorities' => $priorities,
+        'next_steps' => ['Exercices cibles', 'Relecture avec feedback'],
+        'teacher_comment' => AiJsonResponseParser::excerpt($comment, 700),
+        'format_warning' => 'Synthese automatique locale utilisee car la reponse IA etait tronquee.',
+    ];
+}
+
+private static function summaryLabels(array $items, int $limit): array {
+    $out = [];
+
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $domain = trim((string) ($item['domain'] ?? ''));
+        $label = trim((string) ($item['label'] ?? ''));
+        $text = trim($domain !== '' ? $domain . ' - ' . $label : $label);
+
+        if ($text !== '') {
+            $out[] = AiJsonResponseParser::excerpt($text, 110);
+        }
+
+        if (count($out) >= $limit) {
+            break;
+        }
+    }
+
+    return $out;
 }
 
     public static function options(\WP_REST_Request $request) {

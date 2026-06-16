@@ -181,7 +181,14 @@ function apiUrl(path) {
 
 
 
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) {
+      let message = 'HTTP ' + res.status;
+      try {
+        const err = await res.json();
+        if (err && err.message) message = err.message;
+      } catch (_) {}
+      throw new Error(message);
+    }
 
     return res.json();
 
@@ -211,7 +218,14 @@ function apiUrl(path) {
 
 
 
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) {
+      let message = 'HTTP ' + res.status;
+      try {
+        const err = await res.json();
+        if (err && err.message) message = err.message;
+      } catch (_) {}
+      throw new Error(message);
+    }
 
     return res.json();
 
@@ -350,6 +364,12 @@ function apiUrl(path) {
 
 
 function buildStudentUrl() {
+  return buildCompetenciesUrl(params.view);
+}
+
+
+
+function buildCompetenciesUrl(view) {
   const u = new URL(apiUrl('/competencies'), window.location.origin);
 
   u.searchParams.set('year_id', params.year);
@@ -358,9 +378,402 @@ function buildStudentUrl() {
   if (params.domain) u.searchParams.set('domain', params.domain);
   if (params.user) u.searchParams.set('user_id', params.user);
 
-  u.searchParams.set('view', params.view);
+  u.searchParams.set('view', view || params.view);
 
   return u.toString();
+}
+
+
+
+function statusLabel(status) {
+  const labels = {
+    not_acquired: 'Non acquis',
+    in_progress: 'En progression',
+    consolidating: 'En consolidation',
+    acquired: 'Acquis'
+  };
+
+  return labels[status] || labels.not_acquired;
+}
+
+
+
+function selectedText(id, fallback) {
+  const el = document.getElementById(id);
+  if (!el || !el.options || el.selectedIndex < 0) return fallback || '';
+  return el.options[el.selectedIndex].textContent.trim();
+}
+
+
+
+function groupDetailRows(rows) {
+  const map = new Map();
+
+  (rows || []).forEach((row) => {
+    const uid = Number(row.user_id || 0);
+    if (!uid) return;
+
+    if (!map.has(uid)) {
+      map.set(uid, {
+        user_id: uid,
+        display_name: row.display_name || ('Eleve ' + uid),
+        rows: [],
+        counts: {
+          acquired: 0,
+          consolidating: 0,
+          in_progress: 0,
+          not_acquired: 0
+        }
+      });
+    }
+
+    const student = map.get(uid);
+    const status = ['acquired', 'consolidating', 'in_progress', 'not_acquired'].includes(row.status)
+      ? row.status
+      : 'not_acquired';
+
+    student.rows.push(Object.assign({}, row, { status }));
+    student.counts[status] += 1;
+  });
+
+  return Array.from(map.values()).sort((a, b) =>
+    String(a.display_name).localeCompare(String(b.display_name))
+  );
+}
+
+
+
+function studentStatsLine(student) {
+  const c = student.counts || {};
+  const total = student.rows ? student.rows.length : 0;
+
+  return [
+    total + ' competence(s)',
+    Number(c.acquired || 0) + ' acquis',
+    Number(c.consolidating || 0) + ' consolidation',
+    Number(c.in_progress || 0) + ' progression',
+    Number(c.not_acquired || 0) + ' non acquis'
+  ].join(' - ');
+}
+
+
+
+function formatAiComment(payload) {
+  const parts = [];
+
+  if (payload.teacher_comment) {
+    parts.push(String(payload.teacher_comment).trim());
+  } else if (payload.summary) {
+    parts.push(String(payload.summary).trim());
+  }
+
+  if (Array.isArray(payload.strengths) && payload.strengths.length) {
+    parts.push('Points solides : ' + payload.strengths.join(' ; ') + '.');
+  }
+
+  if (Array.isArray(payload.priorities) && payload.priorities.length) {
+    parts.push('Priorites : ' + payload.priorities.join(' ; ') + '.');
+  }
+
+  if (Array.isArray(payload.next_steps) && payload.next_steps.length) {
+    parts.push('Pistes de travail : ' + payload.next_steps.join(' ; ') + '.');
+  }
+
+  return parts.filter(Boolean).join('\n\n');
+}
+
+
+
+function printableCss() {
+  return `
+    @page { margin: 14mm; }
+    body { color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.35; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 18px; margin: 0 0 8px; }
+    h3 { font-size: 13px; margin: 14px 0 6px; }
+    p { margin: 5px 0; }
+    .meta { border-bottom: 2px solid #111; margin-bottom: 14px; padding-bottom: 8px; }
+    .student { break-after: page; page-break-after: always; }
+    .student:last-child { break-after: auto; page-break-after: auto; }
+    .summary { background: #f4f6f8; border: 1px solid #d9dde3; padding: 9px 10px; margin: 8px 0 12px; white-space: pre-wrap; }
+    .stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+    .pill { border: 1px solid #c9ced6; border-radius: 999px; padding: 3px 7px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+    th, td { border: 1px solid #d2d6dc; padding: 4px 5px; text-align: left; vertical-align: top; }
+    th { background: #eef1f5; font-weight: 700; }
+    .status-acquired { color: #166534; }
+    .status-consolidating { color: #1d4ed8; }
+    .status-in_progress { color: #92400e; }
+    .status-not_acquired { color: #991b1b; }
+  `;
+}
+
+
+
+function buildPrintHtml(students) {
+  const now = new Date();
+  const title = 'Suivi de competences';
+  const context = [
+    selectedText('filter-year', ''),
+    selectedText('filter-group', ''),
+    selectedText('filter-domain', '')
+  ].filter(Boolean).join(' - ');
+
+  const body = students.map((student) => {
+    const counts = student.counts || {};
+    const rows = (student.rows || []).slice().sort((a, b) => {
+      const ad = String(a.domain || '');
+      const bd = String(b.domain || '');
+      if (ad !== bd) return ad.localeCompare(bd);
+      return String(a.label || '').localeCompare(String(b.label || ''));
+    });
+
+    const tableRows = rows.map((row) => `
+      <tr>
+        <td>${escapeHTML(row.domain || '')}</td>
+        <td>${escapeHTML(row.label || '')}</td>
+        <td class="status-${escapeHTML(row.status || 'not_acquired')}">${escapeHTML(statusLabel(row.status))}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <section class="student">
+        <div class="meta">
+          <h1>${escapeHTML(title)}</h1>
+          <p>${escapeHTML(context || 'Tous les filtres')}</p>
+          <p>Edition du ${escapeHTML(now.toLocaleDateString('fr-FR'))}</p>
+        </div>
+        <h2>${escapeHTML(student.display_name || '')}</h2>
+        <div class="stats">
+          <span class="pill">${rows.length} competence(s)</span>
+          <span class="pill">${Number(counts.acquired || 0)} acquis</span>
+          <span class="pill">${Number(counts.consolidating || 0)} en consolidation</span>
+          <span class="pill">${Number(counts.in_progress || 0)} en progression</span>
+          <span class="pill">${Number(counts.not_acquired || 0)} non acquis</span>
+        </div>
+        <h3>Commentaire</h3>
+        <div class="summary">${escapeHTML(student.comment || 'Aucun commentaire renseigne.')}</div>
+        <h3>Detail des competences</h3>
+        <table>
+          <thead><tr><th>Domaine</th><th>Competence</th><th>Statut</th></tr></thead>
+          <tbody>${tableRows || '<tr><td colspan="3">Aucune donnee.</td></tr>'}</tbody>
+        </table>
+      </section>
+    `;
+  }).join('');
+
+  return `<!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${escapeHTML(title)}</title>
+      <style>${printableCss()}</style>
+    </head>
+    <body>${body}</body>
+    </html>`;
+}
+
+
+
+function collectSelectedExportStudents(panel) {
+  const selected = [];
+
+  panel.querySelectorAll('[data-export-student]').forEach((card) => {
+    const checkbox = card.querySelector('[data-export-check]');
+    if (!checkbox || !checkbox.checked) return;
+
+    const textarea = card.querySelector('[data-export-comment]');
+    const uid = Number(card.dataset.userId || 0);
+    const student = card._student;
+    if (!student || !uid) return;
+
+    selected.push(Object.assign({}, student, {
+      comment: textarea ? textarea.value.trim() : ''
+    }));
+  });
+
+  return selected;
+}
+
+
+
+async function generateAiForCard(card) {
+  const status = card.querySelector('[data-export-status]');
+  const textarea = card.querySelector('[data-export-comment]');
+  const uid = Number(card.dataset.userId || 0);
+
+  if (!uid || !textarea) return;
+
+  if (status) status.textContent = 'Synthese IA en cours...';
+
+  const payload = await postJSON('/competencies/student-summary', {
+    year_id: params.year,
+    group_id: params.group || 0,
+    user_id: uid,
+    domain: params.domain || ''
+  });
+
+  textarea.value = formatAiComment(payload);
+
+  if (status) status.textContent = 'Synthese ajoutee.';
+}
+
+
+
+function renderExportPanel(students) {
+  const panel = H('section', { class: 'ouinpo-export-panel' });
+
+  panel.innerHTML = `
+    <div class="ouinpo-export-panel__head">
+      <div>
+        <h2>Preparer le PDF de suivi</h2>
+        <p>Selectionne les eleves, ajuste le commentaire, puis imprime la page propre.</p>
+      </div>
+      <button type="button" class="button" data-export-close>Fermer</button>
+    </div>
+    <div class="ouinpo-export-actions">
+      <button type="button" class="button" data-export-select-all>Tout selectionner</button>
+      <button type="button" class="button" data-export-ai-selected>Synthese IA selection</button>
+      <button type="button" class="button button-primary" data-export-print>Imprimer / PDF</button>
+    </div>
+    <div class="ouinpo-export-list"></div>
+  `;
+
+  const list = panel.querySelector('.ouinpo-export-list');
+
+  students.forEach((student) => {
+    const card = H('article', {
+      class: 'ouinpo-export-student',
+      'data-export-student': '1',
+      'data-user-id': String(student.user_id)
+    });
+
+    card._student = student;
+    card.innerHTML = `
+      <div class="ouinpo-export-student__head">
+        <label>
+          <input type="checkbox" data-export-check checked>
+          <strong>${escapeHTML(student.display_name || '')}</strong>
+        </label>
+        <button type="button" class="button button-small" data-export-ai>Generer synthese IA</button>
+      </div>
+      <p class="ouinpo-export-stats">${escapeHTML(studentStatsLine(student))}</p>
+      <textarea data-export-comment rows="5" placeholder="Commentaire a faire apparaitre dans le PDF"></textarea>
+      <p class="ouinpo-export-status" data-export-status></p>
+    `;
+
+    list.appendChild(card);
+  });
+
+  panel.querySelector('[data-export-close]').addEventListener('click', () => panel.remove());
+
+  panel.querySelector('[data-export-select-all]').addEventListener('click', () => {
+    const checks = Array.from(panel.querySelectorAll('[data-export-check]'));
+    const shouldCheck = checks.some((check) => !check.checked);
+    checks.forEach((check) => {
+      check.checked = shouldCheck;
+    });
+  });
+
+  panel.querySelector('[data-export-ai-selected]').addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    const cards = Array.from(panel.querySelectorAll('[data-export-student]'))
+      .filter((card) => {
+        const check = card.querySelector('[data-export-check]');
+        return check && check.checked;
+      });
+
+    if (!cards.length) {
+      alert('Selectionne au moins un eleve.');
+      return;
+    }
+
+    button.disabled = true;
+
+    for (const card of cards) {
+      try {
+        await generateAiForCard(card);
+      } catch (e) {
+        console.error(e);
+        const status = card.querySelector('[data-export-status]');
+        if (status) status.textContent = e.message || 'Erreur IA.';
+      }
+    }
+
+    button.disabled = false;
+  });
+
+  panel.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-export-ai]');
+    if (!button) return;
+
+    const card = button.closest('[data-export-student]');
+    if (!card) return;
+
+    button.disabled = true;
+    try {
+      await generateAiForCard(card);
+    } catch (e) {
+      console.error(e);
+      const status = card.querySelector('[data-export-status]');
+      if (status) status.textContent = e.message || 'Erreur IA.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  panel.querySelector('[data-export-print]').addEventListener('click', () => {
+    const selected = collectSelectedExportStudents(panel);
+    if (!selected.length) {
+      alert('Selectionne au moins un eleve.');
+      return;
+    }
+
+    const win = window.open('', '_blank');
+    if (!win) {
+      alert('La fenetre d impression a ete bloquee par le navigateur.');
+      return;
+    }
+
+    win.document.open();
+    win.document.write(buildPrintHtml(selected));
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 250);
+  });
+
+  return panel;
+}
+
+
+
+async function openExportBuilder(host) {
+  if (queue.length) {
+    await flush();
+  }
+
+  const old = host.querySelector('.ouinpo-export-panel');
+  if (old) old.remove();
+
+  const loading = H('p', { class: 'ouinpo-export-loading' }, 'Preparation des donnees...');
+  host.insertBefore(loading, host.firstChild);
+
+  try {
+    const detailData = await getJSON(buildCompetenciesUrl('detail'));
+    const students = groupDetailRows(detailData.rows || []);
+
+    loading.remove();
+
+    if (!students.length) {
+      host.insertBefore(H('p', { class: 'ouinpo-export-loading' }, 'Aucun eleve a exporter pour ces filtres.'), host.firstChild);
+      return;
+    }
+
+    host.insertBefore(renderExportPanel(students), host.firstChild);
+  } catch (e) {
+    console.error(e);
+    loading.textContent = 'Impossible de preparer le PDF.';
+  }
 }
 
 
@@ -441,6 +854,40 @@ function buildCourseUrl() {
 
 
     tools.appendChild(btnSeed);
+
+
+
+    const btnExport = H(
+
+      'button',
+
+      { class: 'button button-primary', type: 'button' },
+
+      'Preparer PDF'
+
+    );
+
+
+
+    btnExport.addEventListener('click', async () => {
+
+      btnExport.disabled = true;
+
+      try {
+
+        await openExportBuilder(box);
+
+      } finally {
+
+        btnExport.disabled = false;
+
+      }
+
+    });
+
+
+
+    tools.appendChild(btnExport);
 
     box.appendChild(tools);
 
