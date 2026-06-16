@@ -43,7 +43,7 @@ final class ProjectPermissionService
             return true;
         }
 
-        $member = $this->getMemberRow($projectId, $userId);
+        $member = $this->getProjectMemberRow($projectId, $userId);
         if (!$member) {
             return false;
         }
@@ -52,7 +52,11 @@ final class ProjectPermissionService
         $archiveStatus = in_array($lifecycle, ['archived', 'portfolio_archive', 'frozen'], true);
         $accessLevel = sanitize_key((string) ($member['access_level'] ?? $member['role'] ?? 'member'));
 
-        if ($archiveStatus && in_array($accessLevel, ['archive_viewer', 'former_member', 'member', 'owner'], true)) {
+        if ($this->isArchiveMemberAccess($accessLevel)) {
+            return $this->userHasCap($userId, Capabilities::PORTFOLIO_VIEW_OWN_ARCHIVE);
+        }
+
+        if ($archiveStatus) {
             return $this->userHasCap($userId, Capabilities::PORTFOLIO_VIEW_OWN_ARCHIVE)
                 || $this->userHasCap($userId, Capabilities::PROJECTS_VIEW_OWN);
         }
@@ -175,13 +179,18 @@ final class ProjectPermissionService
             return false;
         }
 
-        $member = $this->getMemberRow($projectId, $userId);
+        $member = $this->getProjectMemberRow($projectId, $userId);
         if (!$member) {
             return false;
         }
 
         if (array_key_exists('can_export', $member) && (int) $member['can_export'] !== 1) {
             return false;
+        }
+
+        $accessLevel = sanitize_key((string) ($member['access_level'] ?? $member['role'] ?? 'member'));
+        if ($this->isArchiveMemberAccess($accessLevel)) {
+            return $this->userHasCap($userId, Capabilities::PORTFOLIO_EXPORT_OWN);
         }
 
         return $this->userHasCap($userId, Capabilities::PORTFOLIO_EXPORT_OWN)
@@ -226,7 +235,7 @@ final class ProjectPermissionService
             && $this->userHasCap($userId, Capabilities::PROJECTS_AI_STUDENT_USE);
     }
 
-    private function getMemberRow(int $projectId, int $userId): ?array
+    public function getProjectMemberRow(int $projectId, int $userId): ?array
     {
         global $wpdb;
 
@@ -245,7 +254,7 @@ final class ProjectPermissionService
 
     private function memberAllows(int $userId, int $projectId, string $flag): bool
     {
-        $member = $this->getMemberRow($projectId, $userId);
+        $member = $this->getProjectMemberRow($projectId, $userId);
         if (!$member) {
             return false;
         }
@@ -255,6 +264,11 @@ final class ProjectPermissionService
         }
 
         return (int) $member[$flag] === 1;
+    }
+
+    private function isArchiveMemberAccess(string $accessLevel): bool
+    {
+        return in_array($accessLevel, ['archive_viewer', 'former_member', 'viewer'], true);
     }
 
     private function userHasCap(int $userId, string $capability): bool

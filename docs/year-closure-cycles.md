@@ -27,6 +27,8 @@ La conservation ne depend donc pas seulement de l'ancienne annee scolaire. Elle 
 
 L'eleve reste `ouinpo_student`. Il garde acces a ses projets, livrables, preuves, journal de bord, competences projet et exports portfolio. La progression annuelle d'exercices pourra etre reinitialisee dans une branche future, mais la memoire projet et portfolio n'est pas purgee.
 
+Le report Projects prend aussi en compte les projets legacy dont `current_group_id` est encore vide. La detection utilise d'abord `current_group_id`, puis `origin_group_id`, puis `class_slug` normalise depuis la classe source, puis un fallback non destructif par appartenance commune entre `project_members` et les membres eleves de la classe source.
+
 ## Cas Premiere vers Terminale
 
 `Premiere NSI` vers `Terminale NSI` conserve les donnees utiles si les deux niveaux sont rattaches au meme cycle. Les projets actifs peuvent etre reportes, et les projets utiles au portfolio restent accessibles au minimum en lecture.
@@ -34,6 +36,8 @@ L'eleve reste `ouinpo_student`. Il garde acces a ses projets, livrables, preuves
 ## Cas Terminale ou BTS2 vers alumni
 
 Un niveau terminal sans niveau suivant propose la conversion alumni. Le role `ouinpo_alumni` permet de pratiquer des exercices et, selon les politiques, de consulter ou exporter des archives de portfolio. Il ne donne pas le droit de stocker du suivi pedagogique actif.
+
+Lors de la sortie alumni, l'acces projet/portfolio n'est pas donne via `ouinpo_projects_view_own`. Les projets utiles sont preserves via la ligne `project_members` de l'ancien eleve, avec un acces archive lecture/export (`archive_viewer` ou equivalent), sans droit d'edition ni commentaire par defaut. Si d'autres eleves actifs restent membres du projet, le projet reste actif pour eux ; seul l'acces de l'eleve sortant devient archive.
 
 ## Donnees conservees
 
@@ -77,6 +81,7 @@ Message attendu : `Non execute dans cette version : purge RGPD a implementer apr
 - Pas de suppression destructive.
 - Pas de purge de fichiers.
 - Pas de suppression automatique de projets ou portfolio.
+- Pas de suppression automatique de livrables, preuves, journal de bord ou liens de competences projet.
 - Cohortes et `cycle_members` prepares en base, mais pas encore alimentes automatiquement par l'executeur.
 - Pas de refonte front massive.
 - Les politiques sont preparees et visibles, mais l'execution des purges RGPD reste a implementer dans une branche dediee.

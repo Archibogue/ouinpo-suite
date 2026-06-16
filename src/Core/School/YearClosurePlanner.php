@@ -55,7 +55,10 @@ final class YearClosurePlanner
             'students_redoublement' => 0,
             'students_to_alumni' => 0,
             'active_projects_to_carry' => 0,
+            'explicit_projects_to_carry' => 0,
+            'legacy_member_projects_to_carry' => 0,
             'portfolio_projects_to_preserve' => 0,
+            'alumni_archive_projects_to_prepare' => 0,
             'annual_data_to_reset_later' => 0,
             'gdpr_purges_planned' => 0,
         ];
@@ -115,21 +118,9 @@ final class YearClosurePlanner
 
         $summary['class_plans'] = $classPlans;
 
-        $projects = $wpdb->prefix . 'ouinpo_projects';
-        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $projects)) === $projects) {
-            $statusColumn = $this->columnExists($projects, 'lifecycle_status') ? 'lifecycle_status' : 'status';
-            $summary['active_projects_to_carry'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$projects} WHERE {$statusColumn} IN ('active', 'draft')");
-
-            $portfolioClauses = [];
-            if ($this->columnExists($projects, 'is_portfolio_relevant')) {
-                $portfolioClauses[] = 'is_portfolio_relevant = 1';
-            }
-            if ($this->columnExists($projects, 'closure_policy')) {
-                $portfolioClauses[] = "closure_policy = 'never_purge_automatically'";
-            }
-            if ($portfolioClauses) {
-                $summary['portfolio_projects_to_preserve'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$projects} WHERE " . implode(' OR ', $portfolioClauses));
-            }
+        $projectCounters = $this->projectCountersForClosureGroups($classPlans, (int) ($fromYear['id'] ?? 0));
+        foreach ($projectCounters as $key => $value) {
+            $summary[$key] = $value;
         }
 
         $items[] = ['step' => 'year', 'object_type' => 'academic_year', 'object_id' => (int) ($toYear['id'] ?? 0), 'action' => $toYear ? 'select' : 'create', 'status' => 'planned', 'message' => $toYear ? 'Annee cible existante.' : 'Annee cible a creer.'];
@@ -195,5 +186,58 @@ final class YearClosurePlanner
         }
 
         return (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column));
+    }
+
+    private function projectCountersForClosureGroups(array $classPlans, int $fromYearId): array
+    {
+        if (!class_exists('\Ouinpo\Suite\Modules\Projects\Repository')) {
+            return [
+                'active_projects_to_carry' => 0,
+                'explicit_projects_to_carry' => 0,
+                'legacy_member_projects_to_carry' => 0,
+                'portfolio_projects_to_preserve' => 0,
+                'alumni_archive_projects_to_prepare' => 0,
+            ];
+        }
+
+        $repository = new \Ouinpo\Suite\Modules\Projects\Repository();
+        $projects = [];
+        foreach ($classPlans as $plan) {
+            $groupId = (int) ($plan['source_group_id'] ?? 0);
+            if ($groupId <= 0) {
+                continue;
+            }
+
+            foreach ($repository->findProjectsForClosureGroup($groupId, $fromYearId > 0 ? $fromYearId : null) as $project) {
+                $projectId = (int) ($project['id'] ?? 0);
+                if ($projectId > 0 && !isset($projects[$projectId])) {
+                    $projects[$projectId] = $project;
+                }
+            }
+        }
+
+        $counters = [
+            'active_projects_to_carry' => count($projects),
+            'explicit_projects_to_carry' => 0,
+            'legacy_member_projects_to_carry' => 0,
+            'portfolio_projects_to_preserve' => 0,
+            'alumni_archive_projects_to_prepare' => 0,
+        ];
+
+        foreach ($projects as $project) {
+            $source = (string) ($project['closure_detection_source'] ?? '');
+            if ($source === 'project_members') {
+                $counters['legacy_member_projects_to_carry']++;
+            } else {
+                $counters['explicit_projects_to_carry']++;
+            }
+
+            if (!empty($project['is_portfolio_relevant']) || (string) ($project['closure_policy'] ?? '') === 'never_purge_automatically') {
+                $counters['portfolio_projects_to_preserve']++;
+                $counters['alumni_archive_projects_to_prepare']++;
+            }
+        }
+
+        return $counters;
     }
 }

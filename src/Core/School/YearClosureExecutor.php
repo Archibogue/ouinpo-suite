@@ -44,11 +44,13 @@ final class YearClosureExecutor
                 if ($sourceGroupId > 0) {
                     $source = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$tables['groups']} WHERE id = %d", $sourceGroupId), ARRAY_A);
                     if ($source) {
+                        $sourceLevel = !empty($source['school_level_id']) ? (new CycleRepository())->getLevel((int) $source['school_level_id']) : null;
+                        $sourceCycleId = !empty($sourceLevel['cycle_id']) ? (int) $sourceLevel['cycle_id'] : null;
                         $targetLevelIds = $this->targetLevelIdsForSourceGroup($sourceGroupId, (int) ($source['school_level_id'] ?? 0));
                         foreach ($targetLevelIds as $toLevelId) {
                             $targetGroupId = $this->ensureTargetGroup($source, $toYearId, $toLevelId);
                             $this->copyStudentMembers($sourceGroupId, $targetGroupId, $toLevelId, (int) ($source['school_level_id'] ?? 0));
-                            $this->carryProjects((int) ($fromYear['id'] ?? 0), $toYearId, $sourceGroupId, $targetGroupId);
+                            $this->carryProjects((int) ($fromYear['id'] ?? 0), $toYearId, $sourceGroupId, $targetGroupId, $sourceCycleId);
                             $logger->addItem($runId, 'groups', 'group', $targetGroupId, 'create_or_reuse', 'done', 'Classe cible preparee.');
                         }
                     }
@@ -250,27 +252,59 @@ final class YearClosureExecutor
 
         $tables = $this->tables();
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT DISTINCT gm.user_id, COALESCE(gm.school_level_id_override, g.school_level_id) AS effective_level_id
+            "SELECT DISTINCT gm.user_id, gm.group_id, COALESCE(gm.school_level_id_override, g.school_level_id) AS effective_level_id, l.cycle_id
              FROM {$tables['members']} gm
              JOIN {$tables['groups']} g ON g.id = gm.group_id
+             LEFT JOIN {$tables['levels']} l ON l.id = COALESCE(gm.school_level_id_override, g.school_level_id)
              WHERE g.year_id = %d
                AND gm.role = 'student'",
             $fromYearId
         ), ARRAY_A) ?: [];
 
-        $policy = new LearningDataPolicy();
         $resolver = new CycleTransitionResolver(new CycleRepository());
+        $candidates = [];
         foreach ($rows as $row) {
             $effectiveLevelId = (int) ($row['effective_level_id'] ?? 0);
             $transition = $effectiveLevelId > 0 ? $resolver->resolveDefaultNextLevel($effectiveLevelId) : ['to_level_id' => null];
-            if (!empty($transition['to_level_id'])) {
+            $userId = (int) $row['user_id'];
+            if ($userId <= 0) {
                 continue;
             }
+            if (!isset($candidates[$userId])) {
+                $candidates[$userId] = [
+                    'cycle_id' => !empty($row['cycle_id']) ? (int) $row['cycle_id'] : null,
+                    'group_ids' => [],
+                    'has_target' => false,
+                ];
+            }
+            if (!empty($transition['to_level_id'])) {
+                $candidates[$userId]['has_target'] = true;
+                continue;
+            }
+            $groupId = (int) ($row['group_id'] ?? 0);
+            if ($groupId > 0) {
+                $candidates[$userId]['group_ids'][$groupId] = true;
+            }
+        }
 
-            $userId = (int) $row['user_id'];
+        $policy = new LearningDataPolicy();
+        $projects = new \Ouinpo\Suite\Modules\Projects\Repository();
+        foreach ($candidates as $userId => $candidate) {
+            if (!empty($candidate['has_target'])) {
+                continue;
+            }
             $user = get_user_by('id', $userId);
             if (!$user) {
                 continue;
+            }
+            $preserved = $projects->preserveProjectsForAlumniExit(
+                $userId,
+                $fromYearId,
+                !empty($candidate['cycle_id']) ? (int) $candidate['cycle_id'] : null,
+                array_map('intval', array_keys((array) ($candidate['group_ids'] ?? [])))
+            );
+            foreach ((array) ($preserved['project_ids'] ?? []) as $projectId) {
+                $logger->addItem($runId, 'projects', 'project', (int) $projectId, 'archive_access', 'done', 'Acces archive/export alumni preserve sans suppression.');
             }
             $user->remove_role('ouinpo_student');
             $user->add_role('ouinpo_alumni');
@@ -279,11 +313,11 @@ final class YearClosureExecutor
         }
     }
 
-    private function carryProjects(int $fromYearId, int $toYearId, int $fromGroupId, int $toGroupId): void
+    private function carryProjects(int $fromYearId, int $toYearId, int $fromGroupId, int $toGroupId, ?int $cycleId): void
     {
         $repository = new \Ouinpo\Suite\Modules\Projects\Repository();
         if (method_exists($repository, 'markProjectsCarriedOverForGroup')) {
-            $repository->markProjectsCarriedOverForGroup($fromYearId, $toYearId, $fromGroupId, $toGroupId);
+            $repository->markProjectsCarriedOverForGroup($fromGroupId, $toGroupId, $toYearId, $fromYearId > 0 ? $fromYearId : null, $cycleId);
         }
     }
 

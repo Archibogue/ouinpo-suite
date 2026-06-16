@@ -145,7 +145,10 @@ settings_errors('ouinpo_year_closure');
       <li>Eleves sortant d un cycle : <?php echo (int) ($summary['students_cycle_exit'] ?? 0); ?></li>
       <li>Eleves a convertir alumni : <?php echo (int) ($summary['students_to_alumni'] ?? 0); ?></li>
       <li>Projets actifs a reporter : <?php echo (int) ($summary['active_projects_to_carry'] ?? 0); ?></li>
+      <li>Projets explicitement rattaches : <?php echo (int) ($summary['explicit_projects_to_carry'] ?? 0); ?></li>
+      <li>Projets legacy detectes par membres : <?php echo (int) ($summary['legacy_member_projects_to_carry'] ?? 0); ?></li>
       <li>Projets portfolio a preserver : <?php echo (int) ($summary['portfolio_projects_to_preserve'] ?? 0); ?></li>
+      <li>Acces archive alumni a preparer : <?php echo (int) ($summary['alumni_archive_projects_to_prepare'] ?? 0); ?></li>
       <li>Donnees annuelles a reinitialiser plus tard : <?php echo (int) ($summary['annual_data_to_reset_later'] ?? 0); ?></li>
       <li>Purges RGPD planifiees, non executees : <?php echo (int) ($summary['gdpr_purges_planned'] ?? 0); ?></li>
     </ul>

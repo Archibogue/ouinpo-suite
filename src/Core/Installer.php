@@ -641,6 +641,80 @@ public static function ensureYearClosureSchema(): void
     $evidence = $wpdb->prefix . 'ouinpo_project_evidence';
     self::addColumnIfMissing($evidence, 'is_portfolio_evidence', "is_portfolio_evidence TINYINT(1) NOT NULL DEFAULT 0 AFTER evidence_type");
     self::addColumnIfMissing($evidence, 'preserve_until', 'preserve_until DATE NULL AFTER is_portfolio_evidence');
+
+    self::backfillProjectClosureColumnsFromClassSlug();
+}
+
+private static function backfillProjectClosureColumnsFromClassSlug(): void
+{
+    global $wpdb;
+
+    $projects = $wpdb->prefix . 'ouinpo_projects';
+    $groups = $wpdb->prefix . 'ouin_exo_groups';
+    if (!self::tableExists($projects) || !self::tableExists($groups) || !self::columnExists($projects, 'class_slug')) {
+        return;
+    }
+
+    $required = ['origin_group_id', 'current_group_id', 'origin_year_id', 'current_year_id'];
+    foreach ($required as $column) {
+        if (!self::columnExists($projects, $column)) {
+            return;
+        }
+    }
+
+    $rows = $wpdb->get_results("SELECT id, label, year_id FROM {$groups} WHERE label <> ''", ARRAY_A) ?: [];
+    foreach ($rows as $group) {
+        $groupId = (int) ($group['id'] ?? 0);
+        if ($groupId <= 0) {
+            continue;
+        }
+
+        $candidates = array_values(array_unique(array_filter([
+            (string) $groupId,
+            sanitize_key((string) ($group['label'] ?? '')),
+            sanitize_title((string) ($group['label'] ?? '')),
+        ], static fn($value) => (string) $value !== '')));
+        if (!$candidates) {
+            continue;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($candidates), '%s'));
+        $yearId = !empty($group['year_id']) ? (int) $group['year_id'] : 0;
+        $sets = [
+            'origin_group_id = COALESCE(origin_group_id, %d)',
+            'current_group_id = COALESCE(current_group_id, %d)',
+        ];
+        $args = [$groupId, $groupId];
+        if ($yearId > 0) {
+            $sets[] = 'origin_year_id = COALESCE(origin_year_id, %d)';
+            $sets[] = 'current_year_id = COALESCE(current_year_id, %d)';
+            $args[] = $yearId;
+            $args[] = $yearId;
+        }
+
+        $args = array_merge($args, $candidates);
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$projects}
+             SET " . implode(', ', $sets) . "
+             WHERE current_group_id IS NULL
+               AND class_slug IN ({$placeholders})",
+            $args
+        ));
+    }
+}
+
+private static function tableExists(string $table): bool
+{
+    global $wpdb;
+
+    return $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
+}
+
+private static function columnExists(string $table, string $column): bool
+{
+    global $wpdb;
+
+    return self::tableExists($table) && (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column));
 }
 
 private static function addColumnIfMissing(string $table, string $column, string $definition): void

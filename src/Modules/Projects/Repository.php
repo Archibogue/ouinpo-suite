@@ -578,37 +578,240 @@ final class Repository
         return $updated;
     }
 
-    public function markProjectsCarriedOverForGroup(int $fromYearId, int $toYearId, int $fromGroupId, int $toGroupId): int
+    public function findProjectsForClosureGroup(int $fromGroupId, ?int $fromYearId = null): array
     {
         global $wpdb;
 
-        if (!$this->columnExists($this->projectsTable(), 'current_group_id')) {
+        $projects = $this->projectsTable();
+        if ($fromGroupId <= 0 || !$this->tableExists($projects)) {
+            return [];
+        }
+
+        $found = [];
+        $register = static function (array $rows, string $source) use (&$found): void {
+            foreach ($rows as $row) {
+                $id = (int) ($row['id'] ?? 0);
+                if ($id <= 0 || isset($found[$id])) {
+                    continue;
+                }
+                $row['closure_detection_source'] = $source;
+                $found[$id] = $row;
+            }
+        };
+
+        $currentGroupColumn = $this->columnExists($projects, 'current_group_id');
+        $originGroupColumn = $this->columnExists($projects, 'origin_group_id');
+        $currentYearColumn = $this->columnExists($projects, 'current_year_id');
+
+        if ($currentGroupColumn) {
+            $args = [$fromGroupId];
+            $where = 'current_group_id = %d';
+            if ($fromYearId && $currentYearColumn) {
+                $where .= ' AND (current_year_id = %d OR current_year_id IS NULL)';
+                $args[] = $fromYearId;
+            }
+            $sql = "SELECT * FROM {$projects} WHERE {$where} " . $this->carriableProjectSql();
+            $register($wpdb->get_results($wpdb->prepare($sql, $args), ARRAY_A) ?: [], 'current_group_id');
+        }
+
+        if ($originGroupColumn) {
+            $sql = "SELECT * FROM {$projects}
+                    WHERE origin_group_id = %d
+                      " . ($currentGroupColumn ? 'AND current_group_id IS NULL' : '') . "
+                      {$this->carriableProjectSql()}";
+            $register($wpdb->get_results($wpdb->prepare($sql, $fromGroupId), ARRAY_A) ?: [], 'origin_group_id');
+        }
+
+        $classSlugCandidates = $this->classSlugCandidatesForGroup($fromGroupId);
+        if ($classSlugCandidates && $this->columnExists($projects, 'class_slug')) {
+            $placeholders = implode(', ', array_fill(0, count($classSlugCandidates), '%s'));
+            $sql = "SELECT * FROM {$projects}
+                    WHERE class_slug IN ({$placeholders})
+                      " . ($currentGroupColumn ? 'AND current_group_id IS NULL' : '') . "
+                      {$this->carriableProjectSql()}";
+            $register($wpdb->get_results($wpdb->prepare($sql, $classSlugCandidates), ARRAY_A) ?: [], 'class_slug');
+        }
+
+        $members = $this->table('members');
+        $groupMembers = $wpdb->prefix . 'ouin_exo_group_members';
+        if ($this->tableExists($members) && $this->tableExists($groupMembers)) {
+            $sql = "SELECT DISTINCT p.*
+                    FROM {$projects} p
+                    INNER JOIN {$members} pm ON pm.project_id = p.id
+                    INNER JOIN {$groupMembers} gm ON gm.user_id = pm.user_id
+                    WHERE gm.group_id = %d
+                      AND gm.role = 'student'
+                      " . ($currentGroupColumn ? 'AND p.current_group_id IS NULL' : '') . "
+                      {$this->carriableProjectSql('p')}";
+            $register($wpdb->get_results($wpdb->prepare($sql, $fromGroupId), ARRAY_A) ?: [], 'project_members');
+        }
+
+        return array_values($found);
+    }
+
+    public function backfillProjectClosureColumnsForGroup(int $fromGroupId, ?int $fromYearId = null): int
+    {
+        global $wpdb;
+
+        $projects = $this->projectsTable();
+        if ($fromGroupId <= 0 || !$this->tableExists($projects) || !$this->columnExists($projects, 'class_slug')) {
             return 0;
         }
 
-        $updates = [
-            'current_year_id' => $toYearId,
-            'current_group_id' => $toGroupId,
-            'updated_at' => current_time('mysql'),
-        ];
-        if ($this->columnExists($this->projectsTable(), 'lifecycle_status')) {
-            $updates['lifecycle_status'] = 'active';
+        $candidates = $this->classSlugCandidatesForGroup($fromGroupId);
+        if (!$candidates) {
+            return 0;
         }
 
-        $where = ['current_group_id' => $fromGroupId];
-        $whereFormats = ['%d'];
-        if ($fromYearId > 0 && $this->columnExists($this->projectsTable(), 'current_year_id')) {
-            $where['current_year_id'] = $fromYearId;
-            $whereFormats[] = '%d';
+        $updates = [];
+        $formats = [];
+        if ($this->columnExists($projects, 'origin_group_id')) {
+            $updates['origin_group_id'] = $fromGroupId;
+            $formats[] = '%d';
+        }
+        if ($this->columnExists($projects, 'current_group_id')) {
+            $updates['current_group_id'] = $fromGroupId;
+            $formats[] = '%d';
+        }
+        if ($fromYearId && $this->columnExists($projects, 'origin_year_id')) {
+            $updates['origin_year_id'] = $fromYearId;
+            $formats[] = '%d';
+        }
+        if ($fromYearId && $this->columnExists($projects, 'current_year_id')) {
+            $updates['current_year_id'] = $fromYearId;
+            $formats[] = '%d';
+        }
+        if (!$updates) {
+            return 0;
         }
 
-        $formats = array_map(static function ($value): string {
-            return is_int($value) ? '%d' : '%s';
-        }, array_values($updates));
+        $placeholders = implode(', ', array_fill(0, count($candidates), '%s'));
+        $where = "class_slug IN ({$placeholders})";
+        if ($this->columnExists($projects, 'current_group_id')) {
+            $where .= ' AND current_group_id IS NULL';
+        }
 
-        $result = $wpdb->update($this->projectsTable(), $updates, $where, $formats, $whereFormats);
+        $setClauses = [];
+        foreach (array_keys($updates) as $index => $field) {
+            $setClauses[] = "{$field} = COALESCE({$field}, " . ($formats[$index] ?? '%s') . ')';
+        }
+
+        $sql = "UPDATE {$projects} SET " . implode(', ', $setClauses) . " WHERE {$where}";
+
+        $args = array_merge(array_values($updates), $candidates);
+        $prepared = $wpdb->prepare($sql, $args);
+        $result = $wpdb->query($prepared);
 
         return $result === false ? 0 : (int) $result;
+    }
+
+    public function markProjectsCarriedOverForGroup(int $fromGroupId, int $toGroupId, int $toYearId, ?int $fromYearId = null, ?int $cycleId = null): int
+    {
+        $projects = $this->findProjectsForClosureGroup($fromGroupId, $fromYearId);
+        $updated = 0;
+
+        foreach ($projects as $project) {
+            $projectId = (int) ($project['id'] ?? 0);
+            if ($projectId <= 0) {
+                continue;
+            }
+
+            $updates = [
+                'current_year_id' => $toYearId,
+                'current_group_id' => $toGroupId,
+                'updated_at' => current_time('mysql'),
+            ];
+            if (empty($project['origin_group_id'])) {
+                $updates['origin_group_id'] = $fromGroupId;
+            }
+            if ($fromYearId && empty($project['origin_year_id'])) {
+                $updates['origin_year_id'] = $fromYearId;
+            }
+            if ($cycleId && empty($project['cycle_id'])) {
+                $updates['cycle_id'] = $cycleId;
+            }
+
+            $lifecycle = sanitize_key((string) ($project['lifecycle_status'] ?? $project['status'] ?? 'active'));
+            if ($this->columnExists($this->projectsTable(), 'lifecycle_status') && !in_array($lifecycle, ['frozen', 'archived', 'portfolio_archive'], true)) {
+                $updates['lifecycle_status'] = 'active';
+            }
+
+            $portfolioRelevant = !empty($project['is_portfolio_relevant']);
+            $policy = sanitize_key((string) ($project['closure_policy'] ?? ''));
+            if ($this->columnExists($this->projectsTable(), 'closure_policy')) {
+                if ($portfolioRelevant && $policy !== 'never_purge_automatically' && $policy !== 'freeze_for_portfolio') {
+                    $updates['closure_policy'] = 'never_purge_automatically';
+                } elseif ($policy === '') {
+                    $updates['closure_policy'] = 'auto';
+                }
+            }
+
+            if ($this->updateProjectClosureState($projectId, $updates)) {
+                $updated++;
+            }
+        }
+
+        return $updated;
+    }
+
+    public function preserveProjectsForAlumniExit(int $userId, ?int $fromYearId = null, ?int $fromCycleId = null, array $fromGroupIds = []): array
+    {
+        global $wpdb;
+
+        unset($fromYearId, $fromCycleId, $fromGroupIds);
+
+        $members = $this->table('members');
+        if ($userId <= 0 || !$this->tableExists($members)) {
+            return ['projects' => 0, 'members_archived' => 0, 'projects_frozen' => 0, 'projects_archived' => 0, 'project_ids' => []];
+        }
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT p.*
+             FROM {$this->projectsTable()} p
+             INNER JOIN {$members} pm ON pm.project_id = p.id
+             WHERE pm.user_id = %d",
+            $userId
+        ), ARRAY_A) ?: [];
+
+        $summary = ['projects' => 0, 'members_archived' => 0, 'projects_frozen' => 0, 'projects_archived' => 0, 'project_ids' => []];
+        foreach ($rows as $project) {
+            $projectId = (int) ($project['id'] ?? 0);
+            if ($projectId <= 0 || !$this->isUsefulAlumniProject($project)) {
+                continue;
+            }
+
+            $summary['projects']++;
+            $summary['project_ids'][] = $projectId;
+            if (!empty($project['is_portfolio_relevant']) && $this->columnExists($this->projectsTable(), 'closure_policy')) {
+                $policy = sanitize_key((string) ($project['closure_policy'] ?? ''));
+                if ($policy !== 'never_purge_automatically' && $policy !== 'freeze_for_portfolio') {
+                    $this->updateProjectClosureState($projectId, [
+                        'closure_policy' => 'never_purge_automatically',
+                        'updated_at' => current_time('mysql'),
+                    ]);
+                }
+            }
+            if ($this->markProjectMemberArchiveViewer($projectId, $userId)) {
+                $summary['members_archived']++;
+            }
+
+            if ($this->projectHasActiveNonAlumniMembers($projectId, $userId)) {
+                continue;
+            }
+
+            $lifecycle = sanitize_key((string) ($project['lifecycle_status'] ?? $project['status'] ?? 'active'));
+            if ($this->isPortfolioRelevantProject($project)) {
+                if ($this->freezeProjectForPortfolio($projectId, $userId)) {
+                    $summary['projects_frozen']++;
+                }
+            } elseif (in_array($lifecycle, ['completed', 'finished', 'archived'], true)) {
+                if ($this->archiveProjectReadonly($projectId, $userId)) {
+                    $summary['projects_archived']++;
+                }
+            }
+        }
+
+        return $summary;
     }
 
     public function nextTaskPosition(int $columnId): int
@@ -754,7 +957,7 @@ final class Repository
             if (!$this->columnExists($table, $field) && $field !== 'updated_at') {
                 continue;
             }
-            if ($field === 'current_year_id' || $field === 'current_group_id' || $field === 'archived_by' || $field === 'is_portfolio_relevant') {
+            if (in_array($field, ['origin_year_id', 'current_year_id', 'origin_group_id', 'current_group_id', 'cycle_id', 'archived_by', 'is_portfolio_relevant'], true)) {
                 $clean[$field] = $value === null ? null : (int) $value;
                 $formats[] = '%d';
             } else {
@@ -806,6 +1009,176 @@ final class Repository
         if ($updates) {
             $wpdb->update($table, $updates, ['project_id' => $projectId], $formats, ['%d']);
         }
+    }
+
+    private function markProjectMemberArchiveViewer(int $projectId, int $userId): bool
+    {
+        global $wpdb;
+
+        $table = $this->table('members');
+        if ($projectId <= 0 || $userId <= 0 || !$this->tableExists($table)) {
+            return false;
+        }
+
+        $updates = [
+            'access_level' => 'archive_viewer',
+            'can_edit' => 0,
+            'can_comment' => 0,
+            'can_export' => 1,
+            'archived_at' => current_time('mysql'),
+        ];
+        $formatMap = [
+            'access_level' => '%s',
+            'can_edit' => '%d',
+            'can_comment' => '%d',
+            'can_export' => '%d',
+            'archived_at' => '%s',
+        ];
+        $formats = [];
+
+        foreach (array_keys($updates) as $field) {
+            if (!$this->columnExists($table, $field)) {
+                unset($updates[$field]);
+                continue;
+            }
+            $formats[] = $formatMap[$field];
+        }
+
+        if (!$updates) {
+            return true;
+        }
+
+        return false !== $wpdb->update(
+            $table,
+            $updates,
+            ['project_id' => $projectId, 'user_id' => $userId],
+            $formats,
+            ['%d', '%d']
+        );
+    }
+
+    private function projectHasActiveNonAlumniMembers(int $projectId, int $exitingUserId): bool
+    {
+        global $wpdb;
+
+        $table = $this->table('members');
+        if ($projectId <= 0 || !$this->tableExists($table)) {
+            return false;
+        }
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE project_id = %d AND user_id <> %d",
+            $projectId,
+            $exitingUserId
+        ), ARRAY_A) ?: [];
+
+        foreach ($rows as $row) {
+            $memberUserId = (int) ($row['user_id'] ?? 0);
+            if ($memberUserId <= 0) {
+                continue;
+            }
+            $accessLevel = sanitize_key((string) ($row['access_level'] ?? $row['role'] ?? 'member'));
+            if (in_array($accessLevel, ['archive_viewer', 'former_member', 'viewer'], true)) {
+                continue;
+            }
+            if (array_key_exists('can_edit', $row) && (int) $row['can_edit'] !== 1 && array_key_exists('can_comment', $row) && (int) $row['can_comment'] !== 1) {
+                continue;
+            }
+            $user = get_user_by('id', $memberUserId);
+            if ($user && !in_array('ouinpo_alumni', (array) $user->roles, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isUsefulAlumniProject(array $project): bool
+    {
+        $projectId = (int) ($project['id'] ?? 0);
+        if ($projectId <= 0) {
+            return false;
+        }
+
+        $lifecycle = sanitize_key((string) ($project['lifecycle_status'] ?? $project['status'] ?? 'active'));
+        if ($this->isPortfolioRelevantProject($project) || in_array($lifecycle, ['active', 'completed', 'finished', 'frozen', 'archived', 'portfolio_archive'], true)) {
+            return true;
+        }
+
+        return $this->projectHasRows($this->table('deliverables'), $projectId, 'project_id', "is_portfolio_evidence = 1 OR status = 'validated'")
+            || $this->projectHasRows($this->table('evidence'), $projectId, 'project_id', 'is_portfolio_evidence = 1')
+            || $this->projectHasRows($this->table('competency_links'), $projectId, 'project_id');
+    }
+
+    private function projectHasRows(string $table, int $projectId, string $projectColumn, string $extraWhere = ''): bool
+    {
+        global $wpdb;
+
+        if ($projectId <= 0 || !$this->tableExists($table) || !$this->columnExists($table, $projectColumn)) {
+            return false;
+        }
+
+        if ($extraWhere !== '') {
+            foreach (['is_portfolio_evidence', 'status'] as $column) {
+                if (str_contains($extraWhere, $column) && !$this->columnExists($table, $column)) {
+                    return false;
+                }
+            }
+        }
+
+        $where = "{$projectColumn} = %d";
+        if ($extraWhere !== '') {
+            $where .= " AND ({$extraWhere})";
+        }
+
+        return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE {$where}", $projectId)) > 0;
+    }
+
+    private function classSlugCandidatesForGroup(int $groupId): array
+    {
+        global $wpdb;
+
+        $groups = $wpdb->prefix . 'ouin_exo_groups';
+        if ($groupId <= 0 || !$this->tableExists($groups)) {
+            return [];
+        }
+
+        $group = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$groups} WHERE id = %d LIMIT 1", $groupId), ARRAY_A);
+        if (!$group) {
+            return [(string) $groupId];
+        }
+
+        $label = (string) ($group['label'] ?? '');
+        $candidates = [
+            (string) $groupId,
+            sanitize_key($label),
+            sanitize_title($label),
+        ];
+
+        foreach (['slug', 'class_slug'] as $field) {
+            if (!empty($group[$field])) {
+                $candidates[] = sanitize_key((string) $group[$field]);
+                $candidates[] = sanitize_title((string) $group[$field]);
+            }
+        }
+
+        return array_values(array_unique(array_filter($candidates, static fn($value) => (string) $value !== '')));
+    }
+
+    private function carriableProjectSql(string $alias = ''): string
+    {
+        $table = $this->projectsTable();
+        $prefix = $alias !== '' ? $alias . '.' : '';
+        $clauses = [];
+
+        if ($this->columnExists($table, 'lifecycle_status')) {
+            $clauses[] = "{$prefix}lifecycle_status NOT IN ('archived', 'portfolio_archive', 'pending_deletion', 'deleted')";
+        }
+        if ($this->columnExists($table, 'status')) {
+            $clauses[] = "{$prefix}status NOT IN ('archived', 'portfolio_archive', 'pending_deletion', 'deleted')";
+        }
+
+        return $clauses ? ' AND ' . implode(' AND ', $clauses) : '';
     }
 
     public function columnExists(string $table, string $column): bool
