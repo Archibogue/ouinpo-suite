@@ -1,7 +1,9 @@
 <?php
 namespace Ouinpo\Exercises;
 
-if (!defined('ABSPATH')) exit;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+
+if (!defined('ABSPATH')) exit;
 
 /**
  * Moteur d’attribution automatique des badges
@@ -31,7 +33,11 @@ class BadgeEngine {
      */
     public static function recompute_for_user(int $user_id): void {
 
-        if ($user_id <= 0) return;
+        if ($user_id <= 0) return;
+
+        if (!(new LearningDataPolicy())->canStoreLearningData($user_id)) {
+            return;
+        }
 
         if (self::auto_badges_disabled_for_user($user_id)) {
             return;

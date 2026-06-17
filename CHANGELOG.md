@@ -2,6 +2,42 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.4-beta] - 2026-06-16
+
+### Ajoute
+
+- Socle de cloture annuelle non destructive avec cycles pedagogiques, transitions de niveaux, cohortes, politiques de conservation et journalisation des runs/items.
+- Ecrans admin `Cycles pedagogiques` et `Cloture annuelle` avec simulation, confirmation explicite et execution non destructive.
+- Role `ouinpo_alumni` et capacites `ouinpo_practice_exercises`, `ouinpo_track_learning_data`, `ouinpo_view_own_learning_data`, `ouinpo_portfolio_view_own_archive`, `ouinpo_portfolio_export_own`.
+- Politique centrale `LearningDataPolicy` pour empecher le stockage de suivi pedagogique actif pour les alumni.
+- Extension Projects pour reporter, archiver en lecture seule ou figer les projets portfolio sans suppression automatique.
+- Documentation `docs/year-closure-cycles.md`.
+
+### Migrations
+
+- Migration Exercices `2.8.0`.
+- Ajout des tables `ouinpo_cycles`, `ouinpo_level_transitions`, `ouinpo_cycle_cohorts`, `ouinpo_cycle_members`, `ouinpo_cycle_data_policies`, `ouinpo_year_closure_runs` et `ouinpo_year_closure_items`.
+- Ajout de colonnes idempotentes sur niveaux, annees scolaires, classes et tables Projects.
+
+### Fixed
+
+- Fixed Exercises schema migrations for assessment tables.
+- Replaced fragile `dbDelta()` handling for `assessment_results` and `assessment_attendance`.
+- Added controlled schema repair for partial migrations.
+- Prevented Exercises DB version advancement after critical migration errors.
+- Normalized Exercises `dbDelta()` calls to avoid invalid empty index `ALTER` statements.
+
+### Validation
+
+- Tested ZIP install on LocalWP `ouinpo-test`.
+- Tested fresh install with non-standard database prefix `ouf_`.
+- Validated idempotence and partial schema repair.
+
+### Limites
+
+- Aucune purge RGPD effective dans cette branche.
+- Les suppressions RGPD sont journalisees comme `planned`.
+
 ## [0.7.3-beta] - 2026-06-14
 
 ### Ameliorations

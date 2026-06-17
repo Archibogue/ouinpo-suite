@@ -2,6 +2,8 @@
 
 namespace Ouinpo\Exercises\Rest;
 
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+
 defined('ABSPATH') || exit;
 
 final class WrittenSubjectRoutes
@@ -277,6 +279,10 @@ final class WrittenSubjectRoutes
         $question_id = (int) $request['id'];
         $status = sanitize_key((string) $request->get_param('status'));
 
+        if (!(new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id())) {
+            return rest_ensure_response(LearningDataPolicy::trackingDisabledResponse() + ['status' => $status]);
+        }
+
         $result = self::save_question_status(get_current_user_id(), $question_id, $status);
         if (is_wp_error($result)) {
             return $result;
@@ -320,7 +326,10 @@ final class WrittenSubjectRoutes
             return $quota;
         }
 
-        self::save_report_input(get_current_user_id(), $input);
+        $can_store = (new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id());
+        if ($can_store) {
+            self::save_report_input(get_current_user_id(), $input);
+        }
 
         $report = self::generate_student_report($subject, $input);
         if (is_wp_error($report)) {
@@ -329,7 +338,7 @@ final class WrittenSubjectRoutes
 
         return rest_ensure_response([
             'ok' => true,
-            'stored' => true,
+            'stored' => $can_store,
             'report' => $report,
         ]);
     }
@@ -356,6 +365,10 @@ final class WrittenSubjectRoutes
             return $input;
         }
 
+        if (!(new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id())) {
+            return rest_ensure_response(LearningDataPolicy::trackingDisabledResponse());
+        }
+
         self::save_report_input(get_current_user_id(), $input);
 
         return rest_ensure_response([
@@ -374,6 +387,10 @@ final class WrittenSubjectRoutes
         $question_ids = self::get_subject_question_ids($subject_id);
         if (!$question_ids) {
             return new \WP_Error('not_found', 'Annale écrite introuvable ou sans questions actives.', ['status' => 404]);
+        }
+
+        if (!(new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id())) {
+            return rest_ensure_response(LearningDataPolicy::trackingDisabledResponse() + ['reset' => false]);
         }
 
         self::delete_student_subject_progress(get_current_user_id(), $question_ids);
@@ -430,7 +447,9 @@ final class WrittenSubjectRoutes
             return $quota;
         }
 
-        if ($is_logged) {
+        $can_store = $is_logged && (new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id());
+
+        if ($can_store) {
             self::save_report_input(get_current_user_id(), [
                 'answers' => [$question_id => $answer],
                 'used_hints' => [$question_id => $used_hints],
@@ -445,7 +464,7 @@ final class WrittenSubjectRoutes
             return $advice;
         }
 
-        if (!$is_logged) {
+        if (!$is_logged || !$can_store) {
             return rest_ensure_response([
                 'ok' => true,
                 'stored' => false,
@@ -502,6 +521,10 @@ final class WrittenSubjectRoutes
 
         if (!in_array($status, ['attempted', 'solved'], true)) {
             return new \WP_Error('invalid_status', 'Statut invalide.', ['status' => 400]);
+        }
+
+        if (!(new LearningDataPolicy())->canStoreLearningData($user_id)) {
+            return new \WP_Error('tracking_disabled', 'Suivi pedagogique desactive.', ['status' => 200]);
         }
 
         global $wpdb;

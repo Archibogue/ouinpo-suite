@@ -39,8 +39,29 @@ final class ProjectPermissionService
             return false;
         }
 
-        return $this->canManageProjectRow($project, $userId)
-            || ($this->userHasCap($userId, Capabilities::PROJECTS_VIEW_OWN) && $this->isProjectMember($projectId, $userId));
+        if ($this->canManageProjectRow($project, $userId)) {
+            return true;
+        }
+
+        $member = $this->getProjectMemberRow($projectId, $userId);
+        if (!$member) {
+            return false;
+        }
+
+        $lifecycle = sanitize_key((string) ($project['lifecycle_status'] ?? $project['status'] ?? 'active'));
+        $archiveStatus = in_array($lifecycle, ['archived', 'portfolio_archive', 'frozen'], true);
+        $accessLevel = sanitize_key((string) ($member['access_level'] ?? $member['role'] ?? 'member'));
+
+        if ($this->isArchiveMemberAccess($accessLevel)) {
+            return $this->userHasCap($userId, Capabilities::PORTFOLIO_VIEW_OWN_ARCHIVE);
+        }
+
+        if ($archiveStatus) {
+            return $this->userHasCap($userId, Capabilities::PORTFOLIO_VIEW_OWN_ARCHIVE)
+                || $this->userHasCap($userId, Capabilities::PROJECTS_VIEW_OWN);
+        }
+
+        return $this->userHasCap($userId, Capabilities::PROJECTS_VIEW_OWN);
     }
 
     public function canManageProject(int $projectId, int $userId = 0): bool
@@ -91,6 +112,10 @@ final class ProjectPermissionService
             return false;
         }
 
+        if (!$this->memberAllows($userId, (int) $task['project_id'], 'can_edit')) {
+            return false;
+        }
+
         return $this->canViewProject((int) $task['project_id'], $userId)
             && (
                 (int) ($task['created_by'] ?? 0) === $userId
@@ -102,8 +127,12 @@ final class ProjectPermissionService
     {
         $userId = $this->resolveUserId($userId);
 
-        return $this->canManageProject($projectId, $userId)
-            || $this->userHasCap($userId, Capabilities::PROJECTS_EDIT_OWN_TASKS);
+        if ($this->canManageProject($projectId, $userId)) {
+            return true;
+        }
+
+        return $this->memberAllows($userId, $projectId, 'can_edit')
+            && $this->userHasCap($userId, Capabilities::PROJECTS_EDIT_OWN_TASKS);
     }
 
     public function canCommentOrLog(int $userId = 0): bool
@@ -122,8 +151,50 @@ final class ProjectPermissionService
             return true;
         }
 
-        return $this->userHasCap($userId, Capabilities::PROJECTS_COMMENT)
+        return ($this->memberAllows($userId, $projectId, 'can_comment') || $this->memberAllows($userId, $projectId, 'can_edit'))
+            && ($this->userHasCap($userId, Capabilities::PROJECTS_COMMENT) || $this->userHasCap($userId, Capabilities::PROJECTS_EDIT_OWN_TASKS))
             && $this->canViewProject($projectId, $userId);
+    }
+
+    public function canCommentProjectItem(int $projectId, int $userId = 0): bool
+    {
+        $userId = $this->resolveUserId($userId);
+        if ($this->canManageProject($projectId, $userId)) {
+            return true;
+        }
+
+        return $this->memberAllows($userId, $projectId, 'can_comment')
+            && $this->userHasCap($userId, Capabilities::PROJECTS_COMMENT)
+            && $this->canViewProject($projectId, $userId);
+    }
+
+    public function canExportProject(int $projectId, int $userId = 0): bool
+    {
+        $userId = $this->resolveUserId($userId);
+        if ($this->canManageProject($projectId, $userId)) {
+            return true;
+        }
+
+        if (!$this->canViewProject($projectId, $userId)) {
+            return false;
+        }
+
+        $member = $this->getProjectMemberRow($projectId, $userId);
+        if (!$member) {
+            return false;
+        }
+
+        if (array_key_exists('can_export', $member) && (int) $member['can_export'] !== 1) {
+            return false;
+        }
+
+        $accessLevel = sanitize_key((string) ($member['access_level'] ?? $member['role'] ?? 'member'));
+        if ($this->isArchiveMemberAccess($accessLevel)) {
+            return $this->userHasCap($userId, Capabilities::PORTFOLIO_EXPORT_OWN);
+        }
+
+        return $this->userHasCap($userId, Capabilities::PORTFOLIO_EXPORT_OWN)
+            || $this->userHasCap($userId, Capabilities::PROJECTS_VIEW_OWN);
     }
 
     public function canManageEvidenceItem(array $evidence, int $userId = 0): bool
@@ -159,8 +230,45 @@ final class ProjectPermissionService
 
         return ProjectsStudentAiAssistant::globalEnabled()
             && ProjectsStudentAiAssistant::projectStudentAiEnabled($project)
+            && !in_array(sanitize_key((string) ($project['lifecycle_status'] ?? $project['status'] ?? '')), ['archived', 'portfolio_archive', 'frozen'], true)
             && $this->isProjectMember((int) ($project['id'] ?? 0), $userId)
             && $this->userHasCap($userId, Capabilities::PROJECTS_AI_STUDENT_USE);
+    }
+
+    public function getProjectMemberRow(int $projectId, int $userId): ?array
+    {
+        global $wpdb;
+
+        if ($projectId <= 0 || $userId <= 0) {
+            return null;
+        }
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$this->repository->table('members')} WHERE project_id = %d AND user_id = %d LIMIT 1",
+            $projectId,
+            $userId
+        ), ARRAY_A);
+
+        return is_array($row) ? $row : null;
+    }
+
+    private function memberAllows(int $userId, int $projectId, string $flag): bool
+    {
+        $member = $this->getProjectMemberRow($projectId, $userId);
+        if (!$member) {
+            return false;
+        }
+
+        if (!array_key_exists($flag, $member)) {
+            return true;
+        }
+
+        return (int) $member[$flag] === 1;
+    }
+
+    private function isArchiveMemberAccess(string $accessLevel): bool
+    {
+        return in_array($accessLevel, ['archive_viewer', 'former_member', 'viewer'], true);
     }
 
     private function userHasCap(int $userId, string $capability): bool

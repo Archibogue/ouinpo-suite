@@ -1,7 +1,9 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
-defined('ABSPATH') || exit;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+
+defined('ABSPATH') || exit;
 
 class ExercisesRoutes {
     const NS = 'ouinpo/v1';
@@ -596,11 +598,11 @@ class ExercisesRoutes {
         }
 
         // ✅ trace uniquement si connecté
-        if (is_user_logged_in()) {
-            $uid = get_current_user_id();
-            $wpdb->query($wpdb->prepare(
-                "INSERT IGNORE INTO {$p}user_reveals (user_id, exercise_id, kind, ref)
-                 VALUES (%d, %d, 'hint', %s)",
+        if (is_user_logged_in() && (new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id())) {
+            $uid = get_current_user_id();
+            $wpdb->query($wpdb->prepare(
+                "INSERT IGNORE INTO {$p}user_reveals (user_id, exercise_id, kind, ref)
+                 VALUES (%d, %d, 'hint', %s)",
                 $uid, $exo, (string) $order
             ));
         }
@@ -628,11 +630,11 @@ class ExercisesRoutes {
         }
 
         // ✅ trace uniquement si connecté
-        if (is_user_logged_in()) {
-            $uid = get_current_user_id();
-            $wpdb->query($wpdb->prepare(
-                "INSERT IGNORE INTO {$p}user_reveals (user_id, exercise_id, kind, ref)
-                 VALUES (%d, %d, 'solution', %s)",
+        if (is_user_logged_in() && (new LearningDataPolicy())->canStoreLearningData((int) get_current_user_id())) {
+            $uid = get_current_user_id();
+            $wpdb->query($wpdb->prepare(
+                "INSERT IGNORE INTO {$p}user_reveals (user_id, exercise_id, kind, ref)
+                 VALUES (%d, %d, 'solution', %s)",
                 $uid, $exo, (string) $sid
             ));
         }

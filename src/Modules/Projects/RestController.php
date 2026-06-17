@@ -287,7 +287,7 @@ final class RestController
             [
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => [self::class, 'exportProjectHtml'],
-                'permission_callback' => [self::class, 'canViewProject'],
+                'permission_callback' => [self::class, 'canExportProject'],
             ],
         ]);
 
@@ -295,7 +295,7 @@ final class RestController
             [
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => [self::class, 'exportProjectMarkdown'],
-                'permission_callback' => [self::class, 'canViewProject'],
+                'permission_callback' => [self::class, 'canExportProject'],
             ],
         ]);
 
@@ -303,7 +303,7 @@ final class RestController
             [
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => [self::class, 'exportBtsSituationMarkdown'],
-                'permission_callback' => [self::class, 'canViewProject'],
+                'permission_callback' => [self::class, 'canExportProject'],
             ],
         ]);
 
@@ -991,6 +991,23 @@ final class RestController
             : new WP_Error('ouinpo_projects_forbidden', 'Acces refuse.', ['status' => 403]);
     }
 
+    public static function canExportProject(WP_REST_Request $request)
+    {
+        $allowed = self::requireLoggedInRestNonce();
+        if (is_wp_error($allowed)) {
+            return $allowed;
+        }
+
+        $projectId = self::id($request);
+        if ($projectId <= 0) {
+            return new WP_Error('ouinpo_projects_bad_id', 'Identifiant invalide.', ['status' => 400]);
+        }
+
+        return (new ProjectPermissionService(new Repository()))->canExportProject($projectId, get_current_user_id())
+            ? true
+            : new WP_Error('ouinpo_projects_forbidden', 'Export refuse.', ['status' => 403]);
+    }
+
     public static function canManageProject(WP_REST_Request $request)
     {
         $allowed = self::requireLoggedInRestNonce();
@@ -1137,7 +1154,10 @@ final class RestController
             return $view;
         }
 
-        return (new ProjectPermissionService(new Repository()))->canCommentOrLog(get_current_user_id())
+        $repository = new Repository();
+        $task = $repository->getTask(self::id($request));
+
+        return $task && $repository->userCanCommentProjectItem((int) $task['project_id'], get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Commentaire refuse.', ['status' => 403]);
     }
@@ -1172,7 +1192,7 @@ final class RestController
             return $view;
         }
 
-        return (new ProjectPermissionService(new Repository()))->canCommentOrLog(get_current_user_id())
+        return (new Repository())->userCanCommentProjectItem(self::id($request), get_current_user_id())
             ? true
             : new WP_Error('ouinpo_projects_forbidden', 'Journal refuse.', ['status' => 403]);
     }

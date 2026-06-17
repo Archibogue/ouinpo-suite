@@ -1,7 +1,8 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
-use WP_REST_Request;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+use WP_REST_Request;
 use WP_REST_Response;
 
 defined('ABSPATH') || exit;
@@ -49,9 +50,9 @@ class StatusRoutes
         global $wpdb;
         $p   = $wpdb->prefix . 'ouin_exo_';
         $uid = get_current_user_id();
-        $eid = (int) $r['id'];
-
-        if (self::is_practical_subject($eid)) {
+        $eid = (int) $r['id'];
+
+        if (self::is_practical_subject($eid)) {
             return new WP_REST_Response((object) [
                 'status'      => 'none',
                 'declared_at' => null,
@@ -85,7 +86,11 @@ class StatusRoutes
         global $wpdb;
         $p   = $wpdb->prefix . 'ouin_exo_';
         $uid = get_current_user_id();
-        $eid = (int) $r['id'];
+        $eid = (int) $r['id'];
+
+        if (!(new LearningDataPolicy())->canStoreLearningData((int) $uid)) {
+            return new WP_REST_Response(LearningDataPolicy::trackingDisabledResponse() + ['status' => 'none'], 200);
+        }
         
         if (self::is_practical_subject($eid)) {
             return new WP_REST_Response(

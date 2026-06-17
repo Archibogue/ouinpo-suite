@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.3-beta : beta technique de stabilisation CSS, sujets ecrits et ergonomie front, partageable a des enseignants volontaires pour test encadre. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.7.4-beta : beta technique ajoutant le socle de cloture annuelle par cycles pedagogiques, le role alumni et une execution non destructive. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -16,6 +16,7 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Ce que le plugin fait ou ne fait pas encore : [`docs/ce-que-fait-le-plugin.md`](docs/ce-que-fait-le-plugin.md).
 - Mise a jour d'une installation existante : [`docs/mise-a-jour.md`](docs/mise-a-jour.md).
 - Roles et droits : [`docs/roles-et-droits.md`](docs/roles-et-droits.md).
+- Cloture annuelle et cycles : [`docs/year-closure-cycles.md`](docs/year-closure-cycles.md).
 - Acces publics et prives : [`docs/acces-publics-prives.md`](docs/acces-publics-prives.md).
 - Donnees personnelles et IA : [`docs/modele-donnees-personnelles-ia.md`](docs/modele-donnees-personnelles-ia.md).
 - Checklist de smoke test 0.7.1 : [`docs/smoke-test-0.7.1.md`](docs/smoke-test-0.7.1.md).
@@ -27,6 +28,7 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Classement par niveau, domaine, compétence et difficulté
 - Suivi de la progression des élèves
 - Gestion de groupes/classes
+- Cycles pedagogiques et assistant de cloture annuelle non destructive
 - Badges pédagogiques
 - Flashcards de révision
 - Concepteur de devoirs

@@ -13,6 +13,7 @@ global $wpdb;
 $tbl_groups  = $wpdb->prefix . 'ouin_exo_groups';
 $tbl_members = $wpdb->prefix . 'ouin_exo_group_members';
 $tbl_levels  = $wpdb->prefix . 'ouin_exo_school_levels';
+$learning_policy = new \Ouinpo\Suite\Core\Privacy\LearningDataPolicy();
 
 $group_id = isset($_GET['group_id']) ? intval($_GET['group_id']) : 0;
 
@@ -23,7 +24,7 @@ if (!empty($_POST) && check_admin_referer('ouinpo_assign_form','ouinpo_assign_no
     if (isset($_POST['add_users']) && is_array($_POST['add_users'])) {
         foreach ($_POST['add_users'] as $uid) {
             $uid = intval($uid);
-            if ($uid > 0) {
+            if ($uid > 0 && $learning_policy->canBeAssignedToClass($uid)) {
                 $wpdb->query($wpdb->prepare(
                     "INSERT IGNORE INTO {$tbl_members} (group_id, user_id, role, school_level_id_override)
                      VALUES (%d, %d, 'student', NULL)",
@@ -122,7 +123,7 @@ settings_errors('ouinpo_assign');
           <input type="hidden" name="group_id" value="<?php echo intval($group_id); ?>">
           <select name="add_users[]" multiple size="18" class="ouinpo-admin-full-width">
             <?php foreach ($all_users as $u):
-              if (isset($members[$u->ID])) continue; ?>
+              if (isset($members[$u->ID]) || !$learning_policy->canBeAssignedToClass((int) $u->ID)) continue; ?>
               <option value="<?php echo intval($u->ID); ?>">
                 <?php echo esc_html($u->display_name . ' <'.$u->user_email.'>'); ?>
               </option>

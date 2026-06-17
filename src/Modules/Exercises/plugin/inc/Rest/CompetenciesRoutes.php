@@ -6,6 +6,7 @@ use Ouinpo\Exercises\Services\AiJsonResponseParser;
 use Ouinpo\Exercises\TeachingState;
 use Ouinpo\Suite\Core\AiSettings;
 use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
 
 defined('ABSPATH') || exit;
 
@@ -242,6 +243,7 @@ class CompetenciesRoutes {
         $ok  = 0;
         $now = current_time('mysql');
         $me  = get_current_user_id();
+        $learningPolicy = new LearningDataPolicy();
 
         foreach ($items as $it) {
             $user_id = (int) ($it['user_id'] ?? 0);
@@ -257,6 +259,10 @@ class CompetenciesRoutes {
             $status    = in_array($rawStatus, $allowed, true) ? $rawStatus : 'not_acquired';
 
             if (!$user_id || !$comp_id || !$year_id) {
+                continue;
+            }
+
+            if (!$learningPolicy->canStoreLearningData($user_id)) {
                 continue;
             }
 
