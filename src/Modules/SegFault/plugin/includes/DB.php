@@ -7,7 +7,26 @@ use PDO;
 
 class DB {
   static function pdo(): PDO {
-    $pdo = new PDO('sqlite:' . OUINPO_SF_DB, null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    if (class_exists(Storage::class)) {
+      Storage::ensure_dirs();
+    }
+
+    $path = (string) OUINPO_SF_DB;
+    $dir = dirname($path);
+
+    if (!is_dir($dir)) {
+      throw new \RuntimeException('SegFault SQLite directory is not available.');
+    }
+
+    if (!is_writable($dir)) {
+      throw new \RuntimeException('SegFault SQLite directory is not writable.');
+    }
+
+    try {
+      $pdo = new PDO('sqlite:' . $path, null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    } catch (\PDOException $e) {
+      throw new \RuntimeException('SegFault SQLite database cannot be opened.', 0, $e);
+    }
     $pdo->exec("PRAGMA journal_mode=WAL;");
     return $pdo;
   }

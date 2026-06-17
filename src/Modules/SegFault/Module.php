@@ -84,7 +84,18 @@ final class Module implements ModuleInterface
         }
 
         if (class_exists(\OuInPo\SegFault\DB::class)) {
-            \OuInPo\SegFault\DB::init();
+            try {
+
+                \OuInPo\SegFault\DB::init();
+
+                delete_option('ouinpo_sf_sqlite_init_error');
+
+            } catch (\Throwable $e) {
+
+                update_option('ouinpo_sf_sqlite_init_error', $e->getMessage(), false);
+                error_log('[OuInPo Suite] SegFault SQLite init skipped during activation: ' . $e->getMessage());
+
+            }
         }
 
         if (function_exists('ouinpo_sf_ensure_progress_tables')) {
