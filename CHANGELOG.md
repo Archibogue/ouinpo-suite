@@ -19,6 +19,20 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Ajout des tables `ouinpo_cycles`, `ouinpo_level_transitions`, `ouinpo_cycle_cohorts`, `ouinpo_cycle_members`, `ouinpo_cycle_data_policies`, `ouinpo_year_closure_runs` et `ouinpo_year_closure_items`.
 - Ajout de colonnes idempotentes sur niveaux, annees scolaires, classes et tables Projects.
 
+### Fixed
+
+- Fixed Exercises schema migrations for assessment tables.
+- Replaced fragile `dbDelta()` handling for `assessment_results` and `assessment_attendance`.
+- Added controlled schema repair for partial migrations.
+- Prevented Exercises DB version advancement after critical migration errors.
+- Normalized Exercises `dbDelta()` calls to avoid invalid empty index `ALTER` statements.
+
+### Validation
+
+- Tested ZIP install on LocalWP `ouinpo-test`.
+- Tested fresh install with non-standard database prefix `ouf_`.
+- Validated idempotence and partial schema repair.
+
 ### Limites
 
 - Aucune purge RGPD effective dans cette branche.
