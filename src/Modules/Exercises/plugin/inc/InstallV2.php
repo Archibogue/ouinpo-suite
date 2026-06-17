@@ -14,6 +14,14 @@ class InstallV2 {
 
     const OPTION_KEY = 'ouinpo_exo_db_version';
 
+    const ASSESSMENT_SCHEMA_CHECK_OPTION = 'ouinpo_exo_assessment_schema_checked';
+
+    const SCHEMA_LOCK_OPTION = 'ouinpo_exo_schema_migration_lock';
+
+    const SCHEMA_LOCK_TTL = 120;
+
+    private static array $schema_errors = [];
+
 
 
     public static function maybe_upgrade() {
@@ -22,21 +30,97 @@ class InstallV2 {
 
         if (version_compare((string) $current, self::DB_VERSION, '>=')) {
 
+            self::maybe_repair_assessment_tables();
+
             return;
 
         }
 
-        self::upgrade_schema();
+        if (!self::acquire_schema_lock()) {
 
-        update_option(self::OPTION_KEY, self::DB_VERSION, false);
+            return;
+
+        }
+
+        try {
+
+            if (!self::upgrade_schema()) {
+
+                return;
+
+            }
+
+            update_option(self::OPTION_KEY, self::DB_VERSION, false);
+
+        } finally {
+
+            self::release_schema_lock();
+
+        }
+
+    }
+
+    private static function maybe_repair_assessment_tables(): bool {
+
+        if ((string) get_option(self::ASSESSMENT_SCHEMA_CHECK_OPTION) === self::DB_VERSION) {
+
+            return true;
+
+        }
+
+        if (!self::acquire_schema_lock()) {
+
+            return false;
+
+        }
+
+        try {
+
+            if ((string) get_option(self::ASSESSMENT_SCHEMA_CHECK_OPTION) === self::DB_VERSION) {
+
+                return true;
+
+            }
+
+            global $wpdb;
+
+            self::reset_schema_errors();
+
+            $charset = $wpdb->get_charset_collate();
+
+            $charset_innodb = "ENGINE=InnoDB " . $charset;
+
+            $p = "{$wpdb->prefix}ouin_exo_";
+
+            $ok = self::ensure_assessment_results_schema($p, $charset_innodb);
+
+            $ok = self::ensure_assessment_attendance_schema($p, $charset_innodb) && $ok;
+
+            if ($ok && empty(self::$schema_errors)) {
+
+                update_option(self::ASSESSMENT_SCHEMA_CHECK_OPTION, self::DB_VERSION, false);
+
+                return true;
+
+            }
+
+            return false;
+
+        } finally {
+
+            self::release_schema_lock();
+
+        }
 
     }
 
 
 
-    public static function upgrade_schema() {
+    public static function upgrade_schema(): bool {
 
         global $wpdb;
+
+        self::reset_schema_errors();
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
@@ -715,56 +799,6 @@ class InstallV2 {
 
 
 
-        $sql_assessment_results = "CREATE TABLE {$p}assessment_results (
-
-            assessment_id BIGINT UNSIGNED NOT NULL,
-
-            user_id BIGINT UNSIGNED NOT NULL,
-
-            competency_id BIGINT UNSIGNED NOT NULL,
-
-            observed_status ENUM('not_acquired','in_progress','consolidating','acquired') NOT NULL DEFAULT 'not_acquired',
-
-            note TEXT NULL,
-
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-            updated_by BIGINT UNSIGNED NULL,
-
-            PRIMARY KEY  (assessment_id, user_id, competency_id),
-
-            KEY user_id (user_id),
-
-            KEY competency_id (competency_id),
-
-            KEY observed_status (observed_status)
-
-        ) $charset_innodb;";
-
-        
-
-        $sql_assessment_attendance = "CREATE TABLE {$p}assessment_attendance (
-
-            assessment_id BIGINT UNSIGNED NOT NULL,
-
-            user_id BIGINT UNSIGNED NOT NULL,
-
-            is_absent TINYINT(1) NOT NULL DEFAULT 0,
-
-            note TEXT NULL,
-
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-            updated_by BIGINT UNSIGNED NULL,
-
-            PRIMARY KEY  (assessment_id, user_id),
-
-            KEY user_id (user_id),
-
-            KEY is_absent (is_absent)
-
-        ) $charset_innodb;";
-
         $sql_written_subjects = "CREATE TABLE {$p}written_subjects (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             title VARCHAR(255) NOT NULL,
@@ -1004,90 +1038,53 @@ class InstallV2 {
 
 
 
-        dbDelta($sql_academic_years);
+        $schema_ok = true;
 
-        dbDelta($sql_school_levels);
-
-        dbDelta($sql_groups);
-
-        dbDelta($sql_group_members);
-
-        dbDelta($sql_exercises);
-
-        dbDelta($sql_exercise_school_level);
-
-        dbDelta($sql_hints);
-
-        dbDelta($sql_solutions);
-
-        dbDelta($sql_user_reveals);
-
-        dbDelta($sql_user_competencies);
-
-        dbDelta($sql_competency_teaching);
-
-        dbDelta($sql_post_competency);
-
-        dbDelta($sql_difficulties);
-
-        dbDelta($sql_ai_attempts);
-
-        dbDelta($sql_user_status);
-        dbDelta($sql_domains);
-        dbDelta($sql_competencies);
-        dbDelta($sql_competency_school_level);
-        dbDelta($sql_competencies_import);
-        dbDelta($sql_exo_comp);
-
-        dbDelta($sql_exam_meta);
-
-        dbDelta($sql_practical_calls);
-
-        dbDelta($sql_practical_files);
-
-        dbDelta($sql_written_subjects);
-
-        dbDelta($sql_written_subject_school_level);
-
-        dbDelta($sql_written_exercises);
-
-        dbDelta($sql_written_questions);
-
-        dbDelta($sql_written_question_competency);
-
-        dbDelta($sql_written_question_hints);
-
-        dbDelta($sql_written_question_status);
-
-        dbDelta($sql_written_question_answers);
-
-        dbDelta($sql_written_hint_usage);
-
-        dbDelta($sql_subject_files);
-
-        dbDelta($sql_practical_call_attempts);
-
-        dbDelta($sql_practical_call_status);
-
-        dbDelta($sql_badges);
-
-        dbDelta($sql_user_badges);
-
-        dbDelta($sql_assessments);
-
-        dbDelta($sql_assessment_items);
-
-        dbDelta($sql_assessment_competencies);
-
-        dbDelta($sql_assessment_results);
-
-        dbDelta($sql_assessment_attendance);
-
-        dbDelta($sql_correction_batches);
-
-        dbDelta($sql_correction_copies);
-
-        dbDelta($sql_correction_items);
+        $schema_ok = self::run_db_delta($sql_academic_years, 'academic_years') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_school_levels, 'school_levels') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_groups, 'groups') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_group_members, 'group_members') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_exercises, 'exercises') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_exercise_school_level, 'exercise_school_level') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_hints, 'hints') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_solutions, 'solutions') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_user_reveals, 'user_reveals') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_user_competencies, 'user_competencies') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_competency_teaching, 'competency_teaching') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_post_competency, 'post_competency') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_difficulties, 'difficulties') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_ai_attempts, 'ai_attempts') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_user_status, 'user_status') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_domains, 'domains') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_competencies, 'competencies') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_competency_school_level, 'competency_school_level') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_competencies_import, 'competencies_import') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_exo_comp, 'exo_comp') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_exam_meta, 'exam_meta') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_practical_calls, 'practical_calls') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_practical_files, 'practical_files') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_subjects, 'written_subjects') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_subject_school_level, 'written_subject_school_level') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_exercises, 'written_exercises') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_questions, 'written_questions') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_question_competency, 'written_question_competency') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_question_hints, 'written_question_hints') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_question_status, 'written_question_status') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_question_answers, 'written_question_answers') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_written_hint_usage, 'written_hint_usage') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_subject_files, 'subject_files') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_practical_call_attempts, 'practical_call_attempts') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_practical_call_status, 'practical_call_status') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_badges, 'badges') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_user_badges, 'user_badges') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_assessments, 'assessments') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_assessment_items, 'assessment_items') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_assessment_competencies, 'assessment_competencies') && $schema_ok;
+        $schema_ok = self::ensure_assessment_results_schema($p, $charset_innodb) && $schema_ok;
+        $schema_ok = self::ensure_assessment_attendance_schema($p, $charset_innodb) && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_correction_batches, 'correction_batches') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_correction_copies, 'correction_copies') && $schema_ok;
+        $schema_ok = self::run_db_delta($sql_correction_items, 'correction_items') && $schema_ok;
 
 
 
@@ -1150,6 +1147,16 @@ class InstallV2 {
         self::seed_year_if_missing();
 
         self::ensure_constraints();
+
+        $ok = $schema_ok && empty(self::$schema_errors);
+
+        if ($ok) {
+
+            update_option(self::ASSESSMENT_SCHEMA_CHECK_OPTION, self::DB_VERSION, false);
+
+        }
+
+        return $ok;
 
         
 
@@ -2306,8 +2313,296 @@ class InstallV2 {
              ON DELETE CASCADE"
         );
 
-        
+    }
 
+    private static function reset_schema_errors(): void {
+        self::$schema_errors = [];
+    }
+
+    private static function acquire_schema_lock(): bool {
+        $now = time();
+        $current = (int) get_option(self::SCHEMA_LOCK_OPTION, 0);
+
+        if ($current > 0 && ($now - $current) > self::SCHEMA_LOCK_TTL) {
+            delete_option(self::SCHEMA_LOCK_OPTION);
+        }
+
+        return add_option(self::SCHEMA_LOCK_OPTION, (string) $now, '', false);
+    }
+
+    private static function release_schema_lock(): void {
+        delete_option(self::SCHEMA_LOCK_OPTION);
+    }
+
+    private static function normalize_db_delta_sql(string $sql): string {
+        $lines = preg_split('/\R/', $sql);
+        if (!is_array($lines)) {
+            return trim($sql);
+        }
+
+        $normalized = [];
+        foreach ($lines as $line) {
+            $line = rtrim($line);
+            if (trim($line) === '') {
+                continue;
+            }
+
+            $normalized[] = $line;
+        }
+
+        return implode("\n", $normalized);
+    }
+
+    private static function run_db_delta(string $sql, string $context): bool {
+        global $wpdb;
+
+        $wpdb->last_error = '';
+        dbDelta(self::normalize_db_delta_sql($sql));
+
+        if (!empty($wpdb->last_error)) {
+            self::record_schema_error('dbDelta ' . $context, (string) $wpdb->last_error);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function record_schema_error(string $context, string $message = ''): void {
+        $message = trim($message);
+        self::$schema_errors[] = $context . ($message !== '' ? ' | ' . $message : '');
+        error_log('[ouinpo] exercises schema migration failed: ' . $context . ($message !== '' ? ' | ' . $message : ''));
+    }
+
+    private static function is_safe_identifier(string $identifier): bool {
+        return (bool) preg_match('/^[A-Za-z0-9_]+$/', $identifier);
+    }
+
+    private static function all_safe_identifiers(array $identifiers): bool {
+        if (empty($identifiers)) {
+            return false;
+        }
+
+        foreach ($identifiers as $identifier) {
+            if (!is_string($identifier) || !self::is_safe_identifier($identifier)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function run_schema_query(string $sql, string $context): bool {
+        global $wpdb;
+
+        $wpdb->last_error = '';
+        $result = $wpdb->query($sql);
+        if ($result === false || !empty($wpdb->last_error)) {
+            self::record_schema_error($context, (string) $wpdb->last_error);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function table_exists(string $table): bool {
+        global $wpdb;
+
+        if (!self::is_safe_identifier($table)) {
+            self::record_schema_error('invalid table identifier: ' . $table);
+            return false;
+        }
+
+        return (bool) $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+    }
+
+    private static function column_exists(string $table, string $column): bool {
+        global $wpdb;
+
+        if (!self::is_safe_identifier($table) || !self::is_safe_identifier($column)) {
+            self::record_schema_error('invalid column lookup: ' . $table . '.' . $column);
+            return false;
+        }
+
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+               FROM information_schema.columns
+              WHERE table_schema = DATABASE()
+                AND table_name = %s
+                AND column_name = %s",
+            $table,
+            $column
+        ));
+
+        return (int) $exists > 0;
+    }
+
+    private static function index_exists(string $table, string $index): bool {
+        global $wpdb;
+
+        if (!self::is_safe_identifier($table) || !self::is_safe_identifier($index)) {
+            self::record_schema_error('invalid index lookup: ' . $table . '.' . $index);
+            return false;
+        }
+
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+               FROM information_schema.statistics
+              WHERE table_schema = DATABASE()
+                AND table_name = %s
+                AND index_name = %s",
+            $table,
+            $index
+        ));
+
+        return (int) $exists > 0;
+    }
+
+    private static function add_column_if_missing(string $table, string $column, string $definition): bool {
+        if (!self::is_safe_identifier($table) || !self::is_safe_identifier($column) || strpos($definition, ';') !== false) {
+            self::record_schema_error('invalid column definition: ' . $table . '.' . $column);
+            return false;
+        }
+
+        if (!self::table_exists($table)) {
+            self::record_schema_error('table missing before column check: ' . $table);
+            return false;
+        }
+
+        if (self::column_exists($table, $column)) {
+            return true;
+        }
+
+        return self::run_schema_query("ALTER TABLE {$table} ADD COLUMN {$definition}", 'add column ' . $table . '.' . $column);
+    }
+
+    private static function add_primary_key_if_missing(string $table, array $columns): bool {
+        if (!self::is_safe_identifier($table) || !self::all_safe_identifiers($columns)) {
+            self::record_schema_error('invalid primary key definition: ' . $table);
+            return false;
+        }
+
+        if (!self::table_exists($table)) {
+            self::record_schema_error('table missing before primary key check: ' . $table);
+            return false;
+        }
+
+        if (self::index_exists($table, 'PRIMARY')) {
+            return true;
+        }
+
+        return self::run_schema_query(
+            "ALTER TABLE {$table} ADD PRIMARY KEY  (" . implode(', ', $columns) . ')',
+            'add primary key ' . $table
+        );
+    }
+
+    private static function add_index_if_missing(string $table, string $index, array $columns): bool {
+        if (!self::is_safe_identifier($table) || !self::is_safe_identifier($index) || !self::all_safe_identifiers($columns)) {
+            self::record_schema_error('invalid index definition: ' . $table . '.' . $index);
+            return false;
+        }
+
+        if (!self::table_exists($table)) {
+            self::record_schema_error('table missing before index check: ' . $table);
+            return false;
+        }
+
+        if (self::index_exists($table, $index)) {
+            return true;
+        }
+
+        return self::run_schema_query(
+            "ALTER TABLE {$table} ADD KEY {$index} (" . implode(', ', $columns) . ')',
+            'add index ' . $table . '.' . $index
+        );
+    }
+
+    private static function ensure_assessment_results_schema(string $p, string $charset_innodb): bool {
+        $table = $p . 'assessment_results';
+        if (!self::is_safe_identifier($table)) {
+            self::record_schema_error('invalid assessment_results table identifier: ' . $table);
+            return false;
+        }
+
+        $ok = self::run_schema_query(
+            "CREATE TABLE IF NOT EXISTS {$table} (
+                assessment_id BIGINT UNSIGNED NOT NULL,
+                user_id BIGINT UNSIGNED NOT NULL,
+                competency_id BIGINT UNSIGNED NOT NULL,
+                observed_status ENUM('not_acquired','in_progress','consolidating','acquired') NOT NULL DEFAULT 'not_acquired',
+                note TEXT NULL,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                updated_by BIGINT UNSIGNED NULL,
+                PRIMARY KEY  (assessment_id, user_id, competency_id),
+                KEY user_id (user_id),
+                KEY competency_id (competency_id),
+                KEY observed_status (observed_status)
+            ) {$charset_innodb}",
+            'create table ' . $table
+        );
+
+        $columns = [
+            'assessment_id' => 'assessment_id BIGINT UNSIGNED NOT NULL',
+            'user_id' => 'user_id BIGINT UNSIGNED NOT NULL',
+            'competency_id' => 'competency_id BIGINT UNSIGNED NOT NULL',
+            'observed_status' => "observed_status ENUM('not_acquired','in_progress','consolidating','acquired') NOT NULL DEFAULT 'not_acquired'",
+            'note' => 'note TEXT NULL',
+            'updated_at' => 'updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+            'updated_by' => 'updated_by BIGINT UNSIGNED NULL',
+        ];
+
+        foreach ($columns as $column => $definition) {
+            $ok = self::add_column_if_missing($table, $column, $definition) && $ok;
+        }
+
+        $ok = self::add_primary_key_if_missing($table, ['assessment_id', 'user_id', 'competency_id']) && $ok;
+        $ok = self::add_index_if_missing($table, 'user_id', ['user_id']) && $ok;
+        $ok = self::add_index_if_missing($table, 'competency_id', ['competency_id']) && $ok;
+        $ok = self::add_index_if_missing($table, 'observed_status', ['observed_status']) && $ok;
+
+        return $ok;
+    }
+
+    private static function ensure_assessment_attendance_schema(string $p, string $charset_innodb): bool {
+        $table = $p . 'assessment_attendance';
+        if (!self::is_safe_identifier($table)) {
+            self::record_schema_error('invalid assessment_attendance table identifier: ' . $table);
+            return false;
+        }
+
+        $ok = self::run_schema_query(
+            "CREATE TABLE IF NOT EXISTS {$table} (
+                assessment_id BIGINT UNSIGNED NOT NULL,
+                user_id BIGINT UNSIGNED NOT NULL,
+                is_absent TINYINT(1) NOT NULL DEFAULT 0,
+                note TEXT NULL,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                updated_by BIGINT UNSIGNED NULL,
+                PRIMARY KEY  (assessment_id, user_id),
+                KEY user_id (user_id),
+                KEY is_absent (is_absent)
+            ) {$charset_innodb}",
+            'create table ' . $table
+        );
+
+        $columns = [
+            'assessment_id' => 'assessment_id BIGINT UNSIGNED NOT NULL',
+            'user_id' => 'user_id BIGINT UNSIGNED NOT NULL',
+            'is_absent' => 'is_absent TINYINT(1) NOT NULL DEFAULT 0',
+            'note' => 'note TEXT NULL',
+            'updated_at' => 'updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+            'updated_by' => 'updated_by BIGINT UNSIGNED NULL',
+        ];
+
+        foreach ($columns as $column => $definition) {
+            $ok = self::add_column_if_missing($table, $column, $definition) && $ok;
+        }
+
+        $ok = self::add_primary_key_if_missing($table, ['assessment_id', 'user_id']) && $ok;
+        $ok = self::add_index_if_missing($table, 'user_id', ['user_id']) && $ok;
+        $ok = self::add_index_if_missing($table, 'is_absent', ['is_absent']) && $ok;
+
+        return $ok;
     }
 
     private static function ensure_written_question_attempt_columns(): void {
