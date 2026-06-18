@@ -21,7 +21,7 @@ final class LearningAudiencePolicy
         return in_array('ouinpo_learner', (array) $user->roles, true);
     }
 
-    public static function isClassStudent(int $userId): bool
+    public static function isClassStudent(int $userId, ?int $groupId = null): bool
     {
         if ($userId <= 0 || self::isAutonomousLearner($userId)) {
             return false;
@@ -33,25 +33,65 @@ final class LearningAudiencePolicy
         }
 
         return in_array('ouinpo_student', (array) $user->roles, true)
-            || in_array('eleve', (array) $user->roles, true);
+            || in_array('eleve', (array) $user->roles, true)
+            || self::isRosteredClassStudent($userId, $groupId);
     }
 
-    public static function filterClassStudentIds(array $userIds): array
+    public static function isRosteredClassStudent(int $userId, ?int $groupId = null): bool
+    {
+        if ($userId <= 0 || self::isAutonomousLearner($userId)) {
+            return false;
+        }
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ouin_exo_group_members';
+
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+            return false;
+        }
+
+        if ($groupId !== null && $groupId > 0) {
+            $count = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*)
+                 FROM {$table}
+                 WHERE user_id = %d
+                   AND group_id = %d
+                   AND role = 'student'",
+                $userId,
+                $groupId
+            ));
+        } else {
+            $count = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*)
+                 FROM {$table}
+                 WHERE user_id = %d
+                   AND role = 'student'",
+                $userId
+            ));
+        }
+
+        return $count > 0;
+    }
+
+    public static function filterClassStudentIds(array $userIds, ?int $groupId = null): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn($id) => $id > 0)));
 
-        return array_values(array_filter($ids, static fn($id) => self::isClassStudent((int) $id)));
+        return array_values(array_filter($ids, static fn($id) => self::isClassStudent((int) $id, $groupId)));
     }
 
-    public static function filterClassStudentRows(array $rows, string $userIdKey = 'user_id'): array
+    public static function filterClassStudentRows(array $rows, string $userIdKey = 'user_id', ?string $groupIdKey = 'group_id'): array
     {
-        return array_values(array_filter($rows, static function ($row) use ($userIdKey): bool {
+        return array_values(array_filter($rows, static function ($row) use ($userIdKey, $groupIdKey): bool {
             if (is_array($row)) {
-                return self::isClassStudent((int) ($row[$userIdKey] ?? 0));
+                $groupId = $groupIdKey !== null && isset($row[$groupIdKey]) ? (int) $row[$groupIdKey] : null;
+                return self::isClassStudent((int) ($row[$userIdKey] ?? 0), $groupId);
             }
 
             if (is_object($row)) {
-                return self::isClassStudent((int) ($row->{$userIdKey} ?? 0));
+                $groupId = $groupIdKey !== null && isset($row->{$groupIdKey}) ? (int) $row->{$groupIdKey} : null;
+                return self::isClassStudent((int) ($row->{$userIdKey} ?? 0), $groupId);
             }
 
             return false;

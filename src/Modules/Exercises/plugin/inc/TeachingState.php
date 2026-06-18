@@ -201,14 +201,18 @@ final class TeachingState {
               AND gm.user_id IN ({$student_in})
         ";
 
-        $result = $wpdb->query($wpdb->prepare(
-            $sql,
-            $competency_id,
-            $year_id,
-            current_time('mysql'),
-            $updated_by,
-            $group_id
-        ));
+        $prepare_args = array_merge(
+            [
+                $competency_id,
+                $year_id,
+                current_time('mysql'),
+                $updated_by,
+                $group_id,
+            ],
+            $student_ids
+        );
+
+        $result = $wpdb->query($wpdb->prepare($sql, ...$prepare_args));
 
         return is_numeric($result) ? (int) $result : 0;
     }

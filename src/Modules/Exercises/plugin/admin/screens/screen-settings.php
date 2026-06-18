@@ -34,7 +34,6 @@ class Screen_Settings
         $self_enrolment = (int) get_option(self::OPTION_SELF_ENROLMENT, 1) === 1;
         $path_badges = (int) get_option(self::OPTION_PATH_BADGES, 1) === 1;
         $global_stats = (int) get_option(self::OPTION_GLOBAL_STATS, 0) === 1;
-        $retention = (string) get_option(self::OPTION_RETENTION, 'account_deletion');
         ?>
         <h1>Options des exercices</h1>
 
@@ -68,12 +67,9 @@ class Screen_Settings
                             <p><label><input type="checkbox" name="path_badges" value="1" <?php checked($path_badges); ?>> Autoriser les badges obtenus par parcours</label></p>
                             <p><label><input type="checkbox" name="global_stats" value="1" <?php checked($global_stats); ?>> Afficher les apprenants autonomes dans les statistiques globales</label></p>
                             <p>
-                                <label for="ouinpo-training-retention">Conservation progression autonome</label>
-                                <select id="ouinpo-training-retention" name="retention">
-                                    <option value="12m" <?php selected($retention, '12m'); ?>>12 mois</option>
-                                    <option value="24m" <?php selected($retention, '24m'); ?>>24 mois</option>
-                                    <option value="account_deletion" <?php selected($retention, 'account_deletion'); ?>>Jusqu a suppression du compte</option>
-                                </select>
+                                <strong>Conservation progression autonome</strong><br>
+                                Jusqu a suppression du compte ou reinitialisation manuelle.
+                                <input type="hidden" name="retention" value="account_deletion">
                             </p>
                             <p class="description">Les apprenants autonomes restent exclus des classes, tableaux professeur et clotures scolaires.</p>
                         </td>
@@ -97,11 +93,7 @@ class Screen_Settings
         update_option(self::OPTION_PATH_BADGES, !empty($_POST['path_badges']) ? 1 : 0, false);
         update_option(self::OPTION_GLOBAL_STATS, !empty($_POST['global_stats']) ? 1 : 0, false);
 
-        $retention = sanitize_key((string) ($_POST['retention'] ?? 'account_deletion'));
-        if (!in_array($retention, ['12m', '24m', 'account_deletion'], true)) {
-            $retention = 'account_deletion';
-        }
-        update_option(self::OPTION_RETENTION, $retention, false);
+        update_option(self::OPTION_RETENTION, 'account_deletion', false);
 
         echo '<div class="notice notice-success is-dismissible"><p>Options enregistrées.</p></div>';
     }
