@@ -878,8 +878,7 @@ class PathsService
                  FROM " . self::t('paths') . "
                  WHERE is_template = 0
                    AND COALESCE(path_scope, 'teacher_assigned') IN ('teacher_assigned', 'mixed')
-                   AND year_id IS NOT NULL
-                   AND year_id <> %d",
+                   AND (year_id IS NULL OR year_id <> %d)",
                 $active_year_id
             )
         ) ?: [];

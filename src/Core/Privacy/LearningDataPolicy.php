@@ -32,6 +32,7 @@ final class LearningDataPolicy
             || (string) get_user_meta($userId, 'ouinpo_tracking_disabled', true) === '1'
             || (
                 !user_can($userId, Capabilities::TRACK_LEARNING_DATA)
+                && !LearningAudiencePolicy::isClassStudent($userId)
                 && !LearningAudiencePolicy::canStoreAutonomousProgress($userId)
             );
     }
