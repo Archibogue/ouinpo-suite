@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.4-beta : beta technique ajoutant le socle de cloture annuelle par cycles pedagogiques, le role alumni et une execution non destructive. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.7.5-beta : beta technique ajoutant le centre d entrainement NSI autonome, avec role `ouinpo_learner`, parcours publics personnels et badges lies aux parcours existants. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels ou des apprenants autonomes doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -200,6 +200,8 @@ La carte du site dynamique est optionnelle et reflète surtout l'organisation du
 | Mes projets | `mes-projets` | `[ouinpo_my_projects]` |
 | Suivi des projets | `suivi-projets` | `[ouinpo_teacher_projects]` |
 | Suivi des compétences | `suivi-competences` | `[ouinpo_competences_prof]` |
+
+Un parcours autonome demarrable par un apprenant doit etre un modele public : `path_scope = autonomous` ou `mixed`, `is_template = 1`, visible et autorise par les reglages publics du centre d entrainement. L instance personnelle creee pour l apprenant utilise une cible utilisateur et ne l inscrit pas dans une classe.
 
 Les trois premieres pages de ce tableau sont prevues pour des eleves connectes lorsque le module Submissions est active. Le suivi des competences est reserve aux enseignants ou administrateurs ayant les capacites OuInPo necessaires.
 
@@ -595,6 +597,8 @@ Les roles actuels sont `ouinpo_teacher`, `ouinpo_student`, `ouinpo_learner` et `
 | Eleve OuInPo | Consulte les exercices autorises, repond, suit sa progression, utilise les flashcards, accede eventuellement aux badges et au Gate. |
 | Apprenant autonome NSI | Demarre des parcours publics, suit sa progression personnelle et obtient des badges de parcours sans rattachement a une classe. |
 | Visiteur | Accede uniquement aux pages publiques. L'IA publique n'est disponible que si l'administrateur l'active explicitement. |
+
+Un apprenant autonome n est pas un eleve de classe : il ne doit pas apparaitre dans les tableaux professeurs, exports, statistiques, clotures scolaires, projets, depots ou portfolios. Les badges autonomes valident des parcours d exercices existants et sont enregistres avec `source = path`.
 
 Les droits reels dependent des modules actives, des options du plugin, des roles/capacites WordPress et des reglages de visibilite des pages. Voir aussi `docs/roles-et-droits.md` et `docs/acces-publics-prives.md`.
 

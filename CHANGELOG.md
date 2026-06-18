@@ -2,6 +2,35 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.5-beta] - 2026-06-18
+
+### Ajoute
+
+- Centre d entrainement NSI autonome pour utilisateurs `ouinpo_learner` non rattaches a une classe.
+- Shortcodes `[ouinpo_training_home]`, `[ouinpo_learner_dashboard]` et `[ouinpo_learner_badges]`.
+- Routes REST `/training` pour lister, demarrer et suivre des parcours publics.
+- Badges de parcours avec `source = path`, rattaches aux parcours existants.
+
+### Modifie
+
+- Reutilisation stricte du moteur de parcours existant `ouin_sf_paths`, `ouin_sf_path_items`, `ouin_sf_path_targets` et `PathsService`.
+- Ajout de `path_scope` et de `ouinpo_path_badges` pour distinguer les parcours classe, mixtes et autonomes.
+- Exclusion des apprenants autonomes des classes, tableaux professeurs, exports, statistiques, clotures scolaires et conversion alumni.
+- Documentation des pages et roles du centre d entrainement autonome.
+
+### Corrige
+
+- Respect du kill switch `ouinpo_training_public_paths_enabled` lors du demarrage direct d un parcours public.
+- Conservation des parcours autonomes lors des purges annuelles et clotures scolaires.
+- Filtrage des eleves rostered sans role WP eleve, en excluant strictement `ouinpo_learner`.
+- Purge annuelle des parcours de classe `teacher_assigned` ou `mixed` avec `year_id` nul.
+- Correction des garde-fous review sur les cibles utilisateur pour eviter toute pollution des cibles classe/groupe.
+
+### Validation
+
+- Tests LocalWP sur `ouinpo-test` et installation fraiche `vierge`.
+- `php -l`, `php tools/verify-packs.php`, `php tools/verify-optimizations.php` et `git diff --check`.
+
 ## [0.7.4-beta] - 2026-06-16
 
 ### Ajoute

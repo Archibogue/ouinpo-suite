@@ -242,6 +242,8 @@ Pages personnelles optionnelles :
 
 Ces shortcodes reutilisent les parcours existants marques `autonomous` ou `mixed`. Un apprenant autonome demarre un parcours public via une cible utilisateur individuelle, sans creation de classe artificielle.
 
+Un parcours autonome demarrable doit etre un modele public : `is_template = 1`, `path_scope = autonomous` ou `mixed`, visible et autorise par les reglages publics du centre d entrainement. Un parcours autonome non-template peut exister comme instance ou brouillon, mais il n apparait pas dans le catalogue de demarrage.
+
 ### Page “Palmarès des badges”
 
 Titre conseillé :
@@ -620,7 +622,7 @@ Exemple :
 
 ### `[ouinpo_training_home]`
 
-Affiche les parcours publics/autonomes disponibles et permet a un apprenant connecte de demarrer un parcours personnel.
+Affiche les parcours publics/autonomes disponibles et permet a un apprenant connecte de demarrer un parcours personnel. Seuls les parcours modeles publics (`is_template = 1`) de portee `autonomous` ou `mixed` sont proposes.
 
 ### `[ouinpo_learner_dashboard]`
 
@@ -628,7 +630,7 @@ Affiche les parcours autonomes en cours, les parcours termines, les badges de pa
 
 ### `[ouinpo_learner_badges]`
 
-Affiche les badges de parcours obtenus et les badges possibles lies aux parcours publics.
+Affiche les badges de parcours obtenus et les badges possibles lies aux parcours publics. Les badges de parcours sont attribues avec `source = path`.
 
 ### `[ouinpo_badges_palmares]`
 

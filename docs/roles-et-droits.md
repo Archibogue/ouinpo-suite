@@ -31,6 +31,8 @@ Le role `ouinpo_alumni` ne recoit pas `ouinpo_track_learning_data`, `ouinpo_proj
 
 Le role `ouinpo_learner` ne recoit pas les capacites de classe/professeur, de depot a corriger, de projets BTS ni de portfolio. Il peut pratiquer les exercices, consulter les contenus publics, demarrer des parcours publics, stocker sa progression personnelle et obtenir des badges de parcours. Il est exclu des classes, exports, statistiques professeur et clotures scolaires.
 
+Les eleves presents uniquement dans un roster de classe peuvent rester suivis comme eleves de classe, meme sans role WordPress `ouinpo_student`. En revanche, un utilisateur `ouinpo_learner` reste exclu des lectures de roster classe et ne doit pas etre traite comme eleve de classe.
+
 Les roles historiques `prof` et `eleve` peuvent recevoir les capacites utiles pour compatibilite. Les eleves ne doivent pas recevoir `upload_files` pour les depots OuInPo.
 
 ## Points de verification
