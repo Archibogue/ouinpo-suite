@@ -299,7 +299,7 @@ class Screen_Paths
                         </tr>
 
                         <tr>
-                            <th scope="row"><label for="ouinpo-path-scope">Centre d entrainement</label></th>
+                            <th scope="row"><label for="ouinpo-path-scope">Centre d’entraînement</label></th>
                             <td>
                                 <select id="ouinpo-path-scope" name="path_scope">
                                     <?php foreach ($path_scope_options as $scope => $label): ?>
@@ -309,13 +309,13 @@ class Screen_Paths
                                     <?php endforeach; ?>
                                 </select>
                                 <p class="description">
-                                    Autonome ou mixte rend le parcours visible dans le centre d entrainement public uniquement si ce parcours est aussi un modele. Un apprenant autonome ne peut demarrer que les modeles publics ; un parcours autonome non-modele reste non demarrable.
+                                    Autonome ou mixte rend le parcours visible dans le centre d’entraînement public uniquement si ce parcours est aussi un modèle. Un apprenant autonome ne peut démarrer que les modèles publics ; un parcours autonome non-modèle reste non démarrable.
                                 </p>
                             </td>
                         </tr>
 
                         <tr>
-                            <th scope="row">Badge lie au parcours</th>
+                            <th scope="row">Badge lié au parcours</th>
                             <td>
                                 <select name="path_badge_ids[]" multiple size="6" class="ouinpo-admin-select-users">
                                     <?php foreach ($badges as $badge): ?>
@@ -327,7 +327,7 @@ class Screen_Paths
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <p class="description">MVP : le badge est obtenu quand tous les exercices du parcours sont reussis.</p>
+                                <p class="description">MVP : le badge est obtenu quand tous les exercices du parcours sont réussis.</p>
                             </td>
                         </tr>
 

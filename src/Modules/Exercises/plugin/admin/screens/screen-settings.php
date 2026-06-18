@@ -60,18 +60,18 @@ class Screen_Settings
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">Centre d entrainement</th>
+                        <th scope="row">Centre d’entraînement</th>
                         <td>
                             <p><label><input type="checkbox" name="public_paths" value="1" <?php checked($public_paths); ?>> Autoriser les parcours publics/autonomes</label></p>
-                            <p><label><input type="checkbox" name="self_enrolment" value="1" <?php checked($self_enrolment); ?>> Autoriser l inscription autonome aux parcours publics</label></p>
+                            <p><label><input type="checkbox" name="self_enrolment" value="1" <?php checked($self_enrolment); ?>> Autoriser l’inscription autonome aux parcours publics</label></p>
                             <p><label><input type="checkbox" name="path_badges" value="1" <?php checked($path_badges); ?>> Autoriser les badges obtenus par parcours</label></p>
                             <p><label><input type="checkbox" name="global_stats" value="1" <?php checked($global_stats); ?>> Afficher les apprenants autonomes dans les statistiques globales</label></p>
                             <p>
                                 <strong>Conservation progression autonome</strong><br>
-                                Jusqu a suppression du compte ou reinitialisation manuelle.
+                                Jusqu’à suppression du compte ou réinitialisation manuelle.
                                 <input type="hidden" name="retention" value="account_deletion">
                             </p>
-                            <p class="description">Les apprenants autonomes restent exclus des classes, tableaux professeur et clotures scolaires.</p>
+                            <p class="description">Les apprenants autonomes restent exclus des classes, tableaux professeur et clôtures scolaires.</p>
                         </td>
                     </tr>
                 </tbody>

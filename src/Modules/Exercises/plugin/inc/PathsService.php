@@ -1187,7 +1187,7 @@ class PathsService
     {
         return [
             'teacher_assigned' => 'Affectation enseignant',
-            'autonomous'       => 'Centre d entrainement',
+            'autonomous'       => 'Centre d’entraînement',
             'mixed'            => 'Mixte',
         ];
     }
@@ -1281,7 +1281,7 @@ class PathsService
         self::ensure_path_tables();
 
         if (!self::can_user_start_path($user_id, $path_id)) {
-            return new \WP_Error('path_start_forbidden', 'Ce parcours ne peut pas etre demarre par cet utilisateur.');
+            return new \WP_Error('path_start_forbidden', 'Ce parcours ne peut pas être démarré par cet utilisateur.');
         }
 
         $path = self::get_path($path_id);
@@ -1295,7 +1295,7 @@ class PathsService
         }
 
         if (empty($path['is_template'])) {
-            return new \WP_Error('path_start_requires_template', 'Ce parcours public ne peut pas etre demarre directement.');
+            return new \WP_Error('path_start_requires_template', 'Ce parcours public ne peut pas être démarré directement.');
         }
 
         return self::save_path([

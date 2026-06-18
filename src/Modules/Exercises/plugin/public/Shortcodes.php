@@ -132,21 +132,21 @@ public static function render_training_home($atts = array(), $content = ''): str
 
     $message = is_wp_error($result)
       ? '<div class="ouinpo-competences ouinpo-alert">' . esc_html($result->get_error_message()) . '</div>'
-      : '<div class="ouinpo-competences ouinpo-success">Parcours demarre.</div>';
+      : '<div class="ouinpo-competences ouinpo-success">Parcours démarré.</div>';
   }
 
   $paths = class_exists(PathsService::class) ? PathsService::get_public_autonomous_paths() : [];
 
   $html = '<div class="ouinpo-competences ouinpo-training-home">';
-  $html .= '<h2>Centre d entrainement NSI</h2>';
+  $html .= '<h2>Centre d’entraînement NSI</h2>';
   $html .= $message;
 
   if (!is_user_logged_in()) {
-    $html .= '<p>Connecte-toi pour demarrer un parcours et conserver ta progression.</p>';
+    $html .= '<p>Connecte-toi pour démarrer un parcours et conserver ta progression.</p>';
   }
 
   if (empty($paths)) {
-    return $html . '<p>Aucun parcours public n est disponible pour le moment.</p></div>';
+    return $html . '<p>Aucun parcours public n’est disponible pour le moment.</p></div>';
   }
 
   $levels = class_exists(PathsService::class) ? PathsService::get_template_level_options() : [];
@@ -170,7 +170,7 @@ public static function render_learner_dashboard($atts = array(), $content = ''):
 
   $user_id = get_current_user_id();
   if (!current_user_can(Capabilities::VIEW_OWN_PROGRESS) && !current_user_can(Capabilities::VIEW_OWN_LEARNING_DATA)) {
-    return '<p>Acces refuse.</p>';
+    return '<p>Accès refusé.</p>';
   }
 
   wp_enqueue_style('ouinpo-exo-css');
@@ -187,8 +187,8 @@ public static function render_learner_dashboard($atts = array(), $content = ''):
   $html = '<div class="ouinpo-competences ouinpo-learner-dashboard">';
   $html .= '<h2>Mes parcours</h2>';
   $html .= self::render_training_path_list($active, $levels, $domain_options, $goals, 'Aucun parcours en cours.');
-  $html .= '<h2>Parcours termines</h2>';
-  $html .= self::render_training_path_list($completed, $levels, $domain_options, $goals, 'Aucun parcours termine.');
+  $html .= '<h2>Parcours terminés</h2>';
+  $html .= self::render_training_path_list($completed, $levels, $domain_options, $goals, 'Aucun parcours terminé.');
   $html .= '<h2>Badges obtenus par parcours</h2>';
   $html .= self::render_training_badge_list($badges, 'Aucun badge de parcours obtenu pour le moment.');
   $html .= '<h2>Progression par domaine</h2>';
@@ -204,7 +204,7 @@ public static function render_learner_dashboard($atts = array(), $content = ''):
     $html .= '</ul>';
   }
 
-  $html .= '<h2>Parcours conseilles</h2>';
+  $html .= '<h2>Parcours conseillés</h2>';
   $html .= self::render_training_path_list($suggested, $levels, $domain_options, $goals, 'Aucune suggestion disponible.');
   $html .= '</div>';
 
@@ -227,7 +227,7 @@ public static function render_learner_badges($atts = array(), $content = ''): st
   $html .= '<h2>Badges possibles</h2>';
 
   if (empty($paths)) {
-    $html .= '<p>Aucun badge de parcours public n est disponible.</p>';
+    $html .= '<p>Aucun badge de parcours public n’est disponible.</p>';
   } else {
     $html .= '<ul>';
     foreach ($paths as $path) {
@@ -284,13 +284,13 @@ private static function render_training_path_card(array $path, array $levels, ar
 
   if ($show_start && is_user_logged_in()) {
     if (!empty($path['already_started'])) {
-      $html .= '<p>Parcours deja demarre.</p>';
+      $html .= '<p>Parcours déjà démarré.</p>';
     } elseif (current_user_can(Capabilities::START_PUBLIC_PATHS) || current_user_can(Capabilities::PRACTICE_EXERCISES)) {
       $html .= '<form method="post">';
       $html .= wp_nonce_field('ouinpo_training_start_path', 'ouinpo_training_nonce', true, false);
       $html .= '<input type="hidden" name="ouinpo_training_action" value="start_path">';
       $html .= '<input type="hidden" name="path_id" value="' . (int) ($path['id'] ?? 0) . '">';
-      $html .= '<button type="submit">Demarrer</button>';
+      $html .= '<button type="submit">Démarrer</button>';
       $html .= '</form>';
     }
   }
