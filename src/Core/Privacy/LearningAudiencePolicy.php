@@ -45,33 +45,49 @@ final class LearningAudiencePolicy
 
         global $wpdb;
 
-        $table = $wpdb->prefix . 'ouin_exo_group_members';
+        $members = $wpdb->prefix . 'ouin_exo_group_members';
+        $groups = $wpdb->prefix . 'ouin_exo_groups';
 
-        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $members)) !== $members
+            || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $groups)) !== $groups
+        ) {
             return false;
         }
+
+        $statusWhere = self::columnExists($groups, 'status') ? " AND COALESCE(g.status, 'active') <> 'archived'" : '';
 
         if ($groupId !== null && $groupId > 0) {
             $count = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*)
-                 FROM {$table}
-                 WHERE user_id = %d
-                   AND group_id = %d
-                   AND role = 'student'",
+                 FROM {$members} gm
+                 INNER JOIN {$groups} g ON g.id = gm.group_id
+                 WHERE gm.user_id = %d
+                   AND gm.group_id = %d
+                   AND gm.role = 'student'
+                   {$statusWhere}",
                 $userId,
                 $groupId
             ));
         } else {
             $count = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*)
-                 FROM {$table}
-                 WHERE user_id = %d
-                   AND role = 'student'",
+                 FROM {$members} gm
+                 INNER JOIN {$groups} g ON g.id = gm.group_id
+                 WHERE gm.user_id = %d
+                   AND gm.role = 'student'
+                   {$statusWhere}",
                 $userId
             ));
         }
 
         return $count > 0;
+    }
+
+    private static function columnExists(string $table, string $column): bool
+    {
+        global $wpdb;
+
+        return (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column));
     }
 
     public static function filterClassStudentIds(array $userIds, ?int $groupId = null): array
