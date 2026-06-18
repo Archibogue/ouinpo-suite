@@ -877,8 +877,9 @@ class PathsService
                 "SELECT id
                  FROM " . self::t('paths') . "
                  WHERE is_template = 0
-                   AND COALESCE(path_scope, 'teacher_assigned') = 'teacher_assigned'
-                   AND (year_id IS NULL OR year_id <> %d)",
+                   AND COALESCE(path_scope, 'teacher_assigned') IN ('teacher_assigned', 'mixed')
+                   AND year_id IS NOT NULL
+                   AND year_id <> %d",
                 $active_year_id
             )
         ) ?: [];
@@ -1259,6 +1260,10 @@ class PathsService
             return false;
         }
 
+        if ((int) get_option('ouinpo_training_public_paths_enabled', 1) !== 1) {
+            return false;
+        }
+
         if (!user_can($user_id, Capabilities::START_PUBLIC_PATHS) && !LearningAudiencePolicy::isClassStudent($user_id)) {
             return false;
         }
@@ -1445,10 +1450,56 @@ class PathsService
             'progress' => ['solved' => 0, 'items_count' => count((array) ($path['exercise_ids'] ?? [])), 'percent' => 0.0],
         ];
 
+        $summary = self::inherit_template_metadata_for_training_summary($summary);
+
         if ($user_id > 0 && empty($path['is_template'])) {
             $summary['progress'] = self::get_user_progress_for_path((int) ($path['id'] ?? 0), $user_id);
         } elseif ($summary['started_path_id'] > 0) {
             $summary['progress'] = self::get_user_progress_for_path((int) $summary['started_path_id'], $user_id);
+        }
+
+        return $summary;
+    }
+
+    private static function inherit_template_metadata_for_training_summary(array $summary): array
+    {
+        $template_source_id = isset($summary['template_source_id']) && $summary['template_source_id'] !== null
+            ? (int) $summary['template_source_id']
+            : 0;
+
+        if ($template_source_id <= 0) {
+            return $summary;
+        }
+
+        $needs_metadata = sanitize_key((string) ($summary['level_slug'] ?? '')) === ''
+            || sanitize_key((string) ($summary['domain_slug'] ?? '')) === ''
+            || sanitize_key((string) ($summary['goal_slug'] ?? '')) === '';
+
+        if (!$needs_metadata) {
+            return $summary;
+        }
+
+        global $wpdb;
+
+        $template = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT level_slug, domain_slug, goal_slug
+                 FROM " . self::t('paths') . "
+                 WHERE id = %d
+                 LIMIT 1",
+                $template_source_id
+            ),
+            ARRAY_A
+        );
+
+        if (!$template) {
+            return $summary;
+        }
+
+        foreach (['level_slug', 'domain_slug', 'goal_slug'] as $key) {
+            if (sanitize_key((string) ($summary[$key] ?? '')) === '') {
+                $summary[$key] = sanitize_key((string) ($template[$key] ?? ''));
+            }
         }
 
         return $summary;
