@@ -511,7 +511,7 @@
   background-color: rgba(0,0,0,.25);
   color: var(--ink);
   padding: 1.5em;
-  padding-right: 5.2rem;
+  padding-right: 7.25rem;
   margin-bottom: 2em;
   border-radius: 8px;
   font-style: italic;
@@ -614,7 +614,7 @@
   .ouinpo-site-map .alert,
   .ouinpo-box.alert,
   .ouinpo-alert {
-    padding-right: 4rem;
+    padding-right: 1.2rem;
   }
 
   .ouinpo-content .alert::before,
@@ -633,10 +633,7 @@
   .ouinpo-box.alert::after,
   .ouinpo-alert::before,
   .ouinpo-alert::after {
-    width: 44px;
-    height: 44px;
-    top: 8px;
-    right: 8px;
+    content: none;
   }
 }
 

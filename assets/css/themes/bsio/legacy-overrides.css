@@ -130,6 +130,7 @@
   letter-spacing: 0.08em;
   transform: rotate(1.5deg);
   pointer-events: none;
+  z-index: 0;
 }
 
 .ouinpo-fc-app > *,
@@ -140,6 +141,7 @@
 #ouinpo-student-badges > *,
 .ouinpo-palmares > * {
   position: relative;
+  z-index: 1;
 }
 
 /* Titres : note de service, pas faire-part mystique. */
@@ -1140,6 +1142,20 @@
   font-weight: 900;
   letter-spacing: 0.35em;
   pointer-events: none;
+  z-index: 0;
+}
+
+.ouinpo-content .eldritch > *,
+.ouinpo-exo .eldritch > *,
+.ouinpo-practical-subject .eldritch > *,
+#ouinpo-game .eldritch > *,
+.bsio-card > *,
+.bsio-ticket > *,
+.bsio-note > *,
+.bsio-incident > *,
+.bsio-procedure > * {
+  position: relative;
+  z-index: 1;
 }
 
 .ouinpo-content :not(pre) > code {
@@ -1590,6 +1606,18 @@
   .ouinpo-box::before,
   .ouinpo-rt::before {
     display: none;
+  }
+
+  .ouinpo-content .eldritch::after,
+  .ouinpo-exo .eldritch::after,
+  .ouinpo-practical-subject .eldritch::after,
+  #ouinpo-game .eldritch::after,
+  .bsio-card::after,
+  .bsio-ticket::after,
+  .bsio-note::after,
+  .bsio-incident::after,
+  .bsio-procedure::after {
+    content: none;
   }
 }
 
