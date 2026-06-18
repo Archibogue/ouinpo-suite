@@ -4,6 +4,7 @@ namespace Ouinpo\Exercises\Admin;
 use Ouinpo\Exercises\AssessmentsService;
 use Ouinpo\Exercises\CompetencyLevels;
 use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 
 defined('ABSPATH') || exit;
 
@@ -169,7 +170,7 @@ class Screen_Assessments {
         $tblGM = self::table('group_members');
         $tblU  = $wpdb->users;
 
-        return $wpdb->get_results($wpdb->prepare(
+        $students = $wpdb->get_results($wpdb->prepare(
             "SELECT u.ID AS id, u.display_name, u.user_email
              FROM {$tblGM} gm
              JOIN {$tblU} u ON u.ID = gm.user_id
@@ -178,6 +179,26 @@ class Screen_Assessments {
              ORDER BY u.display_name ASC, u.ID ASC",
             $groupId
         )) ?: [];
+
+        return LearningAudiencePolicy::filterClassStudentRows($students, 'id');
+    }
+
+    private static function get_class_student_ids(int $groupId): array {
+        global $wpdb;
+        if ($groupId <= 0) {
+            return [];
+        }
+
+        $tblGM = self::table('group_members');
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT user_id
+             FROM {$tblGM}
+             WHERE group_id = %d
+               AND role = 'student'",
+            $groupId
+        )) ?: [];
+
+        return LearningAudiencePolicy::filterClassStudentIds($ids);
     }
 
     private static function get_assessment(int $assessmentId): ?object {
@@ -1319,19 +1340,22 @@ class Screen_Assessments {
             return 0;
         }
     
-        $tblGM = self::table('group_members');
         $tblUS = self::table('user_status');
+        $studentIds = self::get_class_student_ids($groupId);
+        if (empty($studentIds)) {
+            return 0;
+        }
+        $studentIn = implode(',', array_fill(0, count($studentIds), '%d'));
     
         return (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT us.user_id)
              FROM {$tblUS} us
-             JOIN {$tblGM} gm ON gm.user_id = us.user_id
-             WHERE gm.group_id = %d
-               AND gm.role = 'student'
+             WHERE us.user_id IN ({$studentIn})
                AND us.exercise_id = %d
                AND us.status IN ('attempted', 'solved')",
-            $groupId,
+            ...array_merge($studentIds, [
             $exerciseId
+            ])
         ));
     }
     
@@ -1342,19 +1366,22 @@ class Screen_Assessments {
             return 0;
         }
     
-        $tblGM = self::table('group_members');
         $tblUS = self::table('user_status');
+        $studentIds = self::get_class_student_ids($groupId);
+        if (empty($studentIds)) {
+            return 0;
+        }
+        $studentIn = implode(',', array_fill(0, count($studentIds), '%d'));
     
         return (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT us.user_id)
              FROM {$tblUS} us
-             JOIN {$tblGM} gm ON gm.user_id = us.user_id
-             WHERE gm.group_id = %d
-               AND gm.role = 'student'
+             WHERE us.user_id IN ({$studentIn})
                AND us.exercise_id = %d
                AND us.status = 'solved'",
-            $groupId,
+            ...array_merge($studentIds, [
             $exerciseId
+            ])
         ));
     }
     
@@ -1390,8 +1417,8 @@ class Screen_Assessments {
         $tblEC  = self::table('exercise_competency');
         $tblC   = self::table('competencies');
         $tblESL = self::table('exercise_school_level');
-        $tblGM  = self::table('group_members');
         $tblUS  = self::table('user_status');
+        $studentIds = $groupId > 0 ? self::get_class_student_ids($groupId) : [];
     
         $compIn = implode(',', array_map('intval', $competencyIds));
         $existingIn = implode(',', array_map('intval', $existingIds));
@@ -1409,17 +1436,16 @@ class Screen_Assessments {
               AND ecx.competency_id IN ({$compIn})
         )";
         
-        if ($groupId > 0) {
+        if ($groupId > 0 && !empty($studentIds)) {
+            $studentIn = implode(',', array_fill(0, count($studentIds), '%d'));
             $where[] = "NOT EXISTS (
                 SELECT 1
                 FROM {$tblUS} us_seen
-                JOIN {$tblGM} gm_seen ON gm_seen.user_id = us_seen.user_id
-                WHERE gm_seen.group_id = %d
-                  AND gm_seen.role = 'student'
+                WHERE us_seen.user_id IN ({$studentIn})
                   AND us_seen.exercise_id = e.id
                   AND us_seen.status IN ('attempted', 'solved')
             )";
-            $args[] = $groupId;
+            array_push($args, ...$studentIds);
         }        
     
         if (!empty($source->level_id)) {

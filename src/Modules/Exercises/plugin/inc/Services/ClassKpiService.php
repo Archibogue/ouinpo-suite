@@ -2,6 +2,8 @@
 
 namespace Ouinpo\Exercises\Services;
 
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
+
 defined('ABSPATH') || exit;
 
 final class ClassKpiService
@@ -172,6 +174,24 @@ final class ClassKpiService
         ));
     }
 
+    private static function class_student_ids(int $group_id): array
+    {
+        global $wpdb;
+        if ($group_id <= 0) {
+            return [];
+        }
+
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT user_id
+             FROM " . self::table('group_members') . "
+             WHERE group_id = %d
+               AND role = 'student'",
+            $group_id
+        )) ?: [];
+
+        return LearningAudiencePolicy::filterClassStudentIds($ids);
+    }
+
     private static function assessment_exercise_rows(int $group_id): array
     {
         global $wpdb;
@@ -200,16 +220,21 @@ final class ClassKpiService
             return [];
         }
 
+        $student_ids = self::class_student_ids($group_id);
+        if (empty($student_ids)) {
+            return [];
+        }
+
+        $student_in = implode(',', array_fill(0, count($student_ids), '%d'));
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT us.exercise_id,
                     COUNT(DISTINCT CASE WHEN us.status IN ('attempted','solved') THEN us.user_id END) AS attempted_count,
                     COUNT(DISTINCT CASE WHEN us.status = 'solved' THEN us.user_id END) AS solved_count
-             FROM " . self::table('group_members') . " gm
-             INNER JOIN " . self::table('user_status') . " us ON us.user_id = gm.user_id
-             WHERE gm.group_id = %d
-               AND gm.role = 'student'
+             FROM " . self::table('user_status') . " us
+             WHERE us.user_id IN ({$student_in})
              GROUP BY us.exercise_id",
-            $group_id
+            ...$student_ids
         ), ARRAY_A) ?: [];
     }
 
@@ -242,6 +267,12 @@ final class ClassKpiService
             return [];
         }
 
+        $student_ids = self::class_student_ids($group_id);
+        if (empty($student_ids)) {
+            return [];
+        }
+
+        $student_in = implode(',', array_fill(0, count($student_ids), '%d'));
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT r.competency_id,
                     COUNT(*) AS total_count,
@@ -249,8 +280,9 @@ final class ClassKpiService
              FROM " . self::table('assessment_results') . " r
              INNER JOIN " . self::table('assessments') . " a ON a.id = r.assessment_id
              WHERE a.group_id = %d
+               AND r.user_id IN ({$student_in})
              GROUP BY r.competency_id",
-            $group_id
+            ...array_merge([$group_id], $student_ids)
         ), ARRAY_A) ?: [];
 
         $out = [];

@@ -47,14 +47,14 @@ $usage_for_level = static function (int $id) use ($wpdb, $table_exists, $tbl_gro
             "SELECT COUNT(*) FROM {$tbl_groups} WHERE school_level_id = %d",
             $id
         )) : 0,
-        'members' => ($table_exists($tbl_members) && $table_exists($tbl_groups)) ? (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(DISTINCT gm.user_id)
+        'members' => ($table_exists($tbl_members) && $table_exists($tbl_groups)) ? count(\Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::filterClassStudentIds($wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT gm.user_id
                FROM {$tbl_members} gm
                LEFT JOIN {$tbl_groups} g ON g.id = gm.group_id
               WHERE gm.role = 'student'
                 AND COALESCE(gm.school_level_id_override, g.school_level_id) = %d",
             $id
-        )) : 0,
+        )) ?: [])) : 0,
         'exercises_legacy' => $table_exists($tbl_exercises) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_exercises} WHERE level_id = %d",
             $id

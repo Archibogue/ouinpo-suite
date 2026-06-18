@@ -30,7 +30,10 @@ final class LearningDataPolicy
 
         return $this->isAlumni($userId)
             || (string) get_user_meta($userId, 'ouinpo_tracking_disabled', true) === '1'
-            || !user_can($userId, Capabilities::TRACK_LEARNING_DATA);
+            || (
+                !user_can($userId, Capabilities::TRACK_LEARNING_DATA)
+                && !LearningAudiencePolicy::canStoreAutonomousProgress($userId)
+            );
     }
 
     public function canPracticeExercises(int $userId): bool
@@ -46,12 +49,17 @@ final class LearningDataPolicy
     public function canUseStudentDashboard(int $userId): bool
     {
         return $this->canStoreLearningData($userId)
-            && user_can($userId, Capabilities::VIEW_OWN_LEARNING_DATA);
+            && (
+                user_can($userId, Capabilities::VIEW_OWN_LEARNING_DATA)
+                || user_can($userId, Capabilities::VIEW_OWN_PROGRESS)
+            );
     }
 
     public function canBeAssignedToClass(int $userId): bool
     {
-        return $userId > 0 && !$this->isAlumni($userId);
+        return $userId > 0
+            && !$this->isAlumni($userId)
+            && !LearningAudiencePolicy::isAutonomousLearner($userId);
     }
 
     public function disableTrackingForAlumni(int $userId): void

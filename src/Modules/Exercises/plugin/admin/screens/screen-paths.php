@@ -54,6 +54,7 @@ class Screen_Paths
         $groups    = PathsService::get_groups();
         $students  = PathsService::get_students();
         $exercises = PathsService::get_exercises();
+        $badges    = PathsService::get_available_badges();
         $paths     = PathsService::list_paths();
 
         $models = [];
@@ -83,6 +84,18 @@ class Screen_Paths
         $selected_level_slug  = sanitize_key((string) ($editing['level_slug'] ?? ''));
         $selected_domain_slug = sanitize_key((string) ($editing['domain_slug'] ?? ''));
         $selected_goal_slug   = sanitize_key((string) ($editing['goal_slug'] ?? ''));
+        $path_scope_options   = PathsService::get_path_scope_options();
+        $selected_path_scope  = sanitize_key((string) ($editing['path_scope'] ?? 'teacher_assigned'));
+        if (!array_key_exists($selected_path_scope, $path_scope_options)) {
+            $selected_path_scope = 'teacher_assigned';
+        }
+        $selected_badge_ids = [];
+        foreach ((array) ($editing['badge_links'] ?? []) as $link) {
+            $badge_id = (int) ($link['badge_id'] ?? 0);
+            if ($badge_id > 0) {
+                $selected_badge_ids[] = $badge_id;
+            }
+        }
 
         if ($show_create_form) {
             echo '<h1>Parcours — création</h1>';
@@ -282,6 +295,39 @@ class Screen_Paths
                                     <?php endforeach; ?>
                                 </select>
                                 <p class="description">Exemple : remédiation, entraînement ou approfondissement.</p>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row"><label for="ouinpo-path-scope">Centre d entrainement</label></th>
+                            <td>
+                                <select id="ouinpo-path-scope" name="path_scope">
+                                    <?php foreach ($path_scope_options as $scope => $label): ?>
+                                        <option value="<?php echo esc_attr($scope); ?>" <?php selected($selected_path_scope, $scope); ?>>
+                                            <?php echo esc_html($label); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="description">
+                                    Autonome ou mixte rend le parcours visible dans le centre d entrainement public uniquement si ce parcours est aussi un modele. Un apprenant autonome ne peut demarrer que les modeles publics ; un parcours autonome non-modele reste non demarrable.
+                                </p>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Badge lie au parcours</th>
+                            <td>
+                                <select name="path_badge_ids[]" multiple size="6" class="ouinpo-admin-select-users">
+                                    <?php foreach ($badges as $badge): ?>
+                                        <option
+                                            value="<?php echo (int) $badge['id']; ?>"
+                                            <?php selected(in_array((int) $badge['id'], $selected_badge_ids, true), true); ?>
+                                        >
+                                            <?php echo esc_html((string) $badge['title'] . ' (' . (string) $badge['slug'] . ')'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="description">MVP : le badge est obtenu quand tous les exercices du parcours sont reussis.</p>
                             </td>
                         </tr>
 
@@ -661,12 +707,16 @@ class Screen_Paths
             'level_slug'   => sanitize_key((string) ($_POST['level_slug'] ?? '')),
             'domain_slug'  => sanitize_key((string) ($_POST['domain_slug'] ?? '')),
             'goal_slug'    => sanitize_key((string) ($_POST['goal_slug'] ?? '')),
+            'path_scope'   => sanitize_key((string) ($_POST['path_scope'] ?? 'teacher_assigned')),
             'mode'         => sanitize_key((string) ($_POST['mode'] ?? 'free')),
             'is_active'    => !empty($_POST['is_active']) ? 1 : 0,
             'is_template'  => !empty($_POST['is_template']) ? 1 : 0,
             'exercise_ids' => $exercise_ids,
             'group_ids'    => $group_ids,
             'user_ids'     => $user_ids,
+            'badge_links'  => isset($_POST['path_badge_ids']) && is_array($_POST['path_badge_ids'])
+                ? array_map('intval', wp_unslash($_POST['path_badge_ids']))
+                : [],
         ]);
 
         if (is_wp_error($result)) {

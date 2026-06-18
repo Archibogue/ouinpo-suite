@@ -1,6 +1,9 @@
 <?php
 namespace Ouinpo\Exercises;
 
+use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
+
 defined('ABSPATH') || exit;
 
 class PathsService
@@ -32,6 +35,9 @@ class PathsService
             'paths'         => $wpdb->prefix . 'ouin_sf_paths',
             'items'         => $wpdb->prefix . 'ouin_sf_path_items',
             'targets'       => $wpdb->prefix . 'ouin_sf_path_targets',
+            'path_badges'   => $wpdb->prefix . 'ouinpo_path_badges',
+            'badges'        => $wpdb->prefix . 'ouin_exo_badges',
+            'user_badges'   => $wpdb->prefix . 'ouin_exo_user_badges',
             'groups'        => $wpdb->prefix . 'ouin_exo_groups',
             'group_members' => $wpdb->prefix . 'ouin_exo_group_members',
             'exercises'     => $wpdb->prefix . 'ouin_exo_exercises',
@@ -155,7 +161,9 @@ class PathsService
         ", ARRAY_A) ?: [];
 
         if (!empty($rows)) {
-            return $rows;
+            return array_values(array_filter($rows, static function ($row): bool {
+                return LearningAudiencePolicy::isClassStudent((int) ($row['id'] ?? 0));
+            }));
         }
 
         $users = get_users([
@@ -167,6 +175,10 @@ class PathsService
 
         $out = [];
         foreach ($users as $u) {
+            if (!LearningAudiencePolicy::isClassStudent((int) $u->ID)) {
+                continue;
+            }
+
             $out[] = [
                 'id'           => (int) $u->ID,
                 'display_name' => (string) $u->display_name,
@@ -247,8 +259,17 @@ class PathsService
 
         if (empty($direct_user_ids) && !empty($path['student_id'])) {
             $legacy_student_id   = (int) $path['student_id'];
-            $direct_user_ids[]   = $legacy_student_id;
-            $assigned_user_ids[] = $legacy_student_id;
+            $legacy_scope = self::normalize_path_scope((string) ($path['path_scope'] ?? 'teacher_assigned'));
+            if (
+                LearningAudiencePolicy::isClassStudent($legacy_student_id)
+                || (
+                    LearningAudiencePolicy::isAutonomousLearner($legacy_student_id)
+                    && in_array($legacy_scope, ['autonomous', 'mixed'], true)
+                )
+            ) {
+                $direct_user_ids[]   = $legacy_student_id;
+                $assigned_user_ids[] = $legacy_student_id;
+            }
         }
 
         $direct_user_ids   = array_values(array_unique(array_map('intval', $direct_user_ids)));
@@ -277,6 +298,7 @@ class PathsService
             'level_slug'        => sanitize_key((string) ($path['level_slug'] ?? '')),
             'domain_slug'       => sanitize_key((string) ($path['domain_slug'] ?? '')),
             'goal_slug'         => sanitize_key((string) ($path['goal_slug'] ?? '')),
+            'path_scope'        => self::normalize_path_scope((string) ($path['path_scope'] ?? 'teacher_assigned')),
             'teacher_id'        => (int) $path['teacher_id'],
             'student_id'        => (int) $path['student_id'],
             'created_at'        => (string) $path['created_at'],
@@ -287,6 +309,7 @@ class PathsService
             'group_ids'         => $direct_group_ids,
             'assigned_user_ids' => $assigned_user_ids,
             'targets_label'     => $targets['targets_label'],
+            'badge_links'       => self::get_path_badge_links($path_id),
             'progress'          => self::get_progress_summary($path_id),
         ];
     }
@@ -333,6 +356,7 @@ class PathsService
                 'level_slug'        => $full['level_slug'],
                 'domain_slug'       => $full['domain_slug'],
                 'goal_slug'         => $full['goal_slug'],
+                'path_scope'        => $full['path_scope'],
                 'created_at'        => $full['created_at'],
                 'updated_at'        => $full['updated_at'],
                 'items_count'       => count($full['items']),
@@ -341,6 +365,7 @@ class PathsService
                 'group_ids'         => $full['group_ids'],
                 'assigned_user_ids' => $full['assigned_user_ids'],
                 'targets_label'     => $full['targets_label'],
+                'badge_links'       => $full['badge_links'],
                 'items_preview'     => $preview,
                 'progress'          => $full['progress'],
             ];
@@ -414,6 +439,8 @@ class PathsService
             $goal_slug = '';
         }
 
+        $path_scope = self::normalize_path_scope((string) ($data['path_scope'] ?? 'teacher_assigned'));
+
         if ($title === '') {
             return new \WP_Error('missing_title', 'Le titre du parcours est obligatoire.');
         }
@@ -426,7 +453,7 @@ class PathsService
             return new \WP_Error('missing_targets', 'Tu dois affecter le parcours à au moins un élève ou une classe.');
         }
 
-        if ($is_template) {
+        if ($is_template || $path_scope === 'autonomous') {
             $year_id = null;
         } elseif ($year_id === null) {
             $year_id = self::get_active_year_id();
@@ -487,6 +514,13 @@ class PathsService
             if (!array_key_exists('goal_slug', $data)) {
                 $goal_slug = sanitize_key((string) ($existing['goal_slug'] ?? ''));
             }
+            if (!array_key_exists('path_scope', $data)) {
+                $path_scope = self::normalize_path_scope((string) ($existing['path_scope'] ?? 'teacher_assigned'));
+            }
+
+            if (empty($is_template) && $path_scope === 'autonomous') {
+                $year_id = null;
+            }
 
             if ($template_source_id !== null && $template_source_id === $path_id) {
                 $template_source_id = null;
@@ -505,11 +539,12 @@ class PathsService
                     'level_slug'         => ($level_slug !== '' ? $level_slug : null),
                     'domain_slug'        => ($domain_slug !== '' ? $domain_slug : null),
                     'goal_slug'          => ($goal_slug !== '' ? $goal_slug : null),
+                    'path_scope'         => $path_scope,
                     'student_id'         => 0,
                     'updated_at'         => $now,
                 ],
                 ['id' => $path_id],
-                ['%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s'],
+                ['%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s'],
                 ['%d']
             );
 
@@ -532,10 +567,11 @@ class PathsService
                     'level_slug'         => ($level_slug !== '' ? $level_slug : null),
                     'domain_slug'        => ($domain_slug !== '' ? $domain_slug : null),
                     'goal_slug'          => ($goal_slug !== '' ? $goal_slug : null),
+                    'path_scope'         => $path_scope,
                     'created_at'         => $now,
                     'updated_at'         => $now,
                 ],
-                ['%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s']
+                ['%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s']
             );
 
             if ($inserted === false) {
@@ -549,6 +585,9 @@ class PathsService
         }
 
         self::replace_items($path_id, $exercise_ids);
+        if (array_key_exists('badge_links', $data)) {
+            self::replace_path_badges($path_id, is_array($data['badge_links'] ?? null) ? $data['badge_links'] : []);
+        }
 
         if ($is_template) {
             $wpdb->delete(self::t('targets'), ['path_id' => $path_id], ['%d']);
@@ -640,6 +679,7 @@ class PathsService
             return;
         }
 
+        $wpdb->delete(self::t('path_badges'), ['path_id' => $path_id], ['%d']);
         $wpdb->delete(self::t('targets'), ['path_id' => $path_id], ['%d']);
         $wpdb->delete(self::t('items'), ['path_id' => $path_id], ['%d']);
         $wpdb->delete(self::t('paths'), ['id' => $path_id], ['%d']);
@@ -761,6 +801,7 @@ class PathsService
                 level_slug,
                 domain_slug,
                 goal_slug,
+                path_scope,
                 teacher_id,
                 student_id,
                 created_at,
@@ -797,6 +838,7 @@ class PathsService
                 'level_slug'         => sanitize_key((string) ($row['level_slug'] ?? '')),
                 'domain_slug'        => sanitize_key((string) ($row['domain_slug'] ?? '')),
                 'goal_slug'          => sanitize_key((string) ($row['goal_slug'] ?? '')),
+                'path_scope'         => self::normalize_path_scope((string) ($row['path_scope'] ?? 'teacher_assigned')),
                 'teacher_id'         => (int) ($row['teacher_id'] ?? 0),
                 'student_id'         => (int) ($row['student_id'] ?? 0),
                 'created_at'         => (string) ($row['created_at'] ?? ''),
@@ -807,6 +849,7 @@ class PathsService
                 'group_ids'          => [],
                 'assigned_user_ids'  => [],
                 'targets_label'      => '',
+                'badge_links'        => self::get_path_badge_links((int) ($row['id'] ?? 0)),
                 'items_preview'      => '',
                 'progress'           => [
                     'targets_count'   => 0,
@@ -834,6 +877,7 @@ class PathsService
                 "SELECT id
                  FROM " . self::t('paths') . "
                  WHERE is_template = 0
+                   AND COALESCE(path_scope, 'teacher_assigned') = 'teacher_assigned'
                    AND (year_id IS NULL OR year_id <> %d)",
                 $active_year_id
             )
@@ -897,6 +941,8 @@ class PathsService
             'level_slug'         => $path['level_slug'] ?? '',
             'domain_slug'        => $path['domain_slug'] ?? '',
             'goal_slug'          => $path['goal_slug'] ?? '',
+            'path_scope'         => $path['path_scope'] ?? 'teacher_assigned',
+            'badge_links'        => $path['badge_links'] ?? [],
             'exercise_ids'       => $path['exercise_ids'] ?? [],
             'group_ids'          => $is_template ? [] : ($path['group_ids'] ?? []),
             'user_ids'           => $is_template ? [] : ($path['user_ids'] ?? []),
@@ -979,6 +1025,8 @@ class PathsService
                 ),
                 ARRAY_A
             ) ?: [];
+
+            $group_rows = LearningAudiencePolicy::filterClassStudentRows($group_rows, 'user_id');
 
             foreach ($group_rows as $gr) {
                 $uid   = (int) ($gr['user_id'] ?? 0);
@@ -1135,6 +1183,481 @@ class PathsService
         return in_array($exercise_id, $allowed, true);
     }
 
+    public static function get_path_scope_options(): array
+    {
+        return [
+            'teacher_assigned' => 'Affectation enseignant',
+            'autonomous'       => 'Centre d entrainement',
+            'mixed'            => 'Mixte',
+        ];
+    }
+
+    private static function normalize_path_scope(string $scope): string
+    {
+        $scope = sanitize_key($scope);
+        return array_key_exists($scope, self::get_path_scope_options()) ? $scope : 'teacher_assigned';
+    }
+
+    public static function get_public_autonomous_paths(array $filters = []): array
+    {
+        self::ensure_path_tables();
+        global $wpdb;
+
+        if ((int) get_option('ouinpo_training_public_paths_enabled', 1) !== 1) {
+            return [];
+        }
+
+        $level_slug = sanitize_key((string) ($filters['level_slug'] ?? ''));
+        $domain_slug = sanitize_key((string) ($filters['domain_slug'] ?? ''));
+        $goal_slug = sanitize_key((string) ($filters['goal_slug'] ?? ''));
+
+        $where = [
+            'is_active = 1',
+            'is_template = 1',
+            "COALESCE(path_scope, 'teacher_assigned') IN ('autonomous', 'mixed')",
+        ];
+        $params = [];
+
+        if ($level_slug !== '') {
+            $where[] = 'level_slug = %s';
+            $params[] = $level_slug;
+        }
+        if ($domain_slug !== '') {
+            $where[] = 'domain_slug = %s';
+            $params[] = $domain_slug;
+        }
+        if ($goal_slug !== '') {
+            $where[] = 'goal_slug = %s';
+            $params[] = $goal_slug;
+        }
+
+        $sql = "SELECT id FROM " . self::t('paths') . " WHERE " . implode(' AND ', $where) . " ORDER BY is_template DESC, level_slug ASC, domain_slug ASC, title ASC, id ASC";
+        $ids = !empty($params)
+            ? $wpdb->get_col($wpdb->prepare($sql, ...$params))
+            : $wpdb->get_col($sql);
+
+        $out = [];
+        foreach (array_map('intval', $ids ?: []) as $path_id) {
+            $path = self::get_path($path_id);
+            if (!$path) {
+                continue;
+            }
+
+            $out[] = self::summarize_path_for_training($path, get_current_user_id());
+        }
+
+        return $out;
+    }
+
+    public static function can_user_start_path(int $user_id, int $path_id): bool
+    {
+        if ($user_id <= 0 || $path_id <= 0) {
+            return false;
+        }
+
+        if ((int) get_option('ouinpo_training_self_enrolment_enabled', 1) !== 1) {
+            return false;
+        }
+
+        if (!user_can($user_id, Capabilities::START_PUBLIC_PATHS) && !LearningAudiencePolicy::isClassStudent($user_id)) {
+            return false;
+        }
+
+        $path = self::get_path($path_id);
+        if (!$path || empty($path['is_active'])) {
+            return false;
+        }
+
+        return !empty($path['is_template'])
+            && in_array((string) ($path['path_scope'] ?? 'teacher_assigned'), ['autonomous', 'mixed'], true);
+    }
+
+    public static function start_path_for_user(int $user_id, int $path_id)
+    {
+        self::ensure_path_tables();
+
+        if (!self::can_user_start_path($user_id, $path_id)) {
+            return new \WP_Error('path_start_forbidden', 'Ce parcours ne peut pas etre demarre par cet utilisateur.');
+        }
+
+        $path = self::get_path($path_id);
+        if (!$path) {
+            return new \WP_Error('missing_path', 'Parcours introuvable.');
+        }
+
+        $existing = self::find_started_path_for_user($user_id, $path_id);
+        if ($existing > 0) {
+            return $existing;
+        }
+
+        if (empty($path['is_template'])) {
+            return new \WP_Error('path_start_requires_template', 'Ce parcours public ne peut pas etre demarre directement.');
+        }
+
+        return self::save_path([
+            'title'              => self::build_instance_title((string) ($path['title'] ?? 'Parcours'), [], [$user_id]),
+            'student_note'       => $path['student_note'] ?? '',
+            'mode'               => $path['mode'] ?? 'free',
+            'is_active'          => 1,
+            'is_template'        => 0,
+            'template_source_id' => $path_id,
+            'year_id'            => null,
+            'path_scope'         => 'autonomous',
+            'exercise_ids'       => $path['exercise_ids'] ?? [],
+            'group_ids'          => [],
+            'user_ids'           => [$user_id],
+            'badge_links'        => $path['badge_links'] ?? [],
+        ]);
+    }
+
+    public static function list_user_training_paths(int $user_id): array
+    {
+        if ($user_id <= 0) {
+            return [];
+        }
+
+        $paths = [];
+        foreach (self::list_paths() as $path) {
+            $scope = (string) ($path['path_scope'] ?? 'teacher_assigned');
+            if (!in_array($scope, ['autonomous', 'mixed'], true)) {
+                continue;
+            }
+            if (!in_array($user_id, array_map('intval', (array) ($path['assigned_user_ids'] ?? [])), true)) {
+                continue;
+            }
+            $paths[] = self::summarize_path_for_training($path, $user_id);
+        }
+
+        return $paths;
+    }
+
+    public static function list_user_paths_containing_exercise(int $user_id, int $exercise_id): array
+    {
+        if ($user_id <= 0 || $exercise_id <= 0) {
+            return [];
+        }
+
+        self::ensure_path_tables();
+        global $wpdb;
+
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT p.id
+             FROM " . self::t('paths') . " p
+             INNER JOIN " . self::t('items') . " i ON i.path_id = p.id
+             INNER JOIN " . self::t('path_badges') . " pb ON pb.path_id = p.id
+             WHERE p.is_active = 1
+               AND COALESCE(p.path_scope, 'teacher_assigned') IN ('autonomous', 'mixed')
+               AND i.exercise_id = %d
+             ORDER BY p.id DESC",
+            $exercise_id
+        )) ?: [];
+
+        $paths = [];
+        foreach (array_map('intval', $ids) as $path_id) {
+            $path = self::get_path($path_id);
+            if (!$path) {
+                continue;
+            }
+
+            if (!in_array($user_id, array_map('intval', (array) ($path['assigned_user_ids'] ?? [])), true)) {
+                continue;
+            }
+
+            $paths[] = self::summarize_path_for_training($path, $user_id);
+        }
+
+        return $paths;
+    }
+
+    public static function get_user_training_dashboard(int $user_id): array
+    {
+        $paths = self::list_user_training_paths($user_id);
+        $completed = array_values(array_filter($paths, static fn($path) => (float) ($path['progress']['percent'] ?? 0) >= 100.0));
+        $active = array_values(array_filter($paths, static fn($path) => (float) ($path['progress']['percent'] ?? 0) < 100.0));
+
+        return [
+            'active_paths' => $active,
+            'completed_paths' => $completed,
+            'badges' => self::get_user_path_badges($user_id),
+            'domains' => self::summarize_domains($paths),
+            'suggested_paths' => array_slice(self::get_public_autonomous_paths(), 0, 5),
+        ];
+    }
+
+    public static function award_path_badges_for_user(int $user_id, ?int $exercise_id = null): array
+    {
+        if ($user_id <= 0 || (int) get_option('ouinpo_training_path_badges_enabled', 1) !== 1) {
+            return [];
+        }
+
+        $awarded = [];
+        $paths = $exercise_id !== null
+            ? self::list_user_paths_containing_exercise($user_id, (int) $exercise_id)
+            : self::list_user_training_paths($user_id);
+
+        foreach ($paths as $path) {
+            $path_id = (int) ($path['id'] ?? 0);
+            if ($path_id <= 0 || empty($path['badge_links'])) {
+                continue;
+            }
+            if ($exercise_id !== null && !in_array((int) $exercise_id, array_map('intval', (array) ($path['exercise_ids'] ?? [])), true)) {
+                continue;
+            }
+            if ((float) ($path['progress']['percent'] ?? 0) < 100.0) {
+                continue;
+            }
+
+            foreach ((array) $path['badge_links'] as $link) {
+                $badge_id = (int) ($link['badge_id'] ?? 0);
+                if ($badge_id <= 0 || !class_exists(BadgeEngine::class)) {
+                    continue;
+                }
+                if (BadgeEngine::award_path_badge($user_id, $badge_id)) {
+                    $awarded[] = [
+                        'path_id' => $path_id,
+                        'badge_id' => $badge_id,
+                    ];
+                }
+            }
+        }
+
+        return $awarded;
+    }
+
+    private static function summarize_path_for_training(array $path, int $user_id = 0): array
+    {
+        $summary = [
+            'id' => (int) ($path['id'] ?? 0),
+            'title' => (string) ($path['title'] ?? ''),
+            'student_note' => (string) ($path['student_note'] ?? ''),
+            'mode' => (string) ($path['mode'] ?? 'free'),
+            'is_template' => (int) ($path['is_template'] ?? 0),
+            'template_source_id' => $path['template_source_id'] ?? null,
+            'path_scope' => self::normalize_path_scope((string) ($path['path_scope'] ?? 'teacher_assigned')),
+            'level_slug' => sanitize_key((string) ($path['level_slug'] ?? '')),
+            'domain_slug' => sanitize_key((string) ($path['domain_slug'] ?? '')),
+            'goal_slug' => sanitize_key((string) ($path['goal_slug'] ?? '')),
+            'exercise_ids' => array_values(array_map('intval', (array) ($path['exercise_ids'] ?? []))),
+            'items_count' => count((array) ($path['exercise_ids'] ?? [])),
+            'badge_links' => $path['badge_links'] ?? [],
+            'already_started' => $user_id > 0 && self::find_started_path_for_user($user_id, (int) ($path['id'] ?? 0)) > 0,
+            'started_path_id' => $user_id > 0 ? self::find_started_path_for_user($user_id, (int) ($path['id'] ?? 0)) : 0,
+            'progress' => ['solved' => 0, 'items_count' => count((array) ($path['exercise_ids'] ?? [])), 'percent' => 0.0],
+        ];
+
+        if ($user_id > 0 && empty($path['is_template'])) {
+            $summary['progress'] = self::get_user_progress_for_path((int) ($path['id'] ?? 0), $user_id);
+        } elseif ($summary['started_path_id'] > 0) {
+            $summary['progress'] = self::get_user_progress_for_path((int) $summary['started_path_id'], $user_id);
+        }
+
+        return $summary;
+    }
+
+    private static function get_user_progress_for_path(int $path_id, int $user_id): array
+    {
+        $exercise_ids = self::get_ordered_exercise_ids($path_id);
+        $items_count = count($exercise_ids);
+        if ($path_id <= 0 || $user_id <= 0 || $items_count === 0) {
+            return ['solved' => 0, 'items_count' => $items_count, 'percent' => 0.0];
+        }
+
+        $status_map = self::get_user_status_map_for_path($path_id, $user_id);
+        $solved = 0;
+        foreach ($exercise_ids as $exercise_id) {
+            if (($status_map[$exercise_id] ?? '') === 'solved') {
+                $solved++;
+            }
+        }
+
+        return [
+            'solved' => $solved,
+            'items_count' => $items_count,
+            'percent' => $items_count > 0 ? round(($solved / $items_count) * 100, 1) : 0.0,
+        ];
+    }
+
+    private static function find_started_path_for_user(int $user_id, int $source_path_id): int
+    {
+        self::ensure_path_tables();
+        global $wpdb;
+
+        if ($user_id <= 0 || $source_path_id <= 0) {
+            return 0;
+        }
+
+        $direct = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT t.path_id
+             FROM " . self::t('targets') . " t
+             INNER JOIN " . self::t('paths') . " p ON p.id = t.path_id
+             WHERE t.path_id = %d
+               AND t.target_type = 'user'
+               AND t.target_id = %d
+               AND p.is_template = 0
+             LIMIT 1",
+            $source_path_id,
+            $user_id
+        ));
+        if ($direct > 0) {
+            return $direct;
+        }
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT p.id
+             FROM " . self::t('paths') . " p
+             INNER JOIN " . self::t('targets') . " t ON t.path_id = p.id
+             WHERE p.template_source_id = %d
+               AND t.target_type = 'user'
+               AND t.target_id = %d
+               AND COALESCE(p.path_scope, 'teacher_assigned') IN ('autonomous', 'mixed')
+             ORDER BY p.id DESC
+             LIMIT 1",
+            $source_path_id,
+            $user_id
+        ));
+    }
+
+    private static function add_user_target(int $path_id, int $user_id, int $assigned_by): void
+    {
+        global $wpdb;
+
+        $now = current_time('mysql');
+        $wpdb->replace(
+            self::t('targets'),
+            [
+                'path_id'     => $path_id,
+                'target_type' => 'user',
+                'target_id'   => $user_id,
+                'assigned_at' => $now,
+                'assigned_by' => $assigned_by,
+                'created_at'  => $now,
+            ],
+            ['%d', '%s', '%d', '%s', '%d', '%s']
+        );
+    }
+
+    public static function get_available_badges(): array
+    {
+        self::ensure_path_tables();
+        global $wpdb;
+
+        return $wpdb->get_results(
+            "SELECT id, slug, title, description, theme, image_url
+             FROM " . self::t('badges') . "
+             ORDER BY title ASC, id ASC",
+            ARRAY_A
+        ) ?: [];
+    }
+
+    public static function get_path_badge_links(int $path_id): array
+    {
+        self::ensure_path_tables();
+        global $wpdb;
+
+        if ($path_id <= 0) {
+            return [];
+        }
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT pb.*, b.slug, b.title, b.description, b.theme, b.image_url
+                 FROM " . self::t('path_badges') . " pb
+                 LEFT JOIN " . self::t('badges') . " b ON b.id = pb.badge_id
+                 WHERE pb.path_id = %d
+                 ORDER BY pb.id ASC",
+                $path_id
+            ),
+            ARRAY_A
+        ) ?: [];
+    }
+
+    private static function replace_path_badges(int $path_id, array $badge_links): void
+    {
+        global $wpdb;
+
+        if ($path_id <= 0) {
+            return;
+        }
+
+        $wpdb->delete(self::t('path_badges'), ['path_id' => $path_id], ['%d']);
+        $now = current_time('mysql');
+        $seen = [];
+
+        foreach ($badge_links as $link) {
+            $badge_id = (int) (is_array($link) ? ($link['badge_id'] ?? 0) : $link);
+            if ($badge_id <= 0 || isset($seen[$badge_id])) {
+                continue;
+            }
+            $seen[$badge_id] = true;
+
+            $wpdb->insert(
+                self::t('path_badges'),
+                [
+                    'path_id' => $path_id,
+                    'badge_id' => $badge_id,
+                    'rule_type' => 'all_mandatory',
+                    'min_percent' => 100,
+                    'require_all_mandatory' => 1,
+                    'require_final_exercise' => 0,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+                ['%d', '%d', '%s', '%f', '%d', '%d', '%s', '%s']
+            );
+        }
+    }
+
+    public static function get_user_path_badges(int $user_id): array
+    {
+        self::ensure_path_tables();
+        global $wpdb;
+
+        if ($user_id <= 0) {
+            return [];
+        }
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT ub.badge_id, ub.awarded_at, ub.source, b.slug, b.title, b.description, b.theme, b.image_url
+                 FROM " . self::t('user_badges') . " ub
+                 LEFT JOIN " . self::t('badges') . " b ON b.id = ub.badge_id
+                 WHERE ub.user_id = %d
+                   AND ub.source = 'path'
+                 ORDER BY ub.awarded_at DESC, ub.badge_id DESC",
+                $user_id
+            ),
+            ARRAY_A
+        ) ?: [];
+    }
+
+    private static function summarize_domains(array $paths): array
+    {
+        $domains = [];
+        foreach ($paths as $path) {
+            $domain = sanitize_key((string) ($path['domain_slug'] ?? ''));
+            if ($domain === '') {
+                $domain = 'libre';
+            }
+            if (!isset($domains[$domain])) {
+                $domains[$domain] = ['domain_slug' => $domain, 'paths' => 0, 'completed' => 0, 'avg_percent' => 0.0];
+            }
+            $domains[$domain]['paths']++;
+            $percent = (float) ($path['progress']['percent'] ?? 0);
+            $domains[$domain]['avg_percent'] += $percent;
+            if ($percent >= 100.0) {
+                $domains[$domain]['completed']++;
+            }
+        }
+
+        foreach ($domains as &$domain) {
+            $count = max(1, (int) $domain['paths']);
+            $domain['avg_percent'] = round(((float) $domain['avg_percent']) / $count, 1);
+        }
+        unset($domain);
+
+        return array_values($domains);
+    }
+
     private static function replace_items(int $path_id, array $exercise_ids): void
     {
         global $wpdb;
@@ -1198,6 +1721,13 @@ class PathsService
         self::ensure_path_tables();
         global $wpdb;
 
+        $path_scope = self::normalize_path_scope((string) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT path_scope FROM " . self::t('paths') . " WHERE id = %d LIMIT 1",
+                $path_id
+            )
+        ));
+
         $targets = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT t.target_type, t.target_id, g.label AS group_label
@@ -1221,6 +1751,14 @@ class PathsService
             $id   = (int) ($t['target_id'] ?? 0);
 
             if ($type === 'user' && $id > 0) {
+                if (!LearningAudiencePolicy::isClassStudent($id) && !LearningAudiencePolicy::isAutonomousLearner($id)) {
+                    continue;
+                }
+
+                if (LearningAudiencePolicy::isAutonomousLearner($id) && !in_array($path_scope, ['autonomous', 'mixed'], true)) {
+                    continue;
+                }
+
                 $direct_user_ids[]   = $id;
                 $assigned_user_ids[] = $id;
 
@@ -1244,7 +1782,7 @@ class PathsService
 
                 foreach ($member_ids as $uid) {
                     $uid = (int) $uid;
-                    if ($uid > 0) {
+                    if ($uid > 0 && LearningAudiencePolicy::isClassStudent($uid)) {
                         $assigned_user_ids[] = $uid;
                     }
                 }

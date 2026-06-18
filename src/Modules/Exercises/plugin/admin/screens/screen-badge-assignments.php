@@ -89,7 +89,7 @@ if (!empty($_POST) && check_admin_referer('ouinpo_badge_assign_form', 'ouinpo_ba
         ? array_map('intval', $_POST['user_ids'])
         : [];
 
-    $selected_users = array_values(array_filter($selected_users));
+    $selected_users = \Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::filterClassStudentIds($selected_users);
 
     if ($badge_id <= 0) {
         add_settings_error('ouinpo_badge_assign', 'no_badge', 'Choisis d’abord un badge.', 'error');
@@ -301,6 +301,9 @@ if ($group_id > 0) {
     $member_ids = [];
     foreach ($member_rows as $row) {
         $uid = intval($row->user_id);
+        if (!\Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::isClassStudent($uid)) {
+            continue;
+        }
         $member_ids[] = $uid;
         $group_membership[$uid] = (string) $row->label;
     }
@@ -335,6 +338,7 @@ if ($group_id > 0) {
     }
 
     $users = get_users($args);
+    $users = \Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::filterClassStudentRows($users, 'ID');
 
     if (!empty($users)) {
         $user_ids = [];
@@ -351,6 +355,9 @@ if ($group_id > 0) {
 
         foreach ($membership_rows as $row) {
             $uid = intval($row->user_id);
+            if (!\Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::isClassStudent($uid)) {
+                continue;
+            }
             if (in_array($uid, $user_ids, true) && !isset($group_membership[$uid])) {
                 $group_membership[$uid] = (string) $row->label;
             }
@@ -361,7 +368,7 @@ if ($group_id > 0) {
 // exclure les admins
 $filtered_users = [];
 foreach ($users as $u) {
-    if (!user_can($u->ID, 'manage_options')) {
+    if (!user_can($u->ID, 'manage_options') && \Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::isClassStudent((int) $u->ID)) {
         $filtered_users[] = $u;
     }
 }

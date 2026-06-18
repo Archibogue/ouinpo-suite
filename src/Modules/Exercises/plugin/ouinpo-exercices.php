@@ -41,6 +41,8 @@ add_action('rest_api_init', function () {
     \Ouinpo\Exercises\Rest\AssessmentsRoutes::register();
     \Ouinpo\Exercises\Rest\AssessmentsCompetencyRoutes::register();
     \Ouinpo\Exercises\Rest\MeRoutes::register();
+    \Ouinpo\Exercises\Rest\TrainingRoutes::register();
+
     \Ouinpo\Exercises\Rest\PracticalRoutes::register();
     \Ouinpo\Exercises\Rest\WrittenSubjectRoutes::register();
     \Ouinpo\Exercises\Rest\AiExerciseBuilderRoutes::register();

@@ -1,5 +1,7 @@
 <?php
-namespace Ouinpo\Exercises;
+namespace Ouinpo\Exercises;
+
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 
 defined('ABSPATH') || exit;
 
@@ -164,7 +166,21 @@ final class TeachingState {
         $updated_by = $updated_by ?: get_current_user_id();
 
         $tblUC = $wpdb->prefix . 'ouin_exo_user_competencies';
-        $tblGM = $wpdb->prefix . 'ouin_exo_group_members';
+        $tblGM = $wpdb->prefix . 'ouin_exo_group_members';
+
+        $student_ids = LearningAudiencePolicy::filterClassStudentIds($wpdb->get_col($wpdb->prepare(
+            "SELECT user_id
+             FROM {$tblGM}
+             WHERE group_id = %d
+               AND role = 'student'",
+            $group_id
+        )) ?: []);
+
+        if (empty($student_ids)) {
+            return 0;
+        }
+
+        $student_in = implode(',', array_fill(0, count($student_ids), '%d'));
 
         $sql = "
             INSERT IGNORE INTO {$tblUC}
@@ -180,7 +196,9 @@ final class TeachingState {
                 'import'
             FROM {$tblGM} gm
             WHERE gm.group_id = %d
-              AND gm.role = 'student'
+              AND gm.role = 'student'
+
+              AND gm.user_id IN ({$student_in})
         ";
 
         $result = $wpdb->query($wpdb->prepare(

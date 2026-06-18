@@ -3,6 +3,7 @@
 namespace Ouinpo\Suite\Core\School;
 
 use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 
 defined('ABSPATH') || exit;
 
@@ -192,7 +193,7 @@ final class YearClosureExecutor
         $resolver = new CycleTransitionResolver(new CycleRepository());
         foreach ($rows as $row) {
             $userId = (int) $row['user_id'];
-            if (!$policy->canBeAssignedToClass($userId)) {
+            if (!$policy->canBeAssignedToClass($userId) || !LearningAudiencePolicy::isSubjectToSchoolClosure($userId)) {
                 continue;
             }
             $effectiveLevelId = !empty($row['school_level_id_override']) ? (int) $row['school_level_id_override'] : $defaultLevelId;
@@ -268,6 +269,9 @@ final class YearClosureExecutor
             $transition = $effectiveLevelId > 0 ? $resolver->resolveDefaultNextLevel($effectiveLevelId) : ['to_level_id' => null];
             $userId = (int) $row['user_id'];
             if ($userId <= 0) {
+                continue;
+            }
+            if (!LearningAudiencePolicy::isSubjectToSchoolClosure($userId)) {
                 continue;
             }
             if (!isset($candidates[$userId])) {

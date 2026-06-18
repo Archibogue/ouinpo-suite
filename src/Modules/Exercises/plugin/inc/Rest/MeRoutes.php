@@ -4,6 +4,7 @@ namespace Ouinpo\Exercises\Rest;
 
 use Ouinpo\Exercises\CompetencyLevels;
 use Ouinpo\Exercises\TeachingState;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 
 use WP_REST_Request;
 
@@ -184,6 +185,10 @@ class MeRoutes {
 
         global $wpdb;
 
+        if (!LearningAudiencePolicy::isClassStudent($user_id)) {
+            return null;
+        }
+
         $p = $wpdb->prefix.'ouin_exo_';
 
 
@@ -237,6 +242,9 @@ class MeRoutes {
 
     private static function find_user_level_id(int $user_id, int $year_id, ?int $explicit_group_id = null): int {
         global $wpdb;
+        if (!LearningAudiencePolicy::isClassStudent($user_id)) {
+            return 0;
+        }
         $p = $wpdb->prefix.'ouin_exo_';
 
         if ($explicit_group_id) {
@@ -610,6 +618,10 @@ class MeRoutes {
     private static function current_student_level_label(int $user_id): string {
 
         global $wpdb;
+
+        if (!LearningAudiencePolicy::isClassStudent($user_id)) {
+            return '';
+        }
 
         $p = $wpdb->prefix . 'ouin_exo_';
 

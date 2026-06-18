@@ -1,6 +1,8 @@
 <?php
 namespace Ouinpo\Exercises;
 
+use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
 
 if (!defined('ABSPATH')) exit;
@@ -691,6 +693,12 @@ class BadgeEngine {
 
         }
 
+        if (!LearningAudiencePolicy::isClassStudent($user_id)) {
+
+            return [];
+
+        }
+
         if (isset(self::$user_level_id_cache[$user_id])) {
 
             return self::$user_level_id_cache[$user_id];
@@ -751,6 +759,74 @@ class BadgeEngine {
 
     }
 
+    public static function award_path_badge(int $user_id, int $badge_id): bool {
+
+        global $wpdb;
+
+        if ($user_id <= 0 || $badge_id <= 0) {
+            return false;
+        }
+
+        $user = get_user_by('id', $user_id);
+        if (!$user) {
+            return false;
+        }
+
+        $roles = (array) $user->roles;
+        $is_allowed_role = in_array('ouinpo_learner', $roles, true)
+            || in_array('ouinpo_student', $roles, true)
+            || in_array('eleve', $roles, true);
+
+        if (!$is_allowed_role || !user_can($user_id, Capabilities::PRACTICE_EXERCISES)) {
+            return false;
+        }
+
+        $t_user_badges = $wpdb->prefix . 'ouin_exo_user_badges';
+        $exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT 1 FROM $t_user_badges WHERE user_id = %d AND badge_id = %d LIMIT 1",
+                $user_id,
+                $badge_id
+            )
+        );
+
+        if ($exists) {
+            return false;
+        }
+
+        $awarded_at = current_time('mysql');
+        $ok = $wpdb->insert(
+            $t_user_badges,
+            [
+                'user_id'    => $user_id,
+                'badge_id'   => $badge_id,
+                'awarded_at' => $awarded_at,
+                'source'     => 'path',
+            ],
+            ['%d','%d','%s','%s']
+        );
+
+        if ($ok === false || !empty($wpdb->last_error)) {
+            return false;
+        }
+
+        $pending = get_user_meta($user_id, 'ouinpo_new_badges', true);
+        if (!is_array($pending)) {
+            $pending = [];
+        }
+
+        $pending[] = [
+            'badge_id'   => (int) $badge_id,
+            'awarded_at' => $awarded_at,
+            'source'     => 'path',
+        ];
+
+        update_user_meta($user_id, 'ouinpo_new_badges', $pending);
+        do_action('ouinpo_exo_badge_awarded', $user_id, $badge_id, 'path');
+
+        return true;
+    }
+
 
 
     protected static function current_level_labels_for_user(int $user_id): array {
@@ -760,7 +836,13 @@ class BadgeEngine {
             return [];
         }
 
-        if (isset(self::$user_level_label_cache[$user_id])) {
+        if (!LearningAudiencePolicy::isClassStudent($user_id)) {
+
+            return [];
+
+        }
+
+        if (isset(self::$user_level_label_cache[$user_id])) {
             return self::$user_level_label_cache[$user_id];
         }
 

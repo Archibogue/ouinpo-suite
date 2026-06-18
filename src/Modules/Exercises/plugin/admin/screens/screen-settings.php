@@ -8,6 +8,11 @@ defined('ABSPATH') || exit;
 class Screen_Settings
 {
     private const OPTION_SHOW_STATUS_ACTIONS = 'ouinpo_exo_show_status_actions';
+    private const OPTION_PUBLIC_PATHS = 'ouinpo_training_public_paths_enabled';
+    private const OPTION_SELF_ENROLMENT = 'ouinpo_training_self_enrolment_enabled';
+    private const OPTION_PATH_BADGES = 'ouinpo_training_path_badges_enabled';
+    private const OPTION_GLOBAL_STATS = 'ouinpo_training_include_learners_global_stats';
+    private const OPTION_RETENTION = 'ouinpo_training_progress_retention';
     private const NONCE_ACTION = 'ouinpo_exo_settings_save';
     private const NONCE_NAME   = 'ouinpo_exo_settings_nonce';
 
@@ -25,6 +30,11 @@ class Screen_Settings
         }
 
         $show_status_actions = (int) get_option(self::OPTION_SHOW_STATUS_ACTIONS, 0) === 1;
+        $public_paths = (int) get_option(self::OPTION_PUBLIC_PATHS, 1) === 1;
+        $self_enrolment = (int) get_option(self::OPTION_SELF_ENROLMENT, 1) === 1;
+        $path_badges = (int) get_option(self::OPTION_PATH_BADGES, 1) === 1;
+        $global_stats = (int) get_option(self::OPTION_GLOBAL_STATS, 0) === 1;
+        $retention = (string) get_option(self::OPTION_RETENTION, 'account_deletion');
         ?>
         <h1>Options des exercices</h1>
 
@@ -50,6 +60,24 @@ class Screen_Settings
                             </p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row">Centre d entrainement</th>
+                        <td>
+                            <p><label><input type="checkbox" name="public_paths" value="1" <?php checked($public_paths); ?>> Autoriser les parcours publics/autonomes</label></p>
+                            <p><label><input type="checkbox" name="self_enrolment" value="1" <?php checked($self_enrolment); ?>> Autoriser l inscription autonome aux parcours publics</label></p>
+                            <p><label><input type="checkbox" name="path_badges" value="1" <?php checked($path_badges); ?>> Autoriser les badges obtenus par parcours</label></p>
+                            <p><label><input type="checkbox" name="global_stats" value="1" <?php checked($global_stats); ?>> Afficher les apprenants autonomes dans les statistiques globales</label></p>
+                            <p>
+                                <label for="ouinpo-training-retention">Conservation progression autonome</label>
+                                <select id="ouinpo-training-retention" name="retention">
+                                    <option value="12m" <?php selected($retention, '12m'); ?>>12 mois</option>
+                                    <option value="24m" <?php selected($retention, '24m'); ?>>24 mois</option>
+                                    <option value="account_deletion" <?php selected($retention, 'account_deletion'); ?>>Jusqu a suppression du compte</option>
+                                </select>
+                            </p>
+                            <p class="description">Les apprenants autonomes restent exclus des classes, tableaux professeur et clotures scolaires.</p>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -64,6 +92,16 @@ class Screen_Settings
 
         $value = !empty($_POST['show_status_actions']) ? 1 : 0;
         update_option(self::OPTION_SHOW_STATUS_ACTIONS, $value, false);
+        update_option(self::OPTION_PUBLIC_PATHS, !empty($_POST['public_paths']) ? 1 : 0, false);
+        update_option(self::OPTION_SELF_ENROLMENT, !empty($_POST['self_enrolment']) ? 1 : 0, false);
+        update_option(self::OPTION_PATH_BADGES, !empty($_POST['path_badges']) ? 1 : 0, false);
+        update_option(self::OPTION_GLOBAL_STATS, !empty($_POST['global_stats']) ? 1 : 0, false);
+
+        $retention = sanitize_key((string) ($_POST['retention'] ?? 'account_deletion'));
+        if (!in_array($retention, ['12m', '24m', 'account_deletion'], true)) {
+            $retention = 'account_deletion';
+        }
+        update_option(self::OPTION_RETENTION, $retention, false);
 
         echo '<div class="notice notice-success is-dismissible"><p>Options enregistrées.</p></div>';
     }

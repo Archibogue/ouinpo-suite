@@ -170,6 +170,12 @@ class StatusRoutes
             \Ouinpo\Exercises\BadgeEngine::recompute_for_user((int) $uid);
         }
 
-        return new WP_REST_Response(['ok' => true, 'status' => $status], 200);
+        if ($status === 'solved' && class_exists(\Ouinpo\Exercises\PathsService::class)) {
+
+            \Ouinpo\Exercises\PathsService::award_path_badges_for_user((int) $uid, $eid);
+
+        }
+
+        return new WP_REST_Response(['ok' => true, 'status' => $status], 200);
     }
 }

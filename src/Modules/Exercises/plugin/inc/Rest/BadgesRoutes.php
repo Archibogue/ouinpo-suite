@@ -7,6 +7,7 @@ namespace Ouinpo\Exercises\Rest;
 
 
 use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 use WP_REST_Request;
 
 use WP_REST_Response;
@@ -129,6 +130,10 @@ class BadgesRoutes {
     private static function get_student_level(int $user_id): string {
 
         global $wpdb;
+
+        if (!LearningAudiencePolicy::isClassStudent($user_id)) {
+            return '';
+        }
 
         $p = $wpdb->prefix . 'ouin_exo_';
 
