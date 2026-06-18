@@ -6,6 +6,7 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 
 ### Ajoute
 
+- Mode Centre d entrainement NSI avec role `ouinpo_learner`, parcours publics/autonomes, inscription personnelle, progression personnelle et badges lies aux parcours existants.
 - Socle de cloture annuelle non destructive avec cycles pedagogiques, transitions de niveaux, cohortes, politiques de conservation et journalisation des runs/items.
 - Ecrans admin `Cycles pedagogiques` et `Cloture annuelle` avec simulation, confirmation explicite et execution non destructive.
 - Role `ouinpo_alumni` et capacites `ouinpo_practice_exercises`, `ouinpo_track_learning_data`, `ouinpo_view_own_learning_data`, `ouinpo_portfolio_view_own_archive`, `ouinpo_portfolio_export_own`.
@@ -17,6 +18,7 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 
 - Migration Exercices `2.8.0`.
 - Ajout des tables `ouinpo_cycles`, `ouinpo_level_transitions`, `ouinpo_cycle_cohorts`, `ouinpo_cycle_members`, `ouinpo_cycle_data_policies`, `ouinpo_year_closure_runs` et `ouinpo_year_closure_items`.
+- Ajout de `path_scope` sur `ouin_sf_paths` et de la table `ouinpo_path_badges` pour relier un parcours existant a un badge.
 - Ajout de colonnes idempotentes sur niveaux, annees scolaires, classes et tables Projects.
 
 ### Fixed

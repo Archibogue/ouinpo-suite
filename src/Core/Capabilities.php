@@ -22,6 +22,14 @@ final class Capabilities
     public const PRACTICE_EXERCISES = 'ouinpo_practice_exercises';
     public const TRACK_LEARNING_DATA = 'ouinpo_track_learning_data';
     public const VIEW_OWN_LEARNING_DATA = 'ouinpo_view_own_learning_data';
+    public const VIEW_REVISIONS = 'ouinpo_view_revisions';
+    public const VIEW_WRITTEN_SUBJECTS = 'ouinpo_view_written_subjects';
+    public const VIEW_PRACTICAL_SUBJECTS = 'ouinpo_view_practical_subjects';
+    public const TRACK_OWN_PROGRESS = 'ouinpo_track_own_progress';
+    public const VIEW_OWN_PROGRESS = 'ouinpo_view_own_progress';
+    public const EARN_BADGES = 'ouinpo_earn_badges';
+    public const VIEW_PUBLIC_PATHS = 'ouinpo_view_public_paths';
+    public const START_PUBLIC_PATHS = 'ouinpo_start_public_paths';
     public const PORTFOLIO_VIEW_OWN_ARCHIVE = 'ouinpo_portfolio_view_own_archive';
     public const PORTFOLIO_EXPORT_OWN = 'ouinpo_portfolio_export_own';
     public const PROJECTS_MANAGE_ALL = 'ouinpo_projects_manage_all';
@@ -68,6 +76,14 @@ final class Capabilities
             self::PRACTICE_EXERCISES,
             self::TRACK_LEARNING_DATA,
             self::VIEW_OWN_LEARNING_DATA,
+            self::VIEW_REVISIONS,
+            self::VIEW_WRITTEN_SUBJECTS,
+            self::VIEW_PRACTICAL_SUBJECTS,
+            self::TRACK_OWN_PROGRESS,
+            self::VIEW_OWN_PROGRESS,
+            self::EARN_BADGES,
+            self::VIEW_PUBLIC_PATHS,
+            self::START_PUBLIC_PATHS,
             self::PORTFOLIO_VIEW_OWN_ARCHIVE,
             self::PORTFOLIO_EXPORT_OWN,
             self::PROJECTS_MANAGE_ALL,
@@ -109,6 +125,22 @@ final class Capabilities
         ];
     }
 
+    public static function learner(): array
+    {
+        return [
+            'read',
+            self::PRACTICE_EXERCISES,
+            self::VIEW_REVISIONS,
+            self::VIEW_WRITTEN_SUBJECTS,
+            self::VIEW_PRACTICAL_SUBJECTS,
+            self::TRACK_OWN_PROGRESS,
+            self::VIEW_OWN_PROGRESS,
+            self::EARN_BADGES,
+            self::VIEW_PUBLIC_PATHS,
+            self::START_PUBLIC_PATHS,
+        ];
+    }
+
     public static function labels(): array
     {
         return [
@@ -128,6 +160,14 @@ final class Capabilities
             self::PRACTICE_EXERCISES => 'Pratiquer les exercices',
             self::TRACK_LEARNING_DATA => 'Stocker le suivi pedagogique',
             self::VIEW_OWN_LEARNING_DATA => 'Voir ses donnees pedagogiques',
+            self::VIEW_REVISIONS => 'Voir les revisions',
+            self::VIEW_WRITTEN_SUBJECTS => 'Voir les sujets ecrits',
+            self::VIEW_PRACTICAL_SUBJECTS => 'Voir les sujets pratiques',
+            self::TRACK_OWN_PROGRESS => 'Stocker sa progression personnelle',
+            self::VIEW_OWN_PROGRESS => 'Voir sa progression personnelle',
+            self::EARN_BADGES => 'Obtenir des badges',
+            self::VIEW_PUBLIC_PATHS => 'Voir les parcours publics',
+            self::START_PUBLIC_PATHS => 'Demarrer les parcours publics',
             self::PORTFOLIO_VIEW_OWN_ARCHIVE => 'Portfolio - voir ses archives',
             self::PORTFOLIO_EXPORT_OWN => 'Portfolio - exporter ses archives',
             self::PROJECTS_MANAGE_ALL => 'Projets - gestion globale',
@@ -238,6 +278,39 @@ final class Capabilities
                 self::PROJECTS_AI_STUDENT_USE,
             ] as $capability) {
                 $alumni->remove_cap($capability);
+            }
+        }
+
+        $learnerCaps = self::learner();
+        $learner = get_role('ouinpo_learner');
+        if (!$learner) {
+            add_role('ouinpo_learner', 'Apprenant autonome NSI', array_fill_keys($learnerCaps, true));
+            $learner = get_role('ouinpo_learner');
+        }
+
+        if ($learner) {
+            foreach ($learnerCaps as $capability) {
+                $learner->add_cap($capability);
+            }
+
+            foreach ([
+                self::MANAGE_CLASSES,
+                self::VIEW_STUDENT_DATA,
+                self::MANAGE_SUBMISSIONS,
+                self::UPLOAD_SUBMISSION,
+                self::SUBMIT_WORK,
+                self::PROJECTS_MANAGE_ALL,
+                self::PROJECTS_MANAGE_CLASS,
+                self::PROJECTS_CREATE,
+                self::PROJECTS_VIEW_OWN,
+                self::PROJECTS_EDIT_OWN_TASKS,
+                self::PROJECTS_COMMENT,
+                self::PROJECTS_VALIDATE,
+                self::PROJECTS_AI_STUDENT_USE,
+                self::PORTFOLIO_VIEW_OWN_ARCHIVE,
+                self::PORTFOLIO_EXPORT_OWN,
+            ] as $capability) {
+                $learner->remove_cap($capability);
             }
         }
     }

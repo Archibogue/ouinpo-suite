@@ -213,6 +213,35 @@ Contenu :
 [ouinpo_student_badges]
 ```
 
+### Pages Centre d entrainement NSI
+
+Titre conseille :
+
+```text
+Centre d entrainement NSI
+```
+
+Slug conseille :
+
+```text
+entrainement-nsi
+```
+
+Contenu :
+
+```text
+[ouinpo_training_home]
+```
+
+Pages personnelles optionnelles :
+
+```text
+[ouinpo_learner_dashboard]
+[ouinpo_learner_badges]
+```
+
+Ces shortcodes reutilisent les parcours existants marques `autonomous` ou `mixed`. Un apprenant autonome demarre un parcours public via une cible utilisateur individuelle, sans creation de classe artificielle.
+
 ### Page “Palmarès des badges”
 
 Titre conseillé :
@@ -588,6 +617,18 @@ Exemple :
 ```text
 [ouinpo_student_badges]
 ```
+
+### `[ouinpo_training_home]`
+
+Affiche les parcours publics/autonomes disponibles et permet a un apprenant connecte de demarrer un parcours personnel.
+
+### `[ouinpo_learner_dashboard]`
+
+Affiche les parcours autonomes en cours, les parcours termines, les badges de parcours et une synthese par domaine pour l utilisateur connecte.
+
+### `[ouinpo_learner_badges]`
+
+Affiche les badges de parcours obtenus et les badges possibles lies aux parcours publics.
 
 ### `[ouinpo_badges_palmares]`
 

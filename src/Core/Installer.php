@@ -16,6 +16,7 @@ final class Installer
         AiSettings::migrate_public_access_for_existing_site($installed);
         self::ensureProjectsStudentAiSchema();
         self::ensureYearClosureSchema();
+        self::ensureTrainingSchema();
         Capabilities::install();
         update_option('ouinpo_suite_version', $current, false);
     }
@@ -92,6 +93,7 @@ final class Installer
             level_slug VARCHAR(30) NULL DEFAULT NULL,
             domain_slug VARCHAR(120) NULL DEFAULT NULL,
             goal_slug VARCHAR(40) NULL DEFAULT NULL,
+            path_scope VARCHAR(30) NOT NULL DEFAULT 'teacher_assigned',
             PRIMARY KEY  (id),
             KEY student_id (student_id),
             KEY teacher_id (teacher_id),
@@ -103,6 +105,7 @@ final class Installer
             KEY idx_level_slug (level_slug),
             KEY idx_domain_slug (domain_slug),
             KEY idx_goal_slug (goal_slug),
+            KEY idx_path_scope (path_scope),
             KEY idx_template_active_level_domain_goal (is_template, is_active, level_slug, domain_slug, goal_slug),
             KEY idx_active_updated (is_active, updated_at, id)
         ) {$schema_suffix};");
@@ -146,6 +149,24 @@ final class Installer
             KEY user_id (user_id),
             KEY last_suggested_at (last_suggested_at),
             KEY exercise_id (exercise_id)
+        ) {$schema_suffix};");
+
+        $tPathBadges = $wpdb->prefix . 'ouinpo_path_badges';
+        dbDelta("CREATE TABLE {$tPathBadges} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            path_id BIGINT UNSIGNED NOT NULL,
+            badge_id BIGINT UNSIGNED NOT NULL,
+            rule_type VARCHAR(40) NOT NULL DEFAULT 'all_mandatory',
+            min_percent DECIMAL(5,2) NOT NULL DEFAULT 100.00,
+            require_all_mandatory TINYINT(1) NOT NULL DEFAULT 1,
+            require_final_exercise TINYINT(1) NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY path_badge (path_id, badge_id),
+            KEY path_id (path_id),
+            KEY badge_id (badge_id),
+            KEY rule_type (rule_type)
         ) {$schema_suffix};");
 
         // Projects / suivi pedagogique BTS SIO.
@@ -643,6 +664,47 @@ public static function ensureYearClosureSchema(): void
     self::addColumnIfMissing($evidence, 'preserve_until', 'preserve_until DATE NULL AFTER is_portfolio_evidence');
 
     self::backfillProjectClosureColumnsFromClassSlug();
+}
+
+public static function ensureTrainingSchema(): void
+{
+    global $wpdb;
+
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+    $charset = $wpdb->get_charset_collate();
+    $schema_suffix = "ENGINE=InnoDB {$charset}";
+    $paths = $wpdb->prefix . 'ouin_sf_paths';
+    $pathBadges = $wpdb->prefix . 'ouinpo_path_badges';
+    $userBadges = $wpdb->prefix . 'ouin_exo_user_badges';
+
+    self::addColumnIfMissing($paths, 'path_scope', "path_scope VARCHAR(30) NOT NULL DEFAULT 'teacher_assigned' AFTER goal_slug");
+
+    dbDelta("CREATE TABLE {$pathBadges} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        path_id BIGINT UNSIGNED NOT NULL,
+        badge_id BIGINT UNSIGNED NOT NULL,
+        rule_type VARCHAR(40) NOT NULL DEFAULT 'all_mandatory',
+        min_percent DECIMAL(5,2) NOT NULL DEFAULT 100.00,
+        require_all_mandatory TINYINT(1) NOT NULL DEFAULT 1,
+        require_final_exercise TINYINT(1) NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY path_badge (path_id, badge_id),
+        KEY path_id (path_id),
+        KEY badge_id (badge_id),
+        KEY rule_type (rule_type)
+    ) {$schema_suffix};");
+
+    if (self::columnExists($userBadges, 'source')) {
+        $columnType = (string) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$userBadges} LIKE %s", 'source'));
+        $row = $wpdb->get_row($wpdb->prepare("SHOW COLUMNS FROM {$userBadges} LIKE %s", 'source'), ARRAY_A);
+        $type = strtolower((string) ($row['Type'] ?? $columnType));
+        if (str_contains($type, 'enum') && !str_contains($type, "'path'")) {
+            $wpdb->query("ALTER TABLE {$userBadges} MODIFY source ENUM('auto','manual','path') NOT NULL DEFAULT 'auto'");
+        }
+    }
 }
 
 private static function backfillProjectClosureColumnsFromClassSlug(): void

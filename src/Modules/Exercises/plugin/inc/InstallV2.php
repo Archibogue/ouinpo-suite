@@ -30,6 +30,10 @@ class InstallV2 {
 
         if (version_compare((string) $current, self::DB_VERSION, '>=')) {
 
+            if (class_exists('\Ouinpo\Suite\Core\Installer')) {
+                \Ouinpo\Suite\Core\Installer::ensureTrainingSchema();
+            }
+
             self::maybe_repair_assessment_tables();
 
             return;
@@ -48,6 +52,10 @@ class InstallV2 {
 
                 return;
 
+            }
+
+            if (class_exists('\Ouinpo\Suite\Core\Installer')) {
+                \Ouinpo\Suite\Core\Installer::ensureTrainingSchema();
             }
 
             update_option(self::OPTION_KEY, self::DB_VERSION, false);
@@ -738,7 +746,7 @@ class InstallV2 {
 
             awarded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-            source ENUM('auto','manual') NOT NULL DEFAULT 'auto',
+            source ENUM('auto','manual','path') NOT NULL DEFAULT 'auto',
 
             PRIMARY KEY  (user_id, badge_id),
 

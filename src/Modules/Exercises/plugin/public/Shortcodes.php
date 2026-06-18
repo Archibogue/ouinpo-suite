@@ -3,6 +3,7 @@
 namespace Ouinpo\Exercises;
 
 use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 
 
 
@@ -92,6 +93,12 @@ final class Shortcodes {
 
     add_shortcode('ouinpo-written-subject', [__CLASS__, 'render_written_subject']);
 
+    add_shortcode('ouinpo_training_home', [__CLASS__, 'render_training_home']);
+
+    add_shortcode('ouinpo_learner_dashboard', [__CLASS__, 'render_learner_dashboard']);
+
+    add_shortcode('ouinpo_learner_badges', [__CLASS__, 'render_learner_badges']);
+
     
 
   }
@@ -105,6 +112,207 @@ private static function page_url_or_fallback(string $slug, string $fallback): st
     }
 
     return home_url($fallback);
+}
+
+public static function render_training_home($atts = array(), $content = ''): string
+{
+  wp_enqueue_style('ouinpo-exo-css');
+
+  $message = '';
+  if (
+    is_user_logged_in()
+    && isset($_POST['ouinpo_training_action'], $_POST['ouinpo_training_nonce'])
+    && (string) $_POST['ouinpo_training_action'] === 'start_path'
+    && wp_verify_nonce(sanitize_text_field(wp_unslash((string) $_POST['ouinpo_training_nonce'])), 'ouinpo_training_start_path')
+  ) {
+    $path_id = (int) ($_POST['path_id'] ?? 0);
+    $result = class_exists(PathsService::class)
+      ? PathsService::start_path_for_user(get_current_user_id(), $path_id)
+      : new \WP_Error('missing_service', 'Service de parcours indisponible.');
+
+    $message = is_wp_error($result)
+      ? '<div class="ouinpo-competences ouinpo-alert">' . esc_html($result->get_error_message()) . '</div>'
+      : '<div class="ouinpo-competences ouinpo-success">Parcours demarre.</div>';
+  }
+
+  $paths = class_exists(PathsService::class) ? PathsService::get_public_autonomous_paths() : [];
+
+  $html = '<div class="ouinpo-competences ouinpo-training-home">';
+  $html .= '<h2>Centre d entrainement NSI</h2>';
+  $html .= $message;
+
+  if (!is_user_logged_in()) {
+    $html .= '<p>Connecte-toi pour demarrer un parcours et conserver ta progression.</p>';
+  }
+
+  if (empty($paths)) {
+    return $html . '<p>Aucun parcours public n est disponible pour le moment.</p></div>';
+  }
+
+  $levels = class_exists(PathsService::class) ? PathsService::get_template_level_options() : [];
+  $domains = class_exists(PathsService::class) ? PathsService::get_template_domain_options() : [];
+  $goals = class_exists(PathsService::class) ? PathsService::get_template_goal_options() : [];
+
+  $html .= '<div class="ouinpo-badges-grid">';
+  foreach ($paths as $path) {
+    $html .= self::render_training_path_card($path, $levels, $domains, $goals, true);
+  }
+  $html .= '</div></div>';
+
+  return $html;
+}
+
+public static function render_learner_dashboard($atts = array(), $content = ''): string
+{
+  if (!is_user_logged_in()) {
+    return '<p>Connecte-toi pour voir ton tableau de bord.</p>';
+  }
+
+  $user_id = get_current_user_id();
+  if (!current_user_can(Capabilities::VIEW_OWN_PROGRESS) && !current_user_can(Capabilities::VIEW_OWN_LEARNING_DATA)) {
+    return '<p>Acces refuse.</p>';
+  }
+
+  wp_enqueue_style('ouinpo-exo-css');
+  $dashboard = class_exists(PathsService::class) ? PathsService::get_user_training_dashboard($user_id) : [];
+  $active = (array) ($dashboard['active_paths'] ?? []);
+  $completed = (array) ($dashboard['completed_paths'] ?? []);
+  $badges = (array) ($dashboard['badges'] ?? []);
+  $domains = (array) ($dashboard['domains'] ?? []);
+  $suggested = (array) ($dashboard['suggested_paths'] ?? []);
+  $levels = class_exists(PathsService::class) ? PathsService::get_template_level_options() : [];
+  $domain_options = class_exists(PathsService::class) ? PathsService::get_template_domain_options() : [];
+  $goals = class_exists(PathsService::class) ? PathsService::get_template_goal_options() : [];
+
+  $html = '<div class="ouinpo-competences ouinpo-learner-dashboard">';
+  $html .= '<h2>Mes parcours</h2>';
+  $html .= self::render_training_path_list($active, $levels, $domain_options, $goals, 'Aucun parcours en cours.');
+  $html .= '<h2>Parcours termines</h2>';
+  $html .= self::render_training_path_list($completed, $levels, $domain_options, $goals, 'Aucun parcours termine.');
+  $html .= '<h2>Badges obtenus par parcours</h2>';
+  $html .= self::render_training_badge_list($badges, 'Aucun badge de parcours obtenu pour le moment.');
+  $html .= '<h2>Progression par domaine</h2>';
+
+  if (empty($domains)) {
+    $html .= '<p>Aucune progression de domaine pour le moment.</p>';
+  } else {
+    $html .= '<ul>';
+    foreach ($domains as $domain) {
+      $label = $domain_options[(string) ($domain['domain_slug'] ?? '')] ?? (string) ($domain['domain_slug'] ?? 'libre');
+      $html .= '<li>' . esc_html($label) . ' : ' . esc_html((string) ($domain['avg_percent'] ?? 0)) . '%</li>';
+    }
+    $html .= '</ul>';
+  }
+
+  $html .= '<h2>Parcours conseilles</h2>';
+  $html .= self::render_training_path_list($suggested, $levels, $domain_options, $goals, 'Aucune suggestion disponible.');
+  $html .= '</div>';
+
+  return $html;
+}
+
+public static function render_learner_badges($atts = array(), $content = ''): string
+{
+  if (!is_user_logged_in()) {
+    return '<p>Connecte-toi pour voir tes badges.</p>';
+  }
+
+  wp_enqueue_style('ouinpo-exo-css');
+  $earned = class_exists(PathsService::class) ? PathsService::get_user_path_badges(get_current_user_id()) : [];
+  $paths = class_exists(PathsService::class) ? PathsService::get_public_autonomous_paths() : [];
+
+  $html = '<div class="ouinpo-competences ouinpo-learner-badges">';
+  $html .= '<h2>Badges obtenus</h2>';
+  $html .= self::render_training_badge_list($earned, 'Aucun badge de parcours obtenu pour le moment.');
+  $html .= '<h2>Badges possibles</h2>';
+
+  if (empty($paths)) {
+    $html .= '<p>Aucun badge de parcours public n est disponible.</p>';
+  } else {
+    $html .= '<ul>';
+    foreach ($paths as $path) {
+      foreach ((array) ($path['badge_links'] ?? []) as $link) {
+        $html .= '<li><strong>' . esc_html((string) ($link['title'] ?? ('Badge #' . (int) ($link['badge_id'] ?? 0)))) . '</strong>';
+        $html .= ' - ' . esc_html((string) ($path['title'] ?? 'Parcours')) . '</li>';
+      }
+    }
+    $html .= '</ul>';
+  }
+
+  return $html . '</div>';
+}
+
+private static function render_training_path_list(array $paths, array $levels, array $domains, array $goals, string $empty): string
+{
+  if (empty($paths)) {
+    return '<p>' . esc_html($empty) . '</p>';
+  }
+
+  $html = '<div class="ouinpo-badges-grid">';
+  foreach ($paths as $path) {
+    $html .= self::render_training_path_card($path, $levels, $domains, $goals, false);
+  }
+  return $html . '</div>';
+}
+
+private static function render_training_path_card(array $path, array $levels, array $domains, array $goals, bool $show_start): string
+{
+  $level = $levels[(string) ($path['level_slug'] ?? '')] ?? '';
+  $domain = $domains[(string) ($path['domain_slug'] ?? '')] ?? '';
+  $goal = $goals[(string) ($path['goal_slug'] ?? '')] ?? '';
+  $progress = (array) ($path['progress'] ?? []);
+  $percent = isset($progress['percent']) ? (float) $progress['percent'] : 0.0;
+
+  $html = '<article class="ouinpo-badge-item ouinpo-training-path">';
+  $html .= '<div class="ouinpo-badge-title">' . esc_html((string) ($path['title'] ?? 'Parcours')) . '</div>';
+  $meta = array_values(array_filter([$level, $domain, $goal], static fn($v) => trim((string) $v) !== ''));
+  if (!empty($meta)) {
+    $html .= '<p>' . esc_html(implode(' - ', $meta)) . '</p>';
+  }
+  if (!empty($path['student_note'])) {
+    $html .= '<p>' . wp_kses_post((string) $path['student_note']) . '</p>';
+  }
+  $html .= '<p>' . (int) ($path['items_count'] ?? 0) . ' exercice(s)';
+  if ($percent > 0) {
+    $html .= ' - ' . esc_html((string) $percent) . '%';
+  }
+  $html .= '</p>';
+
+  foreach ((array) ($path['badge_links'] ?? []) as $link) {
+    $html .= '<p>Badge : ' . esc_html((string) ($link['title'] ?? ('#' . (int) ($link['badge_id'] ?? 0)))) . '</p>';
+  }
+
+  if ($show_start && is_user_logged_in()) {
+    if (!empty($path['already_started'])) {
+      $html .= '<p>Parcours deja demarre.</p>';
+    } elseif (current_user_can(Capabilities::START_PUBLIC_PATHS) || current_user_can(Capabilities::PRACTICE_EXERCISES)) {
+      $html .= '<form method="post">';
+      $html .= wp_nonce_field('ouinpo_training_start_path', 'ouinpo_training_nonce', true, false);
+      $html .= '<input type="hidden" name="ouinpo_training_action" value="start_path">';
+      $html .= '<input type="hidden" name="path_id" value="' . (int) ($path['id'] ?? 0) . '">';
+      $html .= '<button type="submit">Demarrer</button>';
+      $html .= '</form>';
+    }
+  }
+
+  return $html . '</article>';
+}
+
+private static function render_training_badge_list(array $badges, string $empty): string
+{
+  if (empty($badges)) {
+    return '<p>' . esc_html($empty) . '</p>';
+  }
+
+  $html = '<ul>';
+  foreach ($badges as $badge) {
+    $html .= '<li><strong>' . esc_html((string) ($badge['title'] ?? ('Badge #' . (int) ($badge['badge_id'] ?? 0)))) . '</strong>';
+    if (!empty($badge['awarded_at'])) {
+      $html .= ' - ' . esc_html((string) $badge['awarded_at']);
+    }
+    $html .= '</li>';
+  }
+  return $html . '</ul>';
 }
 
 private static function render_ai_notice(string $context = 'exercise'): string {
@@ -3548,6 +3756,7 @@ public static function render_teacher($atts = [], $content = '') {
 
 
     $students = $wpdb->get_results($wpdb->prepare($sql, ...$params));
+    $students = LearningAudiencePolicy::filterClassStudentRows((array) $students, 'ID');
 
 
 
@@ -4172,6 +4381,8 @@ wp_enqueue_script('ouinpo-teacher-competencies');
     );
 
 
+
+    $rows = LearningAudiencePolicy::filterClassStudentRows((array) $rows, 'user_id');
 
     if (!$rows) {
 

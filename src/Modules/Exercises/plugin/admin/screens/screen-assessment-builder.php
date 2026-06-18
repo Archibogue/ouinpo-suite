@@ -4,6 +4,7 @@ namespace Ouinpo\Exercises\Admin;
 use Ouinpo\Exercises\AssessmentsService;
 use Ouinpo\Exercises\CompetencyLevels;
 use Ouinpo\Suite\Core\Capabilities;
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
 
 if (!defined('ABSPATH')) exit;
 
@@ -792,13 +793,15 @@ class Screen_Assessment_Builder {
             return 0;
         }
     
-        return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*)
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT user_id
              FROM " . self::table('group_members') . "
              WHERE group_id = %d
                AND role = 'student'",
             $group_id
-        ));
+        )) ?: [];
+
+        return count(LearningAudiencePolicy::filterClassStudentIds($ids));
     }
 
     private static function class_exercise_done_map(int $group_id): array {
@@ -811,17 +814,28 @@ class Screen_Assessment_Builder {
         $tbl_gm = self::table('group_members');
         $tbl_us = self::table('user_status');
     
+        $student_ids = LearningAudiencePolicy::filterClassStudentIds($wpdb->get_col($wpdb->prepare(
+            "SELECT user_id
+             FROM {$tbl_gm}
+             WHERE group_id = %d
+               AND role = 'student'",
+            $group_id
+        )) ?: []);
+
+        if (empty($student_ids)) {
+            return [];
+        }
+
+        $student_in = implode(',', array_fill(0, count($student_ids), '%d'));
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT
                 us.exercise_id,
                 COUNT(DISTINCT CASE WHEN us.status IN ('attempted','solved') THEN us.user_id END) AS attempted_count,
                 COUNT(DISTINCT CASE WHEN us.status = 'solved' THEN us.user_id END) AS solved_count
-             FROM {$tbl_gm} gm
-             JOIN {$tbl_us} us ON us.user_id = gm.user_id
-             WHERE gm.group_id = %d
-               AND gm.role = 'student'
+             FROM {$tbl_us} us
+             WHERE us.user_id IN ({$student_in})
              GROUP BY us.exercise_id",
-            $group_id
+            ...$student_ids
         )) ?: [];
     
         $map = [];

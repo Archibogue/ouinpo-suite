@@ -182,6 +182,9 @@ Attention : les shortcodes publics peuvent afficher des exercices, indices, solu
 | Flashcards | `flashcards` | `[ouinpo_flashcards]` |
 | Mes compétences | `mes-competences` | `[ouinpo_competences_progress]` |
 | Mes badges | `mes-badges` | `[ouinpo_student_badges]` |
+| Centre d entrainement NSI | `entrainement-nsi` | `[ouinpo_training_home]` |
+| Tableau apprenant autonome | `mon-entrainement` | `[ouinpo_learner_dashboard]` |
+| Badges apprenant autonome | `badges-entrainement` | `[ouinpo_learner_badges]` |
 | Palmarès des badges | `palmares-badges` | `[ouinpo_badges_palmares]` |
 | Carte du site | `carte-du-site` | `[ouinpo_site_map]` |
 
@@ -583,13 +586,14 @@ Avant de partager une archive du plugin, ne jamais inclure :
 
 ## Roles et capacites
 
-Les roles actuels sont `ouinpo_teacher` et `ouinpo_student`. Les anciens roles `prof` et `eleve` restent supportes pour compatibilite avec les installations existantes et certains modules historiques. Les deux familles peuvent donc coexister volontairement.
+Les roles actuels sont `ouinpo_teacher`, `ouinpo_student`, `ouinpo_learner` et `ouinpo_alumni`. Les anciens roles `prof` et `eleve` restent supportes pour compatibilite avec les installations existantes et certains modules historiques. Les deux familles peuvent donc coexister volontairement.
 
 | Profil | Role attendu |
 |---|---|
 | Administrateur WordPress | Installe le plugin, active les modules, configure les pages, configure l'IA, gere les reglages globaux, les roles et les capacites. |
 | Enseignant OuInPo | Gere les exercices, competences, classes/groupes si le module le permet, soumissions, evaluations et badges selon les capacites attribuees. |
 | Eleve OuInPo | Consulte les exercices autorises, repond, suit sa progression, utilise les flashcards, accede eventuellement aux badges et au Gate. |
+| Apprenant autonome NSI | Demarre des parcours publics, suit sa progression personnelle et obtient des badges de parcours sans rattachement a une classe. |
 | Visiteur | Accede uniquement aux pages publiques. L'IA publique n'est disponible que si l'administrateur l'active explicitement. |
 
 Les droits reels dependent des modules actives, des options du plugin, des roles/capacites WordPress et des reglages de visibilite des pages. Voir aussi `docs/roles-et-droits.md` et `docs/acces-publics-prives.md`.

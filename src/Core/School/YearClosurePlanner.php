@@ -2,6 +2,8 @@
 
 namespace Ouinpo\Suite\Core\School;
 
+use Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy;
+
 defined('ABSPATH') || exit;
 
 final class YearClosurePlanner
@@ -70,6 +72,9 @@ final class YearClosurePlanner
                  WHERE gm.group_id = %d AND gm.role = 'student'",
                 (int) $group['id']
             ), ARRAY_A) ?: [];
+            $members = array_values(array_filter($members, static function (array $member): bool {
+                return LearningAudiencePolicy::isSubjectToSchoolClosure((int) ($member['user_id'] ?? 0));
+            }));
 
             $effectiveLevelId = (int) ($group['school_level_id'] ?? 0);
             $transition = $effectiveLevelId > 0 ? $this->resolver->resolveDefaultNextLevel($effectiveLevelId) : $this->resolver->resolve(0, null);
