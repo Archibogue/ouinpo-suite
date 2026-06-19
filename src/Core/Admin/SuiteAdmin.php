@@ -644,6 +644,7 @@ final class SuiteAdmin
             $contentTabs['flashcards'] = 'Flashcards';
         }
 
+        $contentTabs['parcours'] = 'Parcours';
         $contentTabs['import'] = 'Import';
         $contentTabs['options'] = 'Options';
 
@@ -668,6 +669,12 @@ final class SuiteAdmin
                     'Exercices',
                     'Créer, modifier et organiser les exercices du catalogue.',
                     admin_url('admin.php?page=ouinpo-exercices')
+                );
+
+                self::quickAction(
+                    'Creer avec l IA',
+                    'Generer un exercice avec l assistant IA du catalogue.',
+                    admin_url('admin.php?page=ouinpo-ai-exercise-builder')
                 );
                 ?>
             </div>
@@ -705,6 +712,27 @@ final class SuiteAdmin
                     'Créer les paquets, modifier les cartes et préparer les révisions.',
                     admin_url('admin.php?page=ouinpo-flashcards')
                 );
+                ?>
+            </div>
+            <?php
+        } elseif ($tab === 'parcours') {
+            ?>
+            <div class="ouinpo-suite-grid">
+                <?php
+                if (Capabilities::can(Capabilities::MANAGE_COMPETENCIES)) {
+                    self::quickAction(
+                        'Parcours',
+                        'Creer, gerer et affecter les parcours d entrainement.',
+                        admin_url('admin.php?page=ouinpo-paths')
+                    );
+                } else {
+                    ?>
+                    <div class="card ouinpo-suite-card">
+                        <h3 class="ouinpo-suite-card-title">Parcours</h3>
+                        <p>La gestion des parcours est reservee aux profils autorises.</p>
+                    </div>
+                    <?php
+                }
                 ?>
             </div>
             <?php
@@ -882,6 +910,12 @@ final class SuiteAdmin
                         'Créer ou modifier les niveaux utilisés par les classes et les contenus.',
                         admin_url('admin.php?page=ouinpo-levels')
                     );
+
+                    self::quickAction(
+                        'Cycles pedagogiques',
+                        'Gerer les cycles et periodes pedagogiques de suivi.',
+                        admin_url('admin.php?page=ouinpo-cycles')
+                    );
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
@@ -981,6 +1015,14 @@ final class SuiteAdmin
                         'Suivre les acquis par année, classe, domaine et élève.',
                         admin_url('admin.php?page=ouinpo-competencies')
                     );
+
+                    if (ModuleSettings::isEnabled('segfault')) {
+                        self::quickAction(
+                            'Suivi eleves SegFault',
+                            'Consulter le suivi des parcours et progressions SegFault.',
+                            admin_url('admin.php?page=ouinpo-segfault-progress')
+                        );
+                    }
                 } else {
                     ?>
                     <div class="card ouinpo-suite-card">
@@ -1506,6 +1548,14 @@ final class SuiteAdmin
                     'Créer les futures années et choisir l’année active.',
                     admin_url('admin.php?page=ouinpo-years')
                 );
+
+                if (Capabilities::can(Capabilities::MANAGE_CLASSES)) {
+                    self::quickAction(
+                        'Cloture annuelle',
+                        'Preparer et executer la cloture scolaire de fin d annee.',
+                        admin_url('admin.php?page=ouinpo-year-closure')
+                    );
+                }
                 ?>
             </div>
             <?php
