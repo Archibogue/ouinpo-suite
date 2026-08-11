@@ -2,6 +2,7 @@
 
 namespace Ouinpo\Exercises\Rest;
 
+use Ouinpo\Exercises\Services\AiPedagogicalContextService;
 use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
 
 defined('ABSPATH') || exit;
@@ -1201,9 +1202,13 @@ final class WrittenSubjectRoutes
         $context = self::build_report_context($subject, $input);
         $rag_query = self::report_rag_query($context);
         $rag_debug = [];
-        $context['course_context'] = self::course_rag_context($rag_query, 5, 1400, $rag_debug);
+        $pedagogical_context = AiPedagogicalContextService::forWrittenReport($subject, [
+            'user_id' => self::current_ai_user_id(),
+        ]);
+        $context['pedagogical_context'] = AiPedagogicalContextService::promptPayload($pedagogical_context);
+        $context['course_context'] = AiPedagogicalContextService::courseContext($rag_query, $pedagogical_context, 5, 1400, $rag_debug);
         $context['student_pedagogical_context'] = self::student_pedagogical_context();
-        $context['program_guardrail'] = self::out_of_program_notice($rag_query);
+        $context['program_guardrail'] = AiPedagogicalContextService::programGuardrail($pedagogical_context);
 
         self::debug_written_ai_context('written_subject_student_report', [
             'subject_id' => (int) ($subject['id'] ?? 0),
@@ -1213,7 +1218,7 @@ final class WrittenSubjectRoutes
             'course_context_count' => (int) ($rag_debug['count'] ?? 0),
             'student_context_chars' => strlen((string) ($context['student_pedagogical_context'] ?? '')),
             'program_guardrail' => $context['program_guardrail'] !== '' ? 1 : 0,
-        ]);
+        ] + AiPedagogicalContextService::debugMeta($pedagogical_context));
 
         $messages = [[
             'role' => 'system',
@@ -1240,6 +1245,7 @@ final class WrittenSubjectRoutes
                 'consignes' => [
                     'Si une seule question est repondue, produis un rapport court sur cette question uniquement.',
                     'Utilise le contexte de cours/RAG seulement pour cadrer les notions attendues et le programme, sans inventer de source absente.',
+                    'Utilise pedagogical_context pour tenir compte du cycle, de l ordre du niveau attendu et du niveau de reference eleve ou classe.',
                     'Adapte les conseils au contexte pedagogique eleve quand il est fourni, sans citer d identite personnelle.',
                     'Si program_guardrail est renseigne, signale la prudence programme sans sanctionner abusivement une reponse attendue par le sujet.',
                     'Tiens compte de attempt_count : plusieurs essais appellent un conseil de consolidation, pas une penalite. Si status=solved, attempt_count_before_success indique le nombre d essais avant reussite.',
@@ -1298,9 +1304,12 @@ final class WrittenSubjectRoutes
 
         $rag_query = self::question_rag_query($subject, $exercise, $question, $competencies);
         $rag_debug = [];
-        $course_context = self::course_rag_context($rag_query, 4, 1200, $rag_debug);
+        $pedagogical_context = AiPedagogicalContextService::forWrittenQuestion($subject, $exercise, $question, [
+            'user_id' => self::current_ai_user_id(),
+        ]);
+        $course_context = AiPedagogicalContextService::courseContext($rag_query, $pedagogical_context, 4, 1200, $rag_debug);
         $student_context = self::student_pedagogical_context();
-        $program_guardrail = self::out_of_program_notice($rag_query);
+        $program_guardrail = AiPedagogicalContextService::programGuardrail($pedagogical_context);
 
         self::debug_written_ai_context('written_question_student_advice', [
             'subject_id' => (int) ($subject['id'] ?? 0),
@@ -1312,7 +1321,7 @@ final class WrittenSubjectRoutes
             'course_context_count' => (int) ($rag_debug['count'] ?? 0),
             'student_context_chars' => strlen($student_context),
             'program_guardrail' => $program_guardrail !== '' ? 1 : 0,
-        ]);
+        ] + AiPedagogicalContextService::debugMeta($pedagogical_context));
 
         $messages = [[
             'role' => 'system',
@@ -1337,6 +1346,7 @@ final class WrittenSubjectRoutes
                     'si cette definition ou ce resultat precedent est faux, ne penalise pas automatiquement la question courante: indique que la question courante est reussie si son usage est coherent, puis renseigne inherited_issue_note pour rappeler explicitement que l element precedent doit etre corrige',
                     'n evalue pas les reponses precedentes pour elles-memes, sauf si elles rendent la reponse courante incoherente',
                     'utilise course_context comme cadre documentaire prioritaire si pertinent, sans citer les numeros de contexte',
+                    'utilise pedagogical_context pour corriger selon le niveau attendu configure, son cycle et son ordre dans le cycle',
                     'adapte le retour au student_pedagogical_context quand il est fourni, sans mentionner d identite personnelle',
                     'si program_guardrail est renseigne, signale la prudence programme sans sanctionner abusivement une reponse attendue par le sujet',
                     'si verdict=correct, propose surtout une consolidation courte',
@@ -1358,6 +1368,7 @@ final class WrittenSubjectRoutes
                     'previous_answers' => $previous_answers,
                     'used_hints' => $used_hints,
                     'competencies' => array_values(array_filter($competencies)),
+                    'pedagogical_context' => AiPedagogicalContextService::promptPayload($pedagogical_context),
                     'course_context' => $course_context,
                     'student_pedagogical_context' => $student_context,
                     'program_guardrail' => $program_guardrail,

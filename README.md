@@ -737,16 +737,16 @@ Les reglages IA distinguent quatre notions :
 - Consigne interne : regle metier, format attendu ou garde-fou.
 - Contexte IA : donnees concretes injectees automatiquement selon le workflow.
 
-Le contexte IA n est pas un prompt global modifiable. Il est construit par le code selon le cas d usage : question, exercice, copie, sujet, projet, documents RAG, page courante, progression eleve ou criteres de validation. L onglet "Contexte" de l administration SegFault documente ces transmissions sans ajouter de nouveau reglage libre.
+Le contexte IA n est pas un prompt global modifiable. Il est construit par le code selon le cas d usage : question, exercice, copie, sujet, projet, documents RAG, page courante, progression eleve ou criteres de validation. Pour les corrections, le contexte pedagogique tient compte des niveaux configurables, du cycle, de l ordre du niveau dans le cycle, du niveau attendu et du niveau de reference eleve ou classe. L onglet "Contexte" de l administration SegFault documente ces transmissions sans ajouter de nouveau reglage libre.
 
 | Usage IA | Contexte utilise |
 | --- | --- |
 | Chatbox connectee | RAG autorise, page courante, profil pedagogique si disponible, historique court. |
 | Chatbox publique | Question du visiteur, page publique courante, RAG public si disponible. |
-| Correction exercice | Exercice, corriges, indices, reponse eleve, blocs de code, analyse syntaxique si disponible. |
-| Correction pratique | Sujet, appel, consigne, code ou texte fourni, grille IA eventuelle. |
-| Correction copie/fichier | Devoir, exercice ou sujet, OCR ou fichiers extraits, bareme, solutions de reference, avertissements d extraction. |
-| Annales / sujets ecrits | Sujet, exercice, question, reponses, aides utilisees, competences, RAG de cours. |
+| Correction exercice | Exercice, corriges, indices, reponse eleve, blocs de code, analyse syntaxique si disponible, niveau attendu, niveau de reference, cycle, ordre dans le cycle, competences et RAG de cours/programme si disponible. |
+| Correction pratique | Sujet, appel, consigne, code ou texte fourni, grille IA eventuelle, niveau attendu, cycle, ordre dans le cycle, niveau de reference et RAG de cours/programme si disponible. |
+| Correction copie/fichier | Devoir, exercice ou sujet, OCR ou fichiers extraits, bareme, solutions de reference, avertissements d extraction, contexte pedagogique par item. |
+| Annales / sujets ecrits | Sujet, exercice, question, reponses, aides utilisees, competences, RAG de cours, niveau attendu, cycle et ordre du niveau dans le cycle. |
 | Generation pedagogique | Niveau, competences, domaine, difficulte, contraintes, exercices candidats, KPI agreges si disponibles. |
 | Projects enseignant | Projet complet, taches, membres, livrables, traces, logs recents, competences disponibles. |
 | Projects eleve | Projet filtre, taches eleve, traces eleve, journal, livrables, competences liees. |

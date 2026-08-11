@@ -30,10 +30,6 @@ class InstallV2 {
 
         if (version_compare((string) $current, self::DB_VERSION, '>=')) {
 
-            if (class_exists('\Ouinpo\Suite\Core\Installer')) {
-                \Ouinpo\Suite\Core\Installer::ensureTrainingSchema();
-            }
-
             self::maybe_repair_assessment_tables();
 
             return;

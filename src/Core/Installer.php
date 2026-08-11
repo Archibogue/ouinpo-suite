@@ -153,9 +153,9 @@ final class Installer
 
         $tPathBadges = $wpdb->prefix . 'ouinpo_path_badges';
         dbDelta("CREATE TABLE {$tPathBadges} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            path_id BIGINT UNSIGNED NOT NULL,
-            badge_id BIGINT UNSIGNED NOT NULL,
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            path_id BIGINT(20) UNSIGNED NOT NULL,
+            badge_id BIGINT(20) UNSIGNED NOT NULL,
             rule_type VARCHAR(40) NOT NULL DEFAULT 'all_mandatory',
             min_percent DECIMAL(5,2) NOT NULL DEFAULT 100.00,
             require_all_mandatory TINYINT(1) NOT NULL DEFAULT 1,
@@ -681,9 +681,9 @@ public static function ensureTrainingSchema(): void
     self::addColumnIfMissing($paths, 'path_scope', "path_scope VARCHAR(30) NOT NULL DEFAULT 'teacher_assigned' AFTER goal_slug");
 
     dbDelta("CREATE TABLE {$pathBadges} (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        path_id BIGINT UNSIGNED NOT NULL,
-        badge_id BIGINT UNSIGNED NOT NULL,
+        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        path_id BIGINT(20) UNSIGNED NOT NULL,
+        badge_id BIGINT(20) UNSIGNED NOT NULL,
         rule_type VARCHAR(40) NOT NULL DEFAULT 'all_mandatory',
         min_percent DECIMAL(5,2) NOT NULL DEFAULT 100.00,
         require_all_mandatory TINYINT(1) NOT NULL DEFAULT 1,

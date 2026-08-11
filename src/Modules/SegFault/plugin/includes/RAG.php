@@ -1451,7 +1451,7 @@ return min($bonus, 2.5);
       try {
         $db  = DB::pdo();
         self::purge_legacy_private_documents_once();
-        if ($user_id <= 0 && is_user_logged_in()) {
+        if ($user_id === 0 && is_user_logged_in()) {
           $user_id = get_current_user_id();
         }
         $emb = self::embed_text($query);
@@ -2305,7 +2305,7 @@ private static function match_courses_direct_by_query(string $query, int $limit 
 }
 
 public static function search_courses_by_competency(string $query, int $limit = 3, int $user_id = 0): array {
-  if ($user_id <= 0 && is_user_logged_in()) {
+  if ($user_id === 0 && is_user_logged_in()) {
     $user_id = get_current_user_id();
   }
 
@@ -3318,8 +3318,20 @@ public static function student_pedagogical_context(int $user_id): string {
 
   // 1. Niveau scolaire
 $level = self::current_student_level($user_id);
+$dynamic_level_label = '';
+if (
+  class_exists('\Ouinpo\Exercises\Services\AiPedagogicalContextService') &&
+  method_exists('\Ouinpo\Exercises\Services\AiPedagogicalContextService', 'studentLevelForUser')
+) {
+  $dynamic_level = \Ouinpo\Exercises\Services\AiPedagogicalContextService::studentLevelForUser($user_id);
+  if (is_array($dynamic_level)) {
+    $dynamic_level_label = trim((string)($dynamic_level['label'] ?? ''));
+  }
+}
 
-  if ($level !== '') {
+  if ($dynamic_level_label !== '') {
+    $lines[] = "- Niveau scolaire connu : ".$dynamic_level_label.".";
+  } elseif ($level !== '') {
     $label = [
       'seconde' => 'Seconde',
       'premiere' => 'Première NSI',

@@ -29,7 +29,28 @@ final class PracticalAiBridge {
         $prompt_html   = (string) ($call['prompt_html'] ?? '');
         $ai_rubric     = (string) ($call['ai_rubric'] ?? '');
         $answer_mode   = (string) ($call['answer_mode'] ?? 'code');
-        $parts = self::extract_answer_parts($answer, $answer_mode);
+        $parts = self::extract_answer_parts($answer, $answer_mode);
+        $pedagogical_context = \Ouinpo\Exercises\Services\AiPedagogicalContextService::forExercise((int) ($subject['id'] ?? 0), [
+            'user_id' => is_user_logged_in() ? (int) get_current_user_id() : 0,
+        ]);
+        $rag_debug = [];
+        $course_context = \Ouinpo\Exercises\Services\AiPedagogicalContextService::courseContext(
+            implode("\n", array_values(array_filter([$subject_title, $call_title, wp_strip_all_tags($prompt_html)]))),
+            $pedagogical_context,
+            4,
+            1000,
+            $rag_debug
+        );
+        $program_guardrail = \Ouinpo\Exercises\Services\AiPedagogicalContextService::programGuardrail($pedagogical_context);
+
+        \Ouinpo\Suite\Core\AiSettings::debug_log('Practical correction pedagogical context', array_merge([
+            'usage' => 'practical_correction',
+            'subject_id' => (int) ($subject['id'] ?? 0),
+            'call_id' => (int) ($call['id'] ?? 0),
+            'course_context_chars' => strlen($course_context),
+            'course_context_count' => (int) ($rag_debug['count'] ?? 0),
+            'program_guardrail' => $program_guardrail !== '' ? 1 : 0,
+        ], \Ouinpo\Exercises\Services\AiPedagogicalContextService::debugMeta($pedagogical_context)));
 
         $persona = \Ouinpo\Suite\Core\AiSettings::persona('practical_correction', 'ouinpo_ai_persona_teacher');
         $configured_prompt = \Ouinpo\Suite\Core\AiSettings::prompt('ouinpo_ai_practical_correction_prompt');
@@ -58,7 +79,9 @@ final class PracticalAiBridge {
         ]);
 
 
-        $user_prompt_parts = [
+        $system_prompt .= "\n\nContexte pedagogique : utilise le contexte pedagogique structure pour le cycle, l ordre du niveau dans le cycle, le niveau attendu et le niveau de reference eleve ou classe. Corrige selon le niveau attendu du sujet ou de l appel ; le niveau de reference sert a adapter le feedback, pas a modifier les attendus de l enonce.";
+
+        $user_prompt_parts = [
             "Sujet : " . $subject_title,
             "Appel : " . $call_title,
             "Mode de réponse attendu : " . $answer_mode,
@@ -66,7 +89,20 @@ final class PracticalAiBridge {
             wp_strip_all_tags($prompt_html),
         ];
 
-        if ($ai_rubric !== '') {
+        $user_prompt_parts[] = "Contexte pedagogique structure :";
+        $user_prompt_parts[] = \Ouinpo\Exercises\Services\AiPedagogicalContextService::promptBlock($pedagogical_context);
+
+        if ($course_context !== '') {
+            $user_prompt_parts[] = "Extraits de programme / cours RAG :";
+            $user_prompt_parts[] = $course_context;
+        }
+
+        if ($program_guardrail !== '') {
+            $user_prompt_parts[] = "Garde-fou programme :";
+            $user_prompt_parts[] = $program_guardrail;
+        }
+
+        if ($ai_rubric !== '') {
             $user_prompt_parts[] = "Critères de correction :";
             $user_prompt_parts[] = $ai_rubric;
         }

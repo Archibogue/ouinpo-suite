@@ -4353,6 +4353,7 @@ try {
             <td>
               <div class="notice notice-info inline">
                 <p>Le contexte IA correspond aux donnees concretes envoyees a l IA pour repondre : exercice, copie, sujet, projet, documents RAG, page courante, progression eleve, etc.</p>
+                <p>Pour les corrections, le contexte pedagogique utilise les niveaux configurables : niveau attendu, niveau de reference eleve ou classe, cycle et ordre du niveau dans le cycle. Le plugin ne suppose pas que des slugs comme premiere ou terminale existent.</p>
                 <p>Il est construit automatiquement selon le workflow. Pour changer le style de l IA, modifiez un persona dans l onglet Prompts. Pour changer les regles de comportement, modifiez les consignes internes avec prudence.</p>
                 <p><strong>Cet onglet est informatif :</strong> il decrit ce que le plugin transmet a l IA selon les cas d usage.</p>
               </div>
@@ -4399,6 +4400,7 @@ try {
                 <li>Le contexte est construit automatiquement par le workflow.</li>
                 <li>Le contexte public est volontairement limite.</li>
                 <li>Le contexte eleve est filtre selon les droits.</li>
+                <li>Les corrections utilisent le niveau attendu configure et comparent les niveaux par cycle et ordre dans le cycle.</li>
                 <li>Gate utilise un prompt dedie.</li>
               </ul>
             </td>

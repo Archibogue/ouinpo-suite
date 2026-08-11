@@ -1,6 +1,7 @@
 <?php
 namespace Ouinpo\Exercises\Rest;
 
+use Ouinpo\Exercises\Services\AiPedagogicalContextService;
 use Ouinpo\Suite\Core\Privacy\LearningDataPolicy;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -294,6 +295,26 @@ if ($parts['has_code']) {
 
     $persona = \Ouinpo\Suite\Core\AiSettings::persona('exercise_correction', 'ouinpo_ai_persona_teacher');
     $configured_system = \Ouinpo\Suite\Core\AiSettings::prompt('ouinpo_ai_exercise_correction_prompt');
+    $pedagogical_context = AiPedagogicalContextService::forExercise((int) ($exercise['id'] ?? 0), [
+      'user_id' => is_user_logged_in() ? (int) get_current_user_id() : 0,
+    ]);
+    $rag_debug = [];
+    $course_context = AiPedagogicalContextService::courseContext(
+      implode("\n", array_values(array_filter([$title, $statement]))),
+      $pedagogical_context,
+      4,
+      1000,
+      $rag_debug
+    );
+    $program_guardrail = AiPedagogicalContextService::programGuardrail($pedagogical_context);
+
+    \Ouinpo\Suite\Core\AiSettings::debug_log('Exercise correction pedagogical context', array_merge([
+      'usage' => 'exercise_correction',
+      'exercise_id' => (int) ($exercise['id'] ?? 0),
+      'course_context_chars' => strlen($course_context),
+      'course_context_count' => (int) ($rag_debug['count'] ?? 0),
+      'program_guardrail' => $program_guardrail !== '' ? 1 : 0,
+    ], AiPedagogicalContextService::debugMeta($pedagogical_context)));
 
     $system = <<<TXT
 {$persona}
@@ -327,7 +348,17 @@ Règles :
 - Mets "partial" seulement s’il manque réellement un élément attendu, si une partie importante est fausse, ou si la réponse est trop floue pour être comprise.
 - Le champ "feedback" doit être rédigé en français pour l'élève.
 - Le tableau "next_steps" doit contenir 1 à 3 conseils courts, en français, utiles et concrets.
-{$code_guidance}
+Contexte pedagogique :
+
+- Le bloc CONTEXTE PEDAGOGIQUE STRUCTURE transmis dans le message utilisateur fait autorite pour le niveau attendu, le cycle et l ordre du niveau dans le cycle.
+
+- Les niveaux sont configurables : ne raisonne pas avec des slugs historiques supposes.
+
+- Corrige selon le niveau attendu de la question ou de l exercice. Le niveau de reference sert a adapter le feedback, pas a abaisser les attendus de l enonce.
+
+- Si le garde-fou programme indique un niveau attendu plus avance, ne penalise pas ce decalage quand l enonce demande explicitement la notion.
+
+{$code_guidance}
 
 Réponds UNIQUEMENT avec un JSON valide, sans aucun texte avant ou après, au format exact :
 {
@@ -353,7 +384,20 @@ TXT;
       $hints_text ? implode("\n", $hints_text) : '(aucun indice)',
     ];
 
-    if ($parts['has_text']) {
+    $user_parts[] = "CONTEXTE PEDAGOGIQUE STRUCTURE :";
+    $user_parts[] = AiPedagogicalContextService::promptBlock($pedagogical_context);
+
+    if ($course_context !== '') {
+      $user_parts[] = "EXTRAITS DE PROGRAMME / COURS RAG :";
+      $user_parts[] = $course_context;
+    }
+
+    if ($program_guardrail !== '') {
+      $user_parts[] = "GARDE-FOU PROGRAMME :";
+      $user_parts[] = $program_guardrail;
+    }
+
+    if ($parts['has_text']) {
       $user_parts[] = "RÉPONSE RÉDIGÉE DE L'ÉLÈVE :";
       $user_parts[] = $parts['text'];
     }

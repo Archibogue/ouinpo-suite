@@ -46,6 +46,7 @@ final class AiFileCorrectionService
         if (is_wp_error($context)) {
             return $context;
         }
+        $context['_batch_group_id'] = (int) ($batch['group_id'] ?? 0);
 
         if (!class_exists('\OuInPo\SegFault\OpenAI') || !method_exists('\OuInPo\SegFault\OpenAI', 'respond')) {
             return new \WP_Error('ai_unavailable', 'Moteur IA indisponible.');
@@ -167,7 +168,28 @@ final class AiFileCorrectionService
 
     private function messages(array $context, array $copy, string $content): array
     {
-        $items = array_map(static function (array $item): array {
+        $batch_group_id = (int) ($context['_batch_group_id'] ?? ($context['assessment']['group_id'] ?? 0));
+        $student_user_id = (int) ($copy['student_user_id'] ?? 0);
+        $items = array_map(static function (array $item) use ($batch_group_id, $student_user_id): array {
+            $pedagogical_context = AiPedagogicalContextService::forCorrectionItem($item, [
+                'user_id' => $student_user_id,
+                'group_id' => $batch_group_id,
+            ]);
+            $course_debug = [];
+            $course_context = AiPedagogicalContextService::courseContext(
+                implode("\n", array_values(array_filter([
+                    (string) ($item['title'] ?? ''),
+                    wp_strip_all_tags((string) ($item['statement'] ?? '')),
+                    implode("\n", array_map(static function ($competency): string {
+                        return is_array($competency) ? (string) ($competency['label'] ?? '') : '';
+                    }, (array) ($item['competencies'] ?? []))),
+                ]))),
+                $pedagogical_context,
+                2,
+                650,
+                $course_debug
+            );
+
             return [
                 'exercise_id' => (int) $item['exercise_id'],
                 'title' => (string) $item['title'],
@@ -175,6 +197,9 @@ final class AiFileCorrectionService
                 'statement' => wp_strip_all_tags((string) ($item['statement'] ?? '')),
                 'solution' => wp_strip_all_tags((string) ($item['solution_html'] ?? '')),
                 'competencies' => $item['competencies'] ?? [],
+                'pedagogical_context' => AiPedagogicalContextService::promptPayload($pedagogical_context),
+                'course_context' => $course_context,
+                'program_guardrail' => AiPedagogicalContextService::programGuardrail($pedagogical_context),
             ];
         }, (array) ($context['items'] ?? []));
 
@@ -196,7 +221,7 @@ final class AiFileCorrectionService
             . "\n\nTache metier : proposer une correction de rendu numerique a un enseignant, qui valide ensuite. RÃ©ponds uniquement avec un JSON strict. Analyse statique uniquement : ne prÃ©tends jamais avoir exÃ©cutÃ© le code, nâ€™invente pas de tests ni de fichiers absents.";
 
         return [
-            ['role' => 'system', 'content' => $system],
+            ['role' => 'system', 'content' => $system . "\n\nContexte pedagogique : chaque item peut contenir pedagogical_context, course_context et program_guardrail. Corrige selon le niveau attendu configure par cycle et ordre de niveau ; utilise le niveau eleve ou classe pour adapter le feedback, pas pour modifier les attendus de l enonce."],
             ['role' => 'user', 'content' =>
                 "Contexte : " . (string) ($context['title'] ?? '') . "\n"
                 . "BarÃ¨me, Ã©noncÃ©s, solutions et compÃ©tences :\n" . wp_json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
