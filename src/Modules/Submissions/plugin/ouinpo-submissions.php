@@ -2034,9 +2034,18 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-                $section_terms = wp_get_post_terms($post_id, self::TAX_SECTION, array('fields'=>'slugs'));
+                $section_terms = wp_get_post_terms($post_id, self::TAX_SECTION, array('fields'=>'all'));
 
-                $section_slug  = (is_wp_error($section_terms) || empty($section_terms)) ? 'ressources' : $section_terms[0];
+                $section_slug = 'ressources';
+                if (!is_wp_error($section_terms) && !empty($section_terms)) {
+                    // Une seule section par ressource, y compris les sections personnalisées.
+                    $section = $section_terms[0];
+                    $section_slug = $section->slug;
+                    $labels[$section_slug] = $section->name;
+                    if (!in_array($section_slug, $order, true)) {
+                        $order[] = $section_slug;
+                    }
+                }
 
     
 

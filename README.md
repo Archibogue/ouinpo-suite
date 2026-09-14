@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.5-beta : beta technique ajoutant le centre d entrainement NSI autonome, avec role `ouinpo_learner`, parcours publics personnels et badges lies aux parcours existants. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels ou des apprenants autonomes doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.7.6-beta : beta technique ajoutant les groupes facultatifs au sein des classes pour le partage des ressources et corrigeant l'affichage des sections personnalisees. Elle conserve le centre d entrainement NSI autonome et ses parcours et badges. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels ou des apprenants autonomes doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 

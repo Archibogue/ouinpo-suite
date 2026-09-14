@@ -2,6 +2,23 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.6-beta] - 2026-09-14
+
+### Ajoute
+
+- Groupes facultatifs au sein des classes, avec affectation des eleves.
+- Partage des ressources avec une classe entiere ou certains groupes, y compris pour le telechargement protege.
+
+### Corrige
+
+- Affichage des ressources rattachees a une section personnalisee, avec une seule section retenue par ressource.
+- Filtrage des capacites des depots pour ignorer les contextes editeur qui ne sont pas des identifiants de publication.
+
+### Validation
+
+- Verification de syntaxe PHP, tests des acces aux groupes et controles des optimisations.
+- Validation de l'interface sur WordPress restant a effectuer.
+
 ## [0.7.5-beta] - 2026-06-18
 
 ### Ajoute
