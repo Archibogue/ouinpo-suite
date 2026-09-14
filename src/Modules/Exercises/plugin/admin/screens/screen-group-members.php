@@ -20,6 +20,9 @@ $group_id = isset($_GET['group_id']) ? intval($_GET['group_id']) : 0;
 // Actions : add/remove
 if (!empty($_POST) && check_admin_referer('ouinpo_assign_form','ouinpo_assign_nonce')) {
     $group_id = intval($_POST['group_id'] ?? 0);
+    if (!$wpdb->get_var($wpdb->prepare("SELECT id FROM {$tbl_groups} WHERE id=%d", $group_id))) {
+        wp_die('Classe introuvable.');
+    }
 
     if (isset($_POST['add_users']) && is_array($_POST['add_users'])) {
         foreach ($_POST['add_users'] as $uid) {
@@ -39,6 +42,12 @@ if (!empty($_POST) && check_admin_referer('ouinpo_assign_form','ouinpo_assign_no
             $uid = intval($uid);
             if ($uid > 0) {
                 $wpdb->delete($tbl_members, ['group_id'=>$group_id, 'user_id'=>$uid], ['%d','%d']);
+                $class_subgroups = \Ouinpo\Suite\Core\ClassSubgroups::all($group_id);
+                foreach ($class_subgroups as &$class_subgroup) {
+                    $class_subgroup['members'] = array_values(array_diff($class_subgroup['members'], [$uid]));
+                }
+                unset($class_subgroup);
+                \Ouinpo\Suite\Core\ClassSubgroups::save($group_id, $class_subgroups);
             }
         }
         add_settings_error('ouinpo_assign', 'removed', 'Élèves retirés de la classe.', 'updated');
@@ -62,6 +71,7 @@ $groups = $wpdb->get_results("SELECT id, label FROM {$tbl_groups} ORDER BY creat
 $current_group = null;
 if ($group_id) {
     $current_group = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$tbl_groups} WHERE id=%d", $group_id));
+    if (!$current_group) $group_id = 0;
 }
 
 // Users
@@ -87,6 +97,27 @@ if ($group_id) {
 $levels = $wpdb->get_results("SELECT id, label FROM {$tbl_levels} ORDER BY sort_order ASC, id ASC");
 $levels_map = [];
 foreach ($levels as $l) $levels_map[intval($l->id)] = $l->label;
+
+$subgroups = \Ouinpo\Suite\Core\ClassSubgroups::all($group_id);
+if ($current_group && isset($_POST['subgroup_action']) && check_admin_referer('ouinpo_assign_form', 'ouinpo_assign_nonce')) {
+    $subgroup_action = sanitize_key($_POST['subgroup_action']);
+    if ($subgroup_action === 'create') {
+        $label = sanitize_text_field(wp_unslash($_POST['subgroup_label'] ?? ''));
+        if ($label !== '') {
+            $subgroups[wp_generate_uuid4()] = ['label' => $label, 'members' => []];
+        }
+    } elseif ($subgroup_action === 'save') {
+        $remove = array_map('sanitize_key', (array) ($_POST['remove_subgroups'] ?? []));
+        foreach ($subgroups as $id => &$subgroup) {
+            $selected = array_map('intval', (array) ($_POST['subgroup_members'][$id] ?? []));
+            $subgroup['members'] = array_values(array_intersect(array_keys($members), $selected));
+        }
+        unset($subgroup);
+        foreach ($remove as $id) unset($subgroups[$id]);
+    }
+    \Ouinpo\Suite\Core\ClassSubgroups::save($group_id, $subgroups);
+    add_settings_error('ouinpo_assign', 'subgroups', 'Groupes de la classe enregistrés.', 'updated');
+}
 
 settings_errors('ouinpo_assign');
 ?>
@@ -186,5 +217,31 @@ settings_errors('ouinpo_assign');
         </form>
       </div>
     </div>
+    <h2>Groupes de la classe (facultatifs)</h2>
+    <p>Vous pouvez conserver la classe entière sans créer de groupe, créer un seul groupe ou plusieurs. L’accès « Toute la classe » reste toujours disponible pour les ressources.</p>
+    <form method="post">
+      <?php wp_nonce_field('ouinpo_assign_form', 'ouinpo_assign_nonce'); ?>
+      <input type="hidden" name="group_id" value="<?php echo (int) $group_id; ?>">
+      <input type="hidden" name="subgroup_action" value="create">
+      <label>Nom du groupe <input name="subgroup_label" required placeholder="Groupe 1"></label>
+      <?php submit_button('Créer le groupe', 'secondary', '', false); ?>
+    </form>
+    <?php if ($subgroups): ?>
+    <form method="post">
+      <?php wp_nonce_field('ouinpo_assign_form', 'ouinpo_assign_nonce'); ?>
+      <input type="hidden" name="group_id" value="<?php echo (int) $group_id; ?>">
+      <input type="hidden" name="subgroup_action" value="save">
+      <?php foreach ($subgroups as $id => $subgroup): ?>
+        <fieldset>
+          <legend><strong><?php echo esc_html($subgroup['label']); ?></strong></legend>
+          <?php foreach ($all_users as $u): if (!isset($members[$u->ID])) continue; ?>
+            <label style="display:block"><input type="checkbox" name="subgroup_members[<?php echo esc_attr($id); ?>][]" value="<?php echo (int) $u->ID; ?>" <?php checked(in_array((int) $u->ID, $subgroup['members'], true)); ?>> <?php echo esc_html($u->display_name); ?></label>
+          <?php endforeach; ?>
+          <p><label><input type="checkbox" name="remove_subgroups[]" value="<?php echo esc_attr($id); ?>"> Supprimer ce groupe (les ressources associées ne seront pas ouvertes à toute la classe)</label></p>
+        </fieldset>
+      <?php endforeach; ?>
+      <?php submit_button('Enregistrer les groupes'); ?>
+    </form>
+    <?php endif; ?>
   <?php endif; ?>
 </div>

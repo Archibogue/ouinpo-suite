@@ -27,7 +27,7 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Banque d’exercices NSI / SNT
 - Classement par niveau, domaine, compétence et difficulté
 - Suivi de la progression des élèves
-- Gestion de groupes/classes
+- Gestion de classes et de groupes facultatifs pour partager les ressources avec une partie des élèves
 - Cycles pedagogiques et assistant de cloture annuelle non destructive
 - Badges pédagogiques
 - Flashcards de révision
@@ -37,6 +37,19 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Tableaux de suivi pour l’enseignant
 - Modules IA optionnels
 - Diagnostic d’installation
+
+## Partager une ressource avec un groupe
+
+Dans **Suivre → Affectations**, sélectionner une classe puis créer ses groupes
+facultatifs (par exemple « Groupe 1 » et « Groupe 2 » en BTS) et cocher leurs élèves.
+Une classe peut fonctionner sans groupe, avec un seul groupe ou avec plusieurs.
+
+Dans **Ressources prof → Accès des élèves**, cocher **Toute la classe** pour un
+partage collectif, ou seulement les groupes concernés pour un partage restreint.
+Les accès se cumulent avec les élèves sélectionnés individuellement : cocher
+« Toute la classe » donne donc accès à tous ses élèves, même si un groupe est
+également coché. Les ressources existantes conservent leurs accès.
+Les restrictions de groupe s'appliquent aussi au téléchargement protégé.
 
 ## Prérequis
 

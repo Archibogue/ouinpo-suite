@@ -64,6 +64,7 @@ if (!empty($_POST) && check_admin_referer('ouinpo_groups_form', 'ouinpo_groups_n
         // Supprime d'abord les membres
         $wpdb->delete($wpdb->prefix.'ouin_exo_group_members', ['group_id' => $post_id], ['%d']);
         $wpdb->delete($tbl_groups, ['id' => $post_id], ['%d']);
+        delete_option('ouinpo_class_subgroups_' . $post_id);
 
         add_settings_error('ouinpo_groups', 'deleted', 'Classe supprimée.', 'updated');
 

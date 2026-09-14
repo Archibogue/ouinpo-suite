@@ -76,6 +76,7 @@ class Ouinpo_Submissions_Plugin {
     const META_ALLOWED_CLASSES = '_ouinpo_allowed_classes';
 
     const META_ALLOWED_GROUPS  = '_ouinpo_allowed_groups';
+    const META_ALLOWED_SUBGROUPS = '_ouinpo_allowed_subgroups';
 
     const USERMETA_CLASS       = 'ouinpo_user_classes';
 
@@ -1323,6 +1324,11 @@ class Ouinpo_Submissions_Plugin {
 
 
 
+    private function subgroup_access($post_id, int $user_id, array $class_ids): bool {
+        return \Ouinpo\Suite\Core\ClassSubgroups::allows($user_id, $class_ids,
+            (array) get_post_meta($post_id, self::META_ALLOWED_SUBGROUPS, true));
+    }
+
     public function metabox_access($post) {
 
         $allowed_users   = (array) get_post_meta($post->ID, self::META_ALLOWED_USERS, true);
@@ -1353,7 +1359,7 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-        echo '<p><strong>Par groupes (plugin Exercices)</strong></p>';
+        echo '<p><strong>Classes entières</strong></p>';
 
         if (empty($groups)) {
 
@@ -1383,7 +1389,7 @@ class Ouinpo_Submissions_Plugin {
 
                     checked(in_array($gid, $allowed_groups), true, false),
 
-                    esc_html($label)
+                    esc_html($label . ' — Toute la classe')
 
                 );
 
@@ -1419,7 +1425,17 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-        echo '<p class="description">Les élèves cochés <em>ou</em> appartenant aux groupes cochés verront cette ressource dans [ouinpo_resources].</p>';
+        $selected_subgroups = (array) get_post_meta($post->ID, self::META_ALLOWED_SUBGROUPS, true);
+        echo '<p><strong>Groupes de la classe uniquement</strong></p>';
+        foreach ($groups as $g) {
+            foreach (\Ouinpo\Suite\Core\ClassSubgroups::all((int) $g->id) as $id => $subgroup) {
+                $target = $g->id . ':' . $id;
+                printf('<label class="ouinpo-submissions-check-label"><input type="checkbox" name="ouinpo_allowed_subgroups[]" value="%s" %s> %s</label>',
+                    esc_attr($target), checked(in_array($target, $selected_subgroups, true), true, false),
+                    esc_html($g->label . ' — ' . $subgroup['label'] . (!empty($g->year_slug) ? ' (' . $g->year_slug . ')' : '')));
+            }
+        }
+        echo '<p class="description">Les accès cochés se cumulent. Pour réserver une ressource à un groupe, cochez seulement ce groupe et laissez « Toute la classe » décoché. Les groupes se gèrent dans Suivre → Affectations.</p>';
 
     }
 
@@ -1538,6 +1554,8 @@ class Ouinpo_Submissions_Plugin {
             update_post_meta($post_id, self::META_ALLOWED_USERS,  $users);
 
             update_post_meta($post_id, self::META_ALLOWED_GROUPS, $groups);
+            $targets = array_map('sanitize_text_field', (array) wp_unslash($_POST['ouinpo_allowed_subgroups'] ?? []));
+            update_post_meta($post_id, self::META_ALLOWED_SUBGROUPS, array_values(array_unique($targets)));
 
         }
 
@@ -1963,7 +1981,8 @@ class Ouinpo_Submissions_Plugin {
 
                 $allowed = in_array($u->ID, $allowed_users, true)
 
-                           || count(array_intersect($user_group_ids, $allowed_groups)) > 0;
+                           || count(array_intersect($user_group_ids, $allowed_groups)) > 0
+                           || $this->subgroup_access($post_id, (int) $u->ID, $user_group_ids);
 
     
 
@@ -2565,9 +2584,24 @@ class Ouinpo_Submissions_Plugin {
 
     public function filter_submission_caps($allcaps, $caps, $args, $user) {
 
-        if (isset($args[2])) {
+        $requested_cap = $args[0] ?? '';
+
+        // Ce filtre global peut recevoir un contexte Gutenberg plutôt qu'un ID.
+        if (!in_array($requested_cap, array('read_post', 'edit_post', 'delete_post'), true)) {
+
+            return $allcaps;
+
+        }
+
+        if (isset($args[2]) && is_numeric($args[2])) {
 
             $post_id = (int)$args[2];
+
+            if ($post_id <= 0) {
+
+                return $allcaps;
+
+            }
 
             $post = get_post($post_id);
 
@@ -2660,6 +2694,7 @@ class Ouinpo_Submissions_Plugin {
                     $allowed = in_array($current->ID, $allowed_users, true)
 
                                || count(array_intersect($user_groups, $allowed_groups)) > 0
+                               || $this->subgroup_access($res_post->ID, (int) $current->ID, $user_groups)
 
                                || ouinpo_submissions_user_can_manage((int) $current->ID);
 
@@ -2732,6 +2767,16 @@ class Ouinpo_Submissions_Plugin {
     
 
         $out = array();
+        $subgroup_targets = (array) get_post_meta($post_id, self::META_ALLOWED_SUBGROUPS, true);
+        if ($subgroup_targets) {
+            foreach ($this->get_exo_groups() as $class) {
+                foreach (\Ouinpo\Suite\Core\ClassSubgroups::all((int) $class->id) as $id => $subgroup) {
+                    if (in_array($class->id . ':' . $id, $subgroup_targets, true)) {
+                        $out[] = esc_html($class->label . ' — ' . $subgroup['label']);
+                    }
+                }
+            }
+        }
 
     
 
@@ -2769,7 +2814,7 @@ class Ouinpo_Submissions_Plugin {
 
             if (!empty($names)) {
 
-                $out[] = '<strong>Groupes:</strong> '.esc_html(implode(', ', $names));
+                $out[] = '<strong>Classes entières:</strong> '.esc_html(implode(', ', $names));
 
             }
 
@@ -2915,7 +2960,8 @@ class Ouinpo_Submissions_Plugin {
 
                     || in_array($user->ID, $allowed_users, true)
 
-                    || count(array_intersect($user_group_ids, $allowed_groups)) > 0;
+                    || count(array_intersect($user_group_ids, $allowed_groups)) > 0
+                    || $this->subgroup_access($pid, (int) $user->ID, $user_group_ids);
 
 
 
