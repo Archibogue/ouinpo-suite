@@ -58,7 +58,11 @@ final class LearningDataPolicy
 
     public function canBeAssignedToClass(int $userId): bool
     {
+        // Ultimate Member considère les comptes sans statut comme approuvés.
+        $accountStatus = (string) get_user_meta($userId, 'account_status', true);
+
         return $userId > 0
+            && ($accountStatus === '' || $accountStatus === 'approved')
             && !$this->isAlumni($userId)
             && !LearningAudiencePolicy::isAutonomousLearner($userId);
     }

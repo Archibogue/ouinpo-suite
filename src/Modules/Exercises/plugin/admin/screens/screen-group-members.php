@@ -85,6 +85,25 @@ $args_all = [
 ];
 $all_users = get_users($args_all);
 
+// Seuls les élèves sans aucune affectation sont proposés à l'ajout.
+$assigned_users = array_fill_keys(array_map('intval', $wpdb->get_col("SELECT DISTINCT user_id FROM {$tbl_members}")), true);
+$available_users = [];
+update_meta_cache('user', array_map(static fn($user) => (int) $user->ID, $all_users));
+foreach ($all_users as $user) {
+    if (isset($assigned_users[(int) $user->ID]) || !$learning_policy->canBeAssignedToClass((int) $user->ID)) {
+        continue;
+    }
+    $last_name = trim((string) get_user_meta($user->ID, 'last_name', true));
+    $first_name = trim((string) get_user_meta($user->ID, 'first_name', true));
+    $last_name = function_exists('mb_strtoupper') ? mb_strtoupper($last_name, 'UTF-8') : strtoupper($last_name);
+    $name = trim($last_name . ' ' . $first_name);
+    $available_users[] = [
+        'id' => (int) $user->ID,
+        'label' => ($name !== '' ? $name : $user->display_name) . ' <' . $user->user_email . '>',
+    ];
+}
+usort($available_users, static fn($a, $b) => strnatcasecmp(remove_accents($a['label']), remove_accents($b['label'])));
+
 // Membres de la classe sélectionnée
 $members = [];
 if ($group_id) {
@@ -148,15 +167,14 @@ settings_errors('ouinpo_assign');
 
     <div class="ouinpo-admin-grid-two">
       <div>
-        <h3>Élèves hors de la classe</h3>
+        <h3>Élèves sans classe</h3>
         <form method="post">
           <?php wp_nonce_field('ouinpo_assign_form','ouinpo_assign_nonce'); ?>
           <input type="hidden" name="group_id" value="<?php echo intval($group_id); ?>">
           <select name="add_users[]" multiple size="18" class="ouinpo-admin-full-width">
-            <?php foreach ($all_users as $u):
-              if (isset($members[$u->ID]) || !$learning_policy->canBeAssignedToClass((int) $u->ID)) continue; ?>
-              <option value="<?php echo intval($u->ID); ?>">
-                <?php echo esc_html($u->display_name . ' <'.$u->user_email.'>'); ?>
+            <?php foreach ($available_users as $available_user): ?>
+              <option value="<?php echo $available_user['id']; ?>">
+                <?php echo esc_html($available_user['label']); ?>
               </option>
             <?php endforeach; ?>
           </select>
