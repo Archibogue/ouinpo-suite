@@ -1,0 +1,68 @@
+.ouinpo-ticketing button.ouinpo-ticket-delete {
+  color: #991b1b;
+  border-color: #991b1b;
+}
+.ouinpo-ticketing button.ouinpo-ticket-delete:hover {
+  background: #991b1b;
+  color: white;
+}
+.ouinpo-ticketing[data-ticket-admin] {
+  max-width: 1400px;
+  margin: 20px 20px 20px 0;
+}
+.ouinpo-ticketing .ouinpo-ticket-admin-toolbar {
+  position: sticky;
+  top: 32px;
+  z-index: 2;
+  background: #eef5f8;
+  padding: 8px;
+  border: 1px solid var(--td-line);
+}
+.ouinpo-ticketing .ouinpo-ticket-admin-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--td-line);
+}
+.ouinpo-ticketing .ouinpo-ticket-admin-row > span {
+  flex: 1;
+}
+.ouinpo-ticketing fieldset {
+  border: 1px solid var(--td-line);
+  padding: 12px;
+  margin: 12px 0;
+  max-height: 300px;
+  overflow: auto;
+}
+.ouinpo-ticketing legend {
+  font-weight: 600;
+}
+.ouinpo-ticketing label.ouinpo-ticket-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+.ouinpo-ticketing .ouinpo-ticket-checkbox input {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+.ouinpo-ticketing[data-ticket-admin] details details {
+  background: #fff;
+}
+.ouinpo-ticketing[data-ticket-admin] textarea {
+  min-height: 110px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+@media (max-width: 782px) {
+  .ouinpo-ticketing .ouinpo-ticket-admin-toolbar {
+    position: static;
+  }
+  .ouinpo-ticketing[data-ticket-admin] {
+    margin: 10px;
+  }
+}

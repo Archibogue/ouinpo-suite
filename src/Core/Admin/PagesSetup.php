@@ -304,6 +304,14 @@ final class PagesSetup
             ];
         }
 
+        if (ModuleSettings::isEnabled('ticket_simulator')) {
+            $pages['ticket_simulator'] = [
+                'title' => 'PataDesk',
+                'slug' => 'patadesk',
+                'shortcode' => '[ouinpo_ticket_simulator]',
+            ];
+        }
+
         if (ModuleSettings::isEnabled('gate')) {
             $pages['gate'] = [
                 'title' => 'Gate',

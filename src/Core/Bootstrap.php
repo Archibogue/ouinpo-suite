@@ -23,6 +23,7 @@ final class Bootstrap
         $registry->register(new RechTextModule());
         $registry->register(new MetaModule());
         $registry->register(new ProjectsModule());
+        $registry->register(new \Ouinpo\Suite\Modules\TicketSimulator\Module());
 
         return new Plugin($registry);
     }

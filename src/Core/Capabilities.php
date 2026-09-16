@@ -6,6 +6,10 @@ defined('ABSPATH') || exit;
 
 final class Capabilities
 {
+    public const TICKET_MANAGE = 'ouinpo_ticket_manage_scenarios';
+    public const TICKET_OBSERVE = 'ouinpo_ticket_view_attempts';
+    public const TICKET_PRACTICE = 'ouinpo_ticket_practice';
+    public const TICKET_ALL = 'ouinpo_ticket_manage_all';
     public const MANAGE_SUITE = 'ouinpo_manage_suite';
     public const MANAGE_SETTINGS = 'ouinpo_manage_settings';
     public const MANAGE_EXERCISES = 'ouinpo_manage_exercises';
@@ -62,6 +66,7 @@ final class Capabilities
     public static function all(): array
     {
         return [
+            self::TICKET_MANAGE, self::TICKET_OBSERVE, self::TICKET_PRACTICE, self::TICKET_ALL,
             self::MANAGE_SUITE,
             self::MANAGE_SETTINGS,
             self::MANAGE_EXERCISES,
@@ -102,6 +107,7 @@ final class Capabilities
     public static function student(): array
     {
         return [
+            self::TICKET_PRACTICE,
             'read',
             self::PRACTICE_EXERCISES,
             self::TRACK_LEARNING_DATA,
@@ -144,6 +150,10 @@ final class Capabilities
     public static function labels(): array
     {
         return [
+            self::TICKET_MANAGE => 'PataDesk - gérer ses scénarios',
+            self::TICKET_OBSERVE => 'PataDesk - observer ses affectations',
+            self::TICKET_PRACTICE => 'PataDesk - traiter ses tickets',
+            self::TICKET_ALL => 'PataDesk - administration globale',
             self::MANAGE_SUITE => 'Accès OuInPo Suite',
             self::MANAGE_SETTINGS => 'Réglages généraux',
             self::MANAGE_EXERCISES => 'Exercices',
@@ -193,6 +203,7 @@ final class Capabilities
         }
 
         $teacherCaps = [
+            self::TICKET_MANAGE, self::TICKET_OBSERVE,
             'read',
             self::MANAGE_SUITE,
             self::MANAGE_EXERCISES,

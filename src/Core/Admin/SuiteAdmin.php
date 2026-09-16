@@ -406,6 +406,7 @@ final class SuiteAdmin
             'segfault' => 'SegFault / IA',
             'submissions' => 'Submissions',
             'projects' => 'SPOPI Projects',
+            'ticket_simulator' => 'PataDesk',
             'rechtext' => 'RechText',
             'meta' => 'Meta',
         ];
@@ -3618,6 +3619,8 @@ final class SuiteAdmin
                                         Dépôts élèves et ressources.
                                     <?php elseif ($id === 'projects'): ?>
                                         Suivi pedagogique de projets BTS SIO, Kanban et journal de bord.
+                                    <?php elseif ($id === 'ticket_simulator'): ?>
+                                        Simulation de centre de services : scénarios, tickets et suivi des tentatives.
                                     <?php elseif ($id === 'gate'): ?>
                                         Énigmes, progression Gate et certificats.
                                     <?php elseif ($id === 'rechtext'): ?>

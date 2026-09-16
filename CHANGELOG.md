@@ -2,6 +2,24 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.7-beta] - 2026-09-15
+
+### Ajouté
+
+- Module optionnel PataDesk (`ticket_simulator`), désactivé par défaut, pour la simulation de tickets informatiques en BTS SIO.
+- Éditeur de scénarios, ressources pédagogiques, actions, tests simulés et réponses conditionnelles, avec import/export JSON.
+- Affectations aux étudiants, classes et sous-groupes existants ; tentatives indépendantes avec historique, notes, échanges spécialistes et résolution documentée.
+- Observation professeur, archivage, réinitialisation conservant les traces et scénario de démonstration de Madame Boulier.
+- Shortcode `[ouinpo_ticket_simulator]` et guide `docs/ticket-simulator.md`.
+- Console de correction des extraits pédagogiques, copies par tentative, historique des modifications et tests comparant le code enregistré à la correction privée du professeur.
+- Modèle JSON d'import documenté, guide étudiant dépliable et suppression définitive des scénarios avec leurs affectations et tentatives, après confirmation.
+
+### Validation
+
+- 123 contrôles PHP isolés, incluant la suppression en cascade et le modèle JSON, et parcours de démonstration complet par HTTP avec édition de code.
+- Vérifications de syntaxe PHP/JavaScript et contrôles de régression existants.
+- Recette WordPress/MySQL et vérification visuelle responsive restant à effectuer.
+
 ## [0.7.6-beta] - 2026-09-14
 
 ### Ajoute

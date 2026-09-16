@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.6-beta : beta technique ajoutant les groupes facultatifs au sein des classes pour le partage des ressources et corrigeant l'affichage des sections personnalisees. Elle conserve le centre d entrainement NSI autonome et ses parcours et badges. Elle ne doit pas etre presentee comme une version stable. Tout usage avec des eleves reels ou des apprenants autonomes doit etre precede d'une validation sur le site cible : roles, pages, acces publics, workflows IA et cadre donnees personnelles.
+Version 0.7.7-beta : bêta technique ajoutant le module optionnel PataDesk de simulation de tickets informatiques pour le BTS SIO. Elle conserve les groupes facultatifs au sein des classes et le centre d'entraînement NSI autonome. Elle ne doit pas être présentée comme une version stable. La recette WordPress/MySQL et la vérification visuelle responsive de PataDesk restent à effectuer sur le site cible.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -34,9 +34,44 @@ Modules actifs par defaut sur une installation neuve : `exercises` et `flashcard
 - Concepteur de devoirs
 - Sujets pratiques de type bac NSI
 - Suivi de projets BTS SIO avec Kanban et journal de bord via le module optionnel Projects
+- Simulation de tickets informatiques BTS SIO avec le module optionnel PataDesk (`ticket_simulator`)
 - Tableaux de suivi pour l’enseignant
 - Modules IA optionnels
 - Diagnostic d’installation
+
+## PataDesk — simulation de centre de services
+
+Activer **PataDesk** dans **OuInPo Suite → Réglages → Modules**, puis ouvrir
+**OuInPo Suite → PataDesk**. Le module est désactivé par défaut et conserve ses
+données lorsqu'il est désactivé.
+
+1. Choisir **Préparer le scénario de démonstration**, sélectionner **Publié**, puis enregistrer.
+2. Ouvrir **Affectations** et affecter le scénario à un étudiant, une classe ou un sous-groupe existant.
+3. Créer une page contenant `[ouinpo_ticket_simulator]` (ou utiliser la création de pages de la Suite).
+4. L'étudiant ouvre son scénario et traite les tickets. Le professeur consulte les traces avec **Observer**.
+
+Le scénario fourni, **Le mystérieux export de Madame Boulier**, comprend des
+questions utilisateur, du code pédagogique, des logs, des tests conditionnels,
+des échanges avec un DBA et une résolution documentée avec réouverture possible.
+Les tests sont simulés ; aucun code étudiant n'est exécuté sur WordPress.
+
+Les ressources marquées modifiables proposent une **console de correction** :
+l'élève édite sa copie de l'extrait, l'enregistre et relance le test. La nouvelle
+démonstration utilise cette console pour `ExportService.php`. Les anciennes
+tentatives conservent leur scénario d'origine ; démarrer une nouvelle tentative
+sur la nouvelle démonstration pour utiliser ce parcours.
+
+Guide d'édition, architecture et recette : [docs/ticket-simulator.md](docs/ticket-simulator.md).
+Contrôles isolés : `php tools/check-ticket-simulator.php`.
+La recette WordPress/MySQL et la vérification visuelle responsive sur le site cible restent nécessaires.
+
+La page étudiant propose un **Guide d'utilisation** dépliable, également accessible
+dans les tickets. Côté professeur, **Supprimer** retire définitivement le scénario,
+ses affectations et toutes ses tentatives après confirmation ; **Archiver** conserve les traces.
+
+Modèle JSON prêt à adapter : [modele-scenario.json](tools/templates/patadesk/modele-scenario.json)
+et [guide du format](tools/templates/patadesk/README.md). Importer ce modèle dans PataDesk,
+puis publier et affecter le scénario.
 
 ## Partager une ressource avec un groupe
 

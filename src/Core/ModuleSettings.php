@@ -24,6 +24,7 @@ final class ModuleSettings
             'rechtext',
             'meta',
             'projects',
+            'ticket_simulator',
         ];
     }
 
