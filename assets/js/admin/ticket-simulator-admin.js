@@ -36,6 +36,8 @@
     close: "Clôture",
   };
   const fields = {
+    nature: "Nature de la demande (incident, service, evolution)",
+    priority_justification: "Justification de priorité",
     service: "Service",
     location: "Localisation",
     fictional_date: "Date fictive",
@@ -210,6 +212,33 @@
           });
         }
         this.root.append(el("h2", "Tentatives et observation"));
+        if (window.OuinpoTicketing?.canDeleteAllAttempts) {
+          this.root.append(
+            button(
+              "Supprimer toutes les tentatives",
+              async () => {
+                if (
+                  !window.confirm(
+                    "Supprimer définitivement TOUTES les tentatives PataDesk de TOUS les élèves, y compris les archives, notes, codes et historiques ? Les scénarios et affectations seront conservés. Cette suppression est irréversible.",
+                  )
+                )
+                  return;
+                const result = await api("/attempts", "DELETE", {
+                  confirm_delete_all: true,
+                });
+                await this.home();
+                const notice = el(
+                  "p",
+                  `${result.counts.attempts} tentative(s) supprimée(s). La numérotation affichée repart à 1. Les scénarios et affectations sont conservés. Les élèves peuvent recommencer depuis leurs affectations.`,
+                );
+                notice.setAttribute("role", "status");
+                this.root.prepend(notice);
+              },
+              this.root,
+              "ouinpo-ticket-delete",
+            ),
+          );
+        }
         const attempts = await api("/attempts");
         const filter = field(
           this.root,
@@ -221,14 +250,16 @@
           list.replaceChildren();
           attempts
             .filter((a) =>
-              `${a.student_id} ${a.scenario_id} ${a.id}`.includes(filter.value),
+              `${a.student_id} ${a.scenario_id} ${a.number ?? a.id}`.includes(
+                filter.value,
+              ),
             )
             .forEach((a) => {
               const row = el("div", "", "ouinpo-ticket-admin-row");
               row.append(
                 el(
                   "span",
-                  `Étudiant #${a.student_id} · scénario #${a.scenario_id} · tentative #${a.id} · ${a.status}`,
+                  `Étudiant #${a.student_id} · scénario #${a.scenario_id} · tentative #${a.number ?? a.id} · ${a.status}`,
                 ),
                 button(
                   "Observer",
@@ -256,6 +287,35 @@
                       await this.home();
                     },
                     this.root,
+                  ),
+                );
+              }
+              if (window.OuinpoTicketing?.canDeleteAllAttempts) {
+                row.append(
+                  button(
+                    "Supprimer les tentatives de cet élève",
+                    async () => {
+                      if (
+                        !window.confirm(
+                          `Supprimer définitivement toutes les tentatives de l’élève #${a.student_id}, dans tous les scénarios, y compris ses archives, notes, codes et historiques ? Ses affectations et le travail des autres élèves seront conservés.`,
+                        )
+                      )
+                        return;
+                      const result = await api(
+                        `/students/${a.student_id}/attempts`,
+                        "DELETE",
+                        { confirm_delete_student: true },
+                      );
+                      await this.home();
+                      const notice = el(
+                        "p",
+                        `${result.counts.attempts} tentative(s) supprimée(s) pour l’élève #${a.student_id}. Ses affectations sont conservées.`,
+                      );
+                      notice.setAttribute("role", "status");
+                      this.root.prepend(notice);
+                    },
+                    this.root,
+                    "ouinpo-ticket-delete",
                   ),
                 );
               }
@@ -459,6 +519,17 @@
       root.append(toolbar);
       this.text(root, s, "title", "Titre");
       this.text(root, s, "description", "Contexte", true);
+      s.completion_status ??= "resolved";
+      this.choice(
+        root,
+        s,
+        "completion_status",
+        "Parcours terminé lorsque tous les tickets sont…",
+        [
+          ["resolved", "Résolus (ou clôturés)"],
+          ["closed", "Clôturés"],
+        ],
+      );
       this.choice(root, r, "status", "Publication", [
         ["draft", "Brouillon"],
         ["published", "Publié — peut être affecté"],
@@ -554,8 +625,96 @@
             s.users.map((u) => [u.id, u.label]),
           );
           const visible = this.section(p, "Informations initiales visibles");
-          Object.entries(fields).forEach(([k, l]) =>
-            this.text(visible, t.fields, k, l),
+          Object.entries(fields).forEach(([k, l]) => {
+            if (k === "nature") {
+              this.choice(visible, t.fields, k, "Nature de la demande", [
+                ["", "Non renseignée"],
+                ["À qualifier", "À qualifier"],
+                ["incident", "Incident"],
+                ["service", "Assistance / service"],
+                ["evolution", "Évolution"],
+              ]);
+            } else {
+              this.text(
+                visible,
+                t.fields,
+                k,
+                l,
+                k === "priority_justification",
+              );
+            }
+          });
+          const pedagogy = this.section(p, "Accompagnement pédagogique");
+          this.check(
+            pedagogy,
+            t,
+            "guided",
+            "Mode guidé : bloquer la résolution si la qualification ou les traces exigées sont incomplètes",
+          );
+          this.refs(
+            pedagogy,
+            t,
+            "qualification_required",
+            "Champs à renseigner avant résolution (mode guidé)",
+            [
+              { id: "nature", label: "Nature de la demande" },
+              { id: "impact", label: "Impact" },
+              { id: "urgency", label: "Urgence" },
+              { id: "priority", label: "Priorité" },
+              {
+                id: "priority_justification",
+                label: "Justification de priorité",
+              },
+            ],
+          );
+          pedagogy.append(
+            el(
+              "p",
+              "Un champ rempli n’est pas nécessairement pertinent. L’appréciation des textes appartient au professeur ; SegFault peut proposer un avis distinct dans le bilan.",
+            ),
+          );
+          t.requester_validation ??= {
+            enabled: false,
+            replies: [
+              {
+                outcome: "confirmed",
+                message: "Je confirme que ma demande est satisfaite.",
+              },
+            ],
+          };
+          this.check(
+            pedagogy,
+            t.requester_validation,
+            "enabled",
+            "Exiger la validation simulée du demandeur avant clôture (procédure de ce scénario)",
+          );
+          t.requester_validation.replies ??= [
+            {
+              outcome: "confirmed",
+              message: "Je confirme que ma demande est satisfaite.",
+            },
+          ];
+          this.collection(
+            pedagogy,
+            "Réponses successives du demandeur — privées avant réception",
+            t.requester_validation.replies,
+            () => ({
+              outcome: "confirmed",
+              message: "Je confirme que ma demande est satisfaite.",
+            }),
+            (box, reply) => {
+              this.choice(box, reply, "outcome", "Décision", [
+                ["confirmed", "Confirmation — autoriser la clôture"],
+                ["persists", "Le problème persiste — rouvrir"],
+              ]);
+              this.text(box, reply, "message", "Réponse simulée", true);
+            },
+          );
+          pedagogy.append(
+            el(
+              "p",
+              "Les réponses sont utilisées dans l’ordre, une par résolution. Terminer par une confirmation. Un retour négatif exige une transition resolved → reopened, une nouvelle résolution répétable depuis reopened et des tests relançables. Les réponses futures restent cachées à l’élève.",
+            ),
           );
           const expected = this.section(p, "Qualification attendue — privée");
           expected.append(

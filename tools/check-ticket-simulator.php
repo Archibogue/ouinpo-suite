@@ -62,6 +62,11 @@ final class FakeTicketDb {
 
 $scenario = require dirname(__DIR__) . '/src/Modules/TicketSimulator/demo.php';
 check(ScenarioValidator::validate($scenario) === $scenario, 'Demo validates');
+// Preserve explicit coverage of scenarios authored before the B1.2 options.
+unset($scenario['completion_status']);
+foreach ($scenario['tickets'] as &$legacyTicket) { unset($legacyTicket['guided'], $legacyTicket['qualification_required'], $legacyTicket['requester_validation']); }
+unset($legacyTicket);
+check(ScenarioValidator::validate($scenario) === $scenario, 'Legacy scenario without pedagogical options validates unchanged');
 $ticket = $scenario['tickets'][0]; $engine = new SimulationEngine(new SimulatedTestEngine($scenario['resources'])); $state = ScenarioAttempt::initial($ticket); $initial = $state;
 $run = function (string $id, array $input = []) use ($engine, $ticket, &$state): array { [$state, $events] = $engine->perform($ticket, $state, $id, $input); return $events; };
 rejects(fn() => $engine->perform($ticket, $state, 'fix', []), 'Direct correction cannot bypass prerequisites');

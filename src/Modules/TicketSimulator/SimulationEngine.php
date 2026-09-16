@@ -10,6 +10,8 @@ final class SimulationEngine
     public function available(array $action, array $state, ?array $ticket = null): bool
     {
         $to = $this->target($action);
+        if ($to === 'closed' && (!empty($ticket['guided']) || Pedagogy::validation($ticket ?? [])) && ($state['status'] !== 'resolved' || empty($state['resolution']))) { return false; }
+        if ($to === 'closed' && Pedagogy::validation($ticket ?? []) && ($state['requester_validation']['outcome'] ?? '') !== 'confirmed') { return false; }
         if ($ticket !== null && $to !== '' && $to !== $state['status'] && !in_array($to, $ticket['transitions'][$state['status']] ?? [], true)) { return false; }
         return empty($state['pending'])
             && (empty($action['code_resource']) || in_array($action['code_resource'], $state['visible_resources'], true))
@@ -21,9 +23,32 @@ final class SimulationEngine
     public function perform(array $ticket, array $state, string $actionId, array $input): array
     {
         $events = [];
+        if ($actionId === '__validate_requester') {
+            if (!Pedagogy::validation($ticket) || $state['status'] !== 'resolved' || !empty($state['pending']) || ($state['requester_validation']['outcome'] ?? '') === 'confirmed') {
+                throw new \DomainException('Validation du demandeur indisponible.');
+            }
+            $replies = $ticket['requester_validation']['replies'];
+            $count = (int) ($state['requester_validation_count'] ?? 0);
+            $reply = $replies[min($count, count($replies) - 1)];
+            $state['requester_validation_count'] = $count + 1;
+            $state['requester_validation'] = array_intersect_key($reply, array_flip(['outcome','message']));
+            $events[] = ['type'=>'requester_validation', 'text'=>$reply['message'], 'outcome'=>$reply['outcome']];
+            if ($reply['outcome'] === 'persists') {
+                $this->transition($ticket, $state, 'reopened', $events);
+                // A rejected resolution requires fresh verification, not old successful tests.
+                foreach ($ticket['resolution_tests'] ?? [] as $id) {
+                    unset($state['tests'][$id]);
+                    $state['done'] = array_values(array_diff($state['done'], [$id]));
+                }
+                unset($state['review']);
+            }
+            return [$state, $events];
+        }
         if ($actionId === '__reply') {
             $pending = $state['pending'] ?? null;
             if (!$pending) { throw new \DomainException('Aucune réponse en attente.'); }
+            if ((!empty($ticket['guided']) || Pedagogy::validation($ticket)) && in_array($pending['return_status'], ['resolved','closed'], true)) { throw new \DomainException('Une réponse ne remplace pas une résolution documentée.'); }
+            $this->checkReplyTransition($ticket, $state, $pending['return_status']);
             $this->transition($ticket, $state, $pending['return_status'], $events);
             $events[] = ['type' => $pending['type'], 'text' => $pending['text'], 'speaker' => $pending['speaker']];
             $state['visible_resources'] = array_values(array_unique(array_merge($state['visible_resources'], $pending['reveal'])));
@@ -35,6 +60,13 @@ final class SimulationEngine
         $action = $actions[$actionId] ?? null;
         if (!$action || !$this->available($action, $state, $ticket)) { throw new \DomainException('Action indisponible ou prérequis non remplis.'); }
         $type = $action['type'];
+        if ((!empty($ticket['guided']) || Pedagogy::validation($ticket)) && $this->target($action) === 'resolved' && $type !== 'resolve') {
+            throw new \DomainException('Utilisez une action de résolution avec compte rendu.');
+        }
+        if ($type === 'resolve' && !empty($ticket['guided'])) {
+            if (Pedagogy::missing($ticket, $state)) { throw new \DomainException('Complétez les champs de qualification exigés par ce scénario avant la résolution.'); }
+            if (!Pedagogy::evidence($ticket, $state)) { throw new \DomainException('Les actions ou tests simulés exigés avant résolution ne sont pas tous validés.'); }
+        }
         $message = trim((string) ($input['message'] ?? ''));
         if ((in_array($type, ['specialist','transfer','escalate','reassign','communication'], true) || !empty($action['requires_message'])) && $message === '') {
             throw new \DomainException('Rédigez votre demande ou votre message.');
@@ -56,6 +88,7 @@ final class SimulationEngine
         if (in_array($type, ['question','specialist','transfer','escalate','reassign'], true)) {
             $return = !empty($action['return_status']) ? $action['return_status'] : ($type === 'reassign' ? $state['status'] : 'diagnosing');
             // Validate the return before committing the outgoing request.
+            $this->checkReplyTransition($ticket, $state, $return, $action['label']);
             $check = $state; $ignore = [];
             $this->transition($ticket, $check, $return, $ignore);
             $state['pending'] = ['text' => $result['text'], 'type' => $type === 'question' ? 'user_reply' : 'specialist_reply',
@@ -68,16 +101,14 @@ final class SimulationEngine
         }
         if ($type === 'test') { $state['tests'][$actionId] = $result; }
         if ($type === 'resolve') {
+            unset($state['requester_validation']);
             $resolution = [];
             foreach (['cause','solution','tests','result','message'] as $field) {
                 $value = trim((string) ($input[$field] ?? ''));
                 if ($value === '') { throw new \DomainException('Complétez les cinq champs du compte rendu de résolution.'); }
                 $resolution[$field] = $value;
             }
-            $met = !array_diff($ticket['resolution_requires'] ?? [], $state['done']);
-            foreach ($ticket['resolution_tests'] ?? [] as $testId) {
-                $met = $met && (($state['tests'][$testId]['outcome'] ?? '') === 'success');
-            }
+            $met = Pedagogy::evidence($ticket, $state);
             $state['resolution'] = $resolution;
             // Evidence checks are teacher-only; free prose is deliberately not auto-graded.
             $state['review'] = ['required_actions_met' => $met, 'expected_fields_match' => !array_diff_assoc($ticket['expected'], $state['fields'])];
@@ -90,9 +121,16 @@ final class SimulationEngine
         }
         return [$state, $events];
     }
+    private function checkReplyTransition(array $ticket, array $state, string $to, string $label = ''): void
+    {
+        if ($to !== $state['status'] && !in_array($to, $ticket['transitions'][$state['status']] ?? [], true)) {
+            throw new \DomainException('Retour de réponse mal configuré' . ($label !== '' ? ' pour « ' . $label . ' »' : '') . ' : ' . $state['status'] . ' → ' . $to . '. Le professeur doit corriger l’état de retour ou les transitions du scénario. Votre action n’a pas été enregistrée.');
+        }
+    }
     private function transition(array $ticket, array &$state, string $to, array &$events): void
     {
         $from = $state['status'];
+        if ($to === 'closed' && Pedagogy::validation($ticket) && ($state['requester_validation']['outcome'] ?? '') !== 'confirmed') { throw new \DomainException('Recevez la confirmation simulée du demandeur avant de clôturer.'); }
         if ($to === $from) { return; }
         if (!in_array($to, $ticket['transitions'][$from] ?? [], true)) { throw new \DomainException('Transition non autorisée : ' . $from . ' → ' . $to); }
         $state['status'] = $to;

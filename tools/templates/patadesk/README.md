@@ -7,6 +7,59 @@ Le modèle contient un scénario jouable : un ticket, un demandeur, un spéciali
 une application fictive, un log et un fichier PHP modifiable avec sa correction.
 Il est au format PataDesk `format_version: 1`, distinct des packs généraux OuInPo.
 
+Le modèle utilise le parcours guidé jusqu'à la **clôture**, avec qualification
+argumentée et confirmation simulée du demandeur. Les options suivantes restent
+facultatives pour conserver les imports existants.
+
+## Options pédagogiques B1.2
+
+À la racine : `"completion_status": "closed"` exige la clôture de tous les tickets.
+`"resolved"` (valeur par défaut si absente) termine le parcours dès qu'ils sont
+tous résolus ou clôturés. « Terminé » ne signifie pas « compétence acquise ».
+
+Sur chaque ticket, exemple :
+
+```json
+"guided": true,
+"qualification_required": ["nature", "impact", "urgency", "priority", "priority_justification"],
+"requester_validation": {
+  "enabled": true,
+  "replies": [
+    {"outcome": "persists", "message": "Le problème persiste. Merci de reprendre les vérifications."},
+    {"outcome": "confirmed", "message": "Je confirme que ma demande est satisfaite."}
+  ]
+}
+```
+
+- `guided` vaut `false` par défaut. À `true`, les champs sélectionnés doivent
+  être renseignés (ni vides ni « À qualifier »), les actions de
+  `resolution_requires` effectuées et les tests de `resolution_tests` réussis
+  avant résolution. Une réponse libre remplie n'est pas notée automatiquement.
+- `qualification_required` vaut `[]` par défaut : choisir seulement les étapes
+  souhaitées. `nature` accepte `incident`, `service` (assistance/service),
+  `evolution` ou les valeurs initiales `""` / `"À qualifier"`.
+  La nature se stocke dans `fields.nature`, séparément de `fields.category`.
+- `fields.priority_justification` contient le raisonnement de l'élève ; ce champ
+  est distinct de `priority`. SegFault peut apprécier ce texte dans le bilan,
+  sans accès aux valeurs `expected` ni aux corrigés professeur.
+- La validation est désactivée par défaut. Si activée, définir de 1 à 10 réponses,
+  utilisées dans l'ordre, une par nouvelle résolution. La dernière doit confirmer
+  et sera réutilisée si nécessaire. Les messages futurs sont privés.
+- `persists` rouvre le ticket et invalide les tests exigés. Prévoir
+  `resolved → reopened`, `reopened → resolved`, une action `resolve` répétable
+  accessible depuis `reopened`, et des tests relançables. `confirmed` autorise
+  l'action `close` depuis `resolved`, avec la transition `resolved → closed`.
+- Le bouton `__validate_requester` est créé automatiquement ; cet identifiant
+  et `__reply` sont réservés. Ne pas ajouter ces actions dans le JSON.
+- La confirmation est la procédure choisie par l'enseignant pour ce scénario,
+  pas une exigence universelle du BTS. Pour travailler seulement la résolution,
+  désactiver cette option et choisir `completion_status: "resolved"`.
+
+Le compte rendu garde cinq champs obligatoires : `cause` (cause ou analyse adaptée
+à la demande), `solution` (actions réalisées), `tests`, `result`, `message`.
+Le bilan sépare fin du parcours, contrôles de présence/traces, appréciation IA
+des textes et évaluation pédagogique finale du professeur.
+
 ## Importer et affecter
 
 1. Installer la version du module comprenant la console de correction.

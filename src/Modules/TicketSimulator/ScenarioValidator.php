@@ -10,6 +10,7 @@ final class ScenarioValidator
         self::need(($s['format_version'] ?? null) === 1, 'Version de format attendue : 1.');
         self::string($s, 'title', true, 200);
         self::string($s, 'description');
+        self::need(in_array($s['completion_status'] ?? 'resolved', ['resolved','closed'], true), 'Fin de scénario attendue : resolved ou closed.');
         foreach (['users','specialists','resources','tickets'] as $key) {
             self::need(isset($s[$key]) && is_array($s[$key]) && array_is_list($s[$key]) && count($s[$key]) <= 100, "Liste invalide : $key.");
             self::unique($s[$key]);
@@ -29,10 +30,30 @@ final class ScenarioValidator
         foreach ($s['tickets'] as $t) {
             self::string($t, 'title', true); self::string($t, 'description', true);
             self::need(isset($people[$t['requester_id'] ?? '']), 'Demandeur introuvable.');
+            self::need(!isset($t['guided']) || is_bool($t['guided']), 'Mode guidé : booléen attendu.');
+            self::refs($t['qualification_required'] ?? [], array_fill_keys(Pedagogy::QUALIFICATION, true));
+            if (isset($t['requester_validation'])) {
+                $validation = $t['requester_validation'];
+                self::need(is_array($validation) && is_bool($validation['enabled'] ?? null), 'Validation du demandeur invalide.');
+                if ($validation['enabled']) {
+                    self::need(is_array($validation['replies'] ?? null) && array_is_list($validation['replies']) && count($validation['replies']) >= 1 && count($validation['replies']) <= 10, 'Prévoir de 1 à 10 réponses du demandeur.');
+                    foreach ($validation['replies'] as $reply) {
+                        self::need(is_array($reply) && in_array($reply['outcome'] ?? '', ['confirmed','persists'], true), 'Réponse : confirmed ou persists attendu.');
+                        self::string($reply, 'message', true);
+                    }
+                    self::need(end($validation['replies'])['outcome'] === 'confirmed', 'La dernière réponse doit permettre la confirmation.');
+                    self::need(in_array('closed', $t['transitions']['resolved'] ?? [], true), 'Autorisez la clôture depuis resolved.');
+                    if (in_array('persists', array_column($validation['replies'], 'outcome'), true)) {
+                        self::need(in_array('reopened', $t['transitions']['resolved'] ?? [], true), 'Autorisez la réouverture depuis resolved.');
+                        self::need(in_array('resolved', $t['transitions']['reopened'] ?? [], true), 'Autorisez une nouvelle résolution depuis reopened.');
+                    }
+                }
+            }
             foreach (['fields','expected'] as $key) {
                 self::need(isset($t[$key]) && is_array($t[$key]), "Objet requis : $key.");
                 foreach ($t[$key] as $field => $value) {
                     self::need(in_array($field, TicketScenario::FIELDS, true) && is_string($value) && strlen($value) <= 1000, 'Champ ticket invalide.');
+                    if ($field === 'nature') { self::need(in_array($value, array_merge(['','À qualifier'], Pedagogy::NATURES), true), 'Nature attendue : incident, service ou evolution.'); }
                 }
             }
             self::refs($t['resources'] ?? [], $resources);
@@ -46,7 +67,12 @@ final class ScenarioValidator
                 self::refs($to, array_fill_keys(TicketScenario::STATUSES, true));
             }
             foreach ($actions as $a) {
-                self::need($a['id'] !== '__reply', 'Identifiant réservé : __reply.');
+                self::need(!in_array($a['id'], ['__reply','__validate_requester'], true), 'Identifiant réservé au moteur.');
+                if (!empty($t['guided']) || Pedagogy::validation($t)) {
+                    self::need(($a['type'] ?? '') === 'resolve' || !in_array($a['to_status'] ?? '', ['resolved'], true), 'Seule une action resolve peut résoudre le ticket en mode guidé.');
+                    self::need(!in_array($a['return_status'] ?? '', ['resolved','closed'], true), 'Une réponse ne peut pas remplacer la résolution ou la clôture.');
+                    self::need(($a['type'] ?? '') === 'close' || ($a['to_status'] ?? '') !== 'closed', 'Seule une action close peut clôturer le ticket.');
+                }
                 self::string($a, 'label', true); self::string($a, 'description'); self::string($a, 'result');
                 self::string($a, 'success_result');
                 if (!empty($a['code_resource'])) {
@@ -62,6 +88,13 @@ final class ScenarioValidator
                 if (!empty($a['specialist_id'])) { self::need(isset($specialists[$a['specialist_id']]), 'Spécialiste inconnu.'); }
                 foreach (['to_status','return_status'] as $key) {
                     if (!empty($a[$key])) { self::need(in_array($a[$key], TicketScenario::STATUSES, true), 'État cible inconnu.'); }
+                }
+                if (in_array($a['type'], ['question','specialist','transfer','escalate','reassign'], true)) {
+                    $defaults = ['question'=>'waiting_user','specialist'=>'waiting_specialist','transfer'=>'waiting_specialist','escalate'=>'escalated','reassign'=>'escalated'];
+                    $waiting = !empty($a['to_status']) ? $a['to_status'] : $defaults[$a['type']];
+                    $return = !empty($a['return_status']) ? $a['return_status'] : ($a['type'] === 'reassign' ? $waiting : 'diagnosing');
+                    self::need($return === $waiting || in_array($return, $t['transitions'][$waiting] ?? [], true),
+                        'Ticket ' . $t['id'] . ', action « ' . $a['label'] . ' » : retour de réponse non autorisé (' . $waiting . ' → ' . $return . '). Corrigez l’état de retour ou les transitions autorisées du ticket.');
                 }
                 foreach (['cost','score'] as $key) { self::need(!isset($a[$key]) || (is_int($a[$key]) && abs($a[$key]) <= 10000 && ($key !== 'cost' || $a[$key] >= 0)), 'Coût ou score invalide.'); }
                 foreach (['repeatable','requires_message'] as $key) { self::need(!isset($a[$key]) || is_bool($a[$key]), 'Booléen attendu.'); }
@@ -88,6 +121,15 @@ final class ScenarioValidator
             foreach ($t['resolution_requires'] ?? [] as $id) { self::need(!in_array($actions[$id]['type'], ['resolve','close'], true), 'Attendu de résolution circulaire.'); }
             self::need(in_array($t['bad_resolution'] ?? 'accept', ['accept','reopen'], true), 'Conséquence invalide.');
             self::string($t, 'bad_resolution_message'); self::string($t, 'expected_solution');
+            if (($s['completion_status'] ?? 'resolved') === 'closed') {
+                self::need(in_array('closed', $t['transitions']['resolved'] ?? [], true), 'Le critère de fin clôture exige la transition resolved → closed.');
+                self::need((bool) array_filter($actions, static fn($a) => $a['type'] === 'close' && (empty($a['states']) || in_array('resolved', $a['states'], true))), 'Le critère de fin clôture exige une action close depuis resolved.');
+            }
+            if (Pedagogy::validation($t)) {
+                $resolve = array_filter($actions, static fn($a) => $a['type'] === 'resolve' && !empty($a['repeatable']) && (empty($a['states']) || in_array('reopened', $a['states'], true)));
+                if (in_array('persists', array_column($t['requester_validation']['replies'], 'outcome'), true)) { self::need((bool) $resolve, 'La réouverture exige une action resolve répétable accessible depuis reopened.'); }
+                self::need((bool) array_filter($actions, static fn($a) => $a['type'] === 'close' && (empty($a['states']) || in_array('resolved', $a['states'], true))), 'Prévoir une action close accessible depuis resolved.');
+            }
         }
         self::need(strlen(json_encode($s)) <= 1000000, 'Scénario limité à 1 Mo.');
         return $s;

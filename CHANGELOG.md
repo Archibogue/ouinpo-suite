@@ -2,6 +2,32 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.9-beta] - 2026-09-16
+
+### Ajouté
+
+- Téléchargement d'un bilan Markdown des tentatives, incluant les traces et le code de l'élève, sans les corrections privées du professeur.
+
+- Suppression des tentatives d'un élève précis (archives et traces comprises), avec conservation de ses affectations et du travail des autres élèves.
+- Numérotation affichée des tentatives et bilans remise à 1 après nettoyage global, sans réutiliser les identifiants techniques.
+
+- Parcours pédagogique PataDesk : nature de demande distincte de la catégorie, qualification argumentée exigible en mode guidé, validation simulée du demandeur avec réouverture et critère de fin à la résolution ou à la clôture.
+- Bilan enrichi avec décision de clôture, contrôles automatiques et appréciation IA distincte des réponses libres ; nouveaux scénarios de démonstration et d'import, compatibilité des anciennes tentatives conservée.
+
+- Nettoyage global des tentatives PataDesk depuis l'administration : suppression définitive des essais et de leurs traces, avec conservation des scénarios et affectations.
+
+- Qualification PataDesk : menus déroulants pour l'impact, l'urgence et la priorité, avec repères pédagogiques et conservation des anciennes valeurs personnalisées.
+
+- Conseils pédagogiques SegFault dans le bilan Markdown PataDesk : priorisation des tickets, diagnostic progressif, communication et validation, fondés sur les traces de l'élève. Bilan disponible même sans IA.
+
+### Corrigé
+
+- Validation des transitions de retour des échanges dès l'import/enregistrement ; message explicite pour les anciennes tentatives dont une réponse cible un état non autorisé.
+
+- Conseils SegFault PataDesk contextualisés avec les actions accessibles, les ressources révélées et les limites de la simulation, pour éviter les recommandations d'intervention réelle hors scénario.
+
+- Bilan PataDesk : les anciennes pages utilisant le téléchargement GET reçoivent désormais aussi la section de conseils SegFault.
+
 ## [0.7.8-beta] - 2026-09-16
 
 ### Corrigé
@@ -21,7 +47,6 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Shortcode `[ouinpo_ticket_simulator]` et guide `docs/ticket-simulator.md`.
 - Console de correction des extraits pédagogiques, copies par tentative, historique des modifications et tests comparant le code enregistré à la correction privée du professeur.
 - Modèle JSON d'import documenté, guide étudiant dépliable et suppression définitive des scénarios avec leurs affectations et tentatives, après confirmation.
-
 ### Validation
 
 - 123 contrôles PHP isolés, incluant la suppression en cascade et le modèle JSON, et parcours de démonstration complet par HTTP avec édition de code.

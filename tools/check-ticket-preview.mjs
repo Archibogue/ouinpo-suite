@@ -79,6 +79,14 @@ try {
     });
   }
   await action("take");
+  attempt = await request(ticket, "PATCH", {
+    revision: attempt.revision,
+    nature: "incident",
+    impact: "Moyen",
+    urgency: "Élevée",
+    priority: "Haute",
+    priority_justification: "Export comptable bloqué avant l’échéance.",
+  });
   await action("diagnose");
   await action("since");
   assert.equal(attempt.tickets[0].status, "waiting_user");
@@ -118,8 +126,15 @@ try {
     result: "128 lignes",
     message: "Incident résolu.",
   });
+  assert.equal(attempt.status, "active");
+  await action("__validate_requester");
   await action("close");
+  assert.equal(attempt.status, "completed");
   assert.equal(attempt.tickets[0].status, "closed");
+  const report = await request("/api/attempts/1/summary");
+  assert.equal(report.filename, "patadesk-tentative-1.md");
+  assert.ok(report.markdown.includes("Compte rendu de résolution"));
+  assert.ok(report.markdown.includes("Renommage de colonne confirmé."));
   assert.ok(attempt.events.some((e) => e.event_type === "technical_note"));
   assert.ok(attempt.events.some((e) => e.event_type === "specialist_reply"));
   await request("/?admin=1");

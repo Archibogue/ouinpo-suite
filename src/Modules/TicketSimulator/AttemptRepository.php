@@ -9,6 +9,7 @@ final class AttemptRepository
         global $wpdb;
         $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . ScenarioRepository::table('attempts') . ' WHERE id=%d' . ($lock ? ' FOR UPDATE' : ''), $id), ARRAY_A);
         if (!$row) { throw new \RuntimeException('Tentative introuvable.', 404); }
+        $row['number'] = AttemptNumber::display((int) $row['id']);
         return $row;
     }
     public function listing(): array
@@ -18,7 +19,11 @@ final class AttemptRepository
         $where = $wpdb->prepare('student_id=%d', $uid);
         if (\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_OBSERVE)) { $where .= $wpdb->prepare(' OR teacher_id=%d', $uid); }
         if (PermissionService::all()) { $where = '1=1'; }
-        return $wpdb->get_results('SELECT id,scenario_id,student_id,teacher_id,status,started_at,ended_at FROM ' . ScenarioRepository::table('attempts') . " WHERE $where ORDER BY id DESC LIMIT 200", ARRAY_A) ?: [];
+        $rows = $wpdb->get_results('SELECT id,scenario_id,student_id,teacher_id,status,started_at,ended_at FROM ' . ScenarioRepository::table('attempts') . " WHERE $where ORDER BY id DESC LIMIT 200", ARRAY_A) ?: [];
+        $offset = AttemptNumber::offset();
+        foreach ($rows as &$row) { $row['number'] = max(1, (int) $row['id'] - $offset); }
+        unset($row);
+        return $rows;
     }
     public function start(int $assignmentId): int
     {
@@ -77,7 +82,8 @@ final class AttemptRepository
                 [$state, $events] = CodeWorkspace::save($ticket, $state, $resource, $input['content']);
             } elseif ($operation === 'qualify') {
                 if (in_array($state['status'], ['resolved','closed'], true)) { throw new \DomainException('Ticket terminé.'); }
-                foreach (['category','subcategory','impact','urgency','priority','it_service','assignee'] as $key) {
+                if (isset($input['nature']) && !in_array($input['nature'], array_merge(['','À qualifier'], Pedagogy::NATURES), true)) { throw new \InvalidArgumentException('Nature de demande invalide.'); }
+                foreach (['nature','category','subcategory','impact','urgency','priority','priority_justification','it_service','assignee'] as $key) {
                     if (isset($input[$key])) {
                         $events[] = ['type' => 'qualification', 'text' => $key . ' : ' . ($state['fields'][$key] ?? '—') . ' → ' . $input[$key]];
                         $state['fields'][$key] = $input[$key];
@@ -94,7 +100,7 @@ final class AttemptRepository
             ScenarioRepository::check($wpdb->update(ScenarioRepository::table('attempt_tickets'), ['state' => wp_json_encode($state)], ['attempt_id' => $id, 'ticket_key' => $ticketId]));
             foreach ($events as $event) { (new EventRepository())->add($a, $ticketId, $event); }
             $states = $this->states($id);
-            $finished = !array_filter($states, static fn($s) => !in_array($s['status'], ['resolved','closed'], true));
+            $finished = Pedagogy::finished($snapshot, $states);
             ScenarioRepository::check($wpdb->update(ScenarioRepository::table('attempts'), ['revision' => $revision + 1, 'status' => $finished ? 'completed' : 'active', 'ended_at' => $finished ? ($a['ended_at'] ?: current_time('mysql', true)) : null], ['id' => $id]));
         });
     }

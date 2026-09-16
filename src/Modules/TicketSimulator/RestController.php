@@ -70,13 +70,29 @@ final class RestController
             PermissionService::require(\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_PRACTICE) || PermissionService::manage() || \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_OBSERVE));
             return (new AttemptRepository())->listing();
         });
+        self::route('/attempts', 'DELETE', static function ($r) {
+            PermissionService::require(PermissionService::all());
+            if ($r->get_param('confirm_delete_all') !== true) {
+                throw new \InvalidArgumentException('Confirmation de suppression de toutes les tentatives requise.');
+            }
+            return AttemptCleanup::deleteAll();
+        });
+        self::route('/students/(?P<id>\d+)/attempts', 'DELETE', static function ($r) {
+            PermissionService::require(PermissionService::all());
+            if ($r->get_param('confirm_delete_student') !== true) { throw new \InvalidArgumentException('Confirmation de suppression des tentatives de cet élève requise.'); }
+            return AttemptCleanup::deleteStudent((int) $r['id']);
+        });
         self::route('/attempts/(?P<id>\d+)', 'GET', static fn($r) => self::view((int) $r['id']));
+        // Older open pages still download via GET: include feedback there too.
+        self::route('/attempts/(?P<id>\d+)/summary', 'GET', static fn($r) => AttemptAdvice::download((int) $r['id']));
+        self::route('/attempts/(?P<id>\d+)/summary/plain', 'GET', static fn($r) => AttemptMarkdown::download((int) $r['id']));
+        self::route('/attempts/(?P<id>\d+)/summary', 'POST', static fn($r) => AttemptAdvice::download((int) $r['id']));
         self::route('/attempts/(?P<id>\d+)/events', 'GET', static function ($r) {
             PermissionService::require(PermissionService::view((new AttemptRepository())->get((int) $r['id'])));
             return (new EventRepository())->listing((int) $r['id'], max(0, (int) $r->get_param('after')));
         });
         $base = '/attempts/(?P<id>\d+)/tickets/(?P<ticket>[a-zA-Z0-9_-]+)';
-        self::route($base, 'PATCH', static fn($r) => self::mutate($r, 'qualify', self::strings($r, ['category','subcategory','impact','urgency','priority','it_service','assignee'])));
+        self::route($base, 'PATCH', static fn($r) => self::mutate($r, 'qualify', self::strings($r, ['nature','category','subcategory','impact','urgency','priority','priority_justification','it_service','assignee'])));
         self::route($base . '/notes', 'POST', static fn($r) => self::mutate($r, 'note', self::strings($r, ['message'])));
         self::route($base . '/actions/(?P<action>[a-zA-Z0-9_-]+)', 'POST', static fn($r) => self::mutate($r, 'action', ['action_id' => (string) $r['action']] + self::strings($r, ['message','cause','solution','tests','result'])));
         self::route($base . '/resources/(?P<resource>[a-zA-Z0-9_-]+)', 'POST', static function ($r) {

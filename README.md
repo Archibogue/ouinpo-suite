@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.8-beta : bêta technique ajoutant le module optionnel PataDesk de simulation de tickets informatiques pour le BTS SIO. Elle conserve les groupes facultatifs au sein des classes et le centre d'entraînement NSI autonome. Elle ne doit pas être présentée comme une version stable. La recette WordPress/MySQL et la vérification visuelle responsive de PataDesk restent à effectuer sur le site cible.
+Version 0.7.9-beta : bêta technique enrichissant PataDesk avec le parcours guidé de traitement des demandes, les bilans Markdown et IA, et le nettoyage des tentatives. Elle conserve les groupes facultatifs au sein des classes et le centre d'entraînement NSI autonome. Elle ne doit pas être présentée comme une version stable. La recette WordPress/MySQL et la vérification visuelle responsive de PataDesk restent à effectuer sur le site cible.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 
@@ -68,6 +68,23 @@ La recette WordPress/MySQL et la vérification visuelle responsive sur le site c
 La page étudiant propose un **Guide d'utilisation** dépliable, également accessible
 dans les tickets. Côté professeur, **Supprimer** retire définitivement le scénario,
 ses affectations et toutes ses tentatives après confirmation ; **Archiver** conserve les traces.
+
+Le bilan inclut aussi les **conseils de SegFault** sur les priorités et le diagnostic,
+si l'IA et les suggestions pédagogiques sont activées dans les réglages du site.
+En cas d'indisponibilité de l'IA, le bilan reste téléchargeable.
+
+Dans une tentative, **Télécharger mon bilan (.md)** permet à l'élève de conserver
+un résumé de ses actions, échanges, notes, tests, code enregistré et résolution.
+
+Pour accompagner le traitement des demandes (B1.2), l'éditeur propose un **mode
+guidé** par ticket : nature distincte de la catégorie technique, qualification
+argumentée obligatoire au choix et traces/tests réussis exigés avant résolution.
+La **validation simulée du demandeur** peut être exigée avant clôture, avec retour
+négatif et réouverture. Le critère de fin du scénario est configurable : résolution
+ou clôture de tous les tickets. Les anciens scénarios et tentatives restent compatibles.
+Le bilan distingue parcours, contrôles automatiques, appréciation IA des réponses
+libres et évaluation finale du professeur. La démonstration et le modèle JSON
+illustrent le parcours guidé jusqu'à la clôture.
 
 Modèle JSON prêt à adapter : [modele-scenario.json](tools/templates/patadesk/modele-scenario.json)
 et [guide du format](tools/templates/patadesk/README.md). Importer ce modèle dans PataDesk,

@@ -11,6 +11,7 @@ final class Assets
         CoreAssets::enqueueStyle('ouinpo-ticketing', 'assets/css/front/ticket-simulator.css', $deps);
         CoreAssets::enqueueScript('ouinpo-ticketing', 'assets/js/front/ticket-simulator.js');
         wp_localize_script('ouinpo-ticketing', 'OuinpoTicketing', [
+            'canDeleteAllAttempts' => PermissionService::all(),
             'root' => esc_url_raw(rest_url(RestController::NS)), 'nonce' => wp_create_nonce('wp_rest'), 'name' => Module::label(),
         ]);
         if ($admin) {

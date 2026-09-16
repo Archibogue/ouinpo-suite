@@ -30,6 +30,7 @@
     resource: "Consultation",
     code_edit: "Code modifié par l’élève",
     resolution: "Compte rendu",
+    requester_validation: "Validation simulée du demandeur",
     archived: "Archivage",
   };
   function el(tag, text, cls) {
@@ -168,10 +169,46 @@
       header.append(
         button("Retour", this.back, root),
         button("Actualiser", () => this.refresh(), root),
+        button(
+          "Télécharger mon bilan (.md)",
+          async () => {
+            const progress = el(
+              "p",
+              "SegFault prépare les conseils du bilan…",
+              "ouinpo-ticket-notice",
+            );
+            header.append(progress);
+            let report;
+            try {
+              report = await api(`/attempts/${this.a.id}/summary`, "POST");
+            } finally {
+              progress.remove();
+            }
+            const url = URL.createObjectURL(
+              new Blob([report.markdown], {
+                type: "text/markdown;charset=utf-8",
+              }),
+            );
+            const link = el("a");
+            link.href = url;
+            link.download = report.filename;
+            document.body.append(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          },
+          root,
+        ),
       );
       root.append(header);
       if (!this.a.teacher_view) root.append(studentGuide());
       root.append(el("h3", this.a.title), el("p", this.a.description));
+      root.append(
+        el(
+          "p",
+          `Objectif du parcours : ${this.a.completion_status === "closed" ? "clôturer" : "résoudre"} tous les tickets. Parcours ${this.a.path_completed ? "terminé" : "en cours"} — cela ne vaut pas validation pédagogique.`,
+        ),
+      );
       if (this.a.read_only)
         root.append(
           el("p", "Consultation en lecture seule.", "ouinpo-ticket-notice"),
@@ -277,6 +314,8 @@
               sla: "SLA fictif",
               assignee: "Assignation",
               impact: "Impact",
+              nature: "Nature de la demande",
+              priority_justification: "Justification de priorité",
               urgency: "Urgence",
               location: "Localisation",
               fictional_date: "Date fictive",
@@ -285,7 +324,16 @@
               subcategory: "Sous-catégorie",
             }[k] || k,
           ),
-          el("dd", v),
+          el(
+            "dd",
+            k === "nature"
+              ? {
+                  incident: "Incident",
+                  service: "Assistance / service",
+                  evolution: "Évolution",
+                }[v] || v
+              : v,
+          ),
         );
       });
       main.append(facts);
@@ -295,21 +343,95 @@
           `${t.done.length} action(s) distincte(s) · ${t.minutes} min fictives · Début : ${this.a.started_at} UTC${this.a.ended_at ? " · Fin : " + this.a.ended_at + " UTC" : ""}`,
         ),
       );
-      if (!this.a.read_only) {
+      main.append(
+        el(
+          "p",
+          `Contrôles automatiques : ${t.automatic_checks === true ? "satisfaits" : t.automatic_checks === false ? "non satisfaits" : "pas encore évalués"}. La pertinence des réponses reste à apprécier par le professeur.`,
+        ),
+      );
+      if (t.requester_validation_required)
+        main.append(
+          el(
+            "p",
+            "Procédure de ce scénario : recevoir la validation simulée du demandeur après résolution, puis clôturer. Un retour négatif rouvre le ticket.",
+          ),
+        );
+      if (t.requester_validation)
+        main.append(
+          el(
+            "p",
+            `Retour du demandeur : ${t.requester_validation.outcome === "confirmed" ? "confirmation" : "problème persistant"} — ${t.requester_validation.message}`,
+          ),
+        );
+      if (!this.a.read_only && !["resolved", "closed"].includes(t.status)) {
         const details = el("details");
         details.append(el("summary", "Qualifier / affecter le ticket"));
         const form = el("form");
         const inputs = {};
         for (const [k, l] of [
+          ["nature", "Nature de la demande"],
           ["category", "Catégorie"],
           ["subcategory", "Sous-catégorie"],
           ["impact", "Impact"],
           ["urgency", "Urgence"],
           ["priority", "Priorité"],
+          ["priority_justification", "Justification de la priorité"],
           ["it_service", "Service informatique"],
           ["assignee", "Technicien / groupe fictif"],
-        ])
-          inputs[k] = field(form, l, t.fields[k] || "");
+        ]) {
+          const choices = {
+            nature: [
+              ["incident", "Incident"],
+              ["service", "Assistance / service"],
+              ["evolution", "Évolution"],
+            ],
+            impact: [
+              ["Faible", "Faible — une personne, gêne limitée"],
+              ["Moyen", "Moyen — plusieurs personnes ou un service touché"],
+              [
+                "Élevé",
+                "Élevé — activité critique ou nombreux utilisateurs touchés",
+              ],
+            ],
+            urgency: [
+              ["Faible", "Faible — peut attendre"],
+              ["Moyenne", "Moyenne — à traiter rapidement"],
+              ["Élevée", "Élevée — blocage immédiat ou échéance proche"],
+            ],
+            priority: [
+              ["Basse", "Basse"],
+              ["Normale", "Normale"],
+              ["Haute", "Haute"],
+              ["Critique", "Critique"],
+            ],
+          }[k];
+          const value = t.fields[k] || "";
+          if (choices) {
+            const options = [
+              ["", "Choisir…"],
+              ["À qualifier", "À qualifier"],
+              ...choices,
+            ];
+            if (!options.some(([id]) => id === value)) {
+              options.push([value, `${value} (valeur existante)`]);
+            }
+            inputs[k] = select(form, l, options, value);
+          } else {
+            inputs[k] = field(form, l, value, k === "priority_justification");
+          }
+          if (t.guided && t.qualification_required?.includes(k)) {
+            inputs[k].required = true;
+            inputs[k].parentNode.append(
+              el("small", "Obligatoire avant résolution"),
+            );
+          }
+        }
+        form.append(
+          el(
+            "p",
+            "La nature décrit la demande ; la catégorie décrit le domaine technique. Justifiez la priorité en croisant impact, urgence et SLA. Enregistrez votre qualification avant de résoudre.",
+          ),
+        );
         form.append(
           button(
             "Enregistrer la qualification",
@@ -325,6 +447,15 @@
           ),
         );
         details.append(form);
+        if (t.guided && t.qualification_missing?.length) {
+          details.open = true;
+          form.prepend(
+            el(
+              "p",
+              "Qualification incomplète : renseignez les champs obligatoires encore vides ou À qualifier.",
+            ),
+          );
+        }
         main.append(details);
       }
       const nav = el("nav", "", "ouinpo-ticket-tabs");
@@ -359,6 +490,7 @@
             ? [
                 "user_message",
                 "user_reply",
+                "requester_validation",
                 "specialist_request",
                 "specialist_reply",
               ]
@@ -467,8 +599,8 @@
           const inputs = {};
           if (a.type === "resolve") {
             for (const [k, l] of [
-              ["cause", "Cause identifiée"],
-              ["solution", "Solution appliquée"],
+              ["cause", "Cause ou analyse de la demande"],
+              ["solution", "Solution / actions réalisées"],
               ["tests", "Tests effectués"],
               ["result", "Résultat"],
               ["message", "Message final au demandeur"],
@@ -504,10 +636,17 @@
             );
           panel.append(card);
         });
-        if (this.tab === "Tests")
+        if (this.tab === "Tests") {
+          panel.prepend(
+            el(
+              "p",
+              "Tests simulés : la comparaison de l’extrait avec une correction attendue n’exécute pas le code. Toute modification invalide les tests liés à cet extrait.",
+            ),
+          );
           Object.entries(t.tests).forEach(([id, r]) => {
             panel.append(el("h4", id + " · " + r.outcome), el("pre", r.text));
           });
+        }
       }
       if (t.resolution) {
         const d = el("details");
@@ -631,7 +770,7 @@
       ],
       [
         "Prendre en charge et qualifier",
-        "Dans Actions, prenez en charge le ticket puis commencez le diagnostic. Lisez la demande et renseignez la catégorie, l’impact, l’urgence et la priorité dans Qualifier / affecter le ticket.",
+        "Lisez la demande puis ouvrez Qualifier / affecter le ticket. Choisissez sa nature (incident, assistance/service ou évolution), sa catégorie technique, l’impact, l’urgence et la priorité ; justifiez votre priorité et enregistrez. En mode guidé, les champs marqués obligatoires doivent être complétés avant résolution. Prenez en charge le ticket dans Actions pour poursuivre.",
       ],
       [
         "Interroger et investiguer",
@@ -655,7 +794,7 @@
       ],
       [
         "Résoudre et clôturer",
-        "Dans Actions, choisissez la résolution et complétez la cause, la solution, les tests, le résultat et le message final au demandeur. Envoyez le compte rendu, puis clôturez si cette action est proposée. Une résolution insuffisante peut provoquer une réouverture.",
+        "Dans Actions, documentez la cause ou l’analyse de la demande, les actions réalisées, les tests, le résultat et le message utilisateur. Selon la procédure du scénario, recevez ensuite la validation simulée du demandeur : une confirmation permet la clôture ; un retour négatif rouvre le ticket et demande de nouvelles vérifications. L’objectif affiché précise si le parcours se termine à la résolution ou à la clôture.",
       ],
     ].forEach(([title, text]) => {
       const item = el("li");
@@ -663,6 +802,12 @@
       steps.append(item);
     });
     guide.append(steps);
+    guide.append(
+      el(
+        "p",
+        "Pour garder une trace de votre travail, utilisez Télécharger mon bilan (.md), en haut de la tentative. Enregistrez votre code et vos notes avant le téléchargement. SegFault propose une appréciation de vos réponses libres et des conseils à partir des traces. Cet avis IA est distinct de l’évaluation finale du professeur. La préparation peut prendre quelques instants ; si l’IA est indisponible, le bilan reste téléchargeable.",
+      ),
+    );
     guide.append(
       el(
         "p",
@@ -719,7 +864,7 @@
           if (!title.toLowerCase().includes(filter.value.toLowerCase())) return;
           list.append(
             button(
-              `${title} · tentative #${a.id} · ${a.status === "archived" ? "Archivée" : a.status === "completed" ? "Terminée" : "En cours"}`,
+              `${title} · tentative #${a.number ?? a.id} · ${a.status === "archived" ? "Archivée" : a.status === "completed" ? "Terminée" : "En cours"}`,
               async () =>
                 new Desk(root, await api("/attempts/" + a.id), () =>
                   home(root),

@@ -1,5 +1,6 @@
 {
   "format_version": 1,
+  "completion_status": "closed",
   "title": "Modèle — incident applicatif avec correction de code",
   "description": "Vous intervenez au support informatique. Identifiez la cause de l’incident, corrigez l’extrait de code et vérifiez le résultat avant de répondre au demandeur.",
   "users": [
@@ -226,6 +227,23 @@
           "score": 0
         }
       ],
+      "guided": true,
+      "qualification_required": [
+        "nature",
+        "impact",
+        "urgency",
+        "priority",
+        "priority_justification"
+      ],
+      "requester_validation": {
+        "enabled": true,
+        "replies": [
+          {
+            "outcome": "confirmed",
+            "message": "Je confirme : l’export contient les 128 lignes attendues. Merci, vous pouvez clôturer ma demande."
+          }
+        ]
+      },
       "resolution_requires": ["code"],
       "bad_resolution": "reopen",
       "bad_resolution_message": "Le problème persiste lors de l’export. Avez-vous corrigé la requête puis testé le résultat ?",

@@ -42,6 +42,7 @@ if (str_starts_with($path, '/api')) {
         }
         elseif ($p === '/attempts') { $result = isset($_SESSION['attempt']) ? [array_diff_key($_SESSION['attempt'], ['snapshot'=>true])] : []; }
         elseif ($p === '/attempts/1') { $result=attemptView(); }
+        elseif ($p === '/attempts/1/summary') { $result=['filename'=>'patadesk-tentative-1.md','markdown'=>\Ouinpo\Suite\Modules\TicketSimulator\AttemptMarkdown::render($_SESSION['attempt'], $_SESSION['states'], $_SESSION['events'])]; }
         elseif ($p === '/attempts/1/events') { $result=[]; }
         elseif (preg_match('~^/attempts/1/tickets/([\w-]+)(?:/(actions|resources|notes)(?:/([\w-]+))?)?(/code)?$~',$p,$m)) {
             if (($input['revision']??-1)!==$_SESSION['attempt']['revision']) { throw new RuntimeException('Révision périmée.'); }
@@ -52,6 +53,9 @@ if (str_starts_with($path, '/api')) {
             elseif ($kind==='notes') {$events=[['type'=>'technical_note','text'=>$input['message']]];}
             else {unset($input['revision']);$state['fields']=array_merge($state['fields'],$input);$events=[['type'=>'qualification','text'=>'Qualification mise à jour.']];}
             $_SESSION['states'][$tid]=$state;$_SESSION['attempt']['revision']++;
+            $finished=\Ouinpo\Suite\Modules\TicketSimulator\Pedagogy::finished($s, $_SESSION['states']);
+            $_SESSION['attempt']['status']=$finished?'completed':'active';
+            $_SESSION['attempt']['ended_at']=$finished?($_SESSION['attempt']['ended_at']?:gmdate('Y-m-d H:i:s')):null;
             foreach($events as $e){$_SESSION['events'][]=['id'=>count($_SESSION['events'])+1,'ticket_key'=>$tid,'event_type'=>$e['type'],'created_at'=>gmdate('Y-m-d H:i:s'),'payload'=>$e];}
             $result=$kind==='resources' && empty($m[4])?['resource'=>CodeWorkspace::resource(TicketScenario::index($s['resources'])[$item],$state),'attempt'=>attemptView()]:attemptView();
         } else { http_response_code(404); $result=['message'=>'Route de fixture non disponible.']; }

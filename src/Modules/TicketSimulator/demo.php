@@ -6,6 +6,7 @@ defined('ABSPATH') || exit;
 return json_decode(<<<'SCENARIO_JSON'
 {
   "format_version": 1,
+  "completion_status": "closed",
   "title": "Le mystérieux export de Madame Boulier",
   "description": "Vous assurez le support de KpiKoi. Qualifiez la demande, investiguez et documentez une résolution vérifiée.",
   "users": [
@@ -459,6 +460,12 @@ return json_decode(<<<'SCENARIO_JSON'
           "score": 0
         }
       ],
+      "guided": true,
+      "qualification_required": ["nature", "impact", "urgency", "priority", "priority_justification"],
+      "requester_validation": {
+        "enabled": true,
+        "replies": [{"outcome": "confirmed", "message": "Je confirme : l’export contient les 128 lignes attendues. Merci, vous pouvez clôturer ma demande."}]
+      },
       "resolution_requires": [
         "code"
       ],

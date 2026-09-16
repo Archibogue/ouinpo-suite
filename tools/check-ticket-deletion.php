@@ -106,6 +106,8 @@ $template = json_decode(file_get_contents(__DIR__ . '/templates/patadesk/modele-
 check(ScenarioValidator::validate($template) === $template, 'Import template validates');
 $engine = new SimulationEngine(new SimulatedTestEngine($template['resources']));
 $ticket = $template['tickets'][0]; $state = ScenarioAttempt::initial($ticket);
+$state['fields'] += ['nature'=>'incident', 'priority_justification'=>'Export comptable bloqué avant une échéance proche.'];
+$state['fields']['impact'] = 'Moyen'; $state['fields']['urgency'] = 'Élevée';
 foreach (['take','diagnose','since','__reply','logs','code','dba','__reply'] as $action) {
     [$state] = $engine->perform($ticket, $state, $action, ['message'=>'Merci de vérifier le schéma.']);
 }
@@ -113,6 +115,7 @@ $resource = array_column($template['resources'], null, 'id')['code'];
 [$state] = CodeWorkspace::save($ticket, $state, $resource, $resource['expected_content']);
 [$state] = $engine->perform($ticket, $state, 'verify', []);
 [$state] = $engine->perform($ticket, $state, 'resolve', ['cause'=>'Migration','solution'=>'Colonne corrigée','tests'=>'Export','result'=>'128 lignes','message'=>'Export rétabli.']);
+[$state] = $engine->perform($ticket, $state, '__validate_requester', []);
 [$state] = $engine->perform($ticket, $state, 'close', []);
 check($state['status'] === 'closed', 'Import template supports a complete resolved workflow');
 echo "\n$checks total checks passed, including deletion and the import template.\n";

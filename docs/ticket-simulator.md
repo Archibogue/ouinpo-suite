@@ -67,11 +67,58 @@ conserve par défaut son statut et son assignation. Les avis ne changent pas
 l'assignation ; les transferts et escalades la rendent à l'étudiant à la reprise.
 
 L'action **Recevoir la réponse et reprendre** matérialise l'aller-retour.
+Le retour doit être autorisé depuis l'état d'attente : par exemple, une question
+avec `return_status: "resolving"` exige `resolving` dans les transitions de
+`waiting_user`. L'import et l'enregistrement refusent un retour incohérent en
+indiquant le ticket et l'action. Les copies des tentatives existantes ne sont pas
+réécrites : corriger le modèle ne répare pas une tentative déjà commencée.
 Aucun cron, temps d'attente réel ou IA n'est nécessaire. Les demandes aux
 spécialistes et communications exigent un texte rédigé. Une demande utilisateur
 prédéfinie est historisée avec sa réponse.
 
 ## Tentatives et évaluation
+
+### Parcours guidé de traitement des demandes
+
+Dans l'éditeur, choisir **Parcours terminé lorsque tous les tickets sont…** :
+résolus ou clôturés. Dans chaque ticket, ouvrir **Accompagnement pédagogique** :
+
+1. Activer le mode guidé et cocher les champs obligatoires souhaités : nature,
+   impact, urgence, priorité et justification de priorité.
+2. Définir séparément la **nature** (incident, assistance/service, évolution) et
+   la **catégorie technique** (applicatif, réseau, système…). Les anciennes
+   catégories ne sont jamais converties automatiquement en nature.
+3. Sélectionner les traces et tests exigés dans les options de résolution.
+   En mode guidé, une qualification vide ou « À qualifier », une action exigée
+   absente ou un test exigé non réussi bloque la résolution sans modifier l'état.
+   Hors mode guidé, la procédure historique accepter/réouvrir reste applicable.
+4. Facultativement, exiger la **validation simulée du demandeur avant clôture**.
+   Préparer ses réponses successives : confirmation, ou problème persistant puis
+   confirmation. Ce choix est une procédure du scénario, pas une règle universelle
+   du BTS. Les réponses ne sont visibles qu'au moment de leur réception.
+5. Un retour négatif rouvre le ticket et invalide les tests exigés : l'élève reprend
+   le diagnostic, relance les tests puis documente une nouvelle résolution.
+   Prévoir les transitions `resolved → reopened`, `reopened → resolved` et une
+   action de résolution répétable accessible depuis `reopened`. Les tests doivent
+   être relançables depuis cet état ou après retour au diagnostic.
+
+L'élève utilise **Recevoir la validation simulée du demandeur** dans Actions après
+résolution. Une confirmation rend la clôture accessible ; tant que le critère de
+fin est « clôture », un ticket seulement résolu laisse la tentative en cours.
+Avec le critère « résolution », la tentative peut être terminée avant la clôture.
+Un ticket rouvert remet le parcours en cours et retire sa date de fin.
+
+Les champs libres sont contrôlés pour leur présence, pas pour leur pertinence.
+SegFault propose dans le bilan une **appréciation IA des réponses libres**, fondée
+sur des extraits de l'élève et la cohérence avec les traces, sans accès aux corrigés
+ni aux critères privés. L'enseignant reste responsable de l'évaluation pédagogique.
+Ni la fin du parcours, ni les tests simulés, ni cet avis IA ne certifient B1.2.
+
+Sans les nouvelles options : mode guidé désactivé, aucun champ supplémentaire
+obligatoire, aucune confirmation imposée, fin à la résolution. Aucun changement
+SQL ni migration des tentatives : les règles proviennent toujours de leur copie
+figée. Pour appliquer de nouvelles règles, publier un nouveau scénario et
+l'affecter ; **Archiver et recommencer** conserve les règles de l'ancienne copie.
 
 ### Console de correction
 
@@ -122,6 +169,86 @@ scénario. Aucune trace n'est effacée. Retirer une affectation empêche les nou
 démarrages, sans retirer l'accès aux tentatives déjà reçues.
 
 ## Stockage et intégration
+
+### Nettoyage des tentatives de test
+
+Dans l'administration PataDesk, sous **Tentatives et observation**, le bouton
+**Supprimer toutes les tentatives** est réservé aux comptes disposant de la gestion
+globale PataDesk (administrateur par défaut). Après confirmation, il supprime
+définitivement les tentatives de tous les élèves, actives comme archivées, leurs
+états de tickets, codes enregistrés, notes et historiques. Les scénarios et les
+affectations sont conservés : les élèves peuvent démarrer une nouvelle tentative.
+La numérotation affichée et celle des bilans repartent à 1 après le nettoyage
+global, même si les anciennes tentatives avaient déjà été supprimées. Les identifiants
+internes restent uniques : une ancienne page ouverte ne peut pas agir sur une
+nouvelle tentative portant le même numéro affiché. Une erreur SQL annule toute la suppression. Cette opération
+concerne les données du site, pas les fichiers Markdown déjà téléchargés.
+
+Le bouton **Supprimer les tentatives de cet élève**, sur chaque ligne de tentative,
+permet au gestionnaire global de supprimer tous les essais de cet élève dans tous
+les scénarios, archives comprises. Les affectations, scénarios et données des
+autres élèves sont conservés. Cette suppression ciblée ne remet pas à zéro la
+numérotation globale. Les onglets déjà ouverts deviennent périmés ; aucune page
+WordPress ni aucun onglet du navigateur n'est supprimé à distance.
+
+### Bilan étudiant au format Markdown
+
+Dans **Qualifier / affecter le ticket**, l'élève choisit l'impact (Faible, Moyen,
+Élevé), l'urgence (Faible, Moyenne, Élevée) et la priorité (Basse, Normale, Haute,
+Critique) dans des menus déroulants. La priorité reste un choix de l'élève selon
+le contexte et le SLA ; sa justification peut être enregistrée dans Notes.
+Les valeurs personnalisées des scénarios existants restent sélectionnées et
+conservées tant que l'élève ne les remplace pas. Cliquer sur **Enregistrer la
+qualification** pour valider les choix.
+
+Lors du téléchargement, SegFault analyse le bilan étudiant et ajoute une section
+**Conseils de SegFault** : priorisation selon impact, urgence et SLA, vérifications
+simples avant interventions lourdes, communication et tests après correction.
+Les recommandations sont des retours pédagogiques IA, sans notation automatique.
+Le contexte inclut les limites de la simulation, les actions actuellement proposées,
+les actions déjà réalisées et les ressources révélées. SegFault est instruit de
+citer ces actions et de ne pas demander de commandes SQL, d'accès à une machine
+réelle ou de tests en production. Pour un ticket clôturé ou une tentative archivée,
+les améliorations concernent une prochaine tentative. Les actions futures cachées
+ne sont pas transmises. Les anciens conseils en cache sont invalidés par cette révision.
+Les corrigés privés et les réponses futures ne sont pas transmis à l'IA.
+
+Cette fonction réutilise le pont IA de SegFault et ses fournisseurs configurés.
+Elle nécessite l'activation globale de l'IA et de l'usage **Suggestions pédagogiques**
+(`ouinpo_ai_usage_pedagogical_suggestions`). Les quotas IA étudiant par minute et
+par jour s'appliquent dans un compteur dédié aux bilans. Les conseils d'un même
+bilan sont réutilisés pendant une heure pour le même utilisateur ; un changement
+du travail enregistré déclenche une nouvelle analyse. Le bilan étudiant est envoyé
+au fournisseur, avec les notes et le code enregistrés, sans l'identifiant du compte.
+
+Si l'IA est désactivée, indisponible, le quota atteint ou le contexte dépasse 60 Ko,
+le fichier complet reste téléchargeable et indique pourquoi les conseils manquent.
+Le bouton utilise `POST /attempts/{id}/summary`. L'ancien appel `GET` sur cette
+route inclut également les conseils pour les pages déjà ouvertes ou en cache.
+L'export sans IA est disponible via `GET /attempts/{id}/summary/plain`.
+Aucun appel réseau n'est effectué pendant le verrouillage SQL.
+
+Vérification locale : `php tools/check-ticket-advice.php` (pont IA simulé).
+
+Le bouton **Télécharger mon bilan (.md)**, en haut de la tentative, produit
+`patadesk-tentative-ID.md`. Il fonctionne pendant le travail, après résolution
+et en lecture seule sur une tentative archivée. Le fichier reprend le contexte,
+la progression, la qualification des tickets, les actions, échanges, notes,
+résultats des tests, le dernier code enregistré et les comptes rendus.
+
+Le bilan utilise toutes les pages du journal, et non uniquement les événements
+déjà affichés dans le navigateur. Les modifications non enregistrées ne sont
+pas incluses. Il ne contient ni réponses futures, ni correction attendue, ni
+score privé du professeur. L'accès est limité au propriétaire de la tentative
+et aux observateurs autorisés. Aucun fichier public n'est créé sur le serveur.
+
+Route : `GET /attempts/{id}/summary`, avec les mêmes contrôles de session et
+nonce que les autres routes. Réponse JSON : `filename` et `markdown`, téléchargée
+par le navigateur sous forme de fichier UTF-8. Le verrou de tentative maintient
+la cohérence entre les états et le journal pendant la génération.
+
+Vérification dédiée : `php tools/check-ticket-markdown.php` (droits, exclusion
+des données privées, échappement et pagination au-delà de 500 événements).
 
 ### Supprimer définitivement un scénario
 
@@ -233,6 +360,10 @@ nécessitera une pagination supplémentaire des scénarios et tentatives.
 php tools/check-ticket-simulator.php
 php tools/check-ticket-deletion.php
 node tools/check-ticket-preview.mjs
+php tools/check-ticket-pedagogy.php
+php tools/check-ticket-advice.php
+php tools/check-ticket-markdown.php
+php tools/check-ticket-cleanup.php
 node --check assets/js/front/ticket-simulator.js
 node --check assets/js/admin/ticket-simulator-admin.js
 php tools/check-class-subgroups.php
@@ -245,9 +376,9 @@ d'écritures sur les requêtes refusées. Il ne remplace pas un test MySQL.
 
 `check-ticket-preview.mjs` démarre un serveur PHP éphémère sur la boucle locale,
 teste les assets et le parcours de démonstration via HTTP, puis arrête le serveur.
-Il n'automatise pas le navigateur. Les 123 contrôles PHP (avec suppression et
-modèle d'import) et le parcours HTTP ont
-réussi dans l'environnement de développement ; la recette WordPress/MySQL et
+Il n'automatise pas le navigateur. Les contrôles PHP (dont parcours B1.2,
+compatibilité, export, IA simulée, suppression et modèle d'import) et le parcours
+HTTP ont réussi dans l'environnement de développement ; la recette WordPress/MySQL et
 l'inspection visuelle responsive n'y ont pas été exécutées.
 
 Un aperçu isolé utilisant le moteur PHP réel est fourni pour la recette UI :
@@ -269,8 +400,11 @@ paquet de distribution par le script de build existant.
 2. Créer et publier le scénario de démonstration ; l'affecter à deux étudiants.
 3. Avec le premier : prendre en charge → diagnostiquer → question et réponse →
    logs → code → demande au DBA et réponse → console de correction → enregistrement → test → résolution
-   avec les cinq champs → clôture.
-4. Avec le second : tenter une résolution prématurée et vérifier la réouverture.
+   avec les cinq champs → confirmation simulée du demandeur → clôture.
+   Qualifier d'abord la nature, l'impact, l'urgence, la priorité et sa justification.
+4. Avec le second : tenter une résolution prématurée et vérifier le blocage guidé.
+   Préparer également une réponse « problème persistant », vérifier la réouverture,
+   refaire les tests puis résoudre, recevoir la confirmation et clôturer.
    Confirmer que la progression du premier et le modèle n'ont pas changé.
 5. Ouvrir la tentative en observation ; vérifier notes, demandes, tests et attendus.
 6. Modifier le modèle : la tentative existante garde l'ancienne copie.
@@ -291,6 +425,6 @@ Pièces jointes représentées par des ressources textuelles ; pas de dépôt bi
 Pas de coloration syntaxique ajoutée : aucune bibliothèque commune adaptée n'a
 été identifiée dans les assets inspectés. Le code est présenté en police fixe
 avec lignes numérotées. Les SLA sont indicatifs, les délais sont fictifs et aucun
-moteur de commandes réelles n'est exposé. La correction du texte libre reste
-humaine. Pas de suppression automatique, de portfolio généré ni de collaboration
+moteur de commandes réelles n'est exposé. L'appréciation IA du texte libre est
+indicative ; l'évaluation finale reste humaine. Pas de suppression automatique, de portfolio généré ni de collaboration
 multi-étudiants dans une même tentative.
