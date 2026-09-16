@@ -153,11 +153,11 @@ class PathsService
         $t_members = self::t('group_members');
 
         $rows = $wpdb->get_results("
-            SELECT DISTINCT u.ID AS id, u.display_name, u.user_login
+            SELECT DISTINCT u.ID AS id, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name, u.user_login
             FROM {$wpdb->users} u
             INNER JOIN {$t_members} gm ON gm.user_id = u.ID
             WHERE gm.role = 'student'
-            ORDER BY u.display_name ASC, u.ID ASC
+            ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, u.ID ASC
         ", ARRAY_A) ?: [];
 
         if (!empty($rows)) {
@@ -166,7 +166,7 @@ class PathsService
             }));
         }
 
-        $users = get_users([
+        $users = \Ouinpo\Suite\Core\StudentName::getUsers([
             'orderby' => 'display_name',
             'order'   => 'ASC',
             'number'  => 2000,
@@ -181,7 +181,7 @@ class PathsService
 
             $out[] = [
                 'id'           => (int) $u->ID,
-                'display_name' => (string) $u->display_name,
+                'display_name' => (string) \Ouinpo\Suite\Core\StudentName::format($u),
                 'user_login'   => (string) $u->user_login,
             ];
         }
@@ -663,7 +663,7 @@ class PathsService
         if (count($user_ids) === 1) {
             $u = get_userdata((int) $user_ids[0]);
             if ($u) {
-                return $base_title . ' — ' . $u->display_name . ' — ' . $suffix;
+                return $base_title . ' — ' . \Ouinpo\Suite\Core\StudentName::format($u) . ' — ' . $suffix;
             }
         }
 
@@ -1052,7 +1052,7 @@ class PathsService
 
             $details[] = [
                 'user_id'      => $uid,
-                'display_name' => $u ? (string) $u->display_name : ('User #' . $uid),
+                'display_name' => $u ? (string) \Ouinpo\Suite\Core\StudentName::format($u) : ('User #' . $uid),
                 'user_login'   => $u ? (string) $u->user_login : '',
                 'groups_label' => !empty($group_labels_by_user[$uid])
                     ? implode(', ', array_unique($group_labels_by_user[$uid]))
@@ -1066,7 +1066,7 @@ class PathsService
         }
 
         usort($details, function ($a, $b) {
-            return strcasecmp((string) $a['display_name'], (string) $b['display_name']);
+            return \Ouinpo\Suite\Core\StudentName::compare((string) $a['display_name'], (string) $b['display_name']);
         });
 
         return $details;
@@ -1813,7 +1813,7 @@ class PathsService
                 $assigned_user_ids[] = $id;
 
                 $u = get_userdata($id);
-                $labels[] = $u ? $u->display_name : ('User #' . $id);
+                $labels[] = $u ? \Ouinpo\Suite\Core\StudentName::format($u) : ('User #' . $id);
             }
 
             if ($type === 'group' && $id > 0) {

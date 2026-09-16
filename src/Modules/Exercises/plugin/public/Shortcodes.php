@@ -3723,7 +3723,7 @@ public static function render_teacher($atts = [], $content = '') {
 
     $sql = "
 
-      SELECT DISTINCT u.ID, u.display_name
+      SELECT DISTINCT u.ID, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name
 
       FROM $tblUsers AS u
 
@@ -3751,7 +3751,7 @@ public static function render_teacher($atts = [], $content = '') {
 
 
 
-    $sql .= " ORDER BY u.display_name ASC";
+    $sql .= " ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC";
 
 
 
@@ -3886,7 +3886,7 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
                 <option value="<?= (int)$s->ID ?>" <?= selected($user_id, $s->ID, false) ?>>
 
-                  <?= esc_html($s->display_name) ?>
+                  <?= esc_html(\Ouinpo\Suite\Core\StudentName::format($s)) ?>
 
                 </option>
 
@@ -4652,7 +4652,7 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
           $u = get_userdata($uid);
 
-          $users_cache[$uid] = $u ? $u->display_name : 'Élève ' . $uid;
+          $users_cache[$uid] = $u ? \Ouinpo\Suite\Core\StudentName::format($u) : 'Élève ' . $uid;
 
         }
 

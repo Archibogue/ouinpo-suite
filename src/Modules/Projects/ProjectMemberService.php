@@ -18,11 +18,11 @@ final class ProjectMemberService
         global $wpdb;
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT pm.*, u.display_name, u.user_email
+            "SELECT pm.*, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name, u.user_email
              FROM {$this->repository->table('members')} pm
              LEFT JOIN {$wpdb->users} u ON u.ID = pm.user_id
              WHERE pm.project_id = %d
-             ORDER BY pm.role ASC, u.display_name ASC, pm.user_id ASC",
+             ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, pm.user_id ASC",
             $projectId
         ), ARRAY_A);
 

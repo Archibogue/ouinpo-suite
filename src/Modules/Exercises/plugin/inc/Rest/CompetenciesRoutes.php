@@ -178,7 +178,7 @@ class CompetenciesRoutes {
 
         $sqlDetail = "
           SELECT uc.user_id,
-                 u.display_name,
+                 " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
                  uc.group_id,
                  uc.competency_id,
                  c.domain,
@@ -197,7 +197,7 @@ class CompetenciesRoutes {
                WHEN c.track = 'SNT' THEN 2
                ELSE 3
              END,
-             u.display_name ASC, c.domain, c.slug
+             " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, c.domain, c.slug
         ";
 
         if ($view === 'detail') {
@@ -206,7 +206,7 @@ class CompetenciesRoutes {
         }
 
         $sqlDomain = "
-          SELECT uc.group_id, uc.user_id, u.display_name,
+          SELECT uc.group_id, uc.user_id, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
                  c.track, c.level, c.domain,
                  COUNT(*) total,
                  SUM(uc.status='acquired')        acquired,
@@ -217,14 +217,14 @@ class CompetenciesRoutes {
             JOIN $tblComp c ON c.id = uc.competency_id
             JOIN $tblU u ON u.ID = uc.user_id
            WHERE " . implode(' AND ', $where) . "
-           GROUP BY uc.group_id, uc.user_id, c.track, c.level, c.domain, u.display_name
+           GROUP BY uc.group_id, uc.user_id, c.track, c.level, c.domain, " . \Ouinpo\Suite\Core\StudentName::sql() . "
            ORDER BY
              CASE
                WHEN c.track = 'NSI' THEN 1
                WHEN c.track = 'SNT' THEN 2
                ELSE 3
              END,
-             u.display_name ASC, c.domain
+             " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, c.domain
         ";
 
         $rows = $wpdb->get_results($wpdb->prepare($sqlDomain, $args));
@@ -484,7 +484,7 @@ public static function assessmentsProgress(\WP_REST_Request $req) {
     $sql = "
         SELECT
             r.user_id,
-            u.display_name,
+            " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
             r.assessment_id,
             a.title AS assessment_title,
             a.due_on,
@@ -504,7 +504,7 @@ public static function assessmentsProgress(\WP_REST_Request $req) {
         JOIN {$tblC} c   ON c.id = r.competency_id
         JOIN {$tblU} u   ON u.ID = r.user_id
         WHERE " . implode(' AND ', $where) . "
-        ORDER BY u.display_name ASC, c.domain ASC, c.id ASC, a.due_on DESC, r.assessment_id DESC
+        ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, c.domain ASC, c.id ASC, a.due_on DESC, r.assessment_id DESC
     ";
 
     $rows = $wpdb->get_results($wpdb->prepare($sql, $args), ARRAY_A) ?: [];
@@ -628,7 +628,7 @@ public static function assessmentsProgress(\WP_REST_Request $req) {
 
     usort($competencies, static function(array $a, array $b): int {
         if ($a['display_name'] !== $b['display_name']) {
-            return strcmp($a['display_name'], $b['display_name']);
+            return \Ouinpo\Suite\Core\StudentName::compare($a['display_name'], $b['display_name']);
         }
         if ($a['domain'] !== $b['domain']) {
             return strcmp($a['domain'], $b['domain']);
@@ -756,13 +756,13 @@ public static function assessmentsByDs(\WP_REST_Request $req) {
         SELECT
             att.assessment_id,
             att.user_id,
-            u.display_name,
+            " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
             att.note,
             att.updated_at
         FROM {$tblAtt} att
         JOIN {$tblU} u ON u.ID = att.user_id
         WHERE " . implode(' AND ', $attWhere) . "
-        ORDER BY att.assessment_id DESC, u.display_name ASC
+        ORDER BY att.assessment_id DESC, " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC
     ";
 
     $attendanceRows = $attArgs
@@ -818,7 +818,7 @@ public static function assessmentsByDs(\WP_REST_Request $req) {
         SELECT
             r.assessment_id,
             r.user_id,
-            u.display_name,
+            " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
             c.id AS competency_id,
             c.domain,
             c.domain_slug,
@@ -830,7 +830,7 @@ public static function assessmentsByDs(\WP_REST_Request $req) {
         JOIN {$tblU} u ON u.ID = r.user_id
         JOIN {$tblC} c ON c.id = r.competency_id
         WHERE " . implode(' AND ', $resWhere) . "
-        ORDER BY r.assessment_id DESC, u.display_name ASC, c.domain ASC, c.id ASC
+        ORDER BY r.assessment_id DESC, " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, c.domain ASC, c.id ASC
     ";
 
     $resultRows = $resArgs
@@ -897,7 +897,7 @@ public static function assessmentsByDs(\WP_REST_Request $req) {
         $students = array_values($assessment['students']);
 
         usort($students, static function(array $a, array $b): int {
-            return strcmp((string) $a['display_name'], (string) $b['display_name']);
+            return \Ouinpo\Suite\Core\StudentName::compare((string) $a['display_name'], (string) $b['display_name']);
         });
 
         $evaluatedStudents = 0;
@@ -1041,7 +1041,7 @@ public static function exercisesProgress(\WP_REST_Request $req) {
     $sql = "
         SELECT
             u.ID AS user_id,
-            u.display_name,
+            " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
             c.id AS competency_id,
             c.domain,
             c.domain_slug,
@@ -1131,12 +1131,12 @@ public static function exercisesProgress(\WP_REST_Request $req) {
         WHERE " . implode(' AND ', $where) . "
 
         GROUP BY
-            u.ID, u.display_name,
+            u.ID, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
             c.id, c.domain, c.domain_slug, c.competency, c.slug,
             uc.status, c.track, c.level
 
         ORDER BY
-            u.display_name ASC,
+            " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC,
             CASE
               WHEN c.track = 'NSI' THEN 1
               WHEN c.track = 'SNT' THEN 2
@@ -1343,7 +1343,7 @@ private static function studentSummaryContext(int $year_id, int $group_id, int $
     $sql = "
         SELECT
             uc.user_id,
-            u.display_name,
+            " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name,
             uc.group_id,
             g.label AS group_label,
             y.slug AS year_label,

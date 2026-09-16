@@ -2,6 +2,14 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.8-beta] - 2026-09-16
+
+### Corrigé
+
+- Affichage des élèves au format « Nom Prénom » dans les listes du plugin, avec conservation du nom d’affichage si le profil ne renseigne ni nom ni prénom.
+
+- Tri alphabétique des listes et sélecteurs d’élèves sur « Nom Prénom », appliqué avant la pagination.
+
 ## [0.7.7-beta] - 2026-09-15
 
 ### Ajouté

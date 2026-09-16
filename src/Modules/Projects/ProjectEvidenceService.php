@@ -18,7 +18,7 @@ final class ProjectEvidenceService
         global $wpdb;
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT e.*, u.display_name, d.title AS deliverable_title, t.title AS task_title
+            "SELECT e.*, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name, d.title AS deliverable_title, t.title AS task_title
              FROM {$this->repository->table('evidence')} e
              LEFT JOIN {$wpdb->users} u ON u.ID = e.user_id
              LEFT JOIN {$this->repository->table('deliverables')} d ON d.id = e.deliverable_id

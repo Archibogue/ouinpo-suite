@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.7-beta : bêta technique ajoutant le module optionnel PataDesk de simulation de tickets informatiques pour le BTS SIO. Elle conserve les groupes facultatifs au sein des classes et le centre d'entraînement NSI autonome. Elle ne doit pas être présentée comme une version stable. La recette WordPress/MySQL et la vérification visuelle responsive de PataDesk restent à effectuer sur le site cible.
+Version 0.7.8-beta : bêta technique ajoutant le module optionnel PataDesk de simulation de tickets informatiques pour le BTS SIO. Elle conserve les groupes facultatifs au sein des classes et le centre d'entraînement NSI autonome. Elle ne doit pas être présentée comme une version stable. La recette WordPress/MySQL et la vérification visuelle responsive de PataDesk restent à effectuer sur le site cible.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 

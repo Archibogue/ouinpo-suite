@@ -50,7 +50,7 @@ final class ProjectDeliverableService
         global $wpdb;
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT d.*, u.display_name AS creator_name, validator.display_name AS validator_name
+            "SELECT d.*, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS creator_name, validator.display_name AS validator_name
              FROM {$this->repository->table('deliverables')} d
              LEFT JOIN {$wpdb->users} u ON u.ID = d.created_by
              LEFT JOIN {$wpdb->users} validator ON validator.ID = d.validated_by

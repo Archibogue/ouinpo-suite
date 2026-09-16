@@ -322,7 +322,7 @@ if ($group_id > 0) {
             $args['search_columns'] = ['display_name', 'user_email', 'user_login'];
         }
 
-        $users = get_users($args);
+        $users = \Ouinpo\Suite\Core\StudentName::getUsers($args);
     }
 } else {
     $args = [
@@ -337,7 +337,7 @@ if ($group_id > 0) {
         $args['search_columns'] = ['display_name', 'user_email', 'user_login'];
     }
 
-    $users = get_users($args);
+    $users = \Ouinpo\Suite\Core\StudentName::getUsers($args);
     $users = \Ouinpo\Suite\Core\Privacy\LearningAudiencePolicy::filterClassStudentRows($users, 'ID');
 
     if (!empty($users)) {
@@ -530,7 +530,7 @@ settings_errors('ouinpo_badge_assign');
                             <input type="checkbox" name="user_ids[]" value="<?php echo $uid; ?>">
                         </td>
                         <td>
-                            <strong><?php echo esc_html($user->display_name ? $user->display_name : $user->user_login); ?></strong><br>
+                            <strong><?php echo esc_html(\Ouinpo\Suite\Core\StudentName::format($user) ? \Ouinpo\Suite\Core\StudentName::format($user) : $user->user_login); ?></strong><br>
                             <span class="ouinpo-badge-muted"><?php echo esc_html($user->user_login); ?></span>
                         </td>
                         <td><?php echo esc_html($user->user_email); ?></td>

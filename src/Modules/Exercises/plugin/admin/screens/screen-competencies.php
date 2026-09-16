@@ -218,7 +218,7 @@ class Screen_Competencies {
 
         $students = $wpdb->get_results($wpdb->prepare(
 
-          "SELECT DISTINCT u.ID AS id, u.display_name AS name
+          "SELECT DISTINCT u.ID AS id, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS name
 
              FROM $tblGM gm
 
@@ -230,7 +230,7 @@ class Screen_Competencies {
 
               AND gm.group_id = %d
 
-            ORDER BY u.display_name ASC, u.ID ASC",
+            ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, u.ID ASC",
 
           $year_id, $group_id
 
@@ -240,7 +240,7 @@ class Screen_Competencies {
 
         $students = $wpdb->get_results($wpdb->prepare(
 
-          "SELECT DISTINCT u.ID AS id, u.display_name AS name
+          "SELECT DISTINCT u.ID AS id, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS name
 
              FROM $tblGM gm
 
@@ -250,7 +250,7 @@ class Screen_Competencies {
 
             WHERE g.year_id = %d
 
-            ORDER BY u.display_name ASC, u.ID ASC",
+            ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, u.ID ASC",
 
           $year_id
 

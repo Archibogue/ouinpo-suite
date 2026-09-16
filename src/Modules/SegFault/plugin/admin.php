@@ -5226,7 +5226,7 @@ function ouinpo_sf_progress_tables(): array {
 
 function ouinpo_sf_get_students_for_select(): array {
 
-  $users = get_users([
+  $users = \Ouinpo\Suite\Core\StudentName::getUsers([
 
     'fields' => ['ID','display_name','user_login'],
 
@@ -5558,7 +5558,7 @@ function ouinpo_sf_render_path_targets_label(int $path_id): string {
 
       $u = get_userdata($id);
 
-      $labels[] = $u ? $u->display_name : ('User #'.$id);
+      $labels[] = $u ? \Ouinpo\Suite\Core\StudentName::format($u) : ('User #'.$id);
 
     } elseif ($type === 'group' && $id > 0) {
 
@@ -5664,7 +5664,7 @@ function ouinpo_sf_fetch_paths_with_items(): array {
 
       $u = get_userdata((int)$p['student_id']);
 
-      $p['targets_label'] = $u ? $u->display_name : ('User #'.(int)$p['student_id']);
+      $p['targets_label'] = $u ? \Ouinpo\Suite\Core\StudentName::format($u) : ('User #'.(int)$p['student_id']);
 
     }
 
@@ -5682,7 +5682,7 @@ function ouinpo_sf_fetch_paths_with_items(): array {
 
         'id' => (int)$uid,
 
-        'display_name' => $u ? (string)$u->display_name : ('User #'.(int)$uid),
+        'display_name' => $u ? (string)\Ouinpo\Suite\Core\StudentName::format($u) : ('User #'.(int)$uid),
 
         'user_login'   => $u ? (string)$u->user_login   : '',
 
@@ -5814,19 +5814,11 @@ function ouinpo_sf_fetch_paths_with_items(): array {
 
 
 
-      // tri utile : réussis, puis tentés, puis non commencés ; puis nom
+      // Tri alphabetique des eleves par nom et prenom.
 
       usort($per_student, static function(array $a, array $b): int {
 
-        $rank = ['solved' => 0, 'attempted' => 1, 'none' => 2];
-
-        $ra = $rank[$a['status'] ?? 'none'] ?? 9;
-
-        $rb = $rank[$b['status'] ?? 'none'] ?? 9;
-
-        if ($ra !== $rb) return $ra <=> $rb;
-
-        return strcasecmp((string)($a['display_name'] ?? ''), (string)($b['display_name'] ?? ''));
+        return \Ouinpo\Suite\Core\StudentName::compare((string)($a['display_name'] ?? ''), (string)($b['display_name'] ?? ''));
 
       });
 
@@ -6448,7 +6440,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
               <option value="<?php echo (int)$u->ID; ?>" <?php selected($selected_user_id, (int)$u->ID); ?>>
 
-                <?php echo esc_html($u->display_name . ' (@' . $u->user_login . ')'); ?>
+                <?php echo esc_html(\Ouinpo\Suite\Core\StudentName::format($u) . ' (@' . $u->user_login . ')'); ?>
 
               </option>
 
@@ -6502,7 +6494,7 @@ $paths = ouinpo_sf_filter_paths($paths, [
 
           $creator = get_userdata((int)$p['student_id']);
 
-          $teacher_name = $creator ? $creator->display_name . ' (élève)' : 'Élève';
+          $teacher_name = $creator ? \Ouinpo\Suite\Core\StudentName::format($creator) . ' (élève)' : 'Élève';
 
         } else {
 

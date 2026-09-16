@@ -18,7 +18,7 @@ final class ProjectJournalService
         global $wpdb;
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT c.*, u.display_name
+            "SELECT c.*, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name
              FROM {$this->repository->table('task_comments')} c
              LEFT JOIN {$wpdb->users} u ON u.ID = c.user_id
              WHERE c.task_id = %d
@@ -55,7 +55,7 @@ final class ProjectJournalService
         global $wpdb;
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT l.*, u.display_name
+            "SELECT l.*, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name
              FROM {$this->repository->table('logs')} l
              LEFT JOIN {$wpdb->users} u ON u.ID = l.user_id
              WHERE l.project_id = %d

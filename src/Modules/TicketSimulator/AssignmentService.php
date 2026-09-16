@@ -75,10 +75,10 @@ final class AssignmentService
         PermissionService::require(PermissionService::manage() && (Capabilities::can(Capabilities::MANAGE_CLASSES) || PermissionService::all()));
         $args = ['number' => 100, 'capability' => Capabilities::TICKET_PRACTICE, 'fields' => ['ID','display_name']];
         if ($search !== '') { $args['search'] = '*' . $search . '*'; $args['search_columns'] = ['display_name','user_login']; }
-        $users = get_users($args);
+        $users = \Ouinpo\Suite\Core\StudentName::getUsers($args);
         $result = [];
         foreach ($users as $u) {
-            if ((new LearningDataPolicy())->canStoreLearningData((int) $u->ID)) { $result[] = ['type' => 'user', 'id' => (string) $u->ID, 'label' => $u->display_name . ' (#' . $u->ID . ')']; }
+            if ((new LearningDataPolicy())->canStoreLearningData((int) $u->ID)) { $result[] = ['type' => 'user', 'id' => (string) $u->ID, 'label' => \Ouinpo\Suite\Core\StudentName::format($u) . ' (#' . $u->ID . ')']; }
         }
         $classes = $wpdb->get_results("SELECT id,label AS name FROM {$wpdb->prefix}ouin_exo_groups ORDER BY id DESC LIMIT 200", ARRAY_A) ?: [];
         foreach ($classes as $c) {

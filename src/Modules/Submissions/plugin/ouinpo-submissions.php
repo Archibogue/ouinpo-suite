@@ -1341,7 +1341,7 @@ class Ouinpo_Submissions_Plugin {
 
         $groups = $this->get_exo_groups();
 
-        $eleves = get_users(array(
+        $eleves = \Ouinpo\Suite\Core\StudentName::getUsers(array(
 
             'role__in'=>array('eleve','ouinpo_student'),
 
@@ -1415,7 +1415,7 @@ class Ouinpo_Submissions_Plugin {
 
                     $u->ID, checked(in_array($u->ID,$allowed_users), true, false),
 
-                    esc_html($u->display_name), esc_html($u->user_email));
+                    esc_html(\Ouinpo\Suite\Core\StudentName::format($u)), esc_html($u->user_email));
 
             }
 
@@ -1725,7 +1725,7 @@ class Ouinpo_Submissions_Plugin {
 
                     ? sanitize_text_field($_POST['ouinpo_title'])
 
-                    : ('Dépôt de '.$u->display_name.' - '.current_time('mysql'));
+                    : ('Dépôt de '.\Ouinpo\Suite\Core\StudentName::format($u).' - '.current_time('mysql'));
 
 
 
@@ -2461,17 +2461,15 @@ class Ouinpo_Submissions_Plugin {
 
     
 
-                            foreach ($sub_by_group[$gid] as $student_id => $subs) {
-
-                                $student = get_userdata($student_id);
-
-                                if ( ! $student ) continue;
+                            $students = \Ouinpo\Suite\Core\StudentName::getUsers(['include' => array_keys($sub_by_group[$gid])]);
+                            foreach ($students as $student) {
+                                $subs = $sub_by_group[$gid][(int) $student->ID];
 
     
 
                                 echo '<div class="ouinpo-section">';
 
-                                echo '<h4>'.esc_html($student->display_name).'</h4>';
+                                echo '<h4>'.esc_html(\Ouinpo\Suite\Core\StudentName::format($student)).'</h4>';
 
                                 echo '<ul class="ouinpo-list">';
 
@@ -2833,11 +2831,11 @@ class Ouinpo_Submissions_Plugin {
 
         if (!empty($users_ids)){
 
-            $users = get_users(array('include'=>$users_ids,'orderby'=>'display_name','order'=>'ASC'));
+            $users = \Ouinpo\Suite\Core\StudentName::getUsers(array('include'=>$users_ids,'orderby'=>'display_name','order'=>'ASC'));
 
             if ($users){
 
-                $names = array_map(function($u){ return $u->display_name; }, $users);
+                $names = array_map(function($u){ return \Ouinpo\Suite\Core\StudentName::format($u); }, $users);
 
                 $display = implode(', ', array_slice($names, 0, 5));
 

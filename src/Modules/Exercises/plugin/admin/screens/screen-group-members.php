@@ -83,7 +83,7 @@ $args_all = [
     'order' => 'ASC',
     // 'role__in' => ['subscriber'], // décommente si tu as un rôle spécifique
 ];
-$all_users = get_users($args_all);
+$all_users = \Ouinpo\Suite\Core\StudentName::getUsers($args_all);
 
 // Seuls les élèves sans aucune affectation sont proposés à l'ajout.
 $assigned_users = array_fill_keys(array_map('intval', $wpdb->get_col("SELECT DISTINCT user_id FROM {$tbl_members}")), true);
@@ -93,13 +93,10 @@ foreach ($all_users as $user) {
     if (isset($assigned_users[(int) $user->ID]) || !$learning_policy->canBeAssignedToClass((int) $user->ID)) {
         continue;
     }
-    $last_name = trim((string) get_user_meta($user->ID, 'last_name', true));
-    $first_name = trim((string) get_user_meta($user->ID, 'first_name', true));
-    $last_name = function_exists('mb_strtoupper') ? mb_strtoupper($last_name, 'UTF-8') : strtoupper($last_name);
-    $name = trim($last_name . ' ' . $first_name);
+    $name = \Ouinpo\Suite\Core\StudentName::format($user);
     $available_users[] = [
         'id' => (int) $user->ID,
-        'label' => ($name !== '' ? $name : $user->display_name) . ' <' . $user->user_email . '>',
+        'label' => $name . ' <' . $user->user_email . '>',
     ];
 }
 usort($available_users, static fn($a, $b) => strnatcasecmp(remove_accents($a['label']), remove_accents($b['label'])));
@@ -209,7 +206,7 @@ settings_errors('ouinpo_assign');
                 <td class="ouinpo-admin-cell-centered">
                   <label><input type="checkbox" name="remove_users[]" value="<?php echo intval($u->ID); ?>"></label>
                 </td>
-                <td><?php echo esc_html($u->display_name); ?></td>
+                <td><?php echo esc_html(\Ouinpo\Suite\Core\StudentName::format($u)); ?></td>
                 <td><?php echo esc_html($u->user_email); ?></td>
                 <td>
                   <select name="override_level[<?php echo intval($u->ID); ?>]" class="ouinpo-admin-select-override">
@@ -253,7 +250,7 @@ settings_errors('ouinpo_assign');
         <fieldset>
           <legend><strong><?php echo esc_html($subgroup['label']); ?></strong></legend>
           <?php foreach ($all_users as $u): if (!isset($members[$u->ID])) continue; ?>
-            <label style="display:block"><input type="checkbox" name="subgroup_members[<?php echo esc_attr($id); ?>][]" value="<?php echo (int) $u->ID; ?>" <?php checked(in_array((int) $u->ID, $subgroup['members'], true)); ?>> <?php echo esc_html($u->display_name); ?></label>
+            <label style="display:block"><input type="checkbox" name="subgroup_members[<?php echo esc_attr($id); ?>][]" value="<?php echo (int) $u->ID; ?>" <?php checked(in_array((int) $u->ID, $subgroup['members'], true)); ?>> <?php echo esc_html(\Ouinpo\Suite\Core\StudentName::format($u)); ?></label>
           <?php endforeach; ?>
           <p><label><input type="checkbox" name="remove_subgroups[]" value="<?php echo esc_attr($id); ?>"> Supprimer ce groupe (les ressources associées ne seront pas ouvertes à toute la classe)</label></p>
         </fieldset>

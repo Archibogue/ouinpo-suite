@@ -563,7 +563,7 @@ final class AdminPage
 
     private static function userSelect(string $name, int $selected, string $id): void
     {
-        $users = get_users([
+        $users = \Ouinpo\Suite\Core\StudentName::getUsers([
             'number' => 300,
             'orderby' => 'display_name',
             'order' => 'ASC',
@@ -576,7 +576,7 @@ final class AdminPage
             <?php endif; ?>
             <?php foreach ($users as $user): ?>
                 <option value="<?php echo esc_attr((string) $user->ID); ?>" <?php selected($selected, (int) $user->ID); ?>>
-                    <?php echo esc_html($user->display_name . ' (' . $user->user_email . ')'); ?>
+                    <?php echo esc_html(\Ouinpo\Suite\Core\StudentName::format($user) . ' (' . $user->user_email . ')'); ?>
                 </option>
             <?php endforeach; ?>
         </select>

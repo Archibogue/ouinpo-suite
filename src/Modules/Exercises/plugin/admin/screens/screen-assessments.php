@@ -171,12 +171,12 @@ class Screen_Assessments {
         $tblU  = $wpdb->users;
 
         $students = $wpdb->get_results($wpdb->prepare(
-            "SELECT u.ID AS id, u.display_name, u.user_email
+            "SELECT u.ID AS id, " . \Ouinpo\Suite\Core\StudentName::sql() . " AS display_name, u.user_email
              FROM {$tblGM} gm
              JOIN {$tblU} u ON u.ID = gm.user_id
              WHERE gm.group_id = %d
                AND gm.role = 'student'
-             ORDER BY u.display_name ASC, u.ID ASC",
+             ORDER BY " . \Ouinpo\Suite\Core\StudentName::sql() . " ASC, u.ID ASC",
             $groupId
         )) ?: [];
 
@@ -2620,7 +2620,7 @@ class Screen_Assessments {
                 <div class="card ouinpo-assessment-card ouinpo-assessment-card--student">
                     <div class="ouinpo-assessment-student-head">
                         <div>
-                            <strong><?php echo esc_html($student->display_name); ?></strong>
+                            <strong><?php echo esc_html(\Ouinpo\Suite\Core\StudentName::format($student)); ?></strong>
                             <div class="ouinpo-assessment-student-id">ID <?php echo $uid; ?></div>
                         </div>
                         <label class="ouinpo-assessment-absent-label">
