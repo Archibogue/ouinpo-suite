@@ -35,6 +35,7 @@ final class CodeWorkspace
     {
         $data = TicketResource::publicData($resource);
         $data['content'] = $state['code_edits'][$resource['id']] ?? ($resource['content'] ?? '');
+        if (!empty($resource['editable'])) { $data['initial_content'] = $resource['content'] ?? ''; }
         return $data;
     }
 

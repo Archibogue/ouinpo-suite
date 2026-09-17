@@ -74,7 +74,11 @@ final class AttemptRepository
             $state = $this->states($id)[$ticketId] ?? null;
             if (!$ticket || !$state) { throw new \RuntimeException('Ticket introuvable.', 404); }
             $events = [];
-            if ($operation === 'action') {
+            if ($operation === 'reset_ticket') {
+                if (($input['confirm_reset'] ?? false) !== true) { throw new \InvalidArgumentException('Confirmation de remise à zéro requise.'); }
+                $state = ScenarioAttempt::initial($ticket);
+                $events[] = ['type'=>'ticket_reset', 'text'=>'Ticket remis à son état initial. Les traces précédentes appartiennent au traitement antérieur ; qualification, code, tests, temps et résolution ont été réinitialisés.'];
+            } elseif ($operation === 'action') {
                 [$state, $events] = (new SimulationEngine(new SimulatedTestEngine($snapshot['resources'])))->perform($ticket, $state, $input['action_id'], $input);
             } elseif ($operation === 'code') {
                 $resource = TicketScenario::index($snapshot['resources'])[$input['resource_id']] ?? null;

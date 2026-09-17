@@ -20,6 +20,7 @@
     created: "Réception",
     status: "Statut",
     qualification: "Qualification",
+    ticket_reset: "Ticket remis à zéro",
     user_message: "Vous → demandeur",
     user_reply: "Demandeur",
     specialist_request: "Vous → spécialiste",
@@ -100,7 +101,26 @@
     parent.append(wrap);
     return input;
   }
+  // Page-memory drafts only: no student text is left in shared-browser storage.
+  const drafts = new Map();
   class Desk {
+    draftKey(key) {
+      return `${this.a.student_id}:${this.a.id}:${this.ticketId}:${key}`;
+    }
+    remember(input, key) {
+      const scoped = this.draftKey(key);
+      if (drafts.has(scoped)) input.value = drafts.get(scoped);
+      const save = () => drafts.set(scoped, input.value);
+      input.addEventListener("input", save);
+      input.addEventListener("change", save);
+      return input;
+    }
+    clearSubmitted(prefix, body, scope) {
+      for (const [key, value] of Object.entries(body)) {
+        const scoped = `${scope}${prefix}${key}`;
+        if (drafts.get(scoped) === value) drafts.delete(scoped);
+      }
+    }
     constructor(root, attempt, back) {
       this.root = root;
       this.a = attempt;
@@ -117,6 +137,7 @@
       this.render();
     }
     async mutate(path, method, body) {
+      const draftScope = this.draftKey("");
       const previous = this.a.events.at(-1)?.id || 0;
       const loadedEvents = this.a.events;
       this.a = await api(
@@ -124,6 +145,19 @@
         method,
         { ...body, revision: Number(this.a.revision) },
       );
+      const prefix =
+        path === ""
+          ? "qualify:"
+          : path === "/notes"
+            ? "notes:"
+            : path.startsWith("/actions/")
+              ? `action:${path.slice(9)}:`
+              : null;
+      if (prefix !== null) this.clearSubmitted(prefix, body, draftScope);
+      if (path === "/reset") {
+        for (const key of drafts.keys())
+          if (key.startsWith(draftScope)) drafts.delete(key);
+      }
       if (loadedEvents.length >= 500) {
         const more = await api(
           `/attempts/${this.a.id}/events?after=${previous}`,
@@ -201,6 +235,13 @@
         ),
       );
       root.append(header);
+      if (!this.a.read_only)
+        root.append(
+          el(
+            "p",
+            "Vos saisies en cours sont conservées pendant la navigation entre les onglets et tickets. Enregistrez-les avant de fermer ou recharger la page : les brouillons ne figurent pas dans le bilan.",
+          ),
+        );
       if (!this.a.teacher_view) root.append(studentGuide());
       root.append(el("h3", this.a.title), el("p", this.a.description));
       root.append(
@@ -296,6 +337,22 @@
         queue.append(el("p", "Aucun ticket pour ces filtres."));
       const t = this.a.tickets.find((x) => x.id === this.ticketId);
       if (!t) return;
+      if (!this.a.read_only)
+        main.append(
+          button(
+            "Remettre ce ticket à zéro",
+            async () => {
+              if (
+                !window.confirm(
+                  `Remettre le ticket « ${t.title} » à son état initial ? Sa qualification, son code, ses tests, son temps et sa résolution seront réinitialisés. Ses brouillons seront effacés. Les autres tickets ne changent pas. L’historique est conservé avec une marque de remise à zéro.`,
+                )
+              )
+                return;
+              await this.mutate("/reset", "POST", { confirm_reset: true });
+            },
+            root,
+          ),
+        );
       main.append(
         el("span", `${t.id} · ${statuses[t.status]}`, "ouinpo-ticket-status"),
         el("h3", t.title),
@@ -425,6 +482,7 @@
               el("small", "Obligatoire avant résolution"),
             );
           }
+          this.remember(inputs[k], `qualify:${k}`);
         }
         form.append(
           el(
@@ -543,6 +601,7 @@
           );
         if (this.tab === "Notes" && !this.a.read_only) {
           const note = field(panel, "Note technique privée", "", true);
+          this.remember(note, "notes:message");
           panel.append(
             button(
               "Ajouter la note",
@@ -617,6 +676,8 @@
             ].includes(a.type)
           )
             inputs.message = field(card, "Votre message", "", true);
+          for (const [key, input] of Object.entries(inputs))
+            this.remember(input, `action:${a.id}:${key}`);
           if (!this.a.read_only)
             card.append(
               button(
@@ -715,17 +776,45 @@
           r.content || "",
           true,
         );
+        const codeKey = this.draftKey(`code:${r.id}`);
+        this.remember(editor, `code:${r.id}`);
         editor.rows = 18;
         editor.maxLength = 100000;
         editor.spellcheck = false;
         editor.wrap = "off";
         editor.setAttribute("autocapitalize", "off");
-        const saved = el("p", "Copie enregistrée.");
+        const saved = el(
+          "p",
+          editor.value === (r.content || "")
+            ? "Copie enregistrée."
+            : "Brouillon restauré — modifications non enregistrées.",
+        );
+        if (drafts.has(codeKey)) consolePanel.open = true;
         saved.setAttribute("role", "status");
         editor.addEventListener("input", () => {
           saved.textContent = "Modifications non enregistrées.";
         });
         consolePanel.append(
+          button(
+            "Remettre à l’état initial",
+            () => {
+              if (typeof r.initial_content !== "string")
+                throw new Error(
+                  "Rechargez la ressource pour obtenir son contenu initial.",
+                );
+              if (
+                !window.confirm(
+                  "Remplacer le texte de l’éditeur par l’extrait initial du scénario ? Cliquez ensuite sur Enregistrer mon code pour valider.",
+                )
+              )
+                return;
+              editor.value = r.initial_content;
+              drafts.set(codeKey, editor.value);
+              saved.textContent =
+                "Extrait initial restauré — cliquez sur Enregistrer mon code pour valider.";
+            },
+            this.root,
+          ),
           button(
             "Enregistrer mon code",
             async () => {
@@ -735,6 +824,7 @@
                 "PATCH",
                 { content, revision: Number(this.a.revision) },
               );
+              if (drafts.get(codeKey) === content) drafts.delete(codeKey);
               this.render();
               this.showResource({ ...r, content });
               const newConsole = this.root.querySelector(
@@ -755,6 +845,13 @@
     const guide = el("details", undefined, "ouinpo-ticket-guide");
     guide.append(
       el("summary", "Guide d’utilisation — comment traiter un ticket ?"),
+    );
+    guide.append(
+      el(
+        "p",
+        "Important : utilisez PataDesk dans un seul onglet du navigateur. N’ouvrez pas la même tentative dans plusieurs onglets ou fenêtres : les versions peuvent se décaler et vos brouillons ne sont pas partagés. Vous pouvez utiliser normalement les onglets internes Actions, Ressources, Notes, etc.",
+        "ouinpo-ticket-notice",
+      ),
     );
     guide.append(
       el(

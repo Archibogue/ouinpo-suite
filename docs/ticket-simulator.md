@@ -120,7 +120,34 @@ SQL ni migration des tentatives : les règles proviennent toujours de leur copie
 figée. Pour appliquer de nouvelles règles, publier un nouveau scénario et
 l'affecter ; **Archiver et recommencer** conserve les règles de l'ancienne copie.
 
+### Recommencer un ticket et naviguer
+
+Le bouton **Remettre ce ticket à zéro**, dans la tentative élève, restaure après
+confirmation l'état initial du seul ticket sélectionné : qualification, code,
+tests, actions, temps et résolution. Ses brouillons sont effacés. Les autres
+tickets restent inchangés. L'historique est conservé avec une marque de remise
+à zéro ; les traces antérieures ne constituent plus les preuves du traitement
+actuel. Une tentative terminée redevient en cours. Les archives restent en lecture
+seule. L'état initial provient du scénario enregistré au démarrage de la tentative.
+
+Le guide élève demande d'utiliser **un seul onglet du navigateur** pour PataDesk :
+les brouillons ne sont pas partagés entre fenêtres et les versions peuvent se
+décaler. Les onglets internes (Actions, Ressources, Notes…) restent utilisables.
+
 ### Console de correction
+
+Le bouton **Remettre à l’état initial** replace dans l'éditeur l'extrait original
+de la tentative, après confirmation. Cliquer ensuite sur **Enregistrer mon code**
+pour valider : les tests liés à cet extrait sont invalidés et doivent être relancés.
+La correction privée du professeur n'est jamais utilisée pour cette restauration.
+
+Les brouillons de qualification, notes, messages d'actions, comptes rendus et code
+sont conservés en mémoire pendant la navigation entre onglets ou tickets, et même
+un retour à la liste dans la même page. Ils restent distincts par tentative et
+ticket. Rouvrir une ressource retrouve son brouillon de code. Après enregistrement
+réussi, le brouillon soumis est effacé ; un échec conserve le texte. Cette mémoire
+ne survit pas à la fermeture ou au rechargement de la page : enregistrer pour une
+conservation durable et pour inclure le travail dans le bilan.
 
 Dans **Ressources**, ouvrir le fichier révélé puis **Ouvrir la console de
 correction**. Modifier l'extrait, cliquer sur **Enregistrer mon code**, puis

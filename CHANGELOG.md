@@ -2,6 +2,18 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## Non publié
+
+### Ajouté
+
+- Remise à zéro d'un seul ticket avec confirmation, conservation de l'historique et des autres tickets.
+- Avertissement dans le guide élève : utiliser PataDesk dans un seul onglet du navigateur.
+
+### Corrigé
+
+- Conservation en mémoire des brouillons PataDesk lors de la navigation entre onglets et tickets (qualification, notes, messages, résolution et code).
+- Bouton de restauration de l'extrait initial dans la console de correction, à enregistrer pour valider et relancer les tests.
+
 ## [0.7.9-beta] - 2026-09-16
 
 ### Ajouté
