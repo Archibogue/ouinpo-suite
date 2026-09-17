@@ -92,6 +92,14 @@ final class RestController
             return (new EventRepository())->listing((int) $r['id'], max(0, (int) $r->get_param('after')));
         });
         $base = '/attempts/(?P<id>\d+)/tickets/(?P<ticket>[a-zA-Z0-9_-]+)';
+        self::route($base . '/dialogue', 'POST', static function ($r) {
+            $revision = $r->get_param('revision');
+            if (!is_int($revision) || $revision < 0) { throw new \InvalidArgumentException('Révision requise.'); }
+            $input = self::strings($r, ['recipient','message']);
+            TicketDialogue::send((int)$r['id'], (string)$r['ticket'], $revision, $input['recipient'] ?? '', $input['message'] ?? '');
+            return self::view((int)$r['id']);
+        });
+        self::route($base . '/intake', 'PATCH', static fn($r) => self::mutate($r, 'intake', self::strings($r, TicketIntake::FIELDS)));
         self::route($base, 'PATCH', static fn($r) => self::mutate($r, 'qualify', self::strings($r, ['nature','category','subcategory','impact','urgency','priority','priority_justification','it_service','assignee'])));
         self::route($base . '/notes', 'POST', static fn($r) => self::mutate($r, 'note', self::strings($r, ['message'])));
         self::route($base . '/actions/(?P<action>[a-zA-Z0-9_-]+)', 'POST', static fn($r) => self::mutate($r, 'action', ['action_id' => (string) $r['action']] + self::strings($r, ['message','cause','solution','tests','result'])));

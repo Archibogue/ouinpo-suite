@@ -617,6 +617,75 @@
           this.text(p, t, "id", "Identifiant du ticket");
           this.text(p, t, "title", "Titre");
           this.text(p, t, "description", "Demande initiale", true);
+          t.intake_mode ??= "prepared";
+          t.ai_dialogue ??= {
+            enabled: false,
+            requester_context: "",
+            specialists: [],
+          };
+          t.ai_dialogue.specialists ??= [];
+          const dialogue = this.section(
+            p,
+            "Interlocuteurs IA — option facultative",
+          );
+          this.check(
+            dialogue,
+            t.ai_dialogue,
+            "enabled",
+            "Autoriser le dialogue libre avec les interlocuteurs configurés",
+          );
+          this.text(
+            dialogue,
+            t.ai_dialogue,
+            "requester_context",
+            "Faits connus du demandeur (vide : dialogue demandeur désactivé)",
+            true,
+          ).maxLength = 6000;
+          this.collection(
+            dialogue,
+            "Spécialistes disponibles par IA",
+            t.ai_dialogue.specialists,
+            () => ({ specialist_id: s.specialists[0]?.id || "", context: "" }),
+            (box, contact) => {
+              this.choice(
+                box,
+                contact,
+                "specialist_id",
+                "Spécialiste",
+                s.specialists.map((person) => [person.id, person.label]),
+              );
+              this.text(
+                box,
+                contact,
+                "context",
+                "Faits que ce spécialiste peut communiquer à l’élève",
+                true,
+              ).maxLength = 6000;
+            },
+          );
+          dialogue.append(
+            el(
+              "p",
+              "Chaque interlocuteur reçoit seulement ses faits et son propre historique IA. Tout ce qui est écrit ici peut être communiqué à l’élève : ne pas copier les corrigés ou critères privés. Les actions prédéfinies restent nécessaires pour les validations et les ressources à débloquer.",
+            ),
+          );
+          this.choice(p, t, "intake_mode", "Point de départ de l’élève", [
+            ["prepared", "Ticket déjà préparé"],
+            ["from_request", "Créer un ticket à partir d’une demande"],
+          ]);
+          this.text(
+            p,
+            t,
+            "raw_request",
+            "Message utilisateur brut (obligatoire pour le mode création)",
+            true,
+          );
+          p.append(
+            el(
+              "p",
+              "En mode création, le titre, la description et le demandeur configurés restent des repères pour l’enseignant. L’élève rédige sa propre fiche avant les actions de diagnostic. Ses questions libres ne génèrent pas de réponses automatiques.",
+            ),
+          );
           this.choice(
             p,
             t,

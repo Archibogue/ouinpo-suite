@@ -50,7 +50,7 @@ final class AttemptRepository
         $id = (int) $wpdb->insert_id;
         foreach ($s['definition']['tickets'] as $ticket) {
             ScenarioRepository::check($wpdb->insert(ScenarioRepository::table('attempt_tickets'), ['attempt_id' => $id, 'ticket_key' => $ticket['id'], 'state' => wp_json_encode(ScenarioAttempt::initial($ticket))]));
-            (new EventRepository())->add(['id' => $id, 'student_id' => $student], $ticket['id'], ['type' => 'created', 'text' => 'Ticket reçu.']);
+            (new EventRepository())->add(['id' => $id, 'student_id' => $student], $ticket['id'], ['type' => 'created', 'text' => TicketIntake::enabled($ticket) ? "Message utilisateur original :\n" . $ticket['raw_request'] : 'Ticket reçu.']);
         }
         return $id;
     }
@@ -74,7 +74,17 @@ final class AttemptRepository
             $state = $this->states($id)[$ticketId] ?? null;
             if (!$ticket || !$state) { throw new \RuntimeException('Ticket introuvable.', 404); }
             $events = [];
-            if ($operation === 'action') {
+            if ($operation === 'dialogue') {
+                if ($state['status'] === 'closed') { throw new \DomainException('Ticket clôturé.'); }
+                $events = [
+                    ['type'=>'ai_question','recipient'=>$input['recipient'],'text'=>'Vous → ' . $input['label'] . " (IA)\n" . $input['message']],
+                    ['type'=>'ai_reply','recipient'=>$input['recipient'],'text'=>$input['label'] . " (IA) → Vous\n" . $input['reply']],
+                ];
+                $state['dialogue_history'][] = ['recipient'=>$input['recipient'],'question'=>$input['message'],'reply'=>$input['reply']];
+                $state['dialogue_history'] = array_slice($state['dialogue_history'], -40);
+            } elseif ($operation === 'intake') {
+                [$state, $events] = TicketIntake::save($ticket, $state, $input);
+            } elseif ($operation === 'action') {
                 [$state, $events] = (new SimulationEngine(new SimulatedTestEngine($snapshot['resources'])))->perform($ticket, $state, $input['action_id'], $input);
             } elseif ($operation === 'code') {
                 $resource = TicketScenario::index($snapshot['resources'])[$input['resource_id']] ?? null;

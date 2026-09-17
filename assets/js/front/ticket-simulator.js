@@ -20,6 +20,9 @@
     created: "Réception",
     status: "Statut",
     qualification: "Qualification",
+    intake: "Fiche rédigée par l’élève",
+    ai_question: "Question à un interlocuteur IA",
+    ai_reply: "Réponse simulée par IA",
     user_message: "Vous → demandeur",
     user_reply: "Demandeur",
     specialist_request: "Vous → spécialiste",
@@ -303,6 +306,62 @@
         el("p", t.description),
       );
       const facts = el("dl", "", "ouinpo-ticket-facts");
+      if (t.intake_mode === "from_request") {
+        main.append(
+          el("h4", "Message utilisateur original"),
+          el("pre", t.raw_request),
+        );
+        const intake = el("details");
+        intake.open = !t.intake?.title;
+        intake.append(el("summary", "Créer un ticket à partir de la demande"));
+        intake.append(
+          el(
+            "p",
+            "Reformulez la demande sans inventer les informations absentes. Indiquez « à confirmer » si nécessaire. Les questions sont préparées ici ; pour les poser, utilisez les actions d’échange ou le dialogue IA s’il est activé.",
+          ),
+        );
+        const inputs = {};
+        const editable =
+          !this.a.read_only &&
+          !["resolved", "closed"].includes(t.status) &&
+          !t.actions.some((a) => a.id === "__reply");
+        for (const [key, label] of [
+          ["title", "Titre précis"],
+          ["requester", "Demandeur identifié"],
+          ["service", "Service concerné"],
+          ["application", "Application concernée"],
+          ["symptoms", "Symptômes ou besoin décrit"],
+          ["missing_information", "Informations manquantes"],
+          ["questions", "Questions complémentaires à poser"],
+        ]) {
+          inputs[key] = field(
+            intake,
+            label,
+            t.intake?.[key] || "",
+            ["symptoms", "missing_information", "questions"].includes(key),
+          );
+          inputs[key].disabled = !editable;
+        }
+        if (editable)
+          intake.append(
+            button(
+              "Enregistrer la fiche du ticket",
+              () =>
+                this.mutate(
+                  "/intake",
+                  "PATCH",
+                  Object.fromEntries(
+                    Object.entries(inputs).map(([key, input]) => [
+                      key,
+                      input.value,
+                    ]),
+                  ),
+                ),
+              root,
+            ),
+          );
+        main.append(intake);
+      }
       Object.entries(t.fields).forEach(([k, v]) => {
         facts.append(
           el(
@@ -482,6 +541,48 @@
       });
       main.append(nav);
       const panel = el("section", "", "ouinpo-ticket-panel");
+      if (
+        ["Conversation", "Spécialistes"].includes(this.tab) &&
+        t.ai_recipients?.length &&
+        !this.a.read_only &&
+        t.status !== "closed"
+      ) {
+        const chat = el("div", "", "ouinpo-ticket-action");
+        chat.append(
+          el("h4", "Dialoguer avec un interlocuteur IA"),
+          el(
+            "p",
+            "Simulation : ces échanges sont conservés dans Conversation et le bilan. Ils ne remplacent pas les actions, tests et validations du scénario. N’indiquez pas de données personnelles réelles.",
+          ),
+        );
+        const recipient = select(
+          chat,
+          "Interlocuteur",
+          t.ai_recipients.map((r) => [r.id, r.label]),
+          t.ai_recipients[0].id,
+        );
+        const message = field(chat, "Votre question ou message", "", true);
+        message.maxLength = 3000;
+        chat.append(
+          button(
+            "Envoyer à l’interlocuteur IA",
+            async () => {
+              const progress = el("p", "L’interlocuteur prépare sa réponse…");
+              chat.append(progress);
+              try {
+                await this.mutate("/dialogue", "POST", {
+                  recipient: recipient.value,
+                  message: message.value,
+                });
+              } finally {
+                progress.remove();
+              }
+            },
+            root,
+          ),
+        );
+        main.append(chat);
+      }
       panel.append(el("h4", this.tab));
       main.append(panel);
       if (["Conversation", "Historique", "Notes"].includes(this.tab)) {
@@ -491,6 +592,8 @@
                 "user_message",
                 "user_reply",
                 "requester_validation",
+                "ai_question",
+                "ai_reply",
                 "specialist_request",
                 "specialist_reply",
               ]

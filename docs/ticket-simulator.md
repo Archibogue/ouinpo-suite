@@ -78,6 +78,52 @@ prédéfinie est historisée avec sa réponse.
 
 ## Tentatives et évaluation
 
+### Dialogues IA facultatifs
+
+Dans chaque ticket, ouvrir **Interlocuteurs IA — option facultative**, activer
+le dialogue et renseigner les faits connus du demandeur et/ou ajouter des
+spécialistes avec leurs contextes propres. Ces fiches contiennent uniquement des
+informations communicables aux élèves, pas les corrections privées. Activer aussi
+l'IA globale et l'usage chat dans les réglages de la Suite.
+
+L'élève trouve **Dialoguer avec un interlocuteur IA** dans Conversation et
+Spécialistes. Il choisit le destinataire, rédige son message puis l'envoie. Les
+échanges complets sont conservés dans Conversation, Historique et le bilan. Ils
+sont distincts des questions simplement préparées dans la fiche de création.
+Le professeur peut les lire en observation. Les tickets clôturés et les tentatives
+archivées restent en lecture seule pour ces échanges.
+
+SegFault joue un rôle à partir des faits fournis. Les corrections privées et les
+autres fiches d'interlocuteurs ne sont pas envoyées au fournisseur. Les réponses
+restent générées par IA et peuvent être inexactes : aucune action technique, test,
+validation de résolution ou clôture ne peut être exécuté par ce dialogue. Les
+actions prédéfinies restent disponibles et constituent les étapes vérifiables.
+Une requête IA est effectuée hors transaction SQL ; permissions et révision sont
+revérifiées avant l'enregistrement atomique de la question et de sa réponse.
+
+### Créer un ticket à partir d'une demande
+
+Dans l'éditeur d'un ticket, choisir **Point de départ de l'élève → Créer un ticket
+à partir d'une demande**, puis renseigner le **message utilisateur brut**. Le titre,
+la description et le demandeur habituels restent des repères de configuration pour
+le professeur et ne préremplissent pas la fiche de l'élève.
+
+L'élève lit le message original et rédige un titre, identifie le demandeur et au
+moins le service ou l'application, décrit les symptômes ou le besoin, relève les
+informations manquantes et prépare ses questions complémentaires. Les actions de
+traitement deviennent disponibles après enregistrement de la fiche. Si une
+information manque, il peut l'indiquer comme « à confirmer » plutôt que l'inventer.
+Il peut réviser sa fiche tant que le ticket n'est ni résolu ni clôturé, sans réponse
+en attente. Chaque enregistrement conserve une version complète dans l'historique.
+
+Les questions rédigées sont préparées, pas envoyées automatiquement : utiliser
+les actions d'échange du scénario pour recevoir les réponses simulées prévues.
+L'export conserve le message original, la dernière fiche et toutes ses versions
+journalisées. SegFault peut en apprécier la précision et la fidélité au message.
+
+Le mode **Ticket déjà préparé** reste le défaut. Aucun changement des anciennes
+tentatives : pour utiliser cette option, démarrer avec un nouveau scénario configuré.
+
 ### Parcours guidé de traitement des demandes
 
 Dans l'éditeur, choisir **Parcours terminé lorsque tous les tickets sont…** :

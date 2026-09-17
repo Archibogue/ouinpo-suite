@@ -8,10 +8,67 @@ une application fictive, un log et un fichier PHP modifiable avec sa correction.
 Il est au format PataDesk `format_version: 1`, distinct des packs généraux OuInPo.
 
 Le modèle utilise le parcours guidé jusqu'à la **clôture**, avec qualification
-argumentée et confirmation simulée du demandeur. Les options suivantes restent
+argumentée, création de fiche depuis un message brut, dialogue IA avec le demandeur
+et le DBA, puis confirmation simulée du demandeur. Les options suivantes restent
 facultatives pour conserver les imports existants.
 
 ## Options pédagogiques B1.2
+
+### Partir d'un message brut (facultatif)
+
+Sur un ticket, ajouter :
+
+```json
+"intake_mode": "from_request",
+"raw_request": "Bonjour, mon export ne fonctionne plus depuis hier. Camille, comptabilité."
+```
+
+Sans `intake_mode`, ou avec `"prepared"`, le ticket préparé reste affiché comme
+avant. En mode `from_request`, le message brut est obligatoire. Conserver aussi
+les champs habituels `title`, `description` et `requester_id` pour la configuration
+enseignante et les échanges simulés ; ils ne préremplissent pas la fiche élève.
+L'élève rédige sa fiche et ses questions avant le traitement. Les questions libres
+ne déclenchent pas de réponse automatique. Le message et les versions de la fiche
+sont conservés dans l'historique et le bilan.
+
+### Dialogue IA avec le demandeur et les spécialistes
+
+Chaque ticket peut déclarer :
+
+```json
+"ai_dialogue": {
+  "enabled": true,
+  "requester_context": "Camille travaille en comptabilité. L’export échoue depuis hier. Les autres écrans fonctionnent.",
+  "specialists": [
+    {
+      "specialist_id": "dba",
+      "context": "Une migration a eu lieu hier. La base est accessible. Demander à l’élève le message exact du journal avant de proposer une piste."
+    }
+  ]
+}
+```
+
+- `enabled` vaut `false` si l'option est absente. Elle fonctionne avec les deux
+  modes de création de ticket.
+- `requester_context` vide désactive uniquement le dialogue avec le demandeur.
+- `specialist_id` doit désigner un spécialiste de la liste racine, sans doublon.
+  Prévoir au plus 20 spécialistes IA par ticket.
+- Chaque contexte est limité à 6 000 octets. **Tout son contenu peut être révélé
+  par l'interlocuteur à l'élève** : y placer les faits communicables, jamais le
+  corrigé complet ni les critères privés d'évaluation.
+- Chaque interlocuteur reçoit uniquement son contexte, la question et jusqu'à
+  huit échanges récents avec lui. Les contextes et historiques des autres
+  interlocuteurs, les corrections et le snapshot complet ne sont pas transmis.
+- Activer également l'IA globale et son usage chat (`ouinpo_ai_usage_chat_rag`)
+  dans les réglages du site. Les quotas étudiant s'appliquent dans un compteur
+  dédié aux dialogues PataDesk.
+- Les échanges IA sont historisés et exportés. Ils ne débloquent pas les ressources
+  et ne remplissent pas les prérequis d'actions : les actions prédéfinies restent
+  nécessaires pour les tests, les interventions et la validation de clôture.
+- Une indisponibilité IA affiche un message sans enregistrer de réponse fictive.
+  L'élève peut réessayer ou continuer avec les actions prédéfinies.
+
+### Qualification et fin du parcours (paramètres)
 
 À la racine : `"completion_status": "closed"` exige la clôture de tous les tickets.
 `"resolved"` (valeur par défaut si absente) termine le parcours dès qu'ils sont

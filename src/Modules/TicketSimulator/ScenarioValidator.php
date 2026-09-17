@@ -29,6 +29,21 @@ final class ScenarioValidator
         $specialists = TicketScenario::index($s['specialists']);
         foreach ($s['tickets'] as $t) {
             self::string($t, 'title', true); self::string($t, 'description', true);
+            self::need(in_array($t['intake_mode'] ?? 'prepared', ['prepared','from_request'], true), 'Mode de création du ticket invalide.');
+            self::string($t, 'raw_request', TicketIntake::enabled($t));
+            if (isset($t['ai_dialogue'])) {
+                $dialogue = $t['ai_dialogue'];
+                self::need(is_array($dialogue) && is_bool($dialogue['enabled'] ?? null), 'Configuration des échanges IA invalide.');
+                self::string($dialogue, 'requester_context', false, 6000);
+                self::need(is_array($dialogue['specialists'] ?? []) && array_is_list($dialogue['specialists'] ?? []) && count($dialogue['specialists'] ?? []) <= 20, 'Liste des spécialistes IA invalide.');
+                $seen = [];
+                foreach ($dialogue['specialists'] ?? [] as $contact) {
+                    self::need(is_array($contact) && is_string($contact['specialist_id'] ?? null) && isset($specialists[$contact['specialist_id']]) && !isset($seen[$contact['specialist_id']]), 'Spécialiste IA inconnu ou dupliqué.');
+                    $seen[$contact['specialist_id']] = true;
+                    self::string($contact, 'context', true, 6000);
+                }
+                self::need(!$dialogue['enabled'] || trim($dialogue['requester_context'] ?? '') !== '' || count($seen) > 0, 'Renseignez les faits connus d’au moins un interlocuteur IA.');
+            }
             self::need(isset($people[$t['requester_id'] ?? '']), 'Demandeur introuvable.');
             self::need(!isset($t['guided']) || is_bool($t['guided']), 'Mode guidé : booléen attendu.');
             self::refs($t['qualification_required'] ?? [], array_fill_keys(Pedagogy::QUALIFICATION, true));

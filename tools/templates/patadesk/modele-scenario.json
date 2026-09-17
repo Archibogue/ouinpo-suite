@@ -48,6 +48,18 @@
   "tickets": [
     {
       "id": "INC-0001",
+      "intake_mode": "from_request",
+      "raw_request": "Bonjour, c’est Camille du service comptabilité. Depuis la mise à jour d’hier, mon export mensuel échoue. J’en ai besoin avant 14 h. Pouvez-vous m’aider ?",
+      "ai_dialogue": {
+        "enabled": true,
+        "requester_context": "Tu es Camille, du service comptabilité. L’export mensuel de KpiKoi échoue depuis la mise à jour d’hier. Les autres écrans fonctionnent. Deux collègues rencontrent le même problème. Le message affiché est « Export impossible ». Tu as besoin de l’export avant 14 h. Tu ne connais ni le code ni la structure de la base de données.",
+        "specialists": [
+          {
+            "specialist_id": "dba",
+            "context": "Tu es le spécialiste base de données. Une migration a eu lieu hier. La base est accessible et les sauvegardes sont disponibles. Pour investiguer, demande le message exact du journal, la requête concernée et les vérifications déjà faites. Oriente l’élève vers les ressources et l’action prédéfinie de demande au DBA pour consulter le détail de la migration. Tu n’as effectué aucune intervention dans cet échange et ne peux pas certifier la réussite de l’export."
+          }
+        ]
+      },
       "title": "ApplicationExemple — Export mensuel impossible",
       "description": "Depuis ce matin, l’export mensuel de ApplicationExemple ne fonctionne plus. J’en ai besoin pour la réunion de 14 h.",
       "requester_id": "demandeur_1",

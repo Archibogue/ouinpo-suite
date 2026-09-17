@@ -9,6 +9,7 @@ final class SimulationEngine
     public function __construct(?TestEngineInterface $tests = null) { $this->tests = $tests ?? new SimulatedTestEngine(); }
     public function available(array $action, array $state, ?array $ticket = null): bool
     {
+        if (TicketIntake::enabled($ticket ?? []) && empty($state['intake'])) { return false; }
         $to = $this->target($action);
         if ($to === 'closed' && (!empty($ticket['guided']) || Pedagogy::validation($ticket ?? [])) && ($state['status'] !== 'resolved' || empty($state['resolution']))) { return false; }
         if ($to === 'closed' && Pedagogy::validation($ticket ?? []) && ($state['requester_validation']['outcome'] ?? '') !== 'confirmed') { return false; }

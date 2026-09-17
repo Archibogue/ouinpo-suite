@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 final class AttemptMarkdown
 {
     private const STATUS = ['new'=>'Nouveau','accepted'=>'Pris en charge','diagnosing'=>'En diagnostic','waiting_user'=>'En attente utilisateur','waiting_specialist'=>'En attente spécialiste','escalated'=>'Escaladé','resolving'=>'En cours de résolution','resolved'=>'Résolu','closed'=>'Clôturé','reopened'=>'Réouvert'];
-    private const EVENTS = ['created'=>'Ticket reçu','action'=>'Action','status'=>'Statut','qualification'=>'Qualification','user_message'=>'Message au demandeur','user_reply'=>'Réponse du demandeur','specialist_request'=>'Demande au spécialiste','specialist_reply'=>'Réponse du spécialiste','technical_note'=>'Note technique','test'=>'Test simulé','result'=>'Résultat','resource'=>'Consultation','code_edit'=>'Code enregistré','resolution'=>'Compte rendu','archived'=>'Archivage','requester_validation'=>'Validation simulée du demandeur'];
+    private const EVENTS = ['ai_question'=>'Question à un interlocuteur IA','ai_reply'=>'Réponse simulée par IA','intake'=>'Fiche rédigée par l’élève','created'=>'Ticket reçu','action'=>'Action','status'=>'Statut','qualification'=>'Qualification','user_message'=>'Message au demandeur','user_reply'=>'Réponse du demandeur','specialist_request'=>'Demande au spécialiste','specialist_reply'=>'Réponse du spécialiste','technical_note'=>'Note technique','test'=>'Test simulé','result'=>'Résultat','resource'=>'Consultation','code_edit'=>'Code enregistré','resolution'=>'Compte rendu','archived'=>'Archivage','requester_validation'=>'Validation simulée du demandeur'];
 
     public static function download(int $id): array
     {
@@ -63,10 +63,29 @@ final class AttemptMarkdown
             $lines[] = '';
             $lines[] = '### Demande initiale';
             $lines[] = '';
+            if ($ticket['intake_mode'] === 'from_request') {
+                $lines[] = self::block($ticket['raw_request']);
+                $lines[] = '';
+                $lines[] = '### Fiche rédigée par l’élève — dernière version';
+                $lines[] = '';
+                if (!$ticket['intake']) { $lines[] = 'Aucune fiche enregistrée.'; }
+                foreach (TicketIntake::LABELS as $key => $label) {
+                    $lines[] = '**' . $label . '**';
+                    $lines[] = '';
+                    $lines[] = self::block($ticket['intake'][$key] ?? 'Non renseigné');
+                    $lines[] = '';
+                }
+                $lines[] = 'Les questions ci-dessus sont préparées, pas nécessairement envoyées au demandeur.';
+                $lines[] = '';
+            }
             $lines[] = self::text($ticket['description']);
             $lines[] = '';
             $lines[] = '### Possibilités dans PataDesk';
             $lines[] = '';
+            if ($ticket['ai_recipients']) {
+                $lines[] = 'Dialogue libre IA configuré avec : ' . self::text(implode(', ', array_column($ticket['ai_recipients'], 'label'))) . '. Les réponses IA sont des échanges simulés, pas des preuves de test ni des validations de résolution.';
+                $lines[] = '';
+            }
             $lines[] = 'Simulation à actions prédéfinies : aucun terminal système, accès SQL libre, accès à une machine réelle ou environnement de production. La console permet seulement de modifier les extraits pédagogiques autorisés ; les tests sont simulés. Les échanges et leur historique sont enregistrés automatiquement.';
             $lines[] = '';
             $readOnly = $attempt['status'] === 'archived' || $ticket['status'] === 'closed';

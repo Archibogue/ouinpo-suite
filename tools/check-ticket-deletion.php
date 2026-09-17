@@ -106,6 +106,7 @@ $template = json_decode(file_get_contents(__DIR__ . '/templates/patadesk/modele-
 check(ScenarioValidator::validate($template) === $template, 'Import template validates');
 $engine = new SimulationEngine(new SimulatedTestEngine($template['resources']));
 $ticket = $template['tickets'][0]; $state = ScenarioAttempt::initial($ticket);
+[$state] = \Ouinpo\Suite\Modules\TicketSimulator\TicketIntake::save($ticket, $state, ['title'=>'Export mensuel impossible','requester'=>'Camille','service'=>'Comptabilité','application'=>'KpiKoi','symptoms'=>'Échec de l’export depuis la mise à jour','missing_information'=>'Message technique exact','questions'=>'Quel message apparaît ?']);
 $state['fields'] += ['nature'=>'incident', 'priority_justification'=>'Export comptable bloqué avant une échéance proche.'];
 $state['fields']['impact'] = 'Moyen'; $state['fields']['urgency'] = 'Élevée';
 foreach (['take','diagnose','since','__reply','logs','code','dba','__reply'] as $action) {

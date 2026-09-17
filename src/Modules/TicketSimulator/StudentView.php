@@ -26,6 +26,18 @@ final class StudentView
             $public['requester_validation'] = isset($state['requester_validation']) ? array_intersect_key($state['requester_validation'], array_flip(['outcome','message'])) : null;
             $public['automatic_checks'] = isset($state['review']) ? (Pedagogy::evidence($t, $state) && !Pedagogy::missing($t, $state)) : null;
             $public['requester'] = TicketScenario::index($s['users'])[$t['requester_id']]['label'];
+            $public['intake_mode'] = $t['intake_mode'] ?? 'prepared';
+            $public['ai_recipients'] = TicketDialogue::recipients($t, $s);
+            if (TicketIntake::enabled($t)) {
+                $public['raw_request'] = $t['raw_request'];
+                $public['intake'] = array_intersect_key($state['intake'] ?? [], array_flip(TicketIntake::FIELDS));
+                $public['title'] = $public['intake']['title'] ?? 'Demande à transformer en ticket';
+                $public['description'] = $public['intake']['symptoms'] ?? '';
+                $public['requester'] = $public['intake']['requester'] ?? 'À identifier';
+                unset($public['fields']['requester']);
+                $public['fields']['service'] = $public['intake']['service'] ?? '';
+                $public['fields']['application'] = $public['intake']['application'] ?? '';
+            }
             $public['resources'] = [];
             foreach ($s['resources'] as $r) {
                 if (in_array($r['id'], $state['visible_resources'], true)) {
