@@ -9,6 +9,13 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 - Dialogues IA facultatifs avec demandeur et spécialistes : contextes séparés définis par le professeur, historique et export, quotas et absence de validation automatique des actions. Modèle JSON adapté au parcours complet avec création de fiche et interlocuteurs IA.
 
 - Mode facultatif de création d'un ticket à partir d'un message utilisateur brut : fiche rédigée par l'élève, questions préparées, historique des versions et bilan enrichi. Le mode ticket préparé reste inchangé par défaut.
+- Remise à zéro d'un seul ticket avec confirmation, conservation de l'historique et des autres tickets.
+- Avertissement dans le guide élève : utiliser PataDesk dans un seul onglet du navigateur.
+
+### Corrigé
+
+- Conservation en mémoire des brouillons PataDesk lors de la navigation entre onglets et tickets (qualification, notes, messages, résolution et code).
+- Bouton de restauration de l'extrait initial dans la console de correction, à enregistrer pour valider et relancer les tests.
 
 ## [0.7.9-beta] - 2026-09-16
 

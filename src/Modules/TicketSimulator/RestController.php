@@ -100,6 +100,7 @@ final class RestController
             return self::view((int)$r['id']);
         });
         self::route($base . '/intake', 'PATCH', static fn($r) => self::mutate($r, 'intake', self::strings($r, TicketIntake::FIELDS)));
+        self::route($base . '/reset', 'POST', static fn($r) => self::mutate($r, 'reset_ticket', ['confirm_reset'=>$r->get_param('confirm_reset')]));
         self::route($base, 'PATCH', static fn($r) => self::mutate($r, 'qualify', self::strings($r, ['nature','category','subcategory','impact','urgency','priority','priority_justification','it_service','assignee'])));
         self::route($base . '/notes', 'POST', static fn($r) => self::mutate($r, 'note', self::strings($r, ['message'])));
         self::route($base . '/actions/(?P<action>[a-zA-Z0-9_-]+)', 'POST', static fn($r) => self::mutate($r, 'action', ['action_id' => (string) $r['action']] + self::strings($r, ['message','cause','solution','tests','result'])));

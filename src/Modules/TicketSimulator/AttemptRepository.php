@@ -84,6 +84,10 @@ final class AttemptRepository
                 $state['dialogue_history'] = array_slice($state['dialogue_history'], -40);
             } elseif ($operation === 'intake') {
                 [$state, $events] = TicketIntake::save($ticket, $state, $input);
+            } elseif ($operation === 'reset_ticket') {
+                if (($input['confirm_reset'] ?? false) !== true) { throw new \InvalidArgumentException('Confirmation de remise à zéro requise.'); }
+                $state = ScenarioAttempt::initial($ticket);
+                $events[] = ['type'=>'ticket_reset', 'text'=>'Ticket remis à son état initial. Les traces précédentes appartiennent au traitement antérieur ; qualification, code, tests, temps et résolution ont été réinitialisés.'];
             } elseif ($operation === 'action') {
                 [$state, $events] = (new SimulationEngine(new SimulatedTestEngine($snapshot['resources'])))->perform($ticket, $state, $input['action_id'], $input);
             } elseif ($operation === 'code') {
