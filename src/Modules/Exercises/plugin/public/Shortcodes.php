@@ -3952,7 +3952,7 @@ wp_enqueue_script('ouinpo-teacher-competencies');
 
               <div class="kpi" id="t-kpi-students">—</div>
 
-              <div class="kpi-label">Élèves</div>
+              <div class="kpi-label">Élèves avec données</div>
 
             </div>
 

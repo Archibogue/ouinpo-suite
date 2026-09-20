@@ -3,15 +3,6 @@
 
   const cfg = window.OuinpoProjects || {};
 
-  function preserveScroll() {
-    if (
-      window.OuinpoScrollRestore &&
-      typeof window.OuinpoScrollRestore.remember === 'function'
-    ) {
-      window.OuinpoScrollRestore.remember();
-    }
-  }
-
   /* rest */
 
   function request(path, options) {
@@ -41,9 +32,7 @@
     }
 
     return fetch(url, opts).then(function (response) {
-      return response.json().catch(function () {
-        return {};
-      }).then(function (json) {
+      return response.json().then(function (json) {
         if (!response.ok) {
           const fallback = response.status === 403
             ? 'Acces refuse ou session expiree.'
@@ -282,134 +271,139 @@
     });
   }
 
-  /* journal */
-
-  function bindJournal(journal) {
-    const form = journal.querySelector('[data-ouinpo-projects-journal-form]');
-    if (!form) {
-      return;
-    }
-
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      request('/projects/' + encodeURIComponent(journal.dataset.projectId) + '/logs', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }).then(function () {
-        preserveScroll();
-        window.location.reload();
-      }).catch(function (error) {
-        window.alert(error.message);
+  /* Refresh only lists; never replace a form or reload neighbouring work. */
+  function syncDeliverableChoices(root, incoming) {
+    const rows = Array.from(incoming.querySelectorAll('[data-deliverable-id]'));
+    document.querySelectorAll('[data-ouinpo-projects-evidence]').forEach(section => {
+      if (section.dataset.projectId !== root.dataset.projectId) return;
+      const select = section.querySelector('select[name="deliverable_id"]');
+      if (!select) return;
+      const selected = select.value;
+      const options = rows.map(row => {
+        const option = document.createElement('option');
+        option.value = row.dataset.deliverableId;
+        option.textContent = row.querySelector('strong').textContent;
+        return option;
       });
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = 'Aucun';
+      select.replaceChildren(empty, ...options);
+      select.value = options.some(option => option.value === selected) ? selected : '';
     });
   }
 
-  /* deliverables */
+  async function refreshList(root, section) {
+    const payload = await request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/workspace/' + section);
+    const parsed = new DOMParser().parseFromString(payload.html || '', 'text/html');
+    const incoming = parsed.querySelector('[data-ouinpo-projects-list]');
+    const current = root.querySelector('[data-ouinpo-projects-list]');
+    if (!incoming || !current) throw new Error('Liste indisponible.');
+    if (section === 'deliverables') syncDeliverableChoices(root, incoming);
+    current.replaceChildren(...Array.from(incoming.childNodes));
+  }
+
+  async function saveItem(root, section, path, options, form) {
+    if (root._saving) return;
+    root._saving = true;
+    let notice = root.querySelector('[data-projects-save-status]');
+    if (!notice) {
+      notice = el('div', 'ouinpo-projects-notice');
+      notice.dataset.projectsSaveStatus = '1';
+      notice.setAttribute('role', 'status');
+      notice.tabIndex = -1;
+      root.insertBefore(notice, root.querySelector('[data-ouinpo-projects-list]'));
+    }
+    const active = document.activeElement;
+    const controls = Array.from(root.querySelectorAll('button, input, select, textarea')).map(control => [control, control.disabled]);
+    controls.forEach(([control]) => { control.disabled = true; });
+    root.setAttribute('aria-busy', 'true');
+    notice.textContent = 'Enregistrement en cours…';
+    try {
+      await request(path, options);
+      if (form) form.reset();
+      notice.textContent = 'Modification enregistrée.';
+      try {
+        await refreshList(root, section);
+      } catch (_) {
+        notice.textContent = 'Modification enregistrée. La liste n’a pas pu être actualisée. ';
+        const retry = el('button', 'ouinpo-projects-button', 'Actualiser la liste');
+        retry.type = 'button';
+        retry.addEventListener('click', async () => {
+          if (root._saving) return;
+          root._saving = true;
+          retry.disabled = true;
+          try {
+            await refreshList(root, section);
+            notice.textContent = 'Liste actualisée.';
+            notice.focus({ preventScroll: true });
+          } catch (_) { retry.disabled = false; }
+          finally { root._saving = false; }
+        });
+        notice.appendChild(retry);
+      }
+    } catch (error) {
+      notice.textContent = 'Enregistrement impossible : ' + error.message + ' Vos saisies sont conservées ; vous pouvez réessayer.';
+    } finally {
+      root._saving = false;
+      controls.forEach(([control, disabled]) => { control.disabled = disabled; });
+      root.setAttribute('aria-busy', 'false');
+      if (controls.some(([control]) => control === active) &&
+          (document.activeElement === active || document.activeElement === document.body)) {
+        (active.isConnected ? active : notice).focus({ preventScroll: true });
+      }
+    }
+  }
+
+  function bindJournal(root) {
+    const form = root.querySelector('[data-ouinpo-projects-journal-form]');
+    if (!form) return;
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (root._saving) return;
+      const body = JSON.stringify(Object.fromEntries(new FormData(form).entries()));
+      saveItem(root, 'journal', '/projects/' + encodeURIComponent(root.dataset.projectId) + '/logs', {method: 'POST', body}, form);
+    });
+  }
 
   function bindDeliverables(root) {
     const form = root.querySelector('[data-ouinpo-projects-deliverable-form]');
-
-    if (form) {
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
-        request('/projects/' + encodeURIComponent(root.dataset.projectId) + '/deliverables', {
-          method: 'POST',
-          body: JSON.stringify(data)
-        }).then(function () {
-          preserveScroll();
-          window.location.reload();
-        }).catch(function (error) {
-          window.alert(error.message);
-        });
-      });
-    }
-
-    root.addEventListener('click', function (event) {
-      const statusButton = event.target.closest('[data-ouinpo-projects-deliverable-status]');
-      const deleteButton = event.target.closest('[data-ouinpo-projects-deliverable-delete]');
+    if (form) form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (root._saving) return;
+      const body = JSON.stringify(Object.fromEntries(new FormData(form).entries()));
+      saveItem(root, 'deliverables', '/projects/' + encodeURIComponent(root.dataset.projectId) + '/deliverables', {method: 'POST', body}, form);
+    });
+    root.addEventListener('click', event => {
+      if (root._saving) return;
+      const status = event.target.closest('[data-ouinpo-projects-deliverable-status]');
+      const remove = event.target.closest('[data-ouinpo-projects-deliverable-delete]');
       const row = event.target.closest('[data-deliverable-id]');
-
-      if (!row || (!statusButton && !deleteButton)) {
-        return;
-      }
-
-      const id = row.dataset.deliverableId;
-
-      if (statusButton) {
-        request('/deliverables/' + encodeURIComponent(id) + '/status', {
-          method: 'PATCH',
-          body: JSON.stringify({ status: statusButton.dataset.ouinpoProjectsDeliverableStatus })
-        }).then(function () {
-          preserveScroll();
-          window.location.reload();
-        }).catch(function (error) {
-          window.alert(error.message);
-        });
-      }
-
-      if (deleteButton) {
-        if (!window.confirm('Supprimer ce livrable ?')) {
-          return;
-        }
-        request('/deliverables/' + encodeURIComponent(id), {
-          method: 'DELETE'
-        }).then(function () {
-          preserveScroll();
-          window.location.reload();
-        }).catch(function (error) {
-          window.alert(error.message);
-        });
-      }
+      if (!row || (!status && !remove)) return;
+      const path = '/deliverables/' + encodeURIComponent(row.dataset.deliverableId);
+      if (status) saveItem(root, 'deliverables', path + '/status', {method: 'PATCH', body: JSON.stringify({status: status.dataset.ouinpoProjectsDeliverableStatus})});
+      else if (window.confirm('Supprimer ce livrable ?')) saveItem(root, 'deliverables', path, {method: 'DELETE'});
     });
   }
 
-  /* evidence */
-
   function bindEvidence(root) {
     const form = root.querySelector('[data-ouinpo-projects-evidence-form]');
-
-    if (form) {
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const formData = new FormData(form);
-        const file = form.querySelector('input[type="file"][name="file"]');
-        const hasFile = file && file.files && file.files.length > 0;
-        const path = '/projects/' + encodeURIComponent(root.dataset.projectId) + (hasFile ? '/evidence/upload' : '/evidence');
-        const payload = hasFile ? formData : JSON.stringify(Object.fromEntries(formData.entries()));
-
-        request(path, {
-          method: 'POST',
-          body: payload
-        }).then(function () {
-          preserveScroll();
-          window.location.reload();
-        }).catch(function (error) {
-          window.alert(error.message);
-        });
-      });
-    }
-
-    root.addEventListener('click', function (event) {
+    if (form) form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (root._saving) return;
+      const formData = new FormData(form);
+      const file = form.querySelector('input[type="file"][name="file"]');
+      const hasFile = file && file.files && file.files.length > 0;
+      const path = '/projects/' + encodeURIComponent(root.dataset.projectId) + (hasFile ? '/evidence/upload' : '/evidence');
+      const body = hasFile ? formData : JSON.stringify(Object.fromEntries(formData.entries()));
+      saveItem(root, 'evidence', path, {method: 'POST', body}, form);
+    });
+    root.addEventListener('click', event => {
+      if (root._saving) return;
       const button = event.target.closest('[data-ouinpo-projects-evidence-delete]');
       const card = event.target.closest('[data-evidence-id]');
-      if (!button || !card) {
-        return;
-      }
-
-      if (!window.confirm('Supprimer cette trace ?')) {
-        return;
-      }
-
-      request('/evidence/' + encodeURIComponent(card.dataset.evidenceId), {
-        method: 'DELETE'
-      }).then(function () {
-        preserveScroll();
-        window.location.reload();
-      }).catch(function (error) {
-        window.alert(error.message);
-      });
+      if (!button || !card || !window.confirm('Supprimer cette trace ?')) return;
+      saveItem(root, 'evidence', '/evidence/' + encodeURIComponent(card.dataset.evidenceId), {method: 'DELETE'});
     });
   }
 

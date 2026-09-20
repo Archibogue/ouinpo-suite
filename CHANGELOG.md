@@ -2,7 +2,7 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
-## Non publié
+## [0.7.10-beta] - 2026-09-21
 
 ### Ajouté
 
@@ -16,6 +16,14 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 
 ### Corrigé
 
+- Ergonomie PC : confirmations proches des formulaires, état des brouillons PataDesk visible au défilement, suppression des indicateurs Flashcards répétés, grilles du suivi enseignant adaptées à la largeur disponible et message explicite sans données.
+- Projects : choix des livrables synchronisé dans les formulaires voisins sans perdre les saisies ; tableaux plus lisibles et types/statuts des livrables en français.
+- Navigation d'administration : noms accessibles des niveaux de navigation, repère de page courante et focus clavier visible.
+- RechText : commandes désactivées aux bornes, arrêt immédiat de la lecture automatique à la fin et apparence distincte des boutons indisponibles.
+
+- Lot ergonomie PC 1 : brouillons PataDesk sauvegardés sur le serveur, état de sauvegarde, protection contre les conflits entre fenêtres et contrôle des brouillons avant remise (migration du schéma PataDesk vers 3).
+- Projects : journal, livrables et traces actualisés sans rechargement de page ; conservation des autres formulaires, verrouillage pendant la requête et nouvelle tentative de lecture si seul le rafraîchissement échoue.
+- Flashcards : verrouillage des commandes pendant la notation, retour du focus et distinction entre notation enregistrée et échec du rafraîchissement des indicateurs.
 - Conservation en mémoire des brouillons PataDesk lors de la navigation entre onglets et tickets (qualification, notes, messages, résolution et code).
 - Bouton de restauration de l'extrait initial dans la console de correction, à enregistrer pour valider et relancer les tests.
 

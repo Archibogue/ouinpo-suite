@@ -92,6 +92,7 @@ final class RestController
             return AttemptCleanup::deleteStudent((int) $r['id']);
         });
         self::route('/attempts/(?P<id>\d+)', 'GET', static fn($r) => self::view((int) $r['id']));
+        self::route('/attempts/(?P<id>\d+)/drafts', 'PUT', static fn($r) => AttemptDrafts::save((int) $r['id'], $r->get_json_params() ?: []));
         // Older open pages still download via GET: include feedback there too.
         self::route('/attempts/(?P<id>\d+)/summary', 'GET', static fn($r) => AttemptAdvice::download((int) $r['id']));
         self::route('/attempts/(?P<id>\d+)/summary/plain', 'GET', static fn($r) => AttemptMarkdown::download((int) $r['id']));
@@ -170,6 +171,9 @@ final class RestController
         $view = StudentView::build($a, $repo->states($id), PermissionService::observe($a));
         $view['read_only'] = $view['read_only'] || !PermissionService::edit($a);
         $view['events'] = (new EventRepository())->listing($id);
+        if ((int) $a['student_id'] === get_current_user_id() && !$view['read_only']) {
+            $view['drafts'] = AttemptDrafts::data($a);
+        }
         return $view;
     }
 }

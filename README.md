@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.9-beta : bêta technique enrichissant PataDesk avec le parcours guidé de traitement des demandes, les bilans Markdown et IA, et le nettoyage des tentatives. Elle conserve les groupes facultatifs au sein des classes et le centre d'entraînement NSI autonome. Elle ne doit pas être présentée comme une version stable. La recette WordPress/MySQL et la vérification visuelle responsive de PataDesk restent à effectuer sur le site cible.
+Version 0.7.10-beta : amélioration de l'ergonomie sur ordinateur, avec brouillons PataDesk sauvegardés sur le serveur, formulaires Projects conservés pendant les enregistrements, notation Flashcards protégée et interfaces adaptées à la largeur disponible. Recette WordPress/MariaDB et navigateur effectuée sur bsiotest.local ; les détails et limites figurent dans `docs/ergonomie-lot-1.md`. Cette version reste une bêta et nécessite une vérification sur le site cible, avec son thème et ses données.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 

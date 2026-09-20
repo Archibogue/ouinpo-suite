@@ -29,6 +29,16 @@ final class RestController
 
     public static function registerRoutes(): void
     {
+        register_rest_route(self::NS, '/projects/(?P<id>\d+)/workspace/(?P<section>journal|deliverables|evidence)', [
+            'methods' => WP_REST_Server::READABLE,
+            'permission_callback' => [self::class, 'canViewProject'],
+            'callback' => static function (WP_REST_Request $request) {
+                $section = (string) $request['section'];
+                $response = new WP_REST_Response(['html' => Shortcodes::$section(['id' => (int) $request['id']])]);
+                $response->header('Cache-Control', 'private, no-store');
+                return $response;
+            },
+        ]);
         register_rest_route(self::NS, '/projects', [
             [
                 'methods' => WP_REST_Server::READABLE,

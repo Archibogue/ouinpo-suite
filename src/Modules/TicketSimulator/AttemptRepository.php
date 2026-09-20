@@ -143,6 +143,7 @@ final class AttemptRepository
             }
             ScenarioRepository::check($wpdb->update(ScenarioRepository::table('attempt_tickets'), ['state' => wp_json_encode($state)], ['attempt_id' => $id, 'ticket_key' => $ticketId]));
             foreach ($events as $event) { (new EventRepository())->add($a, $ticketId, $event); }
+            AttemptDrafts::consume($a, $ticketId, $operation, $input);
             $states = $this->states($id);
             $finished = Pedagogy::finished($snapshot, $states);
             ScenarioRepository::check($wpdb->update(ScenarioRepository::table('attempts'), ['revision' => $revision + 1, 'status' => $finished ? 'completed' : 'active', 'ended_at' => $finished ? ($a['ended_at'] ?: current_time('mysql', true)) : null], ['id' => $id]));

@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
 
 final class Installer
 {
-    public const VERSION = '2';
+    public const VERSION = '3';
     public static function maybeUpgrade(): void
     {
         if (get_option('ouinpo_ticket_schema_version') !== self::VERSION) { self::install(); }
@@ -45,6 +45,7 @@ final class Installer
                 teacher_id bigint unsigned NOT NULL,
                 snapshot longtext NOT NULL,
                 assessment longtext NULL,
+                drafts longtext NULL,
                 status varchar(20) NOT NULL DEFAULT 'active',
                 revision int unsigned NOT NULL DEFAULT 0,
                 started_at datetime NOT NULL,
@@ -77,7 +78,7 @@ final class Installer
                 if ($wpdb->query("ALTER TABLE {$p}assignments DROP INDEX target") === false) { return; }
             }
         } else { return; }
-        foreach (['assignments'=>['settings','activity_key'],'attempts'=>['assessment']] as $table=>$columns) {
+        foreach (['assignments'=>['settings','activity_key'],'attempts'=>['assessment','drafts']] as $table=>$columns) {
             foreach ($columns as $column) { if (!$wpdb->get_row("SHOW COLUMNS FROM {$p}{$table} LIKE '$column'")) { return; } }
         }
         // Version is only marked installed once all tables exist.

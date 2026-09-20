@@ -210,11 +210,11 @@ final class SuiteAdmin
 
     private static function tabs(array $tabs, string $current): void
     {
-        echo '<nav class="nav-tab-wrapper">';
+        echo '<nav class="nav-tab-wrapper" aria-label="Rubriques de la Suite">';
 
         foreach ($tabs as $slug => $label) {
             $class = ($slug === $current) ? ' nav-tab-active' : '';
-            echo '<a class="nav-tab' . esc_attr($class) . '" href="' . esc_url(admin_url('admin.php?page=' . $slug)) . '">'
+            echo '<a class="nav-tab' . esc_attr($class) . '"' . ($slug === $current ? ' aria-current="page"' : '') . ' href="' . esc_url(admin_url('admin.php?page=' . $slug)) . '">'
                 . esc_html($label) . '</a>';
         }
 
@@ -257,7 +257,7 @@ final class SuiteAdmin
             return;
         }
 
-        echo '<nav class="nav-tab-wrapper ouinpo-suite-tabs">';
+        echo '<nav class="nav-tab-wrapper ouinpo-suite-tabs" aria-label="Sections de la rubrique">';
 
         foreach ($tabs as $slug => $label) {
             $class = ($slug === $current) ? ' nav-tab-active' : '';
@@ -266,7 +266,7 @@ final class SuiteAdmin
                 'tab'  => $slug,
             ], admin_url('admin.php'));
 
-            echo '<a class="nav-tab' . esc_attr($class) . '" href="' . esc_url($url) . '">'
+            echo '<a class="nav-tab' . esc_attr($class) . '"' . ($slug === $current ? ' aria-current="page"' : '') . ' href="' . esc_url($url) . '">'
                 . esc_html($label) . '</a>';
         }
 

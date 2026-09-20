@@ -149,6 +149,7 @@ final class Assessment
             if ($op === 'submit') {
                 PermissionService::require(PermissionService::edit($a));
                 if (($input['confirm'] ?? false) !== true) { throw new \InvalidArgumentException('Confirmation de remise requise.'); }
+                if (AttemptDrafts::data($a)['values']) { throw new \DomainException('Des brouillons restent à valider. Enregistrez chaque saisie avec son bouton ou abandonnez explicitement les brouillons avant de remettre.'); }
                 $scenario = json_decode($a['snapshot'],true); $states = $repo->states($id); $events = []; $after = 0;
                 do { $page = (new EventRepository())->listing($id,$after); foreach ($page as $e) { $events[]=$e; $after=(int)$e['id']; } } while(count($page)===500);
                 $d['submissions'][] = ['submitted_at'=>gmdate('c'),'late'=>!empty($d['settings']['due_at']) && time()>strtotime($d['settings']['due_at']), 'missing'=>self::missing($scenario,$states), 'scenario'=>$scenario,'states'=>$states,'events'=>$events,'rubric'=>$d['settings']['rubric'],'markdown'=>AttemptMarkdown::render($a,$states,$events)];

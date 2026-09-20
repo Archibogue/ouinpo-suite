@@ -716,6 +716,11 @@
 .ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep {
 }
 
+.ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep .ouinpo-fc-kpis,
+.ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep .ouinpo-fc-context-summary {
+  display: none;
+}
+
 .ouinpo-fc-app-v2.is-session-running .ouinpo-fc-prep-head {
   display: none;
 }

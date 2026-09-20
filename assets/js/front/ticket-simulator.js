@@ -104,8 +104,73 @@
     parent.append(wrap);
     return input;
   }
-  // Page-memory drafts only: no student text is left in shared-browser storage.
+  // Server-backed drafts; no student text is left in shared-browser storage.
   const drafts = new Map();
+  const draftSessions = new Map();
+  class DraftSync {
+    constructor(attempt) {
+      this.prefix = `${attempt.student_id}:${attempt.id}:`;
+      this.id = attempt.id;
+      this.saved = {};
+      this.revision = -1;
+      this.paused = false;
+      this.adopt(attempt.drafts);
+    }
+    values() {
+      return Object.fromEntries([...drafts].filter(([key]) => key.startsWith(this.prefix)).map(([key,value]) => [key.slice(this.prefix.length),value]));
+    }
+    dirty() {
+      const values = this.values();
+      return [...new Set([...Object.keys(values), ...Object.keys(this.saved)])].some(key => values[key] !== this.saved[key]);
+    }
+    adopt(remote) {
+      if (!remote || remote.revision < this.revision) return;
+      const incoming = remote.values || {};
+      const local = this.values();
+      for (const key of new Set([...Object.keys(local), ...Object.keys(this.saved), ...Object.keys(incoming)])) {
+        // A late server response never overwrites text typed during the request.
+        if (local[key] === this.saved[key]) {
+          if (Object.hasOwn(incoming, key)) drafts.set(this.prefix + key, incoming[key]);
+          else drafts.delete(this.prefix + key);
+        }
+      }
+      this.saved = { ...incoming };
+      this.revision = remote.revision;
+      this.notify();
+    }
+    notify() { if (this.onStatus) this.onStatus(); }
+    schedule() {
+      clearTimeout(this.timer);
+      this.notify();
+      if (!this.paused) this.timer = setTimeout(() => this.flush().catch(() => {}), 800);
+    }
+    async flush() {
+      clearTimeout(this.timer);
+      if (this.pending) await this.pending;
+      if (!this.dirty()) return;
+      this.failure = '';
+      const save = async () => {
+        while (this.dirty()) {
+          const values = this.values();
+          const remote = await api(`/attempts/${this.id}/drafts`, 'PUT', {revision:this.revision, values});
+          if (!remote || remote.revision !== this.revision + 1) throw new Error('Confirmation de sauvegarde invalide.');
+          // This response acknowledges precisely this snapshot, not subsequent typing.
+          this.saved = { ...values };
+          this.revision = remote.revision;
+        }
+      };
+      this.pending = save();
+      this.notify();
+      try { await this.pending; }
+      catch (e) { this.failure = e.message; throw e; }
+      finally { this.pending = null; this.notify(); }
+    }
+  }
+  window.addEventListener?.('beforeunload', event => {
+    if ([...draftSessions.values()].some(sync => sync.dirty() || sync.pending)) {
+      event.preventDefault(); event.returnValue = '';
+    }
+  });
   const stateNames = {working:'À remettre',submitted:'Remis',correcting:'Correction en cours',published:'Résultat publié',active:'Parcours en cours',completed:'Parcours terminé',archived:'Archivée',draft:'Brouillon'};
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   function dateLabel(value, empty = 'Non renseignée') {
@@ -136,6 +201,51 @@
   }
   function moduleTitle(root) { return root.dataset.showTitle === '0' ? [] : [el('h2',cfg.name)]; }
   class Desk {
+    syncDrafts() {
+      if (!this.a.drafts || this.a.read_only || this.a.teacher_view) { this.sync = null; return; }
+      const key = `${this.a.student_id}:${this.a.id}:`;
+      if (!draftSessions.has(key)) draftSessions.set(key, new DraftSync(this.a));
+      this.sync = draftSessions.get(key);
+      this.sync.adopt(this.a.drafts);
+    }
+    async withDrafts(operation) {
+      const sync = this.sync;
+      if (!sync) return operation();
+      if (sync.paused) throw new Error('Une action est déjà en cours.');
+      sync.paused = true;
+      try { await sync.flush(); return await operation(); }
+      finally {
+        sync.adopt(this.a.drafts);
+        sync.paused = false;
+        if (sync.dirty()) sync.schedule();
+      }
+    }
+    draftStatus(parent) {
+      if (!this.sync) return;
+      const sync = this.sync;
+      const box = el('div', undefined, 'ouinpo-ticket-notice ouinpo-ticket-draft-status');
+      const status = el('p'); status.setAttribute('role','status');
+      const retry = button('Sauvegarder les brouillons', () => sync.flush(), this.root);
+      const discard = button('Abandonner les brouillons', async () => {
+        if (sync.paused || !window.confirm('Abandonner toutes les saisies non validées de cette tentative ? Le travail déjà validé sera conservé.')) return;
+        await this.withDrafts(async () => {
+          for (const key of [...drafts.keys()]) if (key.startsWith(sync.prefix)) drafts.delete(key);
+          await sync.flush();
+        });
+        this.render();
+      }, this.root);
+      sync.onStatus = () => {
+        const count = Object.keys(sync.values()).length;
+        status.textContent = sync.failure ? 'Sauvegarde impossible : '+sync.failure+' Vos saisies restent dans cette page.'
+          : sync.pending ? 'Sauvegarde des brouillons en cours…'
+          : sync.dirty() ? 'Modifications non sauvegardées.'
+          : count ? `Brouillon sauvegardé — ${count} champ(s) à valider.`
+          : 'Toutes les saisies sont validées.';
+        retry.hidden = !sync.failure && !sync.dirty();
+        discard.hidden = !count;
+      };
+      box.append(status,retry,discard); parent.append(box); sync.notify();
+    }
     evidencePanel(parent, t) {
       const box=el('details'); box.append(el('summary', `Traces pédagogiques — ${t.optional ? 'extension facultative' : 'ticket obligatoire'}`)); parent.append(box);
       box.append(el('p','Manipulations extérieures déclarées par l’élève, à vérifier par l’enseignant. Les références de fichiers restent du texte.'));
@@ -178,7 +288,9 @@
       if(!this.a.teacher_view) {
         if(a.state==='working' && !this.a.read_only) box.append(button('Remettre mon travail',async()=>{
           const missing=(this.a.missing||[]).join('\n')||'Aucun élément exigé manquant.';
-          if(window.confirm('Remettre le travail enregistré et verrouiller la copie ? Les saisies non enregistrées ne seront pas incluses.\n\n'+missing+'\n\nUne copie incomplète reste évaluable.')) await change('submit',{confirm:true});
+          await this.sync?.flush();
+          if(this.sync && Object.keys(this.sync.values()).length) throw new Error('Des brouillons restent à valider avec les boutons des formulaires. Vous pouvez aussi les abandonner explicitement avant de remettre.');
+          if(window.confirm('Remettre le travail validé et verrouiller la copie ?\n\n'+missing+'\n\nUne copie incomplète reste évaluable.')) await this.withDrafts(()=>change('submit',{confirm:true}));
         },this.root));
         if(a.state!=='working' && a.attempts>1) box.append(button('Commencer une nouvelle tentative autorisée',async()=>{
           if(!window.confirm('Créer une nouvelle tentative indépendante ? La copie précédente sera conservée.')) return;
@@ -261,7 +373,7 @@
     remember(input, key) {
       const scoped = this.draftKey(key);
       if (drafts.has(scoped)) input.value = drafts.get(scoped);
-      const save = () => drafts.set(scoped, input.value);
+      const save = () => { drafts.set(scoped, input.value); this.sync?.schedule(); };
       input.addEventListener("input", save);
       input.addEventListener("change", save);
       return input;
@@ -271,6 +383,7 @@
         const scoped = `${scope}${prefix}${key}`;
         if (drafts.get(scoped) === value) drafts.delete(scoped);
       }
+      this.sync?.schedule();
     }
     constructor(root, attempt, back) {
       this.root = root;
@@ -288,12 +401,19 @@
       this.render();
     }
     async mutate(path, method, body) {
-      const draftScope = this.draftKey("");
-      const submittedTicket = this.ticketId;
+      const ticketId = this.ticketId;
+      const attemptId = this.a.id;
+      return this.withDrafts(() => {
+        if (this.a.id !== attemptId) throw new Error('La tentative affichée a changé. Revenez au ticket pour valider votre saisie.');
+        return this.mutateSaved(path, method, body, ticketId);
+      });
+    }
+    async mutateSaved(path, method, body, submittedTicket) {
+      const draftScope = `${this.a.student_id}:${this.a.id}:${submittedTicket}:`;
       const previous = this.a.events.at(-1)?.id || 0;
       const loadedEvents = this.a.events;
       this.a = await api(
-        `/attempts/${this.a.id}/tickets/${this.ticketId}${path}`,
+        `/attempts/${this.a.id}/tickets/${submittedTicket}${path}`,
         method,
         { ...body, revision: Number(this.a.revision) },
       );
@@ -371,6 +491,7 @@
       }
     }
     render() {
+      this.syncDrafts();
       const root = this.root;
       root.replaceChildren();
       const header = el("header", "", "ouinpo-ticket-header");
@@ -418,6 +539,7 @@
         ),
       );
       root.append(header);
+      this.draftStatus(root);
       this.assessmentPanel(root).catch((e) => error(root, e));
       root.append(el('p', 'La console compare du texte à une référence sans exécuter le programme. Un écart ne démontre pas que votre programme est incorrect.'));
       if (this.a.priority_policy) root.append(el('h4', 'Grille de priorité du scénario'), el('pre', this.a.priority_policy));
@@ -426,7 +548,7 @@
         root.append(
           el(
             "p",
-            "Vos saisies en cours sont conservées pendant la navigation entre les onglets et tickets. Enregistrez-les avant de fermer ou recharger la page : les brouillons ne figurent pas dans le bilan.",
+            "Vos saisies sont sauvegardées automatiquement en brouillon sur le serveur. Attendez la confirmation avant de fermer la page. Validez chaque formulaire pour inclure son contenu dans le travail et le bilan ; sauvegarder un brouillon n’envoie aucun message.",
           ),
         );
       if (!this.a.teacher_view) root.append(studentGuide());
@@ -1155,6 +1277,7 @@
                 return;
               editor.value = r.initial_content;
               drafts.set(codeKey, editor.value);
+              this.sync?.schedule();
               saved.textContent =
                 "Extrait initial restauré — cliquez sur Enregistrer mon code pour valider.";
             },
@@ -1164,14 +1287,19 @@
             "Enregistrer mon code",
             async () => {
               const content = editor.value;
-              this.a = await api(
-                `/attempts/${this.a.id}/tickets/${this.ticketId}/resources/${r.id}/code`,
-                "PATCH",
-                { content, revision: Number(this.a.revision) },
-              );
-              if (drafts.get(codeKey) === content) drafts.delete(codeKey);
+              const attemptId = this.a.id;
+              const ticketId = this.ticketId;
+              await this.withDrafts(async () => {
+                if (this.a.id !== attemptId) throw new Error('La tentative affichée a changé. Revenez au ticket pour enregistrer le code.');
+                this.a = await api(
+                  `/attempts/${attemptId}/tickets/${ticketId}/resources/${r.id}/code`,
+                  "PATCH",
+                  { content, revision: Number(this.a.revision) },
+                );
+                if (drafts.get(codeKey) === content) drafts.delete(codeKey);
+              });
               this.render();
-              this.showResource({ ...r, content });
+              if (this.ticketId === ticketId) this.showResource({ ...r, content });
               const newConsole = this.root.querySelector(
                 ".ouinpo-ticket-console",
               );

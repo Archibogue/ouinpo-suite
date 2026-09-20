@@ -101,13 +101,13 @@
   box-shadow: var(--rt-button-shadow);
 }
 
-.ouinpo-rt button:hover {
+.ouinpo-rt button:hover:not(:disabled) {
   color: var(--rt-button-text);
   background: var(--rt-button-bg-hover);
   border-color: var(--rt-button-border-hover, var(--rt-button-border));
 }
 
-.ouinpo-rt button:active {
+.ouinpo-rt button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
@@ -296,4 +296,9 @@
   .ouinpo-rt button {
     transition: none;
   }
+}
+.ouinpo-rt button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }

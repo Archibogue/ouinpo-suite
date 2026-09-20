@@ -448,6 +448,17 @@
   background: #f6f8fa;
 }
 
+.ouinpo-projects-deliverables .ouinpo-projects-table td { vertical-align: top; }
+.ouinpo-projects-deliverables .ouinpo-projects-table th:first-child { width: 30%; }
+.ouinpo-projects-deliverables .ouinpo-projects-table td:first-child { overflow-wrap: anywhere; }
+.ouinpo-projects-deliverables .ouinpo-projects-table td.ouinpo-projects-actions {
+  display: table-cell;
+  min-width: 190px;
+}
+.ouinpo-projects-deliverables .ouinpo-projects-table td.ouinpo-projects-actions button {
+  margin: 0 4px 6px 0;
+}
+
 .ouinpo-projects-log-list {
   display: grid;
   gap: 1rem;

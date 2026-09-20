@@ -573,6 +573,7 @@ function updateViewFieldVisibility() {
 
 
 
+
     const elStudents = document.getElementById('t-kpi-students');
 
     const elAcq      = document.getElementById('t-kpi-acq');
@@ -1060,6 +1061,12 @@ function setTeacherDsKpis(payload) {
     container.innerHTML = '';
 
     const rows = payload.rows || [];
+
+    if (!rows.length) {
+      container.appendChild(H('p', { role: 'status' },
+        'Aucune donnée de compétences pour ces filtres. Les élèves inscrits restent accessibles dans la liste Élève. Essayez une autre sélection ou renseignez une première évaluation.'));
+      return;
+    }
 
 
 

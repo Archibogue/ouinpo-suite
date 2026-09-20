@@ -35,7 +35,7 @@ use Ouinpo\Suite\Core\Capabilities as Caps;
 $checks=0;
 function verify(bool $condition,string $message):void {global $checks;if(!$condition)throw new RuntimeException('FAIL: '.$message);$checks++;echo 'OK: '.$message."\n";}
 function denied(callable $callback,string $message):void {try{$callback();}catch(Throwable $e){verify(true,$message);return;}verify(false,$message);}
-verify(get_option('ouinpo_ticket_schema_version')==='2','Schema 2 installed on actual MariaDB');
+verify(get_option('ouinpo_ticket_schema_version')===Installer::VERSION,'Current schema installed on actual MariaDB');
 verify((bool)$wpdb->get_row("SHOW INDEX FROM {$wpdb->prefix}ouinpo_ticket_assignments WHERE Key_name='target_activity'"),'New assignment index exists');
 verify(!$wpdb->get_row("SHOW INDEX FROM {$wpdb->prefix}ouinpo_ticket_assignments WHERE Key_name='target'"),'Old restrictive assignment index removed');
 foreach(['settings','activity_key'] as $column)verify((bool)$wpdb->get_row("SHOW COLUMNS FROM {$wpdb->prefix}ouinpo_ticket_assignments LIKE '$column'"),'Actual assignment column '.$column);
@@ -182,7 +182,7 @@ try {
     foreach(['scenarios','assignments','attempts','attempt_tickets','events'] as $suffix) {
         $schema=$wpdb->get_row('SHOW CREATE TABLE '.$originalPrefix.'ouinpo_ticket_'.$suffix,ARRAY_N)[1];
         $schema=str_replace('`'.$originalPrefix.'ouinpo_ticket_'.$suffix.'`','`'.$migrationPrefix.'ouinpo_ticket_'.$suffix.'`',$schema);
-        $schema=preg_replace('/^\s*`(?:settings|activity_key|assessment)`[^\r\n]*\R/m','',$schema);
+        $schema=preg_replace('/^\s*`(?:settings|activity_key|assessment|drafts)`[^\r\n]*\R/m','',$schema);
         $schema=str_replace('`target_activity` (`scenario_id`,`target_type`,`target_id`,`activity_key`)','`target` (`scenario_id`,`target_type`,`target_id`)',$schema);
         verify($wpdb->query($schema)!==false,'Legacy migration fixture table '.$suffix);
     }
@@ -192,12 +192,13 @@ try {
     $wpdb->insert(ScenarioRepository::table('attempts'),['id'=>1,'scenario_id'=>1,'assignment_id'=>1,'student_id'=>$student,'teacher_id'=>$teacher,'snapshot'=>wp_json_encode($definition),'started_at'=>gmdate('Y-m-d H:i:s')]);
     $oldSnapshot=$wpdb->get_var('SELECT snapshot FROM '.ScenarioRepository::table('attempts').' WHERE id=1');
     update_option('ouinpo_ticket_schema_version','1',false);Installer::maybeUpgrade();
-    verify(get_option('ouinpo_ticket_schema_version')==='2','Actual schema 1 to 2 upgrade completes');
+    verify(get_option('ouinpo_ticket_schema_version')===Installer::VERSION,'Actual schema upgrade completes');
+    verify((bool)$wpdb->get_row('SHOW COLUMNS FROM '.ScenarioRepository::table('attempts')." LIKE 'drafts'"),'Private draft column installed');
     verify($wpdb->get_var('SELECT snapshot FROM '.ScenarioRepository::table('attempts').' WHERE id=1')===$oldSnapshot,'Legacy snapshot unchanged after SQL migration');
     $legacy=$wpdb->get_row('SELECT * FROM '.ScenarioRepository::table('assignments').' WHERE id=1',ARRAY_A);
     verify($legacy['activity_key']==='' && Assessment::settings($legacy)['mode']==='practice','Legacy assignment stays training');
     verify($wpdb->insert(ScenarioRepository::table('assignments'),['scenario_id'=>1,'target_type'=>'user','target_id'=>(string)$student,'created_by'=>$teacher,'active'=>1,'activity_key'=>wp_generate_uuid4()])!==false,'Migrated index accepts separate activity for same target');
-    Installer::maybeUpgrade();verify(get_option('ouinpo_ticket_schema_version')==='2','Migration is idempotent');
+    Installer::maybeUpgrade();verify(get_option('ouinpo_ticket_schema_version')===Installer::VERSION,'Migration is idempotent');
 } finally {
     $wpdb->prefix=$originalPrefix;update_option('ouinpo_ticket_schema_version',$oldVersion,false);
     // Only the five tables created above by this run are disposable fixtures.

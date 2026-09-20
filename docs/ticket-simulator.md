@@ -191,8 +191,9 @@ actuel. Une tentative terminée redevient en cours. Les archives restent en lect
 seule. L'état initial provient du scénario enregistré au démarrage de la tentative.
 
 Le guide élève demande d'utiliser **un seul onglet du navigateur** pour PataDesk :
-les brouillons ne sont pas partagés entre fenêtres et les versions peuvent se
-décaler. Les onglets internes (Actions, Ressources, Notes…) restent utilisables.
+les saisies ne se synchronisent pas en direct entre fenêtres. Une version devenue
+ancienne est refusée pour éviter un écrasement silencieux. Les onglets internes
+(Actions, Ressources, Notes…) restent utilisables.
 
 ### Console de correction
 
@@ -201,13 +202,26 @@ de la tentative, après confirmation. Cliquer ensuite sur **Enregistrer mon code
 pour valider : les tests liés à cet extrait sont invalidés et doivent être relancés.
 La correction privée du professeur n'est jamais utilisée pour cette restauration.
 
-Les brouillons de qualification, notes, messages d'actions, comptes rendus et code
-sont conservés en mémoire pendant la navigation entre onglets ou tickets, et même
-un retour à la liste dans la même page. Ils restent distincts par tentative et
-ticket. Rouvrir une ressource retrouve son brouillon de code. Après enregistrement
-réussi, le brouillon soumis est effacé ; un échec conserve le texte. Cette mémoire
-ne survit pas à la fermeture ou au rechargement de la page : enregistrer pour une
-conservation durable et pour inclure le travail dans le bilan.
+Les brouillons de fiche, qualification, notes, messages, traces et code sont
+sauvegardés automatiquement sur le serveur après une courte pause de saisie.
+Attendre l'état « sauvegardé en brouillon » avant de fermer ou recharger la page.
+Ils restent distincts par élève, tentative et ticket, et ne sont pas conservés
+dans le stockage local du navigateur partagé. L'observation professeur ne les expose pas.
+
+Un brouillon n'envoie aucun message, ne valide aucune action et ne figure pas dans
+le bilan ou la copie remise. Utiliser le bouton de chaque formulaire pour valider
+son contenu. Une validation réussie retire les brouillons correspondants dans
+la même transaction ; les autres saisies restent conservées. La remise est
+refusée tant qu'il reste des brouillons : les valider ou utiliser **Abandonner les
+brouillons**, après confirmation explicite. Cette dernière action conserve le
+travail déjà validé.
+
+Une erreur de sauvegarde conserve les saisies dans la page et propose de réessayer.
+Une fermeture avec une sauvegarde en attente déclenche l'avertissement du navigateur.
+En cas de conflit entre fenêtres, copier les saisies avant de recharger pour
+retrouver la version du serveur. Les brouillons utilisent la colonne `drafts`
+des tentatives (schéma 3), une révision indépendante et les droits d'édition
+habituels. Ils sont supprimés avec leur tentative ; aucune table séparée à purger.
 
 Dans **Ressources**, ouvrir le fichier révélé puis **Ouvrir la console de
 correction**. Modifier l'extrait, cliquer sur **Enregistrer mon code**, puis

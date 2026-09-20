@@ -50,13 +50,14 @@
 
 .ouinpo-teacher .ouinpo-toolbar {
   display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr)) auto;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
   gap: 14px;
   align-items: end;
   margin: 10px 0 14px;
 }
 
 .ouinpo-teacher .ouinpo-toolbar .field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -70,6 +71,8 @@
 
 .ouinpo-teacher .ouinpo-toolbar select {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   height: 44px;
   border-radius: 10px;
   padding: 8px 10px;
@@ -77,6 +80,7 @@
 
 .ouinpo-teacher .ouinpo-toolbar .seg {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 6px 0;
 }
@@ -125,7 +129,7 @@
 
 .ouinpo-teacher .ouinpo-cards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
   gap: 14px;
 }
 
@@ -278,17 +282,10 @@
    ========================= */
 
 @media (max-width: 980px) {
-  .ouinpo-teacher .ouinpo-toolbar {
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-  }
-
   .ouinpo-teacher .ouinpo-toolbar #t-refresh {
     width: 100%;
   }
 
-  .ouinpo-teacher .ouinpo-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 .ouin-bar .seg-conso {
@@ -312,7 +309,7 @@
 }
 
 .ouinpo-ds-students-grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 }
 
 .ouinpo-ds-student-card,
@@ -485,7 +482,7 @@
 /* Cartes en vue élève */
 #ouinpo-teacher-tab-ex .ouinpo-ds-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 14px;
 }
 

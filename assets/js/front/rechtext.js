@@ -758,6 +758,12 @@
 
             const maxSteps = Math.max(state.naiveFrames.length, state.bmFrames.length);
 
+            const atEnd = currentStep >= maxSteps - 1;
+            if (atEnd) stopAuto();
+            prevBtn.disabled = currentStep === 0;
+            nextBtn.disabled = atEnd;
+            playBtn.disabled = atEnd;
+
 
 
             globalStatus.innerHTML =

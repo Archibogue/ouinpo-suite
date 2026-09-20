@@ -315,3 +315,17 @@
   .ouinpo-ticketing .ouinpo-ticket-results td::before { content: attr(data-label); display: block; font-weight: 600; color: var(--td-muted); }
   .ouinpo-ticketing .ouinpo-ticket-results td:last-child { border-bottom: 0; }
 }
+/* Keep the save state visible while working in long desktop forms. */
+@media (min-width: 1000px) {
+  .ouinpo-ticketing .ouinpo-ticket-draft-status {
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  body.admin-bar .ouinpo-ticketing .ouinpo-ticket-draft-status { top: 40px; }
+  .ouinpo-ticketing .ouinpo-ticket-draft-status p { margin: 0; flex: 1 1 240px; }
+}

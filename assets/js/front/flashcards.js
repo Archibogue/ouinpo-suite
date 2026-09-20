@@ -698,6 +698,8 @@
     app.classList.add('is-session-running');
 
     if (session) session.hidden = false;
+    const feedback = qs('.ouinpo-fc-feedback', app);
+    if (session && feedback) session.appendChild(feedback);
 
     if (chooser) chooser.open = false;
 
@@ -717,9 +719,11 @@
 
   async function grade(app, gradeValue) {
 
+    const state = appState(app);
+
     const cardId = app.dataset.cardId;
 
-    if (!cardId) return;
+    if (!cardId || state.grading) return;
 
 
 
@@ -749,27 +753,47 @@
 
 
 
-    const data = await api('/grade', {
+    // Keep the card and its selection stable until this decision is recorded.
+    state.grading = true;
+    const controls = qsa('button, input, select', app).map(control => [control, control.disabled]);
+    const focused = document.activeElement;
+    const restoreFocus = controls.some(([control]) => control === focused);
+    const session = qs('.ouinpo-fc-session', app);
+    controls.forEach(([control]) => { control.disabled = true; });
+    if (session) session.setAttribute('aria-busy', 'true');
+    setFeedback(app, 'Enregistrement de la réponse…', '');
+    let recorded = false;
 
-      method: 'POST',
+    try {
+      const data = await api('/grade', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      recorded = true;
+      updateKpis(app, data.counts || {});
+      renderCard(app, data.card || null);
+      const review = data.review || {};
+      const message = `Carte enregistrée · boîte ${review.new_box || '?'} · prochaine révision le ${review.next_review_at || '?'}.`;
+      setFeedback(app, message, 'ok');
 
-      body: JSON.stringify(body)
-
-    });
-
-
-
-    await refreshDeckList(app);
-
-    updateKpis(app, data.counts || {});
-
-    renderCard(app, data.card || null);
-
-
-
-    const review = data.review || {};
-
-    setFeedback(app, `Carte enregistrée · boîte ${review.new_box || '?'} · prochaine révision le ${review.next_review_at || '?'}.`, 'ok');
+      // A failed secondary refresh must not invite another grade of the saved card.
+      try {
+        await refreshDeckList(app);
+        updateKpis(app, data.counts || {});
+      } catch (_) {
+        setFeedback(app, message + ' Les indicateurs des paquets n’ont pas pu être actualisés.', 'ok');
+      }
+    } finally {
+      state.grading = false;
+      controls.forEach(([control, disabled]) => { control.disabled = disabled; });
+      if (session) session.setAttribute('aria-busy', 'false');
+      if (restoreFocus && (document.activeElement === focused || document.activeElement === document.body)) {
+        const target = recorded
+          ? qs(app.dataset.cardId ? '.ouinpo-fc-reveal' : '.ouinpo-fc-edit-selection', app)
+          : focused;
+        if (target && !target.disabled) target.focus({ preventScroll: true });
+      }
+    }
 
   }
 

@@ -8,6 +8,19 @@ final class Shortcodes
 {
     private static bool $initialized = false;
 
+    private static function deliverableLabel(string $value): string
+    {
+        return [
+            'specification' => 'Cahier des charges', 'model' => 'Modèle',
+            'mockup' => 'Maquette', 'source_code' => 'Code source',
+            'database' => 'Base de données', 'test_plan' => 'Plan de tests',
+            'user_doc' => 'Documentation utilisateur', 'technical_doc' => 'Documentation technique',
+            'presentation' => 'Présentation', 'portfolio_sheet' => 'Fiche portfolio', 'other' => 'Autre',
+            'expected' => 'Attendu', 'submitted' => 'Remis', 'needs_revision' => 'À reprendre',
+            'validated' => 'Validé', 'rejected' => 'Rejeté',
+        ][$value] ?? $value;
+    }
+
     public static function init(): void
     {
         if (self::$initialized) {
@@ -343,7 +356,7 @@ final class Shortcodes
                 </form>
             <?php endif; ?>
 
-            <div class="ouinpo-projects-log-list">
+            <div class="ouinpo-projects-log-list" data-ouinpo-projects-list>
                 <?php if (!$logs): ?>
                     <p class="ouinpo-projects-empty">Aucune entree pour le moment.</p>
                 <?php else: ?>
@@ -410,7 +423,7 @@ final class Shortcodes
                         <span>Type</span>
                         <select name="type">
                             <?php foreach (Repository::DELIVERABLE_TYPES as $type): ?>
-                                <option value="<?php echo esc_attr($type); ?>"><?php echo esc_html($type); ?></option>
+                                <option value="<?php echo esc_attr($type); ?>"><?php echo esc_html(self::deliverableLabel($type)); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
@@ -420,6 +433,7 @@ final class Shortcodes
                 </form>
             <?php endif; ?>
 
+            <div data-ouinpo-projects-list>
             <?php if (!$deliverables): ?>
                 <p class="ouinpo-projects-empty">Aucun livrable pour le moment.</p>
             <?php else: ?>
@@ -435,8 +449,8 @@ final class Shortcodes
                                         <div><?php echo wp_kses_post(wpautop((string) $deliverable['description'])); ?></div>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo esc_html((string) $deliverable['type']); ?></td>
-                                <td><span class="ouinpo-projects-badge ouinpo-projects-status-<?php echo esc_attr((string) $deliverable['status']); ?>"><?php echo esc_html((string) $deliverable['status']); ?></span></td>
+                                <td><?php echo esc_html(self::deliverableLabel((string) $deliverable['type'])); ?></td>
+                                <td><span class="ouinpo-projects-badge ouinpo-projects-status-<?php echo esc_attr((string) $deliverable['status']); ?>"><?php echo esc_html(self::deliverableLabel((string) $deliverable['status'])); ?></span></td>
                                 <td><?php echo esc_html((string) ($deliverable['due_date'] ?: '-')); ?></td>
                                 <td><?php echo esc_html((string) ($deliverable['validated_at'] ?: '-')); ?></td>
                                 <?php if ($canManage): ?>
@@ -453,6 +467,7 @@ final class Shortcodes
                     </table>
                 </div>
             <?php endif; ?>
+            </div>
         </section>
         <?php
 
@@ -535,7 +550,7 @@ final class Shortcodes
                 </form>
             <?php endif; ?>
 
-            <div class="ouinpo-projects-cards">
+            <div class="ouinpo-projects-cards" data-ouinpo-projects-list>
                 <?php if (!$evidence): ?>
                     <p class="ouinpo-projects-empty">Aucune trace pour le moment.</p>
                 <?php endif; ?>
@@ -883,8 +898,8 @@ final class Shortcodes
             <?php foreach ($deliverables as $deliverable): ?>
                 <tr>
                     <td><?php echo esc_html((string) $deliverable['title']); ?></td>
-                    <td><?php echo esc_html((string) $deliverable['type']); ?></td>
-                    <td><?php echo esc_html((string) $deliverable['status']); ?></td>
+                    <td><?php echo esc_html(self::deliverableLabel((string) $deliverable['type'])); ?></td>
+                    <td><?php echo esc_html(self::deliverableLabel((string) $deliverable['status'])); ?></td>
                     <td><?php echo esc_html((string) ($deliverable['due_date'] ?: '-')); ?></td>
                 </tr>
             <?php endforeach; ?>
