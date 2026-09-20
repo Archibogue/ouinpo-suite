@@ -17,6 +17,28 @@ Le pack `ouinpo-pack-demo-minimal.json` est reserve aux tests d'installation et 
 
 ## Ordre d'import recommande
 
+### Pack autonome BTS SIO, première année
+
+`ouinpo-pack-bts-sio1-html-css-javascript.json` contient 12 exercices progressifs :
+3 HTML, 3 CSS, 5 JavaScript et un mini-projet de gestion de demandes d'assistance.
+Durée indicative totale : 6 h 20. Chaque activité comprend un énoncé, deux indices,
+un corrigé possible et des vérifications à réaliser dans le navigateur.
+
+Importer ce fichier depuis **OuInPo Suite → Paramètres → Import**, avec le bouton
+**Importer le pack**. Le niveau, les domaines et les compétences sont inclus ;
+aucun autre pack n'est nécessaire. Les compétences sont des objectifs pédagogiques
+locaux, sans codification officielle du référentiel BTS.
+
+Les étudiants travaillent dans leur éditeur et leur navigateur, sans framework.
+Ils collent ensuite le code, les explications et les résultats des vérifications
+dans la zone de saisie du module Exercices. Pour plusieurs fichiers, leur contenu
+est regroupé dans une seule réponse, chaque partie précédée du nom du fichier.
+Aucun dépôt de fichier ni capture d'écran n'est demandé.
+Le pack ne configure ni exécution de code ni correction automatique. Il utilise
+le format des packs pédagogiques `schema_version: "1.0"`.
+
+### Packs SNT/NSI
+
 1. `ouinpo-pack-referentiel-snt-nsi.json`
 2. `ouinpo-pack-flashcards-nsi.json`
 3. `ouinpo-pack-exercices-site-origine.json`

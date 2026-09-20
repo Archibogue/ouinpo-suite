@@ -39,7 +39,7 @@ final class AttemptMarkdown
             '- Début : ' . self::text($attempt['started_at']) . ' UTC',
             '- Fin : ' . (!empty($attempt['ended_at']) ? self::text($attempt['ended_at']) . ' UTC' : 'Non terminée'),
             '- Tickets résolus ou clôturés : ' . $finished . '/' . count($view['tickets']), '',
-            '- Critère de fin : ' . ($view['completion_status'] === 'closed' ? 'clôture de tous les tickets' : 'résolution de tous les tickets'),
+            '- Objectif travaillé : ' . (['qualified'=>'qualification documentée','oriented'=>'orientation documentée','closed'=>'clôture','resolved'=>'résolution'][$view['completion_status']] ?? $view['completion_status']) . ' des tickets obligatoires',
             '- Parcours terminé : ' . ($view['path_completed'] ? 'oui' : 'non'),
             '- Appréciation pédagogique : à établir par l’enseignant ; la fin du parcours et les contrôles automatiques ne valident pas la compétence.', '',
             'Les tests sont simulés. La comparaison de code ne constitue pas une exécution réelle.', '',
@@ -48,6 +48,9 @@ final class AttemptMarkdown
         foreach ($view['tickets'] as $ticket) {
             $state = $states[$ticket['id']];
             $lines[] = '## ' . self::text($ticket['id'] . ' — ' . $ticket['title']);
+            $lines[] = '';
+            $lines[] = '### Traces déclarées par l’élève — à vérifier';
+            foreach ($ticket['evidence'] ?? [] as $key=>$value) { if (trim($value) !== '') { $lines[] = self::text($key) . ' : ' . self::block($value); } }
             $lines[] = '';
             $lines[] = '- Demandeur : ' . self::text($ticket['requester']);
             $lines[] = '- Statut : ' . self::text(self::STATUS[$ticket['status']] ?? $ticket['status']);
@@ -157,6 +160,24 @@ final class AttemptMarkdown
                 }
             }
             $lines[] = '';
+        }
+        $assessment=Assessment::publicData($attempt);
+        if (($assessment['mode'] ?? '') === 'graded') {
+            $lines[] = '## Évaluation pédagogique';
+            $lines[] = 'Remise et correction : '.self::text(Presentation::STATES[$assessment['state']] ?? $assessment['state']);
+            foreach ($assessment['rubric'] as $r) {
+                $lines[] = self::text($r['title']) . ' — maximum : '.$r['max'].' — '.self::text($r['instruction']);
+                if (isset($assessment['result'])) {
+                    $mark=$assessment['result']['criteria'][$r['id']];
+                    $lines[] = 'Points : '.$mark['points'].' ; commentaire : '.self::block($mark['comment']);
+                }
+            }
+            if (isset($assessment['result'])) {
+                $lines[]='Note publiée : '.$assessment['result']['grade'].'/20 (arrondie au centième).';
+                $lines[]=self::block($assessment['result']['general']);
+                $lines[]='Preuves vérifiées par l’enseignant : '.self::block($assessment['result']['verified_evidence']);
+            } else { $lines[]='Aucune correction publiée. Les critères non corrigés ne valent pas zéro.'; }
+            $lines[]='La note ne certifie pas automatiquement une compétence B1.2.';
         }
         return implode("\n", $lines) . "\n";
     }

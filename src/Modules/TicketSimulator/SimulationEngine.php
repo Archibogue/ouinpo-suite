@@ -69,7 +69,7 @@ final class SimulationEngine
             if (!Pedagogy::evidence($ticket, $state)) { throw new \DomainException('Les actions ou tests simulés exigés avant résolution ne sont pas tous validés.'); }
         }
         $message = trim((string) ($input['message'] ?? ''));
-        if ((in_array($type, ['specialist','transfer','escalate','reassign','communication'], true) || !empty($action['requires_message'])) && $message === '') {
+        if ((in_array($type, ['specialist','transfer','escalate','reassign','communication','technical_note'], true) || !empty($action['requires_message'])) && $message === '') {
             throw new \DomainException('Rédigez votre demande ou votre message.');
         }
         $result = $this->tests->run($action, $state);
@@ -80,7 +80,7 @@ final class SimulationEngine
         $state['minutes'] += $action['cost'] ?? 0;
         if ($first) { $state['score'] += $action['score'] ?? 0; }
         $events[] = ['type' => 'action', 'action_id' => $actionId, 'action_type' => $type, 'text' => $action['label'], 'cost' => $action['cost'] ?? 0];
-        if ($message !== '') { $events[] = ['type' => in_array($type, ['specialist','transfer','escalate','reassign'], true) ? 'specialist_request' : 'user_message', 'text' => $message]; }
+        if ($message !== '') { $events[] = ['type' => $type === 'technical_note' ? 'technical_note' : (in_array($type, ['specialist','transfer','escalate','reassign'], true) ? 'specialist_request' : 'user_message'), 'text' => $message]; }
         $to = $this->target($action);
         if ($type === 'take') { $to = 'accepted'; $state['fields']['assignee'] = 'Vous'; }
         if ($type === 'resolve') { $to = 'resolved'; }

@@ -1,5 +1,13 @@
 # PataDesk / TicketSimulator
 
+## Parcours BTS SIO et évaluations
+
+Le [guide enseignant/élève des évaluations](patadesk-evaluation.md) décrit les
+parcours de qualification et d’orientation sans résolution, les imports SPOPI v2,
+les activités distinctes, grilles manuelles, remises, corrections et publications.
+Il précise la migration interne vers le schéma 2, les restrictions d’aides et
+la recette WordPress restante. Les parcours historiques ci-dessous restent disponibles.
+
 ## Mise en route
 
 Le module `ticket_simulator` est optionnel. L'activer dans **OuInPo Suite →
@@ -167,6 +175,12 @@ figée. Pour appliquer de nouvelles règles, publier un nouveau scénario et
 l'affecter ; **Archiver et recommencer** conserve les règles de l'ancienne copie.
 
 ### Recommencer un ticket et naviguer
+
+L'espace **Traiter le ticket** réunit les actions disponibles (dont celles des
+spécialistes), les tests et la conversation sur une même page. Les ressources,
+notes et l'historique s'ouvrent avec des boutons visibles. Le repère de progression est indicatif :
+les actions autorisées et les prérequis restent ceux du scénario. Les réponses
+reçues sont signalées sans changement automatique d'onglet.
 
 Le bouton **Remettre ce ticket à zéro**, dans la tentative élève, restaure après
 confirmation l'état initial du seul ticket sélectionné : qualification, code,

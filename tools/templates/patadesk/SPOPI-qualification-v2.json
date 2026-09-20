@@ -1,0 +1,189 @@
+{
+  "format_version": 1,
+  "title": "SPOPI v2 — Collecter et qualifier une demande brute",
+  "description": "Semaines 2 à 4 : parcours court sur une demande brute, collecte, nature distincte de la catégorie technique, impact/urgence/priorité argumentée et réponse initiale selon l’extrait contractuel. Terminer l’exercice sans résoudre le ticket. Utilisable en entraînement ou dans une activité notée distincte. Ne constitue pas le sujet écrit du 25 septembre 2026.",
+  "users": [
+    {
+      "id": "gerard",
+      "label": "Gérard Ticket",
+      "service": "Centre de services"
+    },
+    {
+      "id": "lea",
+      "label": "Léa Navigue",
+      "service": "Ressources humaines"
+    },
+    {
+      "id": "ines",
+      "label": "Inès Cadre",
+      "service": "Communication interne"
+    },
+    {
+      "id": "hugo",
+      "label": "Hugo Raire",
+      "service": "Accueil"
+    },
+    {
+      "id": "sarah",
+      "label": "Sarah Conseil",
+      "service": "Accompagnement utilisateurs"
+    },
+    {
+      "id": "paul",
+      "label": "Paul Attente",
+      "service": "Gestion"
+    },
+    {
+      "id": "emma",
+      "label": "Emma Mobile",
+      "service": "Communication interne"
+    },
+    {
+      "id": "luc",
+      "label": "Luc Papier",
+      "service": "Accueil"
+    },
+    {
+      "id": "nora",
+      "label": "Nora Signal",
+      "service": "Formation"
+    },
+    {
+      "id": "marc",
+      "label": "Marc Oubli",
+      "service": "Ressources humaines"
+    }
+  ],
+  "specialists": [
+    {
+      "id": "front",
+      "label": "Camille Balise — spécialiste front-end",
+      "service": "Études et développement"
+    },
+    {
+      "id": "network",
+      "label": "Nadia Paquet — administratrice réseau",
+      "service": "Infrastructure"
+    },
+    {
+      "id": "support",
+      "label": "Gérard Ticket — responsable support",
+      "service": "Centre de services"
+    }
+  ],
+  "resources": [],
+  "tickets": [
+    {
+      "id": "T01",
+      "title": "Le lien « Centre de services » ne s’ouvre pas",
+      "description": "Construisez un ticket à partir du message original. Aucune correction technique n’est attendue dans ce parcours.",
+      "requester_id": "lea",
+      "fields": {
+        "nature": "",
+        "category": "À qualifier",
+        "impact": "À qualifier",
+        "urgency": "À qualifier",
+        "priority": "À qualifier",
+        "priority_justification": ""
+      },
+      "expected": {
+        "category": "Applicatif",
+        "priority": "Haute",
+        "nature": "incident"
+      },
+      "resources": [],
+      "visible_resources": [],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "type": "take",
+          "label": "Prendre en charge",
+          "states": [
+            "new"
+          ]
+        },
+        {
+          "id": "note",
+          "type": "technical_note",
+          "label": "Ajouter une note technique",
+          "requires_message": true,
+          "repeatable": true
+        },
+        {
+          "id": "initial",
+          "type": "communication",
+          "label": "Envoyer une réponse initiale",
+          "requires_message": true,
+          "repeatable": true
+        }
+      ],
+      "expected_solution": "Reproduire le problème, comparer href=\"contact.html\" à l’arborescence, viser centre-services.html, puis tester l’aller et le retour.",
+      "resolution_requires": [],
+      "bad_resolution": "reopen",
+      "bad_resolution_message": "Le ticket est rouvert : le lien de l’accueil ne conduit toujours pas au centre de services.",
+      "resolution_tests": [],
+      "intake_mode": "from_request",
+      "raw_request": "Bonjour, je suis Gérard, du centre de services SPOPI. Depuis ce matin, quand je clique sur Centre de services sur la page d’accueil du portail, ça ne s’ouvre pas. Ma collègue a la même chose. Nous pouvons encore utiliser le numéro habituel mais c’est gênant. Pouvez-vous regarder ?",
+      "qualification_required": [
+        "nature",
+        "category",
+        "impact",
+        "urgency",
+        "priority",
+        "priority_justification"
+      ],
+      "trace_required": [
+        "context",
+        "information",
+        "initial_response"
+      ],
+      "guided": false
+    }
+  ],
+  "priority_policy": "Grille pédagogique propre à ce dossier SPOPI (aucune équivalence universelle) :\nP1 / Haute : fonction utile bloquée pour plusieurs utilisateurs ou information trompeuse risquant de perdre une demande ; expliquer impact et urgence.\nP2 / Normale : gêne limitée, contournement possible ou impact de présentation.\nBasse : évolution de confort planifiable. Critique : à justifier par un arrêt majeur non décrit ici.\nUne autre priorité argumentée peut être pertinente : comparaison indicative, décision de l’enseignant.",
+  "service_agreement": "Extrait fictif de contrat pour cet exercice : périmètre = portail interne SPOPI sur environnement pédagogique fourni. Prise en charge P1 sous 30 minutes ouvrées ; P2 sous 4 heures ouvrées ; évolutions à planifier après analyse. Aucun délai de résolution garanti dans ce dossier. Escalade au référent applicatif si hors périmètre, droits insuffisants ou diagnostic non abouti. Informer le demandeur du prochain point de suivi. La fin de séance est une échéance pédagogique, pas un SLA.",
+  "completion_status": "qualified"
+}

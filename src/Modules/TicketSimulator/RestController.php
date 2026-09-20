@@ -58,14 +58,23 @@ final class RestController
         self::route('/scenarios/(?P<id>\d+)/assignments', 'POST', static function ($r) {
             $p = self::strings($r, ['type','target']);
             if (!isset($p['type'], $p['target'])) { throw new \InvalidArgumentException('Type et cible requis.'); }
-            (new AssignmentService())->save((int) $r['id'], $p['type'], $p['target'], $r->get_param('active') !== false);
+            $settings=$r->get_param('settings');
+            if ($settings !== null && !is_array($settings)) { throw new \InvalidArgumentException('Configuration invalide.'); }
+            (new AssignmentService())->save((int) $r['id'], $p['type'], $p['target'], $r->get_param('active') !== false, $settings, (int)$r->get_param('assignment_id'));
             return ['ok' => true];
         });
         self::route('/assignments', 'GET', static function () {
             PermissionService::require(\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_PRACTICE));
             return PermissionService::practice() ? (new AssignmentService())->listing() : [];
         });
-        self::route('/assignments/(?P<id>\d+)/attempts', 'POST', static fn($r) => ['id' => (new AttemptRepository())->start((int) $r['id'])]);
+        self::route('/assignments/(?P<id>\d+)/attempts', 'POST', static fn($r) => ['id' => (new AttemptRepository())->start((int) $r['id'], $r->get_param('next') === true)]);
+        self::route('/assessment/templates', 'GET', static function() { PermissionService::require(PermissionService::manage()); return Assessment::templates(); });
+        self::route('/assessment/results', 'GET', static fn($r)=>Assessment::results($r->get_params()));
+        self::route('/assessment/results/csv', 'GET', static fn($r)=>Assessment::results($r->get_params(),true));
+        self::route('/attempts/(?P<id>\d+)/assessment', 'GET', static fn($r)=>Assessment::read((int)$r['id']));
+        foreach (['submit','grade','publish','reopen'] as $op) {
+            self::route('/attempts/(?P<id>\d+)/assessment/'.$op, 'POST', static fn($r)=>Assessment::change((int)$r['id'],$op,$r->get_json_params() ?: []));
+        }
         self::route('/attempts', 'GET', static function () {
             PermissionService::require(\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_PRACTICE) || PermissionService::manage() || \Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_OBSERVE));
             return (new AttemptRepository())->listing();
@@ -92,6 +101,8 @@ final class RestController
             return (new EventRepository())->listing((int) $r['id'], max(0, (int) $r->get_param('after')));
         });
         $base = '/attempts/(?P<id>\d+)/tickets/(?P<ticket>[a-zA-Z0-9_-]+)';
+        self::route($base . '/evidence', 'PATCH', static fn($r)=>self::mutate($r,'evidence',self::strings($r,Pedagogy::TRACES)));
+        self::route($base . '/finish-exercise', 'POST', static fn($r)=>self::mutate($r,'finish_exercise',[]));
         self::route($base . '/dialogue', 'POST', static function ($r) {
             $revision = $r->get_param('revision');
             if (!is_int($revision) || $revision < 0) { throw new \InvalidArgumentException('Révision requise.'); }

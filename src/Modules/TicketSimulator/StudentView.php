@@ -10,16 +10,25 @@ final class StudentView
         $s = json_decode($attempt['snapshot'], true);
         $out = array_intersect_key($attempt, array_flip(['id','scenario_id','student_id','status','revision','started_at','ended_at']));
         $out['title'] = $s['title']; $out['description'] = $s['description'] ?? ''; $out['teacher_view'] = $teacher;
-        $out['read_only'] = $teacher || $attempt['status'] === 'archived';
+        $out['read_only'] = $teacher || $attempt['status'] === 'archived' || !Assessment::writable($attempt);
         $out['completion_status'] = $s['completion_status'] ?? 'resolved';
         $out['number'] = $attempt['number'] ?? $attempt['id'];
         $out['path_completed'] = Pedagogy::finished($s, $states);
+        $out['assignment_id'] = $attempt['assignment_id'] ?? 0;
+        $out['assessment'] = Assessment::publicData($attempt);
+        $out['missing'] = Assessment::missing($s,$states);
+        $out['priority_policy'] = $s['priority_policy'] ?? '';
+        $out['service_agreement'] = $s['service_agreement'] ?? '';
         $out['tickets'] = [];
         foreach ($s['tickets'] as $t) {
             $state = $states[$t['id']];
             $public = array_intersect_key($state, array_flip(['status','fields','done','minutes','tests','resolution']));
             $public += ['id' => $t['id'], 'title' => $t['title'], 'description' => $t['description']];
             $public['guided'] = !empty($t['guided']);
+            $public['evidence']=$state['evidence'] ?? [];
+            $public['exercise_completed']=!empty($state['exercise_completed']);
+            $public['optional']=!empty($t['optional']);
+            $public['trace_missing']=Pedagogy::traceMissing($s,$t,$state);
             $public['qualification_required'] = $t['qualification_required'] ?? [];
             $public['qualification_missing'] = Pedagogy::missing($t, $state);
             $public['requester_validation_required'] = Pedagogy::validation($t);
@@ -28,6 +37,7 @@ final class StudentView
             $public['requester'] = TicketScenario::index($s['users'])[$t['requester_id']]['label'];
             $public['intake_mode'] = $t['intake_mode'] ?? 'prepared';
             $public['ai_recipients'] = TicketDialogue::recipients($t, $s);
+            if (!Assessment::aid($attempt,'ai_dialogue')) { $public['ai_recipients']=[]; }
             if (TicketIntake::enabled($t)) {
                 $public['raw_request'] = $t['raw_request'];
                 $public['intake'] = array_intersect_key($state['intake'] ?? [], array_flip(TicketIntake::FIELDS));
@@ -46,6 +56,7 @@ final class StudentView
             }
             $public['actions'] = [];
             foreach ($t['actions'] as $action) {
+                if (!empty($action['hint']) && !Assessment::aid($attempt,'hints')) { continue; }
                 if ((new SimulationEngine())->available($action, $state, $t)) {
                     $a = array_intersect_key($action, array_flip(['id','label','type','description','requires_message','cost']));
                     if (!empty($action['specialist_id'])) { $a['specialist'] = TicketScenario::index($s['specialists'])[$action['specialist_id']]['label']; }

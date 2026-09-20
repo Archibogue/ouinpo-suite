@@ -24,6 +24,7 @@ final class TicketDialogue
     {
         $repo = new AttemptRepository(); $attempt = $repo->get($id);
         PermissionService::require(PermissionService::edit($attempt));
+        PermissionService::require(Assessment::aid($attempt, 'ai_dialogue'));
         if ((int) $attempt['revision'] !== $revision) { throw new \RuntimeException('La tentative a changé. Rechargez-la.', 409); }
         $scenario = json_decode($attempt['snapshot'], true);
         $ticket = TicketScenario::index($scenario['tickets'])[$ticketId] ?? null;

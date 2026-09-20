@@ -10,7 +10,8 @@ final class ScenarioValidator
         self::need(($s['format_version'] ?? null) === 1, 'Version de format attendue : 1.');
         self::string($s, 'title', true, 200);
         self::string($s, 'description');
-        self::need(in_array($s['completion_status'] ?? 'resolved', ['resolved','closed'], true), 'Fin de scénario attendue : resolved ou closed.');
+        self::need(in_array($s['completion_status'] ?? 'resolved', ['qualified','oriented','resolved','closed'], true), 'Objectif de parcours inconnu.');
+        self::string($s, 'priority_policy'); self::string($s, 'service_agreement');
         foreach (['users','specialists','resources','tickets'] as $key) {
             self::need(isset($s[$key]) && is_array($s[$key]) && array_is_list($s[$key]) && count($s[$key]) <= 100, "Liste invalide : $key.");
             self::unique($s[$key]);
@@ -28,6 +29,8 @@ final class ScenarioValidator
         $people = TicketScenario::index($s['users']);
         $specialists = TicketScenario::index($s['specialists']);
         foreach ($s['tickets'] as $t) {
+            self::need(!isset($t['optional']) || is_bool($t['optional']), 'Option de ticket invalide.');
+            self::refs($t['trace_required'] ?? [], array_fill_keys(Pedagogy::TRACES,true));
             self::string($t, 'title', true); self::string($t, 'description', true);
             self::need(in_array($t['intake_mode'] ?? 'prepared', ['prepared','from_request'], true), 'Mode de création du ticket invalide.');
             self::string($t, 'raw_request', TicketIntake::enabled($t));
@@ -46,7 +49,7 @@ final class ScenarioValidator
             }
             self::need(isset($people[$t['requester_id'] ?? '']), 'Demandeur introuvable.');
             self::need(!isset($t['guided']) || is_bool($t['guided']), 'Mode guidé : booléen attendu.');
-            self::refs($t['qualification_required'] ?? [], array_fill_keys(Pedagogy::QUALIFICATION, true));
+            self::refs($t['qualification_required'] ?? [], array_fill_keys(array_merge(Pedagogy::QUALIFICATION,['category']), true));
             if (isset($t['requester_validation'])) {
                 $validation = $t['requester_validation'];
                 self::need(is_array($validation) && is_bool($validation['enabled'] ?? null), 'Validation du demandeur invalide.');
@@ -96,6 +99,7 @@ final class ScenarioValidator
                     self::need(($a['type'] ?? '') === 'test' && !empty($resource['editable']) && isset($resource['expected_content']) && trim($resource['expected_content']) !== '', 'Un test de code nécessite une ressource modifiable et sa correction attendue.');
                 }
                 self::need(in_array($a['type'] ?? '', TicketScenario::ACTION_TYPES, true), 'Type d’action inconnu.');
+                self::need(!isset($a['hint']) || is_bool($a['hint']), 'Option aide invalide.');
                 self::refs($a['requires'] ?? [], $actions);
                 self::refs($a['states'] ?? [], array_fill_keys(TicketScenario::STATUSES, true));
                 self::refs($a['reveal'] ?? [], array_fill_keys($t['resources'] ?? [], true));

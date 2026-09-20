@@ -234,3 +234,13 @@ sans le publier comme pièce jointe accessible aux élèves. Ce dossier est sous
 
 Une importation crée un nouveau modèle ; elle ne remplace pas les copies déjà
 figées dans les tentatives. Affecter le nouveau scénario pour un nouveau parcours.
+
+## Variantes SPOPI v2 — parcours et évaluation
+
+Les quatre fichiers `SPOPI-*-v2.json` sont de nouveaux imports, distincts des
+anciens : qualification brute, orientation documentée, diagnostic essentiel
+(T01/T03/T05) et approfondissements séparés. Les notes techniques sont internes,
+la nature est séparée de la catégorie et les engagements ne sont pas des fins de séance.
+Voir le [guide enseignant/élève](../../../docs/patadesk-evaluation.md).
+Les imports comportent des corrigés privés : ils sont réservés à l’enseignant.
+Ils ne constituent pas le sujet papier du vendredi 25 septembre 2026.

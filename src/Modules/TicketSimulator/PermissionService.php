@@ -25,7 +25,7 @@ final class PermissionService
     }
     public static function edit(array $attempt): bool
     {
-        return self::practice() && (int) $attempt['student_id'] === get_current_user_id() && $attempt['status'] !== 'archived';
+        return self::practice() && (int) $attempt['student_id'] === get_current_user_id() && $attempt['status'] !== 'archived' && Assessment::writable($attempt);
     }
     public static function require(bool $allowed): void
     {

@@ -13,10 +13,12 @@ final class Shortcodes
             if ($post && has_shortcode($post->post_content, 'ouinpo_ticket_simulator')) { Assets::enqueue(); }
         });
     }
-    public static function render(): string
+    public static function render($attributes = []): string
     {
         if (!is_user_logged_in() || !\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_PRACTICE)) { return '<p>Connectez-vous avec un compte autorisé au suivi PataDesk.</p>'; }
         Assets::enqueue();
-        return '<div class="ouinpo-ticketing" data-ticket-student><p role="status">Chargement du centre de services…</p></div>';
+        $attributes=shortcode_atts(['show_title'=>'auto'],$attributes,'ouinpo_ticket_simulator');
+        $show=$attributes['show_title']==='yes' || ($attributes['show_title']==='auto' && !(is_singular() && get_the_title()!==''));
+        return '<div class="ouinpo-ticketing" data-ticket-student data-show-title="'.($show?'1':'0').'"><p role="status">Chargement du centre de services…</p></div>';
     }
 }

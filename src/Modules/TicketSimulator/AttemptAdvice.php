@@ -11,6 +11,7 @@ final class AttemptAdvice
     {
         // Authorization and the consistent snapshot finish before any network call.
         $report = AttemptMarkdown::download($id);
+        if (!Assessment::aid((new AttemptRepository())->get($id), 'ai_advice')) { return $report; }
         $advice = self::generate($report['markdown']);
         $report['markdown'] .= "\n## Conseils de SegFault\n\n" . $advice . "\n";
         return $report;

@@ -24,12 +24,12 @@ final class AssignmentService
         if (!LearningAudiencePolicy::isRosteredClassStudent($user, $class)) { return false; }
         return $a['target_type'] === 'class' || ClassSubgroups::allows($user, [$class], [$a['target_id']]);
     }
-    public function save(int $scenarioId, string $type, string $target, bool $active): void
+    public function save(int $scenarioId, string $type, string $target, bool $active, ?array $settings = null, int $assignmentId = 0): void
     {
         // Sharing the scenario lock with deletion prevents orphan assignments.
-        ScenarioRepository::transaction(fn() => $this->saveLocked($scenarioId, $type, $target, $active));
+        ScenarioRepository::transaction(fn() => $this->saveLocked($scenarioId, $type, $target, $active, $settings, $assignmentId));
     }
-    private function saveLocked(int $scenarioId, string $type, string $target, bool $active): void
+    private function saveLocked(int $scenarioId, string $type, string $target, bool $active, ?array $settings, int $assignmentId): void
     {
         global $wpdb;
         $scenario = (new ScenarioRepository())->get($scenarioId, true);
@@ -37,8 +37,14 @@ final class AssignmentService
         PermissionService::require(Capabilities::can(Capabilities::MANAGE_CLASSES) || PermissionService::all());
         if (!in_array($type, ['user','class','subgroup'], true)) { throw new \InvalidArgumentException('Cible invalide.'); }
         if (!$active) {
+            if ($assignmentId) {
+                $a = $this->get($assignmentId, true);
+                PermissionService::require((int)$a['scenario_id'] === $scenarioId);
+                ScenarioRepository::check($wpdb->update(ScenarioRepository::table('assignments'), ['active'=>0], ['id'=>$assignmentId]));
+                return;
+            }
             // Revocation must still work if the target account or group was removed.
-            ScenarioRepository::check($wpdb->update(ScenarioRepository::table('assignments'), ['active' => 0], ['scenario_id' => $scenarioId, 'target_type' => $type, 'target_id' => $target]));
+            ScenarioRepository::check($wpdb->update(ScenarioRepository::table('assignments'), ['active' => 0], ['scenario_id' => $scenarioId, 'target_type' => $type, 'target_id' => $target, 'activity_key'=>'']));
             return;
         }
         if ($type === 'user') {
@@ -55,6 +61,11 @@ final class AssignmentService
                 $target = $class . ':' . $sub;
             } else { $target = (string) $class; }
         }
+        if ($settings !== null) {
+            $validated = Assessment::validate($settings, $scenario['definition']);
+            ScenarioRepository::check($wpdb->insert(ScenarioRepository::table('assignments'), ['scenario_id'=>$scenarioId,'target_type'=>$type,'target_id'=>$target,'created_by'=>get_current_user_id(),'active'=>1,'activity_key'=>wp_generate_uuid4(),'settings'=>wp_json_encode($validated)]));
+            return;
+        }
         ScenarioRepository::check($wpdb->query($wpdb->prepare('INSERT INTO ' . ScenarioRepository::table('assignments') .
             ' (scenario_id,target_type,target_id,created_by,active) VALUES (%d,%s,%s,%d,%d) ON DUPLICATE KEY UPDATE active=VALUES(active)',
             $scenarioId, $type, $target, get_current_user_id(), $active ? 1 : 0)));
@@ -66,7 +77,13 @@ final class AssignmentService
         $where = $scenarioId !== null ? $wpdb->prepare('a.scenario_id=%d', $scenarioId) : "a.active=1 AND s.status='published'";
         $rows = $wpdb->get_results('SELECT a.*,s.title FROM ' . ScenarioRepository::table('assignments') . ' a JOIN ' . ScenarioRepository::table('scenarios') . " s ON s.id=a.scenario_id WHERE $where ORDER BY a.id DESC", ARRAY_A) ?: [];
         if ($scenarioId !== null) { return $rows; }
-        return array_values(array_map(static fn($a) => array_intersect_key($a, array_flip(['id','scenario_id','title'])),
+        return array_values(array_map(static function($a) {
+            $out = array_intersect_key($a, array_flip(['id','scenario_id','title']));
+            $settings = Assessment::settings($a);
+            $out['mode']=$settings['mode']; $out['label']=$settings['label'] ?? '';
+            if ($out['label']) { $out['title'] .= ' — '.$out['label']; }
+            return $out;
+        },
             array_filter($rows, fn($a) => $this->allows($a, get_current_user_id()))));
     }
     public function targets(string $search = ''): array

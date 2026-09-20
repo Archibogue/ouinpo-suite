@@ -6,6 +6,8 @@ Toutes les modifications notables de OuInPo Suite sont documentées dans ce fich
 
 ### Ajouté
 
+- Espace « Traiter le ticket » réunissant actions, tests et conversation, avec boutons Ressources, Notes et Historique et repère de progression indicatif.
+
 - Dialogues IA facultatifs avec demandeur et spécialistes : contextes séparés définis par le professeur, historique et export, quotas et absence de validation automatique des actions. Modèle JSON adapté au parcours complet avec création de fiche et interlocuteurs IA.
 
 - Mode facultatif de création d'un ticket à partir d'un message utilisateur brut : fiche rédigée par l'élève, questions préparées, historique des versions et bilan enrichi. Le mode ticket préparé reste inchangé par défaut.

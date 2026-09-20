@@ -95,7 +95,8 @@ class Ouinpo_Submissions_Plugin {
     const UPLOAD_ALLOWED_MIMES = array(
         'pdf'  => 'application/pdf',
         'txt'  => 'text/plain',
-        'md'   => 'text/markdown',
+        // PHP/WordPress detect ordinary Markdown as text/plain during upload.
+        'md'   => 'text/plain',
         'csv'  => 'text/csv',
         'json' => 'application/json',
         'sql'  => 'application/sql',
@@ -316,7 +317,7 @@ class Ouinpo_Submissions_Plugin {
 
         $filename = wp_basename($uploaded['file']);
 
-        $filetype = wp_check_filetype($filename, null);
+        $filetype = wp_check_filetype($filename, self::UPLOAD_ALLOWED_MIMES);
 
         $title    = preg_replace('/\.[^.]+$/', '', $filename);
 
@@ -2229,7 +2230,11 @@ class Ouinpo_Submissions_Plugin {
 
                             foreach ($item['files'] as $f) {
 
-                                echo '<li><a href="'.esc_url($f['url']).'">'.esc_html($f['title']).'</a></li>';
+                                echo '<li><a href="'.esc_url($f['url']).'">'.esc_html($f['title']).'</a>';
+                                if (strtolower(pathinfo((string) get_attached_file($f['id']), PATHINFO_EXTENSION)) === 'md') {
+                                    echo ' — <a target="_blank" rel="noopener" href="'.esc_url(add_query_arg('ouinpo_preview', 'markdown', $f['url'])).'">Lire le Markdown (nouvel onglet)</a>';
+                                }
+                                echo '</li>';
 
                             }
 
@@ -2721,6 +2726,17 @@ class Ouinpo_Submissions_Plugin {
 
 
 
+            if (($_GET['ouinpo_preview'] ?? '') === 'markdown') {
+                if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) !== 'md') { status_header(400); exit('Aperçu réservé aux fichiers Markdown.'); }
+                if (filesize($file) > 1048576) { status_header(413); exit('Fichier trop volumineux pour cet aperçu. Utilisez le téléchargement.'); }
+                require_once __DIR__ . '/MarkdownPreview.php';
+                nocache_headers();
+                header('Content-Type: text/html; charset=utf-8');
+                header('X-Content-Type-Options: nosniff');
+                header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'");
+                echo Ouinpo_Submissions_MarkdownPreview::page((string) file_get_contents($file), basename($file));
+                exit;
+            }
             $mime = get_post_mime_type($att_id);
 
             header('Content-Type: '.($mime ?: 'application/octet-stream'));

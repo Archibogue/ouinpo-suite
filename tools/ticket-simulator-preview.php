@@ -31,6 +31,7 @@ if (str_starts_with($path, '/api')) {
         }
         elseif ($p === '/scenarios/1') { $result = $_SESSION['scenario']; }
         elseif ($p === '/scenarios/1/assignments') { $result = $method === 'GET' ? [['id'=>1,'target_type'=>'user','target_id'=>'11','active'=>1]] : ['ok'=>true]; }
+        elseif ($p === '/assessment/templates') { $result = \Ouinpo\Suite\Modules\TicketSimulator\Assessment::templates(); }
         elseif ($p === '/assignments') { $result = [['id'=>1,'scenario_id'=>1,'title'=>$_SESSION['scenario']['definition']['title']]]; }
         elseif ($p === '/assignments/1/attempts') {
             if (!isset($_SESSION['attempt'])) {

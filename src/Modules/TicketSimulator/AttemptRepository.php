@@ -19,33 +19,51 @@ final class AttemptRepository
         $where = $wpdb->prepare('student_id=%d', $uid);
         if (\Ouinpo\Suite\Core\Capabilities::can(\Ouinpo\Suite\Core\Capabilities::TICKET_OBSERVE)) { $where .= $wpdb->prepare(' OR teacher_id=%d', $uid); }
         if (PermissionService::all()) { $where = '1=1'; }
-        $rows = $wpdb->get_results('SELECT id,scenario_id,student_id,teacher_id,status,started_at,ended_at FROM ' . ScenarioRepository::table('attempts') . " WHERE $where ORDER BY id DESC LIMIT 200", ARRAY_A) ?: [];
+        $rows = $wpdb->get_results('SELECT * FROM ' . ScenarioRepository::table('attempts') . " WHERE $where ORDER BY id DESC LIMIT 200", ARRAY_A) ?: [];
         $offset = AttemptNumber::offset();
-        foreach ($rows as &$row) { $row['number'] = max(1, (int) $row['id'] - $offset); }
+        foreach ($rows as &$row) {
+            $public= array_intersect_key($row,array_flip(['id','assignment_id','scenario_id','student_id','teacher_id','status','started_at','ended_at']));
+            $public += Presentation::metadata($row);
+            $data=Assessment::data($row);
+            $public['assessment_state']=($data['settings']['mode'] ?? '')==='graded' ? $data['state'] : null;
+            $public['number']=max(1,(int)$row['id']-$offset);
+            $row=$public;
+        }
         unset($row);
         return $rows;
     }
-    public function start(int $assignmentId): int
+    public function start(int $assignmentId, bool $next = false): int
     {
         global $wpdb;
         PermissionService::require(PermissionService::practice());
         $assignment = (new AssignmentService())->get($assignmentId);
-        return $this->transaction(function () use ($assignmentId, $assignment, $wpdb) {
+        return $this->transaction(function () use ($assignmentId, $assignment, $next, $wpdb) {
             // Always lock scenario before assignment/attempt, matching deletion.
             $s = (new ScenarioRepository())->get((int) $assignment['scenario_id'], true);
             $a = (new AssignmentService())->get($assignmentId, true);
             PermissionService::require((new AssignmentService())->allows($a, get_current_user_id()));
             PermissionService::require($s['status'] === 'published');
-            $existing = $wpdb->get_var($wpdb->prepare('SELECT id FROM ' . ScenarioRepository::table('attempts') . " WHERE scenario_id=%d AND student_id=%d AND status<>'archived' ORDER BY id DESC LIMIT 1 FOR UPDATE", $s['id'], get_current_user_id()));
-            if ($existing) { return (int) $existing; }
-            return $this->create($s, $assignmentId, get_current_user_id());
+            $settings = Assessment::settings($a);
+            if (!Assessment::open($settings)) { throw new \DomainException('Activité non ouverte ou échéance dépassée.'); }
+            $existing = $wpdb->get_var($wpdb->prepare('SELECT id FROM ' . ScenarioRepository::table('attempts') . " WHERE assignment_id=%d AND student_id=%d AND status<>'archived' ORDER BY id DESC LIMIT 1 FOR UPDATE", $assignmentId, get_current_user_id()));
+            if ($existing) {
+                if (!$next) { return (int) $existing; }
+                $previous = $this->get((int)$existing, true);
+                if (!Assessment::data($previous) || (Assessment::graded($previous) ? (Assessment::data($previous)['state'] ?? 'working') === 'working' : $previous['status'] !== 'completed')) { throw new \DomainException('Terminez l’entraînement ou remettez l’évaluation avant une nouvelle tentative.'); }
+            }
+            if (!empty($a['settings'])) {
+                $count = (int)$wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM '.ScenarioRepository::table('attempts').' WHERE assignment_id=%d AND student_id=%d', $assignmentId, get_current_user_id()));
+                if ($count >= $settings['attempts']) { throw new \DomainException('Nombre de tentatives autorisées atteint.'); }
+            }
+            return $this->create($s, $assignmentId, get_current_user_id(), !empty($a['settings']) ? $settings : null);
         });
     }
-    private function create(array $s, int $assignmentId, int $student): int
+    private function create(array $s, int $assignmentId, int $student, ?array $settings = null): int
     {
         global $wpdb;
         $data = ['scenario_id' => $s['id'], 'assignment_id' => $assignmentId, 'student_id' => $student,
             'teacher_id' => $s['owner_id'], 'snapshot' => wp_json_encode($s['definition']), 'started_at' => current_time('mysql', true)];
+        if ($settings !== null) { $data['assessment']=wp_json_encode(['settings'=>$settings,'state'=>'working','submissions'=>[],'history'=>[]]); }
         ScenarioRepository::check($wpdb->insert(ScenarioRepository::table('attempts'), $data));
         $id = (int) $wpdb->insert_id;
         foreach ($s['definition']['tickets'] as $ticket) {
@@ -68,13 +86,23 @@ final class AttemptRepository
         $this->transaction(function () use ($id, $ticketId, $revision, $operation, $input, $wpdb) {
             $a = $this->get($id, true);
             PermissionService::require(PermissionService::edit($a));
+            if ($operation === 'dialogue') { PermissionService::require(Assessment::aid($a,'ai_dialogue')); }
+            if ($operation === 'reset_ticket' && Assessment::graded($a)) { throw new \DomainException('Remise à zéro interdite en évaluation.'); }
             if ((int) $a['revision'] !== $revision) { throw new \RuntimeException('La tentative a changé. Rechargez-la avant de réessayer.', 409); }
             $snapshot = json_decode($a['snapshot'], true);
             $ticket = TicketScenario::index($snapshot['tickets'])[$ticketId] ?? null;
             $state = $this->states($id)[$ticketId] ?? null;
             if (!$ticket || !$state) { throw new \RuntimeException('Ticket introuvable.', 404); }
             $events = [];
-            if ($operation === 'dialogue') {
+            if ($operation === 'evidence') {
+                $state['evidence'] = array_intersect_key($input, array_flip(Pedagogy::TRACES));
+                $events[] = ['type'=>'technical_note','text'=>'Traces déclarées par l’élève (à vérifier) : ' . wp_json_encode($state['evidence'])];
+            } elseif ($operation === 'finish_exercise') {
+                if (!in_array($snapshot['completion_status'] ?? '', ['qualified','oriented'], true)) { throw new \DomainException('Utilisez le parcours de résolution de ce scénario.'); }
+                if (Pedagogy::missing($ticket,$state) || Pedagogy::traceMissing($snapshot,$ticket,$state)) { throw new \DomainException('Complétez les traces exigées avant de terminer cet exercice.'); }
+                $state['exercise_completed']=true;
+                $events[]=['type'=>'technical_note','text'=>'Exercice terminé ; statut technique conservé. Présence des traces seulement, pertinence à apprécier.'];
+            } elseif ($operation === 'dialogue') {
                 if ($state['status'] === 'closed') { throw new \DomainException('Ticket clôturé.'); }
                 $events = [
                     ['type'=>'ai_question','recipient'=>$input['recipient'],'text'=>'Vous → ' . $input['label'] . " (IA)\n" . $input['message']],
@@ -89,6 +117,8 @@ final class AttemptRepository
                 $state = ScenarioAttempt::initial($ticket);
                 $events[] = ['type'=>'ticket_reset', 'text'=>'Ticket remis à son état initial. Les traces précédentes appartiennent au traitement antérieur ; qualification, code, tests, temps et résolution ont été réinitialisés.'];
             } elseif ($operation === 'action') {
+                $action = TicketScenario::index($ticket['actions'])[$input['action_id']] ?? [];
+                if (!empty($action['hint'])) { PermissionService::require(Assessment::aid($a,'hints')); }
                 [$state, $events] = (new SimulationEngine(new SimulatedTestEngine($snapshot['resources'])))->perform($ticket, $state, $input['action_id'], $input);
             } elseif ($operation === 'code') {
                 $resource = TicketScenario::index($snapshot['resources'])[$input['resource_id']] ?? null;
@@ -127,6 +157,7 @@ final class AttemptRepository
             $a = $this->get($id, true);
             PermissionService::require(PermissionService::observe($a));
             PermissionService::require(PermissionService::scenario($scenario));
+            if (Assessment::data($a)) { throw new \DomainException('Utilisez une nouvelle tentative autorisée ou la réouverture de l’évaluation.'); }
             if ($a['status'] === 'archived') { throw new \DomainException('Tentative déjà archivée.'); }
             ScenarioRepository::check($wpdb->update(ScenarioRepository::table('attempts'), ['status' => 'archived', 'revision' => (int) $a['revision'] + 1], ['id' => $id]));
             (new EventRepository())->add($a, '', ['type' => 'archived', 'text' => $reset ? 'Archivée pour recommencer.' : 'Archivée.', 'actor_id' => get_current_user_id()]);

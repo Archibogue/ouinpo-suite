@@ -1,0 +1,471 @@
+{
+  "schema_version": "1.0",
+  "pack": {
+    "slug": "ouinpo-pack-bts-sio1-html-css-javascript",
+    "title": "BTS SIO 1re année — HTML, CSS et JavaScript",
+    "description": "12 exercices progressifs (6 h 20 estimées) : 3 HTML, 3 CSS, 5 JavaScript et un mini-projet. Énoncés, deux indices par exercice, corrigés et vérifications manuelles. Compétences pédagogiques locales, sans codification officielle. Travail dans un éditeur et un navigateur, sans framework.",
+    "author": "OuInPo",
+    "license": "CC BY-NC-SA 4.0",
+    "created_at": "2026-09-18"
+  },
+  "school_levels": [
+    {
+      "slug": "bts-sio-1",
+      "label": "BTS SIO 1re année",
+      "sort_order": 50
+    }
+  ],
+  "domains": [
+    {
+      "slug": "bts-sio-web-html",
+      "label": "HTML : structurer une page",
+      "track": "BTS SIO",
+      "description": "Construire une page sémantique avec tableaux et formulaires.",
+      "sort_order": 10,
+      "active": 1
+    },
+    {
+      "slug": "bts-sio-web-css",
+      "label": "CSS : présenter une interface",
+      "track": "BTS SIO",
+      "description": "Appliquer la cascade, le modèle de boîte et une disposition responsive.",
+      "sort_order": 20,
+      "active": 1
+    },
+    {
+      "slug": "bts-sio-web-javascript",
+      "label": "JavaScript : programmer une interaction",
+      "track": "BTS SIO",
+      "description": "Utiliser variables, fonctions, conditions, tableaux, événements et DOM.",
+      "sort_order": 30,
+      "active": 1
+    },
+    {
+      "slug": "bts-sio-web-projet",
+      "label": "Intégration web",
+      "track": "BTS SIO",
+      "description": "Intégrer et vérifier une interface web interactive accessible au clavier.",
+      "sort_order": 40,
+      "active": 1
+    }
+  ],
+  "difficulties": [
+    {
+      "slug": "debutant",
+      "label": "Débutant"
+    },
+    {
+      "slug": "confirme",
+      "label": "Confirmé"
+    }
+  ],
+  "competencies": [
+    {
+      "slug": "bts-sio1-web-html",
+      "track": "BTS SIO",
+      "level": "BTS SIO 1re année",
+      "cycle": "bts-sio-1",
+      "domain": "HTML : structurer une page",
+      "domain_slug": "bts-sio-web-html",
+      "competency": "Construire une page sémantique avec tableaux et formulaires.",
+      "capacity": "Construire une page sémantique avec tableaux et formulaires.",
+      "example": "Activités de développement web en première année.",
+      "reference_url": "",
+      "active": 1
+    },
+    {
+      "slug": "bts-sio1-web-css",
+      "track": "BTS SIO",
+      "level": "BTS SIO 1re année",
+      "cycle": "bts-sio-1",
+      "domain": "CSS : présenter une interface",
+      "domain_slug": "bts-sio-web-css",
+      "competency": "Appliquer la cascade, le modèle de boîte et une disposition responsive.",
+      "capacity": "Appliquer la cascade, le modèle de boîte et une disposition responsive.",
+      "example": "Activités de développement web en première année.",
+      "reference_url": "",
+      "active": 1
+    },
+    {
+      "slug": "bts-sio1-web-javascript",
+      "track": "BTS SIO",
+      "level": "BTS SIO 1re année",
+      "cycle": "bts-sio-1",
+      "domain": "JavaScript : programmer une interaction",
+      "domain_slug": "bts-sio-web-javascript",
+      "competency": "Utiliser variables, fonctions, conditions, tableaux, événements et DOM.",
+      "capacity": "Utiliser variables, fonctions, conditions, tableaux, événements et DOM.",
+      "example": "Activités de développement web en première année.",
+      "reference_url": "",
+      "active": 1
+    },
+    {
+      "slug": "bts-sio1-web-projet",
+      "track": "BTS SIO",
+      "level": "BTS SIO 1re année",
+      "cycle": "bts-sio-1",
+      "domain": "Intégration web",
+      "domain_slug": "bts-sio-web-projet",
+      "competency": "Intégrer et vérifier une interface web interactive accessible au clavier.",
+      "capacity": "Intégrer et vérifier une interface web interactive accessible au clavier.",
+      "example": "Activités de développement web en première année.",
+      "reference_url": "",
+      "active": 1
+    }
+  ],
+  "exercises": [
+    {
+      "title": "01 — Une page de présentation du service informatique",
+      "slug": "bts-sio1-web-01",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 25 min. Objectif : Structurer un document HTML sémantique.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer index.html en français, avec encodage UTF-8, titre et viewport.</li><li>Ajouter header, nav, main et footer ; un h1 Service informatique, une section Services avec h2 et une liste de trois services.</li><li>Le lien Services doit conduire à la section correspondante.</li></ol><h3>Vérifications attendues</h3><ul><li>Le titre de l’onglet est Service informatique.</li><li>Le lien interne atteint la section Services ; un seul h1 est présent.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-html"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>La structure commence par &lt;!doctype html&gt;.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Une ancre href=&quot;#services&quot; cible id=&quot;services&quot;.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>index.html</h3><pre><code>&lt;!doctype html&gt;\n&lt;html lang=&quot;fr&quot;&gt;\n&lt;head&gt;\n  &lt;meta charset=&quot;UTF-8&quot;&gt;\n  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;\n  &lt;title&gt;Service informatique&lt;/title&gt;\n&lt;/head&gt;\n&lt;body&gt;\n  &lt;header&gt;&lt;h1&gt;Service informatique&lt;/h1&gt;&lt;/header&gt;\n  &lt;nav aria-label=&quot;Navigation principale&quot;&gt;&lt;a href=&quot;#services&quot;&gt;Services&lt;/a&gt;&lt;/nav&gt;\n  &lt;main&gt;\n    &lt;section id=&quot;services&quot;&gt;\n      &lt;h2&gt;Services&lt;/h2&gt;\n      &lt;ul&gt;&lt;li&gt;Assistance&lt;/li&gt;&lt;li&gt;Prêt de matériel&lt;/li&gt;&lt;li&gt;Maintenance&lt;/li&gt;&lt;/ul&gt;\n    &lt;/section&gt;\n  &lt;/main&gt;\n  &lt;footer&gt;&lt;p&gt;Lycée — Service informatique&lt;/p&gt;&lt;/footer&gt;\n&lt;/body&gt;\n&lt;/html&gt;</code></pre><p>Les éléments sémantiques décrivent le rôle des zones ; les titres organisent le contenu.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "02 — Un inventaire sous forme de tableau",
+      "slug": "bts-sio1-web-02",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 25 min. Objectif : Présenter des données tabulaires accessibles.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer inventaire.html avec un document HTML complet.</li><li>Dans main, créer un tableau avec caption Inventaire du laboratoire, thead et tbody. Colonnes : Matériel, Quantité, État.</li><li>Afficher Ordinateur / 12 / Disponible et Vidéoprojecteur / 1 / En maintenance. Identifier les en-têtes avec th et scope.</li></ol><h3>Vérifications attendues</h3><ul><li>Le tableau contient trois colonnes et deux lignes de données.</li><li>Le code contient un caption et scope=&quot;col&quot; sur les trois en-têtes.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-html"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Chaque ligne est un tr.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Utiliser td pour les données et th pour les en-têtes.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>inventaire.html</h3><pre><code>&lt;!doctype html&gt;\n&lt;html lang=&quot;fr&quot;&gt;\n&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;&lt;title&gt;Inventaire&lt;/title&gt;&lt;/head&gt;\n&lt;body&gt;&lt;main&gt;\n&lt;h1&gt;Matériel du laboratoire&lt;/h1&gt;\n&lt;table&gt;\n  &lt;caption&gt;Inventaire du laboratoire&lt;/caption&gt;\n  &lt;thead&gt;&lt;tr&gt;&lt;th scope=&quot;col&quot;&gt;Matériel&lt;/th&gt;&lt;th scope=&quot;col&quot;&gt;Quantité&lt;/th&gt;&lt;th scope=&quot;col&quot;&gt;État&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;\n  &lt;tbody&gt;\n    &lt;tr&gt;&lt;td&gt;Ordinateur&lt;/td&gt;&lt;td&gt;12&lt;/td&gt;&lt;td&gt;Disponible&lt;/td&gt;&lt;/tr&gt;\n    &lt;tr&gt;&lt;td&gt;Vidéoprojecteur&lt;/td&gt;&lt;td&gt;1&lt;/td&gt;&lt;td&gt;En maintenance&lt;/td&gt;&lt;/tr&gt;\n  &lt;/tbody&gt;\n&lt;/table&gt;\n&lt;/main&gt;&lt;/body&gt;&lt;/html&gt;</code></pre><p>Un tableau représente des données liées ; il ne sert pas à mettre en page tout le site.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "03 — Un formulaire de demande d’assistance",
+      "slug": "bts-sio1-web-03",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 30 min. Objectif : Associer labels et contrôles et utiliser la validation native.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer assistance.html, document complet, avec un formulaire de démonstration.</li><li>Prévoir nom obligatoire, adresse électronique obligatoire, catégorie (Matériel ou Logiciel), description obligatoire de 10 caractères minimum et bouton Envoyer.</li><li>Relier chaque label au contrôle ; donner un name à chaque champ. Bloquer tout envoi réseau avec un gestionnaire submit qui appelle preventDefault() et affiche Démonstration : aucune demande envoyée.</li></ol><h3>Vérifications attendues</h3><ul><li>Une adresse incorrecte empêche la soumission.</li><li>Une description vide est refusée ; saisir manuellement moins de 10 caractères est refusé.</li><li>Un formulaire valide affiche le message sans recharger la page.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-html"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Utiliser type=&quot;email&quot;, required et minlength.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Le submit est déclenché après la validation native.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>assistance.html</h3><pre><code>&lt;!doctype html&gt;\n&lt;html lang=&quot;fr&quot;&gt;\n&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;&lt;title&gt;Assistance&lt;/title&gt;&lt;/head&gt;\n&lt;body&gt;&lt;main&gt;&lt;h1&gt;Demande d’assistance&lt;/h1&gt;\n&lt;form id=&quot;assistance&quot;&gt;\n  &lt;p&gt;&lt;label for=&quot;nom&quot;&gt;Nom&lt;/label&gt;&lt;input id=&quot;nom&quot; name=&quot;nom&quot; required&gt;&lt;/p&gt;\n  &lt;p&gt;&lt;label for=&quot;email&quot;&gt;Adresse électronique&lt;/label&gt;&lt;input id=&quot;email&quot; name=&quot;email&quot; type=&quot;email&quot; required&gt;&lt;/p&gt;\n  &lt;p&gt;&lt;label for=&quot;categorie&quot;&gt;Catégorie&lt;/label&gt;&lt;select id=&quot;categorie&quot; name=&quot;categorie&quot;&gt;&lt;option&gt;Matériel&lt;/option&gt;&lt;option&gt;Logiciel&lt;/option&gt;&lt;/select&gt;&lt;/p&gt;\n  &lt;p&gt;&lt;label for=&quot;description&quot;&gt;Description&lt;/label&gt;&lt;textarea id=&quot;description&quot; name=&quot;description&quot; minlength=&quot;10&quot; required&gt;&lt;/textarea&gt;&lt;/p&gt;\n  &lt;button type=&quot;submit&quot;&gt;Envoyer&lt;/button&gt;\n&lt;/form&gt;\n&lt;p id=&quot;message&quot; role=&quot;status&quot;&gt;&lt;/p&gt;\n&lt;script&gt;\ndocument.querySelector('#assistance').addEventListener('submit', (event) =&gt; {\n  event.preventDefault();\n  document.querySelector('#message').textContent = 'Démonstration : aucune demande envoyée.';\n});\n&lt;/script&gt;&lt;/main&gt;&lt;/body&gt;&lt;/html&gt;</code></pre><p>La validation du navigateur aide la saisie. Une application réelle doit également contrôler les données sur son serveur.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "04 — Habiller une fiche de matériel",
+      "slug": "bts-sio1-web-04",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 25 min. Objectif : Utiliser les sélecteurs et le modèle de boîte.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer une page fiche.html contenant &lt;article class=&quot;fiche&quot;&gt;&lt;h1&gt;PC portable&lt;/h1&gt;&lt;p&gt;Disponible au prêt&lt;/p&gt;&lt;/article&gt; et lier styles.css.</li><li>Appliquer box-sizing: border-box à tous les éléments. La fiche mesure au maximum 360 px, reste dans la largeur disponible et est centrée.</li><li>Ajouter padding 24 px, bordure 2 px solide #334155, coins arrondis 12 px et fond #f1f5f9. Mettre le texte en #0f172a et utiliser une police sans empattement.</li></ol><h3>Vérifications attendues</h3><ul><li>Dans les outils de développement, la largeur totale de la fiche est de 360 px si la fenêtre le permet.</li><li>À 320 px de fenêtre, la fiche ne provoque pas de défilement horizontal.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-css"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Avec border-box, padding et bordure sont inclus dans width.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Combiner width: 100% et max-width.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>styles.css</h3><pre><code>* { box-sizing: border-box; }\nbody { margin: 0; padding: 16px; font-family: sans-serif; color: #0f172a; }\n.fiche { width: 100%; max-width: 360px; margin: 0 auto; padding: 24px; border: 2px solid #334155; border-radius: 12px; background: #f1f5f9; }</code></pre><p>Le fichier HTML doit contenir &lt;link rel=&quot;stylesheet&quot; href=&quot;styles.css&quot;&gt; dans head. Sans border-box, la bordure et le padding augmenteraient la largeur totale.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "05 — Comprendre la cascade CSS",
+      "slug": "bts-sio1-web-05",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 20 min. Objectif : Expliquer la spécificité et corriger une règle.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer une page contenant &lt;p id=&quot;alerte&quot; class=&quot;message&quot;&gt;Maintenance prévue&lt;/p&gt;.</li><li>Tester ces règles dans cet ordre : p { color: blue; } .message { color: green; } #alerte { color: red; }. Prédire puis vérifier la couleur.</li><li>Obtenir une couleur #9a3412 en modifiant uniquement la valeur de la règle #alerte. Expliquer pourquoi déplacer la règle p à la fin ne suffit pas. Ne pas utiliser !important.</li></ol><h3>Vérifications attendues</h3><ul><li>La couleur initiale est rouge.</li><li>La couleur finale calculée est rgb(154, 52, 18).</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-css"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Comparer les sélecteurs d’identifiant, de classe et de type.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>À origine et importance identiques, la spécificité départage ces règles.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>styles.css</h3><pre><code>p { color: blue; }\n.message { color: green; }\n#alerte { color: #9a3412; }</code></pre><p>Le sélecteur #alerte est plus spécifique que .message, lui-même plus spécifique que p. L’ordre tranche lorsque les autres critères de la cascade sont à égalité.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "06 — Un catalogue responsive avec Flexbox",
+      "slug": "bts-sio1-web-06",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 35 min. Objectif : Adapter une disposition à la largeur de l’écran.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer catalogue.html avec un titre et un conteneur .catalogue contenant trois articles .carte : Ordinateur, Écran et Clavier. Lier styles.css.</li><li>À partir de 700 px de largeur de fenêtre, afficher les trois cartes sur une ligne avec un espace de 16 px. Sous 700 px, les empiler.</li><li>Ajouter padding 16 px et bordure 1 px aux cartes. éviter toute largeur fixe qui déborderait sur mobile.</li></ol><h3>Vérifications attendues</h3><ul><li>À 900 px, les trois cartes occupent une ligne.</li><li>À 699 px et 320 px, elles sont empilées sans débordement horizontal.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-css"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>flex-direction contrôle la direction principale.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Commencer par la disposition mobile puis utiliser @media (min-width: 700px).</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>styles.css</h3><pre><code>* { box-sizing: border-box; }\nbody { margin: 0; padding: 16px; font-family: sans-serif; }\n.catalogue { display: flex; flex-direction: column; gap: 16px; }\n.carte { padding: 16px; border: 1px solid #475569; min-width: 0; overflow-wrap: anywhere; }\n@media (min-width: 700px) {\n  .catalogue { flex-direction: row; }\n  .carte { flex: 1; }\n}</code></pre><p>Une media query applique ici les règles de bureau seulement à partir de 700 px.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "07 — Calculer le coût d’une commande",
+      "slug": "bts-sio1-web-07",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 25 min. Objectif : Manipuler nombres, fonctions et arrondi d’affichage.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Dans calcul.js, Écrire totalTTC(prixHT, quantite, tauxTVA) qui renvoie un nombre sans arrondi intermédiaire. Le taux est un décimal : 0.20 pour 20 %.</li><li>Les arguments sont supposés être des nombres positifs ou nuls. Calculer le total pour un prix de 25 euros HT, 3 unités et 20 % de TVA.</li><li>Afficher le résultat avec deux décimales et le suffixe € dans la console.</li></ol><h3>Vérifications attendues</h3><ul><li>totalTTC(25, 3, 0.20) renvoie 90.</li><li>totalTTC(10, 0, 0.20) renvoie 0.</li><li>totalTTC(12.5, 2, 0) renvoie 25.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-javascript"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Multiplier le montant HT par 1 + tauxTVA.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>toFixed(2) sert à l’affichage et renvoie une chaîne.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>calcul.js</h3><pre><code>function totalTTC(prixHT, quantite, tauxTVA) {\n  return prixHT * quantite * (1 + tauxTVA);\n}\nconsole.log(totalTTC(25, 3, 0.20).toFixed(2) + ' €');</code></pre><p>Séparer le calcul numérique de la présentation évite de transformer trop tôt le résultat en chaîne.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "08 — Classer la priorité d’un incident",
+      "slug": "bts-sio1-web-08",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 25 min. Objectif : Écrire des conditions avec des bornes explicites.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Écrire priorite(nbUtilisateurs, serviceBloque). nbUtilisateurs est un entier positif ou nul et serviceBloque un booléen.</li><li>Renvoyer Haute si le service est bloqué OU si au moins 20 utilisateurs sont touchés ; sinon Normale si au moins 5 utilisateurs sont touchés ; sinon Basse.</li><li>Ces seuils sont une règle fictive de l’exercice. Écrire un appel de test pour chaque borne et pour un service bloqué.</li></ol><h3>Vérifications attendues</h3><ul><li>priorite(0, false) et priorite(4, false) donnent Basse.</li><li>priorite(5, false) et priorite(19, false) donnent Normale.</li><li>priorite(20, false) et priorite(1, true) donnent Haute.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-javascript"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Évaluer la priorité la plus élevée en premier.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>L’opérateur || exprime OU.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>priorite.js</h3><pre><code>function priorite(nbUtilisateurs, serviceBloque) {\n  if (serviceBloque || nbUtilisateurs &gt;= 20) return 'Haute';\n  if (nbUtilisateurs &gt;= 5) return 'Normale';\n  return 'Basse';\n}\nconsole.log(priorite(0, false), priorite(4, false));\nconsole.log(priorite(5, false), priorite(19, false));\nconsole.log(priorite(20, false), priorite(1, true));</code></pre><p>Le retour immédiat évite qu’un incident de priorité Haute soit reclassé par une condition suivante.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "09 — Analyser un tableau de durées",
+      "slug": "bts-sio1-web-09",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "debutant",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 30 min. Objectif : Parcourir un tableau et gérer le cas vide.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Écrire bilan(durees) pour un tableau de durées positives ou nulles en minutes.</li><li>Renvoyer un objet avec total et moyenne, en utilisant une boucle for...of. Pour un tableau vide, renvoyer total: 0 et moyenne: 0.</li><li>Ne pas modifier le tableau reçu.</li></ol><h3>Vérifications attendues</h3><ul><li>bilan([15, 30, 45]) donne { total: 90, moyenne: 30 }.</li><li>bilan([]) donne { total: 0, moyenne: 0 }.</li><li>bilan([0, 10]) donne { total: 10, moyenne: 5 }.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-javascript"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Initialiser un accumulateur à zéro avant la boucle.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Tester length avant de diviser.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>bilan.js</h3><pre><code>function bilan(durees) {\n  let total = 0;\n  for (const duree of durees) total += duree;\n  const moyenne = durees.length === 0 ? 0 : total / durees.length;\n  return { total, moyenne };\n}\nconsole.log(bilan([15, 30, 45]));\nconsole.log(bilan([]));\nconsole.log(bilan([0, 10]));</code></pre><p>Le test du tableau vide évite une division de zéro par zéro, dont le résultat serait NaN.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "10 — Un compteur de tickets avec le DOM",
+      "slug": "bts-sio1-web-10",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "confirme",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 30 min. Objectif : Réagir à un clic et mettre à jour le texte d’une page.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer compteur.html avec un paragraphe affichant Tickets ouverts : suivi d’un span #nombre initialement à 0. Ajouter deux boutons #ajouter et #retirer.</li><li>Charger compteur.js avec defer. Un clic sur Ajouter incrémente ; Retirer décrémente sans jamais passer sous zéro.</li><li>Utiliser addEventListener et textContent.</li></ol><h3>Vérifications attendues</h3><ul><li>Trois clics sur Ajouter affichent 3.</li><li>Quatre clics sur Retirer après ces ajouts affichent 0.</li><li>Un rechargement réinitialise à zéro.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-javascript"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Conserver le nombre dans une variable let.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Math.max(0, valeur) impose une borne inférieure.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>compteur.html</h3><pre><code>&lt;!doctype html&gt;\n&lt;html lang=&quot;fr&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;&lt;title&gt;Compteur&lt;/title&gt;&lt;script src=&quot;compteur.js&quot; defer&gt;&lt;/script&gt;&lt;/head&gt;\n&lt;body&gt;&lt;main&gt;&lt;h1&gt;Suivi des tickets&lt;/h1&gt;&lt;p role=&quot;status&quot;&gt;Tickets ouverts : &lt;span id=&quot;nombre&quot;&gt;0&lt;/span&gt;&lt;/p&gt;&lt;button id=&quot;ajouter&quot; type=&quot;button&quot;&gt;Ajouter&lt;/button&gt;&lt;button id=&quot;retirer&quot; type=&quot;button&quot;&gt;Retirer&lt;/button&gt;&lt;/main&gt;&lt;/body&gt;&lt;/html&gt;</code></pre><h3>compteur.js</h3><pre><code>let nombre = 0;\nconst sortie = document.querySelector('#nombre');\ndocument.querySelector('#ajouter').addEventListener('click', () =&gt; {\n  nombre += 1;\n  sortie.textContent = nombre;\n});\ndocument.querySelector('#retirer').addEventListener('click', () =&gt; {\n  nombre = Math.max(0, nombre - 1);\n  sortie.textContent = nombre;\n});</code></pre><p>defer permet au script externe de s’exécuter une fois le document analysé. Les valeurs restent en mémoire pendant la vie de la page.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "11 — Déboguer une addition dans un formulaire",
+      "slug": "bts-sio1-web-11",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "confirme",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 35 min. Objectif : Convertir les saisies et traiter les entrées invalides.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer une page avec formulaire #addition, deux champs texte #a et #b, un bouton submit et un paragraphe #resultat avec role=&quot;status&quot;. Charger addition.js avec defer.</li><li>Le code défectueux calcule document.querySelector(&quot;#a&quot;).value + document.querySelector(&quot;#b&quot;).value : expliquer pourquoi 2 et 3 donnent 23.</li><li>Corriger : refuser une saisie vide ou composée d’espaces, convertir avec Number, refuser les valeurs non finies et afficher la somme. Empêcher le rechargement. Les décimaux sont saisis avec un point.</li></ol><h3>Vérifications attendues</h3><ul><li>2 et 3 affichent 5 ; 2.5 et 3 affichent 5.5.</li><li>Une saisie vide, des espaces, abc ou Infinity affichent Saisies invalides.</li><li>0 et -2 affichent -2.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-javascript"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>La propriété value d’un champ est une chaîne.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Tester trim() avant Number(), car Number(&quot;&quot;) vaut 0.</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>addition.js</h3><pre><code>document.querySelector('#addition').addEventListener('submit', (event) =&gt; {\n  event.preventDefault();\n  const texteA = document.querySelector('#a').value.trim();\n  const texteB = document.querySelector('#b').value.trim();\n  const a = Number(texteA);\n  const b = Number(texteB);\n  const resultat = document.querySelector('#resultat');\n  if (texteA === '' || texteB === '' || !Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(a + b)) {\n    resultat.textContent = 'Saisies invalides';\n    return;\n  }\n  resultat.textContent = String(a + b);\n});</code></pre><p>Le symbole + concatène deux chaînes ; la conversion explicite permet l’addition. Le résultat est aussi contrôlé pour détecter un dépassement numérique.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    },
+    {
+      "title": "12 — Mini-projet : une liste de demandes d’assistance",
+      "slug": "bts-sio1-web-12",
+      "level_slug": "bts-sio-1",
+      "difficulty_slug": "confirme",
+      "statement": "<p>BTS SIO 1re année — Durée indicative : 75 min. Objectif : Assembler HTML, CSS et JavaScript dans une petite interface.</p><p>Préparer et tester le code dans un éditeur et un navigateur récent, sans framework, puis coller la réponse dans la zone de saisie du module Exercices. Les noms de fichiers indiqués servent à organiser le travail local. Pour un script seul, utiliser la console du navigateur ou le charger depuis une page HTML avec &lt;script src=&quot;nom-du-fichier.js&quot; defer&gt;&lt;/script&gt;.</p><h3>Travail demandé</h3><ol><li>Créer index.html, styles.css et app.js. Prévoir h1, formulaire, label, champ #demande, bouton Ajouter, liste #demandes et message #message avec role=&quot;status&quot;.</li><li>Au submit, empêcher le rechargement. Refuser une saisie vide ou composée d’espaces avec le message Saisissez une demande.</li><li>Ajouter chaque demande comme texte dans un li muni d’un bouton Supprimer qui retire uniquement cette ligne. Vider le champ et lui rendre le focus après un ajout.</li><li>La page doit fonctionner à 320 px sans débordement. Les demandes ne sont pas sauvegardées après rechargement. Ne pas utiliser innerHTML pour insérer la saisie.</li></ol><h3>Vérifications attendues</h3><ul><li>Ajouter deux demandes puis supprimer la première : la seconde reste visible.</li><li>Des espaces seuls n’ajoutent aucune ligne.</li><li>Saisir &lt;b&gt;Test&lt;/b&gt; affiche ce texte littéralement.</li><li>Les boutons sont accessibles au clavier ; à 320 px, une longue demande revient à la ligne.</li></ul><h3>Réponse à saisir dans le module</h3><p>Coller le code demandé directement dans la zone de saisie. Si plusieurs fichiers sont nécessaires, regrouper leur contenu dans une seule réponse en plaçant le nom de chaque fichier sur une ligne avant son code. Ajouter les explications demandées et un court compte rendu des vérifications : résultat attendu et résultat observé. Aucun fichier ni capture d’écran à joindre.</p><p>Effectuer les vérifications dans le navigateur et vérifier aussi l’absence d’erreur dans la console. La zone de saisie recueille votre réponse ; ce pack ne configure pas d’exécution du code ni de correction automatique.</p>",
+      "is_active": 1,
+      "competency_slugs": [
+        "bts-sio1-web-html",
+        "bts-sio1-web-css",
+        "bts-sio1-web-javascript",
+        "bts-sio1-web-projet"
+      ],
+      "hints": [
+        {
+          "order": 1,
+          "content": "<p>Créer les nœuds avec document.createElement.</p>"
+        },
+        {
+          "order": 2,
+          "content": "<p>Le gestionnaire du bouton Supprimer peut appeler li.remove().</p>"
+        }
+      ],
+      "solutions": [
+        {
+          "order": 1,
+          "title": "Corrigé possible et explication",
+          "content": "<h3>index.html</h3><pre><code>&lt;!doctype html&gt;\n&lt;html lang=&quot;fr&quot;&gt;\n&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;&lt;title&gt;Assistance&lt;/title&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;styles.css&quot;&gt;&lt;script src=&quot;app.js&quot; defer&gt;&lt;/script&gt;&lt;/head&gt;\n&lt;body&gt;&lt;main&gt;&lt;h1&gt;Demandes d’assistance&lt;/h1&gt;\n&lt;form id=&quot;formulaire&quot;&gt;&lt;label for=&quot;demande&quot;&gt;Nouvelle demande&lt;/label&gt;&lt;input id=&quot;demande&quot; name=&quot;demande&quot; type=&quot;text&quot;&gt;&lt;button type=&quot;submit&quot;&gt;Ajouter&lt;/button&gt;&lt;/form&gt;\n&lt;p id=&quot;message&quot; role=&quot;status&quot;&gt;&lt;/p&gt;&lt;ul id=&quot;demandes&quot;&gt;&lt;/ul&gt;\n&lt;/main&gt;&lt;/body&gt;&lt;/html&gt;</code></pre><h3>styles.css</h3><pre><code>* { box-sizing: border-box; }\nbody { margin: 0; padding: 16px; font-family: sans-serif; color: #0f172a; }\nmain { max-width: 700px; margin: auto; }\nform { display: flex; flex-direction: column; gap: 8px; }\ninput, button { font: inherit; padding: 10px; max-width: 100%; }\ninput { min-width: 0; }\nul { padding: 0; list-style: none; }\nli { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #64748b; }\nli span { flex: 1; min-width: 0; overflow-wrap: anywhere; }\n:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }</code></pre><h3>app.js</h3><pre><code>const formulaire = document.querySelector('#formulaire');\nconst champ = document.querySelector('#demande');\nconst liste = document.querySelector('#demandes');\nconst message = document.querySelector('#message');\nformulaire.addEventListener('submit', (event) =&gt; {\n  event.preventDefault();\n  const texte = champ.value.trim();\n  if (texte === '') {\n    message.textContent = 'Saisissez une demande.';\n    champ.focus();\n    return;\n  }\n  const li = document.createElement('li');\n  const contenu = document.createElement('span');\n  contenu.textContent = texte;\n  const supprimer = document.createElement('button');\n  supprimer.type = 'button';\n  supprimer.textContent = 'Supprimer';\n  supprimer.setAttribute('aria-label', 'Supprimer la demande : ' + texte);\n  supprimer.addEventListener('click', () =&gt; {\n    li.remove();\n    message.textContent = 'Demande supprimée.';\n    champ.focus();\n  });\n  li.append(contenu, supprimer);\n  liste.append(li);\n  champ.value = '';\n  champ.focus();\n  message.textContent = 'Demande ajoutée.';\n});</code></pre><p>textContent conserve la saisie comme texte. Chaque bouton possède un gestionnaire associé à sa propre ligne. Le projet fonctionne localement sans serveur ni dépendance.</p><p>Accepter toute solution équivalente qui satisfait les consignes et les vérifications.</p>",
+          "is_official": 1
+        }
+      ]
+    }
+  ],
+  "flashcards": [],
+  "badges": []
+}

@@ -7,6 +7,16 @@ final class Pedagogy
 {
     public const NATURES = ['incident','service','evolution'];
     public const QUALIFICATION = ['nature','impact','urgency','priority','priority_justification'];
+    public const TRACES = ['context','information','initial_response','orientation','symptom','hypothesis','observed','correction','verification','proof','reflection'];
+    public static function traceMissing(array $scenario, array $ticket, array $state): array
+    {
+        $objective = $scenario['completion_status'] ?? 'resolved';
+        $required = array_unique(array_merge($ticket['trace_required'] ?? [], in_array($objective,['qualified','oriented'],true) ? ['context','information','initial_response'] : []));
+        if ($objective === 'oriented') { $required[]='orientation'; }
+        $missing=array_values(array_filter($required, static fn($key)=>trim($state['evidence'][$key] ?? '') === ''));
+        if (TicketIntake::enabled($ticket) && empty($state['intake'])) { $missing[]='Fiche de demande'; }
+        return $missing;
+    }
     public static function missing(array $ticket, array $state): array
     {
         return array_values(array_filter($ticket['qualification_required'] ?? [], static function ($key) use ($state): bool {
@@ -28,7 +38,14 @@ final class Pedagogy
     {
         $allowed = ($scenario['completion_status'] ?? 'resolved') === 'closed' ? ['closed'] : ['resolved','closed'];
         foreach ($scenario['tickets'] as $ticket) {
+            if (!empty($ticket['optional'])) { continue; }
+            if (in_array($scenario['completion_status'] ?? '', ['qualified','oriented'], true)) {
+                $state=$states[$ticket['id']] ?? [];
+                if (empty($state['exercise_completed']) || self::missing($ticket,$state) || self::traceMissing($scenario,$ticket,$state)) { return false; }
+                continue;
+            }
             if (!in_array($states[$ticket['id']]['status'] ?? '', $allowed, true)) { return false; }
+            if (self::traceMissing($scenario,$ticket,$states[$ticket['id']] ?? [])) { return false; }
         }
         return true;
     }

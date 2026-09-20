@@ -2,7 +2,7 @@
   "use strict";
   const ui = window.OuinpoTicketUI;
   if (!ui) return;
-  const { api, el, button, field, select, error, Desk, statuses } = ui;
+  const { api, el, button, field, select, error, Desk, statuses, stateNames, dateLabel, timeZone } = ui;
   const resources = {
     application: "Application",
     source: "Fichier source",
@@ -26,6 +26,7 @@
     test: "Test simulé",
     diagnostic: "Diagnostic",
     technical: "Action technique / correction",
+    technical_note: "Note technique interne",
     communication: "Communication",
     specialist: "Avis spécialiste",
     transfer: "Transfert temporaire",
@@ -121,15 +122,111 @@
     expected_solution: "",
   });
   class Admin {
+    async assessmentAssignment(scenarioId,parent,targets,scenario) {
+      const box=el('details');box.append(el('summary','Créer une activité distincte : entraînement ou évaluation notée'));parent.append(box);
+      const name=field(box,'Nom de l’activité');
+      const mode=select(box,'Mode',[['practice','Entraînement'],['graded','Évaluation notée']],'practice');
+      const target=select(box,'Affectation',targets.map(t=>[t.type+'|'+t.id,t.label]),targets[0]?targets[0].type+'|'+targets[0].id:'');
+      const opens=field(box,`Ouverture (${timeZone})`);opens.type='datetime-local';
+      const due=field(box,`Échéance (${timeZone})`);due.type='datetime-local';
+      const attempts=field(box,'Tentatives autorisées',1);attempts.type='number';attempts.min='1';attempts.max='100';
+      const late=select(box,'Retard',[['block','Interdire'],['flag','Accepter et signaler']],'block');
+      const publication=field(box,`Publication manuelle possible à partir de (facultatif, ${timeZone})`);publication.type='datetime-local';
+      box.append(el('p','Les résultats nécessitent toujours une publication explicite de l’enseignant. Chaque création produit une nouvelle affectation indépendante.'));
+      const aids={};
+      for(const [key,label] of Object.entries({hints:'Indices marqués comme aides',ai_advice:'Conseils IA dans le bilan',ai_dialogue:'Dialogues IA'})) {
+        aids[key]=select(box,label,[['yes','Autorisés'],['no','Interdits']],'yes');
+      }
+      mode.addEventListener('change',()=>Object.values(aids).forEach(s=>s.value=mode.value==='graded'?'no':'yes'));
+      const templates=await api('/assessment/templates');let rows=structuredClone(Object.values(templates)[0]);
+      const grid=el('div');const total=el('p');
+      select(box,'Modèle de grille',Object.keys(templates).map(k=>[k,k]),Object.keys(templates)[0],key=>{rows=structuredClone(templates[key]);draw();});
+      box.append(grid,total);
+      const sum=()=>total.textContent='Total : '+rows.reduce((n,r)=>n+Number(r.max||0),0)+' points ; note /20 arrondie au centième.';
+      const draw=()=>{
+        grid.replaceChildren();
+        rows.forEach((r,i)=>{
+          const row=el('fieldset');row.append(el('legend','Critère '+(i+1)));grid.append(row);
+          for(const [key,label] of Object.entries({title:'Intitulé',instruction:'Attendu visible par l’élève',max:'Points maximum',competence:'Repère de compétence facultatif',private:'Indications de correction privées'})) {
+            const input=field(row,label,r[key],['instruction','private'].includes(key));
+            if(key==='max') {input.type='number';input.min='0';input.max='1000';input.step='0.01';}
+            input.addEventListener('input',()=>{r[key]=key==='max'?Number(input.value):input.value;sum();});
+          }
+          select(row,'Portée',[['','Ensemble du scénario'],...scenario.tickets.filter(t=>!t.optional).map(t=>[t.id,t.title])],r.ticket,v=>r.ticket=v);
+          row.append(button('Retirer ce critère',()=>{rows.splice(i,1);draw();},this.root));
+        });sum();
+      };draw();
+      box.append(button('Ajouter un critère',()=>{rows.push({id:id('criterion'),title:'Nouveau critère',instruction:'',max:1,competence:'',private:'',ticket:''});draw();},this.root));
+      box.append(button('Créer cette activité pour la cible sélectionnée',async()=>{
+        const [type,tid]=target.value.split('|');if(!tid) throw new Error('Sélectionnez une cible.');
+        const utc=input=>input.value?new Date(input.value).toISOString().replace('.000Z','Z'):'';
+        await api(`/scenarios/${scenarioId}/assignments`,'POST',{type,target:tid,active:true,settings:{label:name.value,mode:mode.value,opens_at:utc(opens),due_at:utc(due),publish_after:utc(publication),attempts:Number(attempts.value),late_policy:late.value,...Object.fromEntries(Object.entries(aids).map(([k,v])=>[k,v.value==='yes'])),rubric:rows}});
+        await this.assignments(scenarioId,parent);
+      },this.root));
+    }
+    async results() {
+      this.view=Symbol('results');
+      const root=this.root;root.replaceChildren(el('h2','Remises et correction'));
+      root.append(button('Retour',()=>this.home(),root));
+      const loading=el('p','Chargement des remises…');loading.setAttribute('role','status');root.append(loading);
+      let available;
+      try {available=await api('/assessment/results');}catch(e){loading.remove();error(root,e);return;}
+      if(!loading.isConnected)return;
+      loading.remove();
+      const filters=el('div',undefined,'ouinpo-ticket-filters');root.append(filters);
+      const choices=(key)=>[...new Map(available.flatMap(r=>r[key]||[]).map(v=>[String(v.id),v.label])).entries()];
+      const activities=[...new Map(available.map(r=>[String(r.assignment),`${r.activity_name||r.label||r.scenario_title} — ${r.scenario_title} (#${r.assignment})`])).entries()];
+      const assignment=select(filters,'Activité',[['','Toutes les activités'],...activities],'');
+      const cls=select(filters,'Classe',[['','Toutes les classes'],...choices('classes')],'');
+      const group=select(filters,'Groupe',[['','Tous les groupes'],...choices('groups')],'');
+      const state=select(filters,'Remise et correction',[['','Tous les états'],...['working','submitted','correcting','published'].map(k=>[k,stateNames[k]])],'');
+      const search=field(filters,'Rechercher un élève');search.type='search';
+      root.append(el('p','Les filtres classe/groupe incluent la cible de l’affectation et les appartenances actuelles des élèves affectés individuellement.'));
+      const list=el('div');root.append(list);
+      const query=()=>'?'+new URLSearchParams({assignment:assignment.value,class:cls.value,group:group.value,state:state.value,search:search.value.trim()});
+      let request=0;
+      const draw=async()=>{
+        const current=++request;const progress=el('p','Chargement des remises…');progress.setAttribute('role','status');list.replaceChildren(progress);
+        try {
+          const rows=await api('/assessment/results'+query());if(current!==request || !list.isConnected)return;
+          list.replaceChildren();
+          if(!rows.length){list.append(el('p','Aucune tentative pour ces filtres. Les activités apparaissent ici dès qu’un élève les commence.'));return;}
+          const count=el('p',`${rows.length} tentative(s)`);count.setAttribute('role','status');list.append(count);
+          const table=el('table',undefined,'ouinpo-ticket-results');table.append(el('caption','Tentatives des élèves autorisés'));
+          const head=el('thead');const headings=el('tr');
+          ['Élève','Activité','Dernière remise','Remise et correction','Note publiée','Consulter'].forEach(title=>{const th=el('th',title);th.setAttribute('scope','col');headings.append(th);});head.append(headings);table.append(head);
+          const body=el('tbody');table.append(body);list.append(table);
+          rows.forEach(r=>{
+            const row=el('tr');body.append(row);
+            const cell=(label,...nodes)=>{const td=el('td');td.dataset.label=label;td.append(...nodes);row.append(td);};
+            cell('Élève',el('strong',r.student_name),el('small',`Compte #${r.student} · tentative #${r.id}`));
+            cell('Activité',el('strong',r.activity_name||r.label||r.scenario_title),el('small',r.scenario_title));
+            cell('Dernière remise',el('span',dateLabel(r.submitted_at,'Pas encore remis')),el('strong',r.late?'En retard':''));
+            cell('Remise et correction',el('span',stateNames[r.state]));
+            cell('Note publiée',el('span',r.grade===null?'Aucune note publiée':Number(r.grade).toLocaleString('fr-FR')+' / 20'));
+            const open=button('Ouvrir',async()=>new Desk(root,await api('/attempts/'+r.id),()=>this.results()),root);open.setAttribute('aria-label',`Ouvrir la tentative de ${r.student_name} — ${r.activity_name||r.label}`);cell('Consulter',open);
+          });
+        }catch(e){if(current===request){list.replaceChildren();error(list,e);}}
+      };
+      [assignment,cls,group,state].forEach(input=>input.addEventListener('change',draw));
+      search.addEventListener('keydown',e=>{if(e.key==='Enter')draw();});
+      root.append(button('Filtrer',draw,root),button('Exporter les résultats CSV',async()=>{
+        const result=await api('/assessment/results/csv'+query());
+        const url=URL.createObjectURL(new Blob([result.csv],{type:'text/csv;charset=utf-8'}));const link=el('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      },root));root.append(list);await draw();
+    }
     constructor(root) {
       this.root = root;
       this.manage = root.dataset.canManage === "1";
       this.home();
     }
     async home() {
+      const view=this.view=Symbol('home');
       try {
         this.root.replaceChildren(el("h1", window.OuinpoTicketing.name));
+        const loading=el('p','Chargement des scénarios et tentatives…');loading.setAttribute('role','status');this.root.append(loading);
         if (this.manage) {
+          this.root.append(button('Remises, correction et export CSV',()=>this.results(),this.root));
           const toolbar = el("div");
           toolbar.append(
             button(
@@ -193,11 +290,13 @@
           this.root.append(toolbar);
           this.root.append(el("h2", "Mes scénarios"));
           const scenarios = await api("/scenarios");
+          if(this.view!==view)return;
+          if(!scenarios.length)this.root.append(el('p','Aucun scénario accessible.'));
           scenarios.forEach((s) => {
             const row = el("div", undefined, "ouinpo-ticket-admin-row");
             row.append(
               button(
-                `${s.title} · ${s.status} · v${s.revision}`,
+                `${s.title} · ${{published:'Publié',draft:'Brouillon',archived:'Archivé'}[s.status]||s.status} · v${s.revision}`,
                 async () => this.edit(await api("/scenarios/" + s.id)),
                 this.root,
               ),
@@ -240,6 +339,8 @@
           );
         }
         const attempts = await api("/attempts");
+        if(this.view!==view)return;
+        loading.remove();
         const filter = field(
           this.root,
           "Filtrer par étudiant, scénario ou tentative",
@@ -250,8 +351,8 @@
           list.replaceChildren();
           attempts
             .filter((a) =>
-              `${a.student_id} ${a.scenario_id} ${a.number ?? a.id}`.includes(
-                filter.value,
+              `${a.student_name} ${a.scenario_title} ${a.activity_name} ${a.student_id} ${a.scenario_id} ${a.number ?? a.id}`.toLocaleLowerCase('fr').includes(
+                filter.value.toLocaleLowerCase('fr'),
               ),
             )
             .forEach((a) => {
@@ -259,7 +360,7 @@
               row.append(
                 el(
                   "span",
-                  `Étudiant #${a.student_id} · scénario #${a.scenario_id} · tentative #${a.number ?? a.id} · ${a.status}`,
+                  `${a.student_name} — ${a.scenario_title}${a.activity_name?' — '+a.activity_name:''} · ${stateNames[a.status]||a.status}${a.assessment_state?' · '+stateNames[a.assessment_state]:''} · tentative #${a.number ?? a.id} (élève #${a.student_id})`,
                 ),
                 button(
                   "Observer",
@@ -270,7 +371,7 @@
                   this.root,
                 ),
               );
-              if (a.status !== "archived" && this.manage) {
+              if (a.status !== "archived" && this.manage && !a.configured_activity) {
                 row.append(
                   button(
                     "Archiver",
@@ -321,6 +422,7 @@
               }
               list.append(row);
             });
+          if(!list.children.length)list.append(el('p','Aucune tentative pour cette recherche.'));
         };
         filter.addEventListener("input", draw);
         draw();
@@ -329,6 +431,7 @@
       }
     }
     edit(record) {
+      this.view=Symbol('editor');
       this.record = record;
       this.drawEditor();
     }
@@ -519,6 +622,8 @@
       root.append(toolbar);
       this.text(root, s, "title", "Titre");
       this.text(root, s, "description", "Contexte", true);
+      this.text(root, s, 'priority_policy', 'Grille de priorité propre au scénario (codes P1/P2, libellés et justification)', true);
+      this.text(root, s, 'service_agreement', 'Engagements : périmètre, prise en charge, résolution éventuelle, escalade (hors échéance de séance)', true);
       s.completion_status ??= "resolved";
       this.choice(
         root,
@@ -526,6 +631,8 @@
         "completion_status",
         "Parcours terminé lorsque tous les tickets sont…",
         [
+          ["qualified", "Qualifiés avec traces (sans résolution)"],
+          ["oriented", "Orientés avec traces (sans résolution)"],
           ["resolved", "Résolus (ou clôturés)"],
           ["closed", "Clôturés"],
         ],
@@ -714,6 +821,10 @@
             }
           });
           const pedagogy = this.section(p, "Accompagnement pédagogique");
+          this.check(pedagogy,t,'optional','Extension facultative, hors fin du parcours essentiel');
+          this.refs(pedagogy,t,'trace_required','Traces exigées (présence seulement)',[
+            ['context','Contexte'],['information','Informations recherchées'],['initial_response','Réponse initiale'],['orientation','Orientation documentée'],['symptom','Reproduction'],['hypothesis','Hypothèse et test'],['observed','Résultat observé'],['correction','Correction'],['verification','Vérification'],['proof','Preuves'],['reflection','Bilan personnel']
+          ].map(([id,label])=>({id,label})));
           this.check(
             pedagogy,
             t,
@@ -727,6 +838,7 @@
             "Champs à renseigner avant résolution (mode guidé)",
             [
               { id: "nature", label: "Nature de la demande" },
+              { id: "category", label: "Catégorie technique" },
               { id: "impact", label: "Impact" },
               { id: "urgency", label: "Urgence" },
               { id: "priority", label: "Priorité" },
@@ -861,6 +973,7 @@
                 [["", "Diagnostic par défaut"], ...Object.entries(statuses)],
               );
               this.check(ap, a, "requires_message", "Exiger un message écrit");
+              this.check(ap,a,'hint','Aide facultative : soumise à l’autorisation de l’affectation');
               this.check(ap, a, "repeatable", "Action répétable");
               this.choice(
                 ap,
@@ -999,6 +1112,15 @@
         api(`/scenarios/${id}`),
       ]);
       container.replaceChildren(el("summary", "Affectations"));
+      await this.assessmentAssignment(id,container,targets,savedScenario.definition);
+      current.filter(a=>a.activity_key).forEach(a=>{
+        const settings=JSON.parse(a.settings||'{}');
+        const targetName=targets.find(t=>t.type===a.target_type && String(t.id)===String(a.target_id))?.label || `Cible indisponible (#${a.target_id})`;
+        container.append(el('p',`${settings.label||'Activité sans nom'} — ${settings.mode==='graded'?'Évaluation notée':'Entraînement'} — ${targetName} — ${Number(a.active)?'Active':'Retirée'} (activité #${a.id})`));
+        if(Number(a.active)) container.append(button('Retirer cette activité',async()=>{
+          await api(`/scenarios/${id}/assignments`,'POST',{type:a.target_type,target:a.target_id,active:false,assignment_id:Number(a.id)});await this.assignments(id,container);
+        },this.root));
+      });
       if (savedScenario.status !== "published") {
         const notice = el("div", undefined, "ouinpo-ticket-notice");
         notice.append(
@@ -1032,7 +1154,7 @@
         list.replaceChildren();
         items.forEach((target) => {
           const exists = current.find(
-            (a) => a.target_type === target.type && a.target_id === target.id,
+            (a) => !a.activity_key && a.target_type === target.type && a.target_id === target.id,
           );
           const row = el("div", "", "ouinpo-ticket-admin-row");
           row.append(

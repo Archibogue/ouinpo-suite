@@ -1,0 +1,2235 @@
+{
+  "format_version": 1,
+  "title": "SPOPI v2 — Approfondissements facultatifs séparés",
+  "description": "Activité indépendante : T02/T04, évolutions et passerelles support/réseau. À proposer après le parcours essentiel ; ne retire aucun point à ce dernier. Manipulations extérieures déclarées et appréciation humaine. Les comparaisons de code sont indicatives.",
+  "users": [
+    {
+      "id": "gerard",
+      "label": "Gérard Ticket",
+      "service": "Centre de services"
+    },
+    {
+      "id": "lea",
+      "label": "Léa Navigue",
+      "service": "Ressources humaines"
+    },
+    {
+      "id": "ines",
+      "label": "Inès Cadre",
+      "service": "Communication interne"
+    },
+    {
+      "id": "hugo",
+      "label": "Hugo Raire",
+      "service": "Accueil"
+    },
+    {
+      "id": "sarah",
+      "label": "Sarah Conseil",
+      "service": "Accompagnement utilisateurs"
+    },
+    {
+      "id": "paul",
+      "label": "Paul Attente",
+      "service": "Gestion"
+    },
+    {
+      "id": "emma",
+      "label": "Emma Mobile",
+      "service": "Communication interne"
+    },
+    {
+      "id": "luc",
+      "label": "Luc Papier",
+      "service": "Accueil"
+    },
+    {
+      "id": "nora",
+      "label": "Nora Signal",
+      "service": "Formation"
+    },
+    {
+      "id": "marc",
+      "label": "Marc Oubli",
+      "service": "Ressources humaines"
+    }
+  ],
+  "specialists": [
+    {
+      "id": "front",
+      "label": "Camille Balise — spécialiste front-end",
+      "service": "Études et développement"
+    },
+    {
+      "id": "network",
+      "label": "Nadia Paquet — administratrice réseau",
+      "service": "Infrastructure"
+    },
+    {
+      "id": "support",
+      "label": "Gérard Ticket — responsable support",
+      "service": "Centre de services"
+    }
+  ],
+  "resources": [
+    {
+      "id": "portal",
+      "label": "Portail collaborateurs SPOPI",
+      "type": "application",
+      "filename": "portail-spopi.txt",
+      "language": "text",
+      "content": "SPOPI / DSIIR — Portail collaborateurs de formation\nFichiers : index.html, centre-services.html, style.css, script.js\nEnvironnement : copie locale, navigateur récent."
+    },
+    {
+      "id": "index_bad",
+      "label": "Accueil — version livrée",
+      "type": "source",
+      "filename": "index.html",
+      "language": "html",
+      "content": "<!doctype html>\r\n<html lang=\"fr\">\r\n<head>\r\n  <meta charset=\"UTF-8\">\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n  <title>Portail collaborateurs | SPOPI</title>\r\n  <link rel=\"stylesheet\" href=\"style.css\">\r\n  <script src=\"script.js\" defer></script>\r\n</head>\r\n<body>\r\n  <header>\r\n    <p class=\"marque\">SPOPI / DSIIR</p>\r\n    <p>Services aux collaborateurs</p>\r\n    <nav aria-label=\"Navigation principale\">\r\n      <a href=\"index.html\" aria-current=\"page\">Accueil</a>\r\n      <a href=\"contact.html\">Centre de services</a>\r\n    </nav>\r\n  </header>\r\n  <main>\r\n    <p class=\"rubrique\">VOTRE ESPACE PRATIQUE</p>\r\n    <h1>Un point de départ pour votre journée.</h1>\r\n    <p>Retrouvez les informations utiles pour travailler avec les services numériques de la SPOPI.</p>\r\n    <section class=\"encadre-info\">\r\n      <h2>Avant de contacter l’assistance</h2>\r\n      <p>Notez le nom de l’application, le problème observé et les étapes qui permettent de le reproduire.</p>\r\n      <p>Ne communiquez jamais votre mot de passe.</p>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">01 / SE REPÉRER</p>\r\n      <h2>Les horaires du centre de services</h2>\r\n      <p id=\"horaires\">Les horaires ne sont pas encore affichés.</p>\r\n      <button id=\"bouton-horaires\" type=\"button\">Afficher les horaires</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">02 / PRÉPARER SON SIGNALEMENT</p>\r\n      <h2>Un conseil avant votre demande</h2>\r\n      <p id=\"conseil\">Cliquez pour afficher un conseil.</p>\r\n      <button id=\"bouton-conseil\" type=\"button\">Afficher un conseil</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">03 / CONNAÎTRE LA DÉMARCHE</p>\r\n      <h2>Demander une assistance</h2>\r\n      <p>Ce bouton permet de consulter les démarches à suivre pour contacter la DSIIR.</p>\r\n      <p id=\"procedure\" aria-live=\"polite\">La procédure n’est pas encore affichée.</p>\r\n      <button id=\"bouton-procedure\" type=\"button\">Afficher la procédure d’assistance</button>\r\n    </section>\r\n  </main>\r\n  <footer>SPOPI · Direction des Systèmes d’Information et des Incertitudes Raisonnables<br>Portail de formation · Informations et coordonnées fictives</footer>\r\n</body>\r\n</html>\r\n"
+    },
+    {
+      "id": "centre_page",
+      "label": "Page du centre de services",
+      "type": "source",
+      "filename": "centre-services.html",
+      "language": "html",
+      "content": "<!doctype html>\r\n<html lang=\"fr\">\r\n<head>\r\n  <meta charset=\"UTF-8\">\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n  <title>Centre de services | SPOPI</title>\r\n  <link rel=\"stylesheet\" href=\"style.css\">\r\n</head>\r\n<body>\r\n  <header>\r\n    <p class=\"marque\">SPOPI / DSIIR</p>\r\n    <p>Services aux collaborateurs</p>\r\n    <nav aria-label=\"Navigation principale\">\r\n      <a href=\"index.html\">Accueil</a>\r\n      <a href=\"centre-services.html\" aria-current=\"page\">Centre de services</a>\r\n    </nav>\r\n  </header>\r\n  <main>\r\n    <p class=\"rubrique\">VOTRE INTERLOCUTEUR</p>\r\n    <h1>Le centre de services</h1>\r\n    <section>\r\n      <h2>Préparer une demande</h2>\r\n      <p>Précisez l’application concernée, ce que vous souhaitiez faire et ce qui s’est produit.</p>\r\n      <p>Ajoutez le message d’erreur exact lorsqu’il existe. Ne transmettez aucun mot de passe.</p>\r\n    </section>\r\n    <section>\r\n      <h2>Contacter l’équipe</h2>\r\n      <p>Dans l’organisation, les demandes sont déposées dans l’outil de tickets du centre de services.</p>\r\n      <p>Cette copie de formation ne donne pas accès à cet outil et ne transmet aucune demande.</p>\r\n    </section>\r\n    <a href=\"index.html\">Retour à l’accueil</a>\r\n  </main>\r\n  <footer>SPOPI · DSIIR · Portail de formation · Informations fictives</footer>\r\n</body>\r\n</html>\r\n"
+    },
+    {
+      "id": "tree",
+      "label": "Arborescence du portail",
+      "type": "attachment",
+      "filename": "arborescence.txt",
+      "language": "text",
+      "content": "site_eleve/\n├── index.html\n├── centre-services.html\n├── style.css\n└── script.js\n\nAucun fichier contact.html."
+    },
+    {
+      "id": "t01_browser",
+      "label": "Résultat du clic sur Centre de services",
+      "type": "log",
+      "filename": "navigation-t01.txt",
+      "language": "text",
+      "content": "Navigation demandée : contact.html\nRésultat : fichier introuvable\nLa page centre-services.html est présente dans le même dossier."
+    },
+    {
+      "id": "t02_computed",
+      "label": "Inspection de l’encadré",
+      "type": "log",
+      "filename": "inspection-t02.txt",
+      "language": "text",
+      "content": "Élément HTML : <section class=\"encadre-info\">\nSélecteur CSS recherché : .encadre-information\nCorrespondances : 0\nStyles calculés : fond blanc, aucune bordure gauche spécifique."
+    },
+    {
+      "id": "t03_console",
+      "label": "Console après clic sur les horaires",
+      "type": "log",
+      "filename": "console-t03.txt",
+      "language": "text",
+      "content": "TypeError: Cannot set properties of null (setting 'textContent')\nLa variable horaires vaut null."
+    },
+    {
+      "id": "t04_dom",
+      "label": "Observation du DOM après les clics",
+      "type": "log",
+      "filename": "dom-t04.txt",
+      "language": "text",
+      "content": "Après clic sur « Afficher un conseil » :\n#horaires contient le texte du conseil.\n#conseil contient toujours « Cliquez pour afficher un conseil. »\nAucune erreur dans la console."
+    },
+    {
+      "id": "t05_need",
+      "label": "Besoin validé par le centre de services",
+      "type": "attachment",
+      "filename": "besoin-t05.md",
+      "language": "markdown",
+      "content": "# Fonction attendue\nLe bouton affiche uniquement la démarche à suivre. Il ne crée et ne transmet aucune demande.\n\nTexte attendu :\n« Pour demander une assistance, ouvrez le centre de services et décrivez votre problème. »"
+    },
+    {
+      "id": "e06_acceptance",
+      "label": "Critères du bouton de réinitialisation",
+      "type": "attachment",
+      "filename": "criteres-e06.md",
+      "language": "markdown",
+      "content": "# Évolution facultative\nAjouter un bouton « Réinitialiser le conseil ». Il rétablit « Cliquez pour afficher un conseil. » sans modifier les horaires ni la procédure. Le conseil doit pouvoir être affiché à nouveau."
+    },
+    {
+      "id": "e07_mobile",
+      "label": "Test mobile du portail",
+      "type": "log",
+      "filename": "test-mobile.txt",
+      "language": "text",
+      "content": "Viewport : 360 px\nNavigation : les liens tiennent sur une ligne, mais les marges et espacements réduisent fortement la zone utile.\nCertaines lignes de texte approchent le bord de l’écran.\nAttendu : aucune barre horizontale, liens utilisables, marges adaptées."
+    },
+    {
+      "id": "printer",
+      "label": "État de l’imprimante ACC-02",
+      "type": "log",
+      "filename": "imprimante-acc-02.txt",
+      "language": "text",
+      "content": "État réseau : en ligne\nFile : 3 documents\nBac papier : vide\nToner : 61 %"
+    },
+    {
+      "id": "wifi",
+      "label": "Mesures réseau en salle B12",
+      "type": "log",
+      "filename": "reseau-b12.txt",
+      "language": "text",
+      "content": "3 postes testés\nWi-Fi vers passerelle : 35 à 42 % de pertes\nEthernet vers passerelle : 0 % de perte\nPoint d’accès : AP-B12"
+    },
+    {
+      "id": "password_procedure",
+      "label": "Procédure mot de passe",
+      "type": "attachment",
+      "filename": "mot-de-passe.md",
+      "language": "markdown",
+      "content": "# Réinitialisation\n1. Vérifier l’identité.\n2. Générer un mot de passe temporaire.\n3. Imposer son changement à la prochaine connexion.\n4. Ne jamais communiquer l’ancien mot de passe."
+    },
+    {
+      "id": "t01_index_code",
+      "label": "T01 — Corriger le lien dans index.html",
+      "type": "source",
+      "filename": "index.html",
+      "language": "html",
+      "content": "<!doctype html>\r\n<html lang=\"fr\">\r\n<head>\r\n  <meta charset=\"UTF-8\">\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n  <title>Portail collaborateurs | SPOPI</title>\r\n  <link rel=\"stylesheet\" href=\"style.css\">\r\n  <script src=\"script.js\" defer></script>\r\n</head>\r\n<body>\r\n  <header>\r\n    <p class=\"marque\">SPOPI / DSIIR</p>\r\n    <p>Services aux collaborateurs</p>\r\n    <nav aria-label=\"Navigation principale\">\r\n      <a href=\"index.html\" aria-current=\"page\">Accueil</a>\r\n      <a href=\"contact.html\">Centre de services</a>\r\n    </nav>\r\n  </header>\r\n  <main>\r\n    <p class=\"rubrique\">VOTRE ESPACE PRATIQUE</p>\r\n    <h1>Un point de départ pour votre journée.</h1>\r\n    <p>Retrouvez les informations utiles pour travailler avec les services numériques de la SPOPI.</p>\r\n    <section class=\"encadre-info\">\r\n      <h2>Avant de contacter l’assistance</h2>\r\n      <p>Notez le nom de l’application, le problème observé et les étapes qui permettent de le reproduire.</p>\r\n      <p>Ne communiquez jamais votre mot de passe.</p>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">01 / SE REPÉRER</p>\r\n      <h2>Les horaires du centre de services</h2>\r\n      <p id=\"horaires\">Les horaires ne sont pas encore affichés.</p>\r\n      <button id=\"bouton-horaires\" type=\"button\">Afficher les horaires</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">02 / PRÉPARER SON SIGNALEMENT</p>\r\n      <h2>Un conseil avant votre demande</h2>\r\n      <p id=\"conseil\">Cliquez pour afficher un conseil.</p>\r\n      <button id=\"bouton-conseil\" type=\"button\">Afficher un conseil</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">03 / CONNAÎTRE LA DÉMARCHE</p>\r\n      <h2>Demander une assistance</h2>\r\n      <p>Ce bouton permet de consulter les démarches à suivre pour contacter la DSIIR.</p>\r\n      <p id=\"procedure\" aria-live=\"polite\">La procédure n’est pas encore affichée.</p>\r\n      <button id=\"bouton-procedure\" type=\"button\">Afficher la procédure d’assistance</button>\r\n    </section>\r\n  </main>\r\n  <footer>SPOPI · Direction des Systèmes d’Information et des Incertitudes Raisonnables<br>Portail de formation · Informations et coordonnées fictives</footer>\r\n</body>\r\n</html>\r\n",
+      "editable": true,
+      "expected_content": "<!doctype html>\r\n<html lang=\"fr\">\r\n<head>\r\n  <meta charset=\"UTF-8\">\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n  <title>Portail collaborateurs | SPOPI</title>\r\n  <link rel=\"stylesheet\" href=\"style.css\">\r\n  <script src=\"script.js\" defer></script>\r\n</head>\r\n<body>\r\n  <header>\r\n    <p class=\"marque\">SPOPI / DSIIR</p>\r\n    <p>Services aux collaborateurs</p>\r\n    <nav aria-label=\"Navigation principale\">\r\n      <a href=\"index.html\" aria-current=\"page\">Accueil</a>\r\n      <a href=\"centre-services.html\">Centre de services</a>\r\n    </nav>\r\n  </header>\r\n  <main>\r\n    <p class=\"rubrique\">VOTRE ESPACE PRATIQUE</p>\r\n    <h1>Un point de départ pour votre journée.</h1>\r\n    <p>Retrouvez les informations utiles pour travailler avec les services numériques de la SPOPI.</p>\r\n    <section class=\"encadre-info\">\r\n      <h2>Avant de contacter l’assistance</h2>\r\n      <p>Notez le nom de l’application, le problème observé et les étapes qui permettent de le reproduire.</p>\r\n      <p>Ne communiquez jamais votre mot de passe.</p>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">01 / SE REPÉRER</p>\r\n      <h2>Les horaires du centre de services</h2>\r\n      <p id=\"horaires\">Les horaires ne sont pas encore affichés.</p>\r\n      <button id=\"bouton-horaires\" type=\"button\">Afficher les horaires</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">02 / PRÉPARER SON SIGNALEMENT</p>\r\n      <h2>Un conseil avant votre demande</h2>\r\n      <p id=\"conseil\">Cliquez pour afficher un conseil.</p>\r\n      <button id=\"bouton-conseil\" type=\"button\">Afficher un conseil</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">03 / CONNAÎTRE LA DÉMARCHE</p>\r\n      <h2>Demander une assistance</h2>\r\n      <p>Ce bouton permet de consulter les démarches à suivre pour contacter la DSIIR.</p>\r\n      <p id=\"procedure\" aria-live=\"polite\">La procédure n’est pas encore affichée.</p>\r\n      <button id=\"bouton-procedure\" type=\"button\">Afficher la procédure d’assistance</button>\r\n    </section>\r\n  </main>\r\n  <footer>SPOPI · Direction des Systèmes d’Information et des Incertitudes Raisonnables<br>Portail de formation · Informations et coordonnées fictives</footer>\r\n</body>\r\n</html>\r\n"
+    },
+    {
+      "id": "t02_style_code",
+      "label": "T02 — Corriger le sélecteur dans style.css",
+      "type": "source",
+      "filename": "style.css",
+      "language": "css",
+      "content": "body {\r\n  font-family: Arial, sans-serif;\r\n  background-color: #f3f5f1;\r\n  color: #243b35;\r\n  max-width: 900px;\r\n  margin: 0 auto;\r\n  padding: 24px;\r\n  line-height: 1.6;\r\n}\r\nheader { border-bottom: 2px solid #c9d4ca; padding-bottom: 20px; }\r\n.marque { font-weight: bold; letter-spacing: 2px; color: #185b49; }\r\nnav a { display: inline-block; margin-right: 24px; }\r\na { color: #185b49; text-underline-offset: 4px; }\r\nmain { padding-top: 30px; }\r\nh1 { font-size: 36px; line-height: 1.2; max-width: 650px; }\r\nh2 { font-size: 22px; line-height: 1.3; }\r\n.rubrique { font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #52665b; }\r\nsection { background-color: white; padding: 24px; margin: 24px 0; border-radius: 8px; }\r\n.encadre-information {\r\n  background-color: #fff1cb;\r\n  border-left: 6px solid #9b6900;\r\n  padding: 24px;\r\n}\r\nbutton {\r\n  font: inherit;\r\n  font-weight: bold;\r\n  background-color: #185b49;\r\n  color: white;\r\n  border: 2px solid #185b49;\r\n  border-radius: 5px;\r\n  padding: 10px 16px;\r\n  cursor: pointer;\r\n}\r\nbutton:hover { background-color: #113f33; }\r\na:focus-visible, button:focus-visible { outline: 3px solid #9b6900; outline-offset: 4px; }\r\nfooter { border-top: 1px solid #c9d4ca; margin-top: 36px; padding: 20px 0; font-size: 13px; }\r\n",
+      "editable": true,
+      "expected_content": "body {\r\n  font-family: Arial, sans-serif;\r\n  background-color: #f3f5f1;\r\n  color: #243b35;\r\n  max-width: 900px;\r\n  margin: 0 auto;\r\n  padding: 24px;\r\n  line-height: 1.6;\r\n}\r\nheader { border-bottom: 2px solid #c9d4ca; padding-bottom: 20px; }\r\n.marque { font-weight: bold; letter-spacing: 2px; color: #185b49; }\r\nnav a { display: inline-block; margin-right: 24px; }\r\na { color: #185b49; text-underline-offset: 4px; }\r\nmain { padding-top: 30px; }\r\nh1 { font-size: 36px; line-height: 1.2; max-width: 650px; }\r\nh2 { font-size: 22px; line-height: 1.3; }\r\n.rubrique { font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #52665b; }\r\nsection { background-color: white; padding: 24px; margin: 24px 0; border-radius: 8px; }\r\n.encadre-info {\r\n  background-color: #fff1cb;\r\n  border-left: 6px solid #9b6900;\r\n  padding: 24px;\r\n}\r\nbutton {\r\n  font: inherit;\r\n  font-weight: bold;\r\n  background-color: #185b49;\r\n  color: white;\r\n  border: 2px solid #185b49;\r\n  border-radius: 5px;\r\n  padding: 10px 16px;\r\n  cursor: pointer;\r\n}\r\nbutton:hover { background-color: #113f33; }\r\na:focus-visible, button:focus-visible { outline: 3px solid #9b6900; outline-offset: 4px; }\r\nfooter { border-top: 1px solid #c9d4ca; margin-top: 36px; padding: 20px 0; font-size: 13px; }\r\n"
+    },
+    {
+      "id": "t03_script_code",
+      "label": "T03 — Corriger la cible des horaires dans script.js",
+      "type": "source",
+      "filename": "script.js",
+      "language": "javascript",
+      "content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaire\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#horaires\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Votre demande a été transmise à la DSIIR. Un technicien vous contactera.\";\r\n});\r\n",
+      "editable": true,
+      "expected_content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaires\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#horaires\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Votre demande a été transmise à la DSIIR. Un technicien vous contactera.\";\r\n});\r\n"
+    },
+    {
+      "id": "t04_script_code",
+      "label": "T04 — Corriger la cible du conseil dans script.js",
+      "type": "source",
+      "filename": "script.js",
+      "language": "javascript",
+      "content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaire\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#horaires\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Votre demande a été transmise à la DSIIR. Un technicien vous contactera.\";\r\n});\r\n",
+      "editable": true,
+      "expected_content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaire\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#conseil\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Votre demande a été transmise à la DSIIR. Un technicien vous contactera.\";\r\n});\r\n"
+    },
+    {
+      "id": "t05_script_code",
+      "label": "T05 — Corriger le message de procédure dans script.js",
+      "type": "source",
+      "filename": "script.js",
+      "language": "javascript",
+      "content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaire\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#horaires\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Votre demande a été transmise à la DSIIR. Un technicien vous contactera.\";\r\n});\r\n",
+      "editable": true,
+      "expected_content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaire\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#horaires\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Pour demander une assistance, ouvrez le centre de services et décrivez votre problème.\";\r\n});\r\n"
+    },
+    {
+      "id": "e06_index_code",
+      "label": "E06 — Ajouter le bouton dans index.html",
+      "type": "source",
+      "filename": "index.html",
+      "language": "html",
+      "content": "<!doctype html>\r\n<html lang=\"fr\">\r\n<head>\r\n  <meta charset=\"UTF-8\">\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n  <title>Portail collaborateurs | SPOPI</title>\r\n  <link rel=\"stylesheet\" href=\"style.css\">\r\n  <script src=\"script.js\" defer></script>\r\n</head>\r\n<body>\r\n  <header>\r\n    <p class=\"marque\">SPOPI / DSIIR</p>\r\n    <p>Services aux collaborateurs</p>\r\n    <nav aria-label=\"Navigation principale\">\r\n      <a href=\"index.html\" aria-current=\"page\">Accueil</a>\r\n      <a href=\"centre-services.html\">Centre de services</a>\r\n    </nav>\r\n  </header>\r\n  <main>\r\n    <p class=\"rubrique\">VOTRE ESPACE PRATIQUE</p>\r\n    <h1>Un point de départ pour votre journée.</h1>\r\n    <p>Retrouvez les informations utiles pour travailler avec les services numériques de la SPOPI.</p>\r\n    <section class=\"encadre-info\">\r\n      <h2>Avant de contacter l’assistance</h2>\r\n      <p>Notez le nom de l’application, le problème observé et les étapes qui permettent de le reproduire.</p>\r\n      <p>Ne communiquez jamais votre mot de passe.</p>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">01 / SE REPÉRER</p>\r\n      <h2>Les horaires du centre de services</h2>\r\n      <p id=\"horaires\">Les horaires ne sont pas encore affichés.</p>\r\n      <button id=\"bouton-horaires\" type=\"button\">Afficher les horaires</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">02 / PRÉPARER SON SIGNALEMENT</p>\r\n      <h2>Un conseil avant votre demande</h2>\r\n      <p id=\"conseil\">Cliquez pour afficher un conseil.</p>\r\n      <button id=\"bouton-conseil\" type=\"button\">Afficher un conseil</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">03 / CONNAÎTRE LA DÉMARCHE</p>\r\n      <h2>Demander une assistance</h2>\r\n      <p>Ce bouton permet de consulter les démarches à suivre pour contacter la DSIIR.</p>\r\n      <p id=\"procedure\" aria-live=\"polite\">La procédure n’est pas encore affichée.</p>\r\n      <button id=\"bouton-procedure\" type=\"button\">Afficher la procédure d’assistance</button>\r\n    </section>\r\n  </main>\r\n  <footer>SPOPI · Direction des Systèmes d’Information et des Incertitudes Raisonnables<br>Portail de formation · Informations et coordonnées fictives</footer>\r\n</body>\r\n</html>\r\n",
+      "editable": true,
+      "expected_content": "<!doctype html>\r\n<html lang=\"fr\">\r\n<head>\r\n  <meta charset=\"UTF-8\">\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n  <title>Portail collaborateurs | SPOPI</title>\r\n  <link rel=\"stylesheet\" href=\"style.css\">\r\n  <script src=\"script.js\" defer></script>\r\n</head>\r\n<body>\r\n  <header>\r\n    <p class=\"marque\">SPOPI / DSIIR</p>\r\n    <p>Services aux collaborateurs</p>\r\n    <nav aria-label=\"Navigation principale\">\r\n      <a href=\"index.html\" aria-current=\"page\">Accueil</a>\r\n      <a href=\"centre-services.html\">Centre de services</a>\r\n    </nav>\r\n  </header>\r\n  <main>\r\n    <p class=\"rubrique\">VOTRE ESPACE PRATIQUE</p>\r\n    <h1>Un point de départ pour votre journée.</h1>\r\n    <p>Retrouvez les informations utiles pour travailler avec les services numériques de la SPOPI.</p>\r\n    <section class=\"encadre-info\">\r\n      <h2>Avant de contacter l’assistance</h2>\r\n      <p>Notez le nom de l’application, le problème observé et les étapes qui permettent de le reproduire.</p>\r\n      <p>Ne communiquez jamais votre mot de passe.</p>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">01 / SE REPÉRER</p>\r\n      <h2>Les horaires du centre de services</h2>\r\n      <p id=\"horaires\">Les horaires ne sont pas encore affichés.</p>\r\n      <button id=\"bouton-horaires\" type=\"button\">Afficher les horaires</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">02 / PRÉPARER SON SIGNALEMENT</p>\r\n      <h2>Un conseil avant votre demande</h2>\r\n      <p id=\"conseil\">Cliquez pour afficher un conseil.</p>\r\n      <button id=\"bouton-conseil\" type=\"button\">Afficher un conseil</button>\n      <button id=\"bouton-reset\" type=\"button\">Réinitialiser le conseil</button>\r\n    </section>\r\n    <section>\r\n      <p class=\"rubrique\">03 / CONNAÎTRE LA DÉMARCHE</p>\r\n      <h2>Demander une assistance</h2>\r\n      <p>Ce bouton permet de consulter les démarches à suivre pour contacter la DSIIR.</p>\r\n      <p id=\"procedure\" aria-live=\"polite\">La procédure n’est pas encore affichée.</p>\r\n      <button id=\"bouton-procedure\" type=\"button\">Afficher la procédure d’assistance</button>\r\n    </section>\r\n  </main>\r\n  <footer>SPOPI · Direction des Systèmes d’Information et des Incertitudes Raisonnables<br>Portail de formation · Informations et coordonnées fictives</footer>\r\n</body>\r\n</html>\r\n"
+    },
+    {
+      "id": "e06_script_code",
+      "label": "E06 — Programmer la réinitialisation dans script.js",
+      "type": "source",
+      "filename": "script.js",
+      "language": "javascript",
+      "content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaires\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#conseil\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Pour demander une assistance, ouvrez le centre de services et décrivez votre problème.\";\r\n});\r\n",
+      "editable": true,
+      "expected_content": "const boutonHoraires = document.querySelector(\"#bouton-horaires\");\r\nconst horaires = document.querySelector(\"#horaires\");\r\n\r\nboutonHoraires.addEventListener(\"click\", () => {\r\n  horaires.textContent = \"Le centre de services est ouvert du lundi au vendredi, de 8 h à 17 h.\";\r\n});\r\n\r\nconst boutonConseil = document.querySelector(\"#bouton-conseil\");\r\nconst conseil = document.querySelector(\"#conseil\");\r\n\r\nboutonConseil.addEventListener(\"click\", () => {\r\n  conseil.textContent = \"Indiquez le message d’erreur exact et les étapes pour reproduire le problème.\";\r\n});\r\n\r\nconst boutonProcedure = document.querySelector(\"#bouton-procedure\");\r\nconst procedure = document.querySelector(\"#procedure\");\r\n\r\nboutonProcedure.addEventListener(\"click\", () => {\r\n  procedure.textContent = \"Pour demander une assistance, ouvrez le centre de services et décrivez votre problème.\";\r\n});\n\nconst boutonReset = document.querySelector(\"#bouton-reset\");\nboutonReset.addEventListener(\"click\", () => {\n  conseil.textContent = \"Cliquez pour afficher un conseil.\";\n});\n"
+    },
+    {
+      "id": "e07_style_code",
+      "label": "E07 — Adapter le portail dans style.css",
+      "type": "source",
+      "filename": "style.css",
+      "language": "css",
+      "content": "body {\r\n  font-family: Arial, sans-serif;\r\n  background-color: #f3f5f1;\r\n  color: #243b35;\r\n  max-width: 900px;\r\n  margin: 0 auto;\r\n  padding: 24px;\r\n  line-height: 1.6;\r\n}\r\nheader { border-bottom: 2px solid #c9d4ca; padding-bottom: 20px; }\r\n.marque { font-weight: bold; letter-spacing: 2px; color: #185b49; }\r\nnav a { display: inline-block; margin-right: 24px; }\r\na { color: #185b49; text-underline-offset: 4px; }\r\nmain { padding-top: 30px; }\r\nh1 { font-size: 36px; line-height: 1.2; max-width: 650px; }\r\nh2 { font-size: 22px; line-height: 1.3; }\r\n.rubrique { font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #52665b; }\r\nsection { background-color: white; padding: 24px; margin: 24px 0; border-radius: 8px; }\r\n.encadre-info {\r\n  background-color: #fff1cb;\r\n  border-left: 6px solid #9b6900;\r\n  padding: 24px;\r\n}\r\nbutton {\r\n  font: inherit;\r\n  font-weight: bold;\r\n  background-color: #185b49;\r\n  color: white;\r\n  border: 2px solid #185b49;\r\n  border-radius: 5px;\r\n  padding: 10px 16px;\r\n  cursor: pointer;\r\n}\r\nbutton:hover { background-color: #113f33; }\r\na:focus-visible, button:focus-visible { outline: 3px solid #9b6900; outline-offset: 4px; }\r\nfooter { border-top: 1px solid #c9d4ca; margin-top: 36px; padding: 20px 0; font-size: 13px; }\r\n",
+      "editable": true,
+      "expected_content": "body {\r\n  font-family: Arial, sans-serif;\r\n  background-color: #f3f5f1;\r\n  color: #243b35;\r\n  max-width: 900px;\r\n  margin: 0 auto;\r\n  padding: 24px;\r\n  line-height: 1.6;\r\n}\r\nheader { border-bottom: 2px solid #c9d4ca; padding-bottom: 20px; }\r\n.marque { font-weight: bold; letter-spacing: 2px; color: #185b49; }\r\nnav a { display: inline-block; margin-right: 24px; }\r\na { color: #185b49; text-underline-offset: 4px; }\r\nmain { padding-top: 30px; }\r\nh1 { font-size: 36px; line-height: 1.2; max-width: 650px; }\r\nh2 { font-size: 22px; line-height: 1.3; }\r\n.rubrique { font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #52665b; }\r\nsection { background-color: white; padding: 24px; margin: 24px 0; border-radius: 8px; }\r\n.encadre-info {\r\n  background-color: #fff1cb;\r\n  border-left: 6px solid #9b6900;\r\n  padding: 24px;\r\n}\r\nbutton {\r\n  font: inherit;\r\n  font-weight: bold;\r\n  background-color: #185b49;\r\n  color: white;\r\n  border: 2px solid #185b49;\r\n  border-radius: 5px;\r\n  padding: 10px 16px;\r\n  cursor: pointer;\r\n}\r\nbutton:hover { background-color: #113f33; }\r\na:focus-visible, button:focus-visible { outline: 3px solid #9b6900; outline-offset: 4px; }\r\nfooter { border-top: 1px solid #c9d4ca; margin-top: 36px; padding: 20px 0; font-size: 13px; }\n\n@media (max-width: 600px) {\n  header { padding: 16px; }\n  nav { display: flex; flex-wrap: wrap; gap: 8px 14px; }\n  main { padding: 24px 16px; }\n  section { padding: 18px; }\n}\n"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "T02",
+      "title": "Le rappel d’assistance n’est plus mis en évidence",
+      "description": "Le rappel « Avant de contacter l’assistance » ne se distingue plus des autres rubriques.",
+      "requester_id": "ines",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Applicatif",
+        "priority": "Normale",
+        "application": "Portail collaborateurs SPOPI",
+        "location": "Site de formation local",
+        "fictional_date": "Lundi, 09:07",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "Tous les visiteurs de l’accueil",
+        "urgency": "Normale",
+        "nature": "incident"
+      },
+      "expected": {
+        "category": "Applicatif",
+        "priority": "Normale",
+        "nature": "incident"
+      },
+      "resources": [
+        "portal",
+        "index_bad",
+        "t02_computed",
+        "t02_style_code"
+      ],
+      "visible_resources": [
+        "portal"
+      ],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "compare",
+          "label": "Comparer visuellement le rappel aux autres rubriques",
+          "type": "test",
+          "description": "",
+          "result": "Le rappel conserve un fond blanc et aucune bordure ocre.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "inspect_html",
+          "label": "Consulter la classe HTML du rappel",
+          "type": "consult",
+          "description": "",
+          "result": "La section porte class=\"encadre-info\".",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "index_bad"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "inspect_css",
+          "label": "Consulter la règle CSS de l’encadré",
+          "type": "consult",
+          "description": "",
+          "result": "style.css est disponible dans Ressources. Ouvrez sa console de correction pour modifier votre copie.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "t02_style_code"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "selector",
+          "label": "Tester la correspondance du sélecteur",
+          "type": "test",
+          "description": "",
+          "result": "Aucun élément ne correspond à .encadre-information.",
+          "requires": [
+            "inspect_html",
+            "inspect_css"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "t02_computed"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 3
+        },
+        {
+          "id": "important",
+          "label": "Ajouter !important aux couleurs",
+          "type": "technical",
+          "description": "",
+          "result": "Aucun élément ne correspond au sélecteur : le rendu ne change pas.",
+          "requires": [
+            "inspect_css"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 6,
+          "score": -2
+        },
+        {
+          "id": "verify",
+          "label": "Vérifier le rappel et les autres sections",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC\nLe sélecteur enregistré ne correspond pas encore à la classe de l’encadré. Corrigez puis enregistrez style.css.",
+          "requires": [
+            "inspect_html",
+            "inspect_css",
+            "selector"
+          ],
+          "states": [
+            "resolving",
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 3,
+          "repeatable": true,
+          "code_resource": "t02_style_code",
+          "success_result": "Fond jaune pâle : OK\nBordure gauche ocre : OK\nEspace intérieur : OK\nAutres rubriques blanches : OK\nSUCCÈS"
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Comparer class=\"encadre-info\" au sélecteur .encadre-information, harmoniser les deux noms puis vérifier que seule la bonne section reçoit le style.",
+      "resolution_requires": [
+        "inspect_css",
+        "selector"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "Le rappel reste visuellement identique aux autres rubriques.",
+      "resolution_tests": [],
+      "guided": false
+    },
+    {
+      "id": "T04",
+      "title": "Le conseil remplace les horaires",
+      "description": "Quand je demande un conseil, c’est la rubrique des horaires qui change.",
+      "requester_id": "sarah",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Applicatif",
+        "priority": "Normale",
+        "application": "Portail collaborateurs SPOPI",
+        "location": "Site de formation local",
+        "fictional_date": "Lundi, 09:18",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "Utilisateurs préparant un signalement",
+        "urgency": "Normale",
+        "nature": "incident"
+      },
+      "expected": {
+        "category": "Applicatif",
+        "priority": "Normale",
+        "nature": "incident"
+      },
+      "resources": [
+        "portal",
+        "index_bad",
+        "t04_dom",
+        "t04_script_code"
+      ],
+      "visible_resources": [
+        "portal"
+      ],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "reproduce",
+          "label": "Afficher les horaires puis le conseil",
+          "type": "test",
+          "description": "",
+          "result": "Le texte du conseil remplace les horaires ; la zone conseil reste inchangée.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "t04_dom"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 3
+        },
+        {
+          "id": "inspect_html",
+          "label": "Comparer les id des deux rubriques",
+          "type": "consult",
+          "description": "",
+          "result": "Les zones portent id=\"horaires\" et id=\"conseil\".",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "index_bad"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "inspect_js",
+          "label": "Contrôler la variable conseil",
+          "type": "consult",
+          "description": "",
+          "result": "script.js est disponible dans Ressources. Ouvrez sa console de correction pour modifier votre copie.",
+          "requires": [
+            "reproduce"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "t04_script_code"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 3
+        },
+        {
+          "id": "duplicate_text",
+          "label": "Écrire le conseil directement dans le HTML",
+          "type": "technical",
+          "description": "",
+          "result": "Le texte initial change, mais le clic continue à modifier les horaires.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 6,
+          "score": -2
+        },
+        {
+          "id": "verify",
+          "label": "Tester les boutons dans les deux ordres",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC\nVotre copie modifie encore la mauvaise rubrique. Vérifiez le sélecteur utilisé pour la variable conseil.",
+          "requires": [
+            "reproduce",
+            "inspect_html",
+            "inspect_js"
+          ],
+          "states": [
+            "resolving",
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 4,
+          "repeatable": true,
+          "code_resource": "t04_script_code",
+          "success_result": "Horaires puis conseil : OK\nConseil puis horaires : OK\nChaque texte reste dans sa rubrique\nSUCCÈS"
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Observer que l’événement fonctionne mais vise la mauvaise zone, remplacer #horaires par #conseil pour la variable conseil, puis tester les deux enchaînements.",
+      "resolution_requires": [
+        "inspect_js"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "Le ticket est rouvert : l’affichage du conseil perturbe toujours la rubrique des horaires.",
+      "resolution_tests": [],
+      "guided": false
+    },
+    {
+      "id": "E06",
+      "title": "Ajouter « Réinitialiser le conseil »",
+      "description": "Après correction des incidents, le centre de services demande un bouton qui rétablit le texte initial du conseil, sans modifier les deux autres rubriques.",
+      "requester_id": "gerard",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Applicatif / Web",
+        "priority": "Basse",
+        "application": "Portail collaborateurs SPOPI",
+        "location": "Site de formation local",
+        "fictional_date": "Lundi, 09:34",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "Fonction de confort",
+        "urgency": "Basse",
+        "nature": "evolution"
+      },
+      "expected": {
+        "category": "Applicatif / Web",
+        "priority": "Basse",
+        "nature": "evolution"
+      },
+      "resources": [
+        "portal",
+        "e06_acceptance",
+        "e06_index_code",
+        "e06_script_code"
+      ],
+      "visible_resources": [
+        "portal",
+        "e06_acceptance"
+      ],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "inspect_html",
+          "label": "Ouvrir index.html dans la console de correction",
+          "type": "consult",
+          "description": "",
+          "result": "Ajoutez le bouton demandé dans votre copie de index.html, puis enregistrez.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "e06_index_code"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "inspect_js",
+          "label": "Ouvrir script.js dans la console de correction",
+          "type": "consult",
+          "description": "",
+          "result": "Ajoutez le gestionnaire de réinitialisation dans votre copie de script.js, puis enregistrez.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "e06_script_code"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "reset_all",
+          "label": "Recharger toute la page pour réinitialiser le conseil",
+          "type": "technical",
+          "description": "",
+          "result": "Les horaires et la procédure sont également réinitialisés : le critère n’est pas respecté.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 6,
+          "score": -2
+        },
+        {
+          "id": "verify_html",
+          "label": "Tester la structure HTML avec mon code",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC\nLe bouton #bouton-reset avec type=\"button\" n’est pas placé comme attendu dans la rubrique conseil.",
+          "requires": [
+            "inspect_html"
+          ],
+          "states": [
+            "resolving",
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 3,
+          "repeatable": true,
+          "code_resource": "e06_index_code",
+          "success_result": "Bouton #bouton-reset présent dans la rubrique conseil.\nStructure HTML : SUCCÈS"
+        },
+        {
+          "id": "verify_js",
+          "label": "Tester la réinitialisation avec mon code",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC\nLe gestionnaire enregistré ne rétablit pas exactement le texte initial de #conseil.",
+          "requires": [
+            "inspect_js"
+          ],
+          "states": [
+            "resolving",
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 3,
+          "repeatable": true,
+          "code_resource": "e06_script_code",
+          "success_result": "Affichage du conseil : OK\nRéinitialisation : OK\nNouvel affichage : OK\nHoraires et procédure inchangés : OK\nSUCCÈS"
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Qualifier comme évolution, ajouter un bouton HTML dans la bonne section, cibler #conseil dans un gestionnaire click et tester l’indépendance des trois rubriques.",
+      "resolution_requires": [
+        "inspect_html",
+        "inspect_js"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "La recette est refusée : le conseil ne se réinitialise pas seul ou ne peut pas être affiché à nouveau.",
+      "resolution_tests": [],
+      "guided": false
+    },
+    {
+      "id": "E07",
+      "title": "Adapter le portail aux petits écrans",
+      "description": "La Communication demande une évolution légère : le portail doit rester lisible et navigable à 360 px sans modifier son identité visuelle.",
+      "requester_id": "emma",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Applicatif / Web",
+        "priority": "Basse",
+        "application": "Portail collaborateurs SPOPI",
+        "location": "Site de formation local",
+        "fictional_date": "Lundi, 09:42",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "Utilisateurs sur smartphone",
+        "urgency": "Basse",
+        "nature": "evolution"
+      },
+      "expected": {
+        "category": "Applicatif / Web",
+        "priority": "Basse",
+        "nature": "evolution"
+      },
+      "resources": [
+        "portal",
+        "index_bad",
+        "e07_mobile",
+        "e07_style_code"
+      ],
+      "visible_resources": [
+        "portal",
+        "e07_mobile"
+      ],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "inspect_meta",
+          "label": "Vérifier la balise viewport",
+          "type": "consult",
+          "description": "",
+          "result": "La balise viewport est déjà correcte.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "index_bad"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "inspect_css",
+          "label": "Ouvrir style.css dans la console de correction",
+          "type": "consult",
+          "description": "",
+          "result": "Ajoutez les règles responsives dans votre copie de style.css, puis enregistrez.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "e07_style_code"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "zoom",
+          "label": "Forcer un zoom à 75 %",
+          "type": "technical",
+          "description": "",
+          "result": "Le texte devient trop petit et l’accessibilité se dégrade.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 7,
+          "score": -3
+        },
+        {
+          "id": "verify",
+          "label": "Tester à 360 px, 600 px et 1024 px",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC\nLes règles enregistrées ne correspondent pas encore à l’adaptation responsive attendue.",
+          "requires": [
+            "inspect_meta",
+            "inspect_css"
+          ],
+          "states": [
+            "resolving",
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 4,
+          "repeatable": true,
+          "code_resource": "e07_style_code",
+          "success_result": "360 px : aucune barre horizontale, liens utilisables\n600 px : mise en page lisible\n1024 px : rendu d’origine préservé\nSUCCÈS"
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Conserver le HTML et la balise viewport, ajouter une media query ciblée pour réduire les espacements et permettre le repli de la navigation, puis tester trois largeurs.",
+      "resolution_requires": [
+        "inspect_css"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "L’évolution est refusée : le portail déborde encore ou le rendu ordinateur a régressé.",
+      "resolution_tests": [],
+      "guided": false
+    },
+    {
+      "id": "P01",
+      "title": "L’imprimante de l’accueil ne sort plus les documents",
+      "description": "Trois documents attendent sur ACC-02, mais rien ne s’imprime avant l’ouverture de l’accueil.",
+      "requester_id": "luc",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Matériel",
+        "priority": "Normale",
+        "application": "Impression",
+        "location": "Accueil",
+        "fictional_date": "Lundi, 09:10",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "Une imprimante partagée",
+        "urgency": "Normale",
+        "nature": "incident"
+      },
+      "expected": {
+        "category": "Matériel",
+        "priority": "Normale",
+        "nature": "incident"
+      },
+      "resources": [
+        "printer"
+      ],
+      "visible_resources": [],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "scope",
+          "label": "Vérifier si plusieurs postes sont touchés",
+          "type": "question",
+          "description": "",
+          "result": "Oui, tous les postes utilisant ACC-02 sont concernés.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 2,
+          "to_status": "waiting_user",
+          "return_status": "diagnosing"
+        },
+        {
+          "id": "status",
+          "label": "Consulter l’état de l’imprimante",
+          "type": "test",
+          "description": "",
+          "result": "L’imprimante est en ligne, mais son bac papier est vide.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "printer"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 3
+        },
+        {
+          "id": "driver",
+          "label": "Réinstaller le pilote sur tous les postes",
+          "type": "technical",
+          "description": "",
+          "result": "La file reste bloquée : le bac est toujours vide.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 12,
+          "score": -3
+        },
+        {
+          "id": "refill",
+          "label": "Réapprovisionner le bac papier",
+          "type": "technical",
+          "description": "",
+          "result": "Le bac est rempli et la file reprend.",
+          "requires": [
+            "status"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 3,
+          "to_status": "resolving"
+        },
+        {
+          "id": "verify",
+          "label": "Imprimer une page de test",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC — aucune page ne sort.",
+          "requires": [
+            "refill"
+          ],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [
+            {
+              "requires": [
+                "refill"
+              ],
+              "result": "Page de test imprimée et file vidée.\nSUCCÈS",
+              "outcome": "success"
+            }
+          ],
+          "cost": 2,
+          "score": 2,
+          "repeatable": true
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Qualifier comme incident matériel, contrôler l’état, remplir le bac et imprimer une page de test sans réinstaller inutilement les pilotes.",
+      "resolution_requires": [
+        "refill",
+        "verify"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "L’imprimante reste indisponible faute de papier et de test de sortie.",
+      "guided": false,
+      "resolution_tests": []
+    },
+    {
+      "id": "P02",
+      "title": "Coupures Wi-Fi répétées en salle B12",
+      "description": "Les 18 personnes de B12 subissent des déconnexions Wi-Fi. Les bureaux voisins ne semblent pas touchés.",
+      "requester_id": "nora",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Réseau",
+        "priority": "Haute",
+        "application": "Wi-Fi interne",
+        "location": "Salle B12",
+        "fictional_date": "Lundi, 09:16",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "18 utilisateurs",
+        "urgency": "Haute",
+        "nature": "incident"
+      },
+      "expected": {
+        "category": "Réseau",
+        "priority": "Haute",
+        "nature": "incident"
+      },
+      "resources": [
+        "wifi"
+      ],
+      "visible_resources": [],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "scope",
+          "label": "Confirmer le périmètre de la panne",
+          "type": "question",
+          "description": "",
+          "result": "Toute la salle B12 est touchée ; le Wi-Fi fonctionne dans les salles voisines.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 2,
+          "to_status": "waiting_user",
+          "return_status": "diagnosing"
+        },
+        {
+          "id": "tests",
+          "label": "Comparer Wi-Fi et Ethernet sur plusieurs postes",
+          "type": "test",
+          "description": "",
+          "result": "Pertes fortes en Wi-Fi et aucune perte en Ethernet.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "wifi"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 3
+        },
+        {
+          "id": "forget",
+          "label": "Faire oublier le réseau sur les 18 postes",
+          "type": "technical",
+          "description": "",
+          "result": "Les coupures réapparaissent : l’incident est collectif.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 15,
+          "score": -2
+        },
+        {
+          "id": "escalate_network",
+          "label": "Escalader au réseau avec les mesures",
+          "type": "escalate",
+          "description": "",
+          "result": "AP-B12 présente des erreurs radio. Le canal est changé et le point d’accès redémarré.",
+          "requires": [
+            "scope",
+            "tests"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 4,
+          "to_status": "escalated",
+          "return_status": "diagnosing",
+          "specialist_id": "network"
+        },
+        {
+          "id": "verify",
+          "label": "Tester la stabilité pendant dix minutes",
+          "type": "test",
+          "description": "",
+          "result": "ÉCHEC — l’intervention n’est pas encore réalisée.",
+          "requires": [
+            "escalate_network"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [
+            {
+              "requires": [
+                "escalate_network"
+              ],
+              "result": "3 postes, 10 minutes : 0 % de perte et aucune déconnexion.\nSUCCÈS",
+              "outcome": "success"
+            }
+          ],
+          "cost": 2,
+          "score": 3,
+          "repeatable": true
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Qualifier l’incident réseau, circonscrire la zone, comparer Wi-Fi et Ethernet, transmettre des mesures au spécialiste puis tester après intervention.",
+      "resolution_requires": [
+        "escalate_network",
+        "verify"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "Les coupures persistent : l’incident collectif n’a pas été correctement escaladé ou vérifié.",
+      "guided": false,
+      "resolution_tests": []
+    },
+    {
+      "id": "P03",
+      "title": "Mot de passe oublié après un congé",
+      "description": "Je ne retrouve plus mon mot de passe. Pouvez-vous me renvoyer l’ancien ?",
+      "requester_id": "marc",
+      "fields": {
+        "service": "Centre de services",
+        "category": "Identité et accès",
+        "priority": "Normale",
+        "application": "Compte utilisateur",
+        "location": "RH",
+        "fictional_date": "Lundi, 09:29",
+        "sla": "Voir l’extrait de contrat du scénario : prise en charge distincte de la résolution.",
+        "impact": "Un utilisateur",
+        "urgency": "Normale",
+        "nature": "service"
+      },
+      "expected": {
+        "category": "Identité et accès",
+        "priority": "Normale",
+        "nature": "service"
+      },
+      "resources": [
+        "password_procedure"
+      ],
+      "visible_resources": [],
+      "transitions": {
+        "new": [
+          "accepted"
+        ],
+        "accepted": [
+          "diagnosing"
+        ],
+        "diagnosing": [
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ],
+        "waiting_user": [
+          "diagnosing",
+          "resolving"
+        ],
+        "waiting_specialist": [
+          "diagnosing"
+        ],
+        "escalated": [
+          "diagnosing"
+        ],
+        "resolving": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "resolved"
+        ],
+        "resolved": [
+          "closed",
+          "reopened"
+        ],
+        "closed": [],
+        "reopened": [
+          "diagnosing",
+          "waiting_user",
+          "waiting_specialist",
+          "escalated",
+          "resolving",
+          "resolved"
+        ]
+      },
+      "actions": [
+        {
+          "id": "take",
+          "label": "Prendre en charge",
+          "type": "take",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "new"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 1,
+          "score": 0
+        },
+        {
+          "id": "diagnose",
+          "label": "Commencer le diagnostic",
+          "type": "diagnostic",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "accepted"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "to_status": "diagnosing"
+        },
+        {
+          "id": "identity",
+          "label": "Vérifier l’identité selon la procédure",
+          "type": "question",
+          "description": "",
+          "result": "L’identité du demandeur est vérifiée par le mécanisme interne.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 3,
+          "to_status": "waiting_user",
+          "return_status": "diagnosing"
+        },
+        {
+          "id": "procedure",
+          "label": "Consulter la procédure de réinitialisation",
+          "type": "consult",
+          "description": "",
+          "result": "La procédure est disponible.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [
+            "password_procedure"
+          ],
+          "variants": [],
+          "cost": 2,
+          "score": 2
+        },
+        {
+          "id": "send_old",
+          "label": "Envoyer l’ancien mot de passe par courriel",
+          "type": "technical",
+          "description": "",
+          "result": "Action impossible et contraire à la politique de sécurité.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 10,
+          "score": -5
+        },
+        {
+          "id": "reset",
+          "label": "Créer un mot de passe temporaire avec changement obligatoire",
+          "type": "technical",
+          "description": "",
+          "result": "Le mot de passe temporaire est créé et son changement sera imposé.",
+          "requires": [
+            "identity",
+            "procedure"
+          ],
+          "states": [
+            "diagnosing",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 4,
+          "to_status": "resolving"
+        },
+        {
+          "id": "verify",
+          "label": "Faire confirmer la reconnexion",
+          "type": "question",
+          "description": "",
+          "result": "Je suis reconnecté et j’ai choisi un nouveau mot de passe.",
+          "requires": [
+            "reset"
+          ],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 3,
+          "to_status": "waiting_user",
+          "return_status": "resolving"
+        },
+        {
+          "id": "note",
+          "label": "Ajouter une note technique",
+          "type": "technical_note",
+          "description": "",
+          "result": "La note technique est enregistrée dans le journal.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "inform",
+          "label": "Informer le demandeur de l’avancement",
+          "type": "communication",
+          "description": "",
+          "result": "Votre message est ajouté à la conversation.",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "resolve",
+          "label": "Résoudre et documenter",
+          "type": "resolve",
+          "description": "",
+          "result": "",
+          "requires": [],
+          "states": [
+            "diagnosing",
+            "resolving",
+            "reopened"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0,
+          "repeatable": true
+        },
+        {
+          "id": "close",
+          "label": "Clôturer le ticket",
+          "type": "close",
+          "description": "",
+          "result": "Ticket clôturé.",
+          "requires": [],
+          "states": [
+            "resolved"
+          ],
+          "reveal": [],
+          "variants": [],
+          "cost": 2,
+          "score": 0
+        }
+      ],
+      "expected_solution": "Qualifier comme demande de service, vérifier l’identité, appliquer la procédure et obtenir confirmation de la reconnexion sans jamais communiquer l’ancien mot de passe.",
+      "resolution_requires": [
+        "reset",
+        "verify"
+      ],
+      "bad_resolution": "accept",
+      "bad_resolution_message": "Le demandeur ne peut toujours pas se connecter ou la procédure de sécurité n’a pas été respectée.",
+      "guided": false,
+      "resolution_tests": []
+    }
+  ],
+  "priority_policy": "Grille pédagogique propre à ce dossier SPOPI (aucune équivalence universelle) :\nP1 / Haute : fonction utile bloquée pour plusieurs utilisateurs ou information trompeuse risquant de perdre une demande ; expliquer impact et urgence.\nP2 / Normale : gêne limitée, contournement possible ou impact de présentation.\nBasse : évolution de confort planifiable. Critique : à justifier par un arrêt majeur non décrit ici.\nUne autre priorité argumentée peut être pertinente : comparaison indicative, décision de l’enseignant.",
+  "service_agreement": "Extrait fictif de contrat pour cet exercice : périmètre = portail interne SPOPI sur environnement pédagogique fourni. Prise en charge P1 sous 30 minutes ouvrées ; P2 sous 4 heures ouvrées ; évolutions à planifier après analyse. Aucun délai de résolution garanti dans ce dossier. Escalade au référent applicatif si hors périmètre, droits insuffisants ou diagnostic non abouti. Informer le demandeur du prochain point de suivi. La fin de séance est une échéance pédagogique, pas un SLA."
+}
