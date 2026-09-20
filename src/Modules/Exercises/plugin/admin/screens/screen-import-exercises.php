@@ -234,6 +234,11 @@ class Screen_Import_Exercises {
 
                                 if ($has_levels_col || $existing_id === 0) {
                                     self::sync_relations($wpdb, $table_exo_level, $exercise_id, 'school_level_id', $level_ids);
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$table_exercises} SET level_id = (SELECT MIN(school_level_id) FROM {$table_exo_level} WHERE exercise_id = %d) WHERE id = %d",
+                                        $exercise_id,
+                                        $exercise_id
+                                    ));
                                 }
 
                                 if ($has_comp_col || $existing_id === 0) {

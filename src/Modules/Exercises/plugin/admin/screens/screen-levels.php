@@ -42,6 +42,10 @@ $normalize_slug = static function (string $slug, string $label): string {
 };
 
 $usage_for_level = static function (int $id) use ($wpdb, $table_exists, $tbl_groups, $tbl_members, $tbl_exercises, $tbl_exo_levels, $tbl_comp_levels): array {
+    // Count a legacy reference only when the same association is not already counted.
+    $legacy_only = $table_exists($tbl_exo_levels)
+        ? " AND NOT EXISTS (SELECT 1 FROM {$tbl_exo_levels} rel WHERE rel.exercise_id = e.id AND rel.school_level_id = e.level_id)"
+        : '';
     return [
         'groups' => $table_exists($tbl_groups) ? (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$tbl_groups} WHERE school_level_id = %d",
@@ -56,7 +60,7 @@ $usage_for_level = static function (int $id) use ($wpdb, $table_exists, $tbl_gro
             $id
         )) ?: [])) : 0,
         'exercises_legacy' => $table_exists($tbl_exercises) ? (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$tbl_exercises} WHERE level_id = %d",
+            "SELECT COUNT(*) FROM {$tbl_exercises} e WHERE e.level_id = %d{$legacy_only}",
             $id
         )) : 0,
         'exercises_links' => $table_exists($tbl_exo_levels) ? (int) $wpdb->get_var($wpdb->prepare(

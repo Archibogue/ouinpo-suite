@@ -969,6 +969,14 @@ class Screen_Exercises {
       }
     }
 
+    // Keep the legacy reference aligned with the persisted school-level links.
+    // NULL is intentional when the exercise no longer has a school level.
+    $wpdb->query($wpdb->prepare(
+      "UPDATE {$p_exo} SET level_id = (SELECT MIN(school_level_id) FROM {$p_lv} WHERE exercise_id = %d) WHERE id = %d",
+      $id,
+      $id
+    ));
+
     // Compétences BO
     $competencies = isset($_POST['competencies']) ? array_map('intval', (array)$_POST['competencies']) : [];
     $wpdb->delete($p_comp, ['exercise_id'=>$id], ['%d']);

@@ -6,7 +6,7 @@ Il propose un ensemble d’outils pédagogiques pour organiser des exercices, su
 
 ## Statut
 
-Version 0.7.10-beta : amélioration de l'ergonomie sur ordinateur, avec brouillons PataDesk sauvegardés sur le serveur, formulaires Projects conservés pendant les enregistrements, notation Flashcards protégée et interfaces adaptées à la largeur disponible. Recette WordPress/MariaDB et navigateur effectuée sur bsiotest.local ; les détails et limites figurent dans `docs/ergonomie-lot-1.md`. Cette version reste une bêta et nécessite une vérification sur le site cible, avec son thème et ses données.
+Version 0.7.11-beta : correction des rattachements de niveaux après édition ou import CSV et du double comptage des exercices dans l’administration. Inclut l’amélioration de l'ergonomie sur ordinateur, avec brouillons PataDesk sauvegardés sur le serveur, formulaires Projects conservés pendant les enregistrements, notation Flashcards protégée et interfaces adaptées à la largeur disponible. Recette WordPress/MariaDB et navigateur effectuée sur bsiotest.local ; les détails et limites figurent dans `docs/ergonomie-lot-1.md`. Cette version reste une bêta et nécessite une vérification sur le site cible, avec son thème et ses données.
 
 Modules actifs par defaut sur une installation neuve : `exercises` et `flashcards`. Le module `exercises` est le socle et reste actif. Les autres modules, dont Gate, Submissions, SegFault, RechText et Projects, doivent etre actives volontairement depuis l'administration.
 

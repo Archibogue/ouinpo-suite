@@ -2,6 +2,13 @@
 
 Toutes les modifications notables de OuInPo Suite sont documentées dans ce fichier.
 
+## [0.7.11-beta] - 2026-09-21
+
+### Corrigé
+
+- Niveaux : le compteur et le message de suppression ne comptent plus deux fois un exercice présent à la fois dans le champ historique et dans les associations de niveaux.
+- Exercices : l’édition et l’import CSV synchronisent désormais le niveau historique avec les associations de niveaux enregistrées, y compris lorsqu’aucun niveau n’est sélectionné. Un déplacement ne laisse plus d’ancien rattachement bloquant la suppression du niveau quitté.
+
 ## [0.7.10-beta] - 2026-09-21
 
 ### Ajouté
